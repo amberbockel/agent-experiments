@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F0F12">
+<title>Revenue Pulse · Amber Miro Creative</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+<style>
+  :root {
+    --bg: #0F0F12;
+    --surface: #16161B;
+    --surface-2: #1E1E25;
+    --border: rgba(255,255,255,0.08);
+    --text: #EDECEF;
+    --muted: #8B8A92;
+    --accent: #FFB48C;
+    --accent-2: #B5A4FF;
+    --success: #7DDDB7;
+    --warn: #FFD978;
+    --danger: #FF8C9C;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    min-height: 100vh; -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 80% 0%, rgba(255, 180, 140, 0.10), transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(181, 164, 255, 0.08), transparent 50%);
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 13px; margin-bottom: 24px; }
+  .back:hover { color: var(--accent); }
+  header { margin-bottom: 32px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+  }
+  h1 { font-size: clamp(28px, 5vw, 36px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 15px; }
+
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    background-image: linear-gradient(135deg, rgba(255,180,140,0.06), rgba(181,164,255,0.04));
+  }
+  .hero-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .hero-amount {
+    font-size: clamp(40px, 9vw, 64px);
+    font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero-goal { font-size: 14px; color: var(--muted); margin-top: 8px; }
+  .hero-goal strong { color: var(--text); font-weight: 600; }
+
+  .progress {
+    height: 14px; background: var(--surface-2); border-radius: 999px;
+    overflow: hidden; margin-top: 20px; position: relative;
+    border: 1px solid var(--border);
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 12px rgba(255, 180, 140, 0.3);
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted);
+    margin-top: 8px; font-variant-numeric: tabular-nums;
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+  .stat-value.dim { color: var(--muted); }
+  .stat-value.success { color: var(--success); }
+  .stat-value.warn { color: var(--warn); }
+
+  .section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+  }
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+
+  .input-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  input[type="number"], input[type="text"], input[type="date"], select {
+    width: 100%;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px;
+    color: var(--text); font-size: 15px; font-family: inherit;
+    transition: border-color 0.15s ease;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  button {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1A1822; border: none; padding: 10px 18px;
+    border-radius: 10px; font-weight: 600; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(255, 180, 140, 0.25); }
+  button:active { transform: translateY(0); }
+  button.ghost {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+  }
+  button.ghost:hover { color: var(--text); border-color: var(--text); box-shadow: none; }
+
+  .entry-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 12px; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .entry-row:last-child { border-bottom: none; }
+  .entry-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 56px; }
+  .entry-source { color: var(--text); }
+  .entry-amount { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--success); }
+  .entry-del {
+    background: transparent; color: var(--muted); border: none;
+    padding: 4px 8px; font-size: 16px; cursor: pointer;
+  }
+  .entry-del:hover { color: var(--danger); }
+  .empty-list { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
+
+  .month-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .month-btn {
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--muted); padding: 6px 12px; border-radius: 8px;
+    font-size: 13px; cursor: pointer; font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .month-btn.active { background: var(--accent); color: #1A1822; border-color: var(--accent); font-weight: 600; }
+  .month-btn:hover:not(.active) { color: var(--text); }
+
+  .pace {
+    margin-top: 16px; padding: 14px 16px;
+    background: var(--surface-2); border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .pace strong { color: var(--text); }
+  .pace.ahead { border-color: rgba(125, 221, 183, 0.3); background: rgba(125, 221, 183, 0.05); }
+  .pace.behind { border-color: rgba(255, 140, 156, 0.3); background: rgba(255, 140, 156, 0.05); }
+
+  .source-options {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .source-tag {
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--muted); padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .source-tag:hover, .source-tag.active { color: var(--accent); border-color: var(--accent); }
+
+  footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 12px; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../../">← All experiments</a>
+    <header>
+      <div class="eyebrow">Apr 30, 2026 · Productivity</div>
+      <h1>Revenue Pulse</h1>
+      <p class="sub">Track your path to $25K/year Amber Miro Creative revenue. One number, one bar, no spreadsheet.</p>
+    </header>
+
+    <div class="hero">
+      <div class="hero-label">Year-to-date earned</div>
+      <div class="hero-amount" id="ytd-amount">$0</div>
+      <div class="hero-goal">of <strong id="goal-display">$25,000</strong> · <span id="ytd-pct">0%</span></div>
+      <div class="progress"><div class="progress-bar" id="ytd-bar" style="width: 0%"></div></div>
+      <div class="progress-meta">
+        <span>$0</span>
+        <span id="goal-label">$25,000</span>
+      </div>
+      <div class="pace" id="pace-msg">Add your first earning to see how you're tracking.</div>
+    </div>
+
+    <div class="grid">
+      <div class="stat">
+        <div class="stat-label">This month</div>
+        <div class="stat-value" id="month-amount">$0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Monthly target</div>
+        <div class="stat-value dim" id="month-target">$2,083</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Best month</div>
+        <div class="stat-value success" id="best-month">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Entries</div>
+        <div class="stat-value dim" id="entry-count">0</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">+ Log earning</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label for="amount-input">Amount</label>
+          <input id="amount-input" type="number" step="0.01" placeholder="0.00" inputmode="decimal">
+        </div>
+        <div>
+          <label for="date-input">Date</label>
+          <input id="date-input" type="date">
+        </div>
+      </div>
+      <div>
+        <label for="source-input">Source</label>
+        <input id="source-input" type="text" placeholder="e.g. Print sale, workshop, commission">
+        <div class="source-options">
+          <span class="source-tag" data-src="Original">Original</span>
+          <span class="source-tag" data-src="Print">Print</span>
+          <span class="source-tag" data-src="POD">POD</span>
+          <span class="source-tag" data-src="Workshop">Workshop</span>
+          <span class="source-tag" data-src="Commission">Commission</span>
+          <span class="source-tag" data-src="Other">Other</span>
+        </div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="add-btn">Add earning</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Recent entries</div>
+      <div class="month-row" id="month-filter"></div>
+      <div id="entries-list"><div class="empty-list">No earnings logged yet.</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Settings</div>
+      <div class="input-row">
+        <div>
+          <label for="goal-input">Annual goal</label>
+          <input id="goal-input" type="number" step="100" value="25000">
+        </div>
+        <button class="ghost" id="save-goal">Save</button>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="ghost" id="export-btn">Export JSON</button>
+        <button class="ghost" id="reset-btn">Reset all</button>
+      </div>
+    </div>
+
+    <footer>
+      Saved locally in your browser · Made by Ada 🦄 · <a href="README.md">PRD</a>
+    </footer>
+  </div>
+
+<script>
+const STORAGE_KEY = 'revenue-pulse-v1';
+const DEFAULT_GOAL = 25000;
+const YEAR = new Date().getFullYear();
+
+const state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return Object.assign({ goal: DEFAULT_GOAL, entries: [] }, JSON.parse(raw));
+  } catch (e) {}
+  return { goal: DEFAULT_GOAL, entries: [] };
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  render();
+}
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+function fmtFull(n) {
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function thisYear(e) { return e.date.startsWith(String(YEAR)); }
+function thisMonth(e, m) {
+  const month = m != null ? m : new Date().getMonth();
+  const d = new Date(e.date + 'T12:00:00');
+  return d.getFullYear() === YEAR && d.getMonth() === month;
+}
+
+function expectedByNow() {
+  const start = new Date(YEAR, 0, 1);
+  const end = new Date(YEAR + 1, 0, 1);
+  const now = new Date();
+  const elapsed = (now - start) / (end - start);
+  return state.goal * Math.min(1, Math.max(0, elapsed));
+}
+
+function paceMsg(ytd) {
+  const expected = expectedByNow();
+  const diff = ytd - expected;
+  const pctDay = (new Date() - new Date(YEAR, 0, 1)) / (1000 * 60 * 60 * 24);
+  const dayOfYear = Math.floor(pctDay) + 1;
+  if (state.entries.length === 0) {
+    return { text: 'Add your first earning to see how you\'re tracking.', cls: '' };
+  }
+  if (diff >= 0) {
+    return {
+      text: `<strong>Ahead of pace by ${fmt(Math.abs(diff))}</strong> on day ${dayOfYear} of ${YEAR}.`,
+      cls: 'ahead'
+    };
+  }
+  return {
+    text: `<strong>Behind pace by ${fmt(Math.abs(diff))}</strong> on day ${dayOfYear} of ${YEAR}. Catch up rate: ${fmt(Math.abs(diff) / Math.max(1, 365 - dayOfYear))}/day.`,
+    cls: 'behind'
+  };
+}
+
+function bestMonth() {
+  const buckets = Array(12).fill(0);
+  state.entries.filter(thisYear).forEach(e => {
+    const m = new Date(e.date + 'T12:00:00').getMonth();
+    buckets[m] += Number(e.amount);
+  });
+  let max = 0, idx = -1;
+  buckets.forEach((v, i) => { if (v > max) { max = v; idx = i; } });
+  if (idx < 0) return '—';
+  const name = new Date(YEAR, idx, 1).toLocaleString('en-US', { month: 'short' });
+  return `${fmt(max)} · ${name}`;
+}
+
+function renderMonthFilter() {
+  const container = document.getElementById('month-filter');
+  const months = [];
+  state.entries.filter(thisYear).forEach(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+    if (!months.find(m => m.key === key)) months.push({ key, m: d.getMonth(), y: d.getFullYear() });
+  });
+  months.sort((a, b) => b.key.localeCompare(a.key));
+  if (!months.length) { container.innerHTML = ''; return; }
+
+  const active = state.activeMonth || months[0].key;
+  container.innerHTML = months.map(mo => {
+    const name = new Date(mo.y, mo.m, 1).toLocaleString('en-US', { month: 'short' });
+    return `<button class="month-btn ${mo.key === active ? 'active' : ''}" data-key="${mo.key}">${name}</button>`;
+  }).join('');
+  container.querySelectorAll('.month-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeMonth = btn.dataset.key;
+      save();
+    });
+  });
+}
+
+function renderEntries() {
+  const list = document.getElementById('entries-list');
+  const active = state.activeMonth;
+  let entries = state.entries.slice().sort((a, b) => b.date.localeCompare(a.date));
+  if (active) {
+    const [y, m] = active.split('-').map(Number);
+    entries = entries.filter(e => {
+      const d = new Date(e.date + 'T12:00:00');
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+  }
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-list">No earnings in this month yet.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `
+      <div class="entry-row">
+        <div class="entry-date">${dateStr}</div>
+        <div class="entry-source">${escapeHtml(e.source || '—')}</div>
+        <div class="entry-amount">${fmtFull(Number(e.amount))}</div>
+        <button class="entry-del" data-id="${e.id}" aria-label="Delete">×</button>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('.entry-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.entries = state.entries.filter(e => e.id !== btn.dataset.id);
+      save();
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+function render() {
+  const ytd = state.entries.filter(thisYear).reduce((s, e) => s + Number(e.amount), 0);
+  const monthTotal = state.entries.filter(e => thisMonth(e)).reduce((s, e) => s + Number(e.amount), 0);
+  const pct = state.goal > 0 ? Math.min(100, (ytd / state.goal) * 100) : 0;
+
+  document.getElementById('ytd-amount').textContent = fmt(ytd);
+  document.getElementById('ytd-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('ytd-bar').style.width = pct + '%';
+  document.getElementById('goal-display').textContent = fmt(state.goal);
+  document.getElementById('goal-label').textContent = fmt(state.goal);
+  document.getElementById('month-amount').textContent = fmt(monthTotal);
+  document.getElementById('month-target').textContent = fmt(state.goal / 12);
+  document.getElementById('best-month').textContent = bestMonth();
+  document.getElementById('entry-count').textContent = state.entries.filter(thisYear).length;
+  document.getElementById('goal-input').value = state.goal;
+
+  const pace = paceMsg(ytd);
+  const paceEl = document.getElementById('pace-msg');
+  paceEl.innerHTML = pace.text;
+  paceEl.className = 'pace ' + pace.cls;
+
+  renderMonthFilter();
+  renderEntries();
+}
+
+// Wire up
+document.getElementById('date-input').value = new Date().toISOString().slice(0, 10);
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  const amount = parseFloat(document.getElementById('amount-input').value);
+  const date = document.getElementById('date-input').value;
+  const source = document.getElementById('source-input').value.trim() || 'Other';
+  if (!amount || amount <= 0 || !date) {
+    document.getElementById('amount-input').focus();
+    return;
+  }
+  state.entries.push({
+    id: Math.random().toString(36).slice(2, 10),
+    amount, date, source
+  });
+  document.getElementById('amount-input').value = '';
+  document.getElementById('source-input').value = '';
+  save();
+});
+
+document.getElementById('save-goal').addEventListener('click', () => {
+  const v = parseFloat(document.getElementById('goal-input').value);
+  if (v && v > 0) { state.goal = v; save(); }
+});
+
+document.querySelectorAll('.source-tag').forEach(tag => {
+  tag.addEventListener('click', () => {
+    document.getElementById('source-input').value = tag.dataset.src;
+  });
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `revenue-pulse-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Delete all entries? This cannot be undone.')) {
+    state.entries = []; save();
+  }
+});
+
+document.getElementById('amount-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('add-btn').click();
+});
+
+render();
+</script>
+</body>
+</html>

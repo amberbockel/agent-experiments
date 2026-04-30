@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "owner": "amberbockel",
+  "description": "Daily mini-apps built by Ada for Amber",
+  "apps": [
+    {
+      "date": "2026-04-30",
+      "title": "Revenue Pulse",
+      "category": "productivity",
+      "oneLiner": "Visual progress meter toward your $25K/year Amber Miro Creative goal — set monthly targets, log earnings, watch the bar grow.",
+      "path": "apps/2026-04-30/"
+    }
+  ]
+}
