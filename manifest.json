@@ -5,6 +5,15 @@
   "apps": [
     {
       "date": "2026-04-30",
+      "slug": "2026-04-30-jeopardy",
+      "title": "Family Jeopardy!",
+      "category": "delightful",
+      "oneLiner": "Mobile Jeopardy for Amber, William, and Zev — 8 family-friendly categories, pass one phone, answer in the form of a question.",
+      "path": "apps/2026-04-30-jeopardy/"
+    },
+    {
+      "date": "2026-04-30",
+      "slug": "2026-04-30",
       "title": "Revenue Pulse",
       "category": "productivity",
       "oneLiner": "Visual progress meter toward your $25K/year Amber Miro Creative goal — set monthly targets, log earnings, watch the bar grow.",

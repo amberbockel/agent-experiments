@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#060CE9">
+<title>Family Jeopardy! 🎤</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Family Jeopardy","short_name":"Jeopardy","display":"standalone","background_color":"%23060CE9","theme_color":"%23060CE9"}'>
+<style>
+  :root {
+    --jeo-blue: #060CE9;
+    --jeo-blue-dark: #02078A;
+    --jeo-gold: #FFCC00;
+    --jeo-gold-dim: #C49A00;
+    --tile-bg: #0A14C2;
+    --tile-hover: #1322E8;
+    --tile-used: #060A5C;
+    --text: #FFFFFF;
+    --text-dim: #B8C4FF;
+    --correct: #2BCB6E;
+    --wrong: #FF4D6D;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Korinna', 'Times New Roman', Georgia, serif;
+    background: var(--jeo-blue);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .app {
+    max-width: 720px; margin: 0 auto;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  /* Header */
+  header {
+    padding: 16px 16px 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--jeo-blue-dark);
+  }
+  .back-btn {
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 14px; font-family: inherit; cursor: pointer;
+    padding: 6px 10px; border-radius: 6px;
+  }
+  .back-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+  .header-title {
+    font-family: 'Korinna', 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--jeo-gold);
+    text-shadow: 2px 2px 0 var(--jeo-blue-dark);
+    letter-spacing: 0.05em;
+  }
+
+  /* Screens */
+  .screen { flex: 1; display: none; flex-direction: column; padding: 16px; }
+  .screen.active { display: flex; }
+
+  /* Home screen */
+  .home-hero {
+    text-align: center; padding: 32px 16px 16px;
+  }
+  .logo-stack {
+    display: inline-block;
+    background: var(--jeo-blue-dark);
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 0 #000033, inset 0 0 0 4px var(--jeo-blue);
+  }
+  .logo-text {
+    font-family: 'Korinna', 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: clamp(32px, 8vw, 48px);
+    color: var(--jeo-gold);
+    text-shadow: 3px 3px 0 #000033;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .logo-text .small {
+    display: block; font-size: 0.55em; color: var(--text); margin-top: 4px;
+    letter-spacing: 0.15em;
+  }
+  .home-tagline {
+    margin-top: 24px; font-size: 16px; color: var(--text-dim);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .pack-grid { display: grid; gap: 12px; margin: 24px 0; }
+  .pack-card {
+    background: var(--tile-bg);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 18px 20px;
+    text-align: left; cursor: pointer; color: inherit;
+    font-family: inherit;
+    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .pack-card:hover, .pack-card:active {
+    background: var(--tile-hover);
+    border-color: var(--jeo-gold);
+    transform: translateY(-2px);
+  }
+  .pack-emoji { font-size: 32px; flex-shrink: 0; }
+  .pack-info { flex: 1; min-width: 0; }
+  .pack-name {
+    font-weight: 700; font-size: 18px; color: var(--jeo-gold);
+    letter-spacing: 0.02em;
+  }
+  .pack-meta {
+    font-size: 13px; color: var(--text-dim); margin-top: 2px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Players section */
+  .players-section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--jeo-gold); margin-bottom: 12px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .player-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: 8px; align-items: center; margin-bottom: 8px;
+  }
+  .player-input {
+    background: var(--jeo-blue-dark); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--text); font-size: 16px; font-family: inherit;
+  }
+  .player-input:focus { outline: none; border-color: var(--jeo-gold); }
+  .player-color {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--text); cursor: pointer;
+  }
+  .player-remove {
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 24px; cursor: pointer; padding: 0 8px;
+  }
+  .add-player-btn {
+    background: transparent; color: var(--jeo-gold); border: 2px dashed var(--jeo-gold-dim);
+    border-radius: 8px; padding: 10px; width: 100%;
+    font-size: 14px; cursor: pointer; font-family: inherit;
+    margin-top: 4px;
+  }
+  .add-player-btn:hover { border-color: var(--jeo-gold); background: rgba(255,204,0,0.05); }
+
+  /* Board screen */
+  .board-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  }
+  .pack-title {
+    font-size: 22px; font-weight: 700; color: var(--jeo-gold);
+    text-shadow: 2px 2px 0 var(--jeo-blue-dark);
+  }
+  .scores {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .score-pill {
+    background: var(--jeo-blue-dark); border: 2px solid var(--jeo-gold-dim);
+    border-radius: 999px; padding: 6px 14px;
+    font-size: 14px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .score-pill.lead { border-color: var(--jeo-gold); box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
+  .score-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .clue-tile {
+    background: var(--tile-bg);
+    border: 2px solid var(--jeo-blue-dark);
+    border-radius: 8px;
+    aspect-ratio: 1 / 1.2;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Korinna', 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: clamp(14px, 4vw, 22px);
+    color: var(--jeo-gold);
+    text-shadow: 2px 2px 0 #000033;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.1s ease;
+    box-shadow: inset 0 0 0 2px var(--jeo-blue);
+  }
+  .clue-tile:hover, .clue-tile:active {
+    transform: scale(1.05);
+    background: var(--tile-hover);
+  }
+  .clue-tile.used {
+    background: var(--tile-used);
+    color: transparent;
+    cursor: default;
+    box-shadow: inset 0 0 0 2px var(--jeo-blue-dark);
+  }
+  .clue-tile.used:hover { transform: none; }
+
+  .end-game-btn {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: 10px 16px;
+    font-family: inherit; font-size: 13px;
+    cursor: pointer; align-self: center; margin-top: auto;
+  }
+  .end-game-btn:hover { color: var(--text); border-color: var(--text); }
+
+  /* Clue screen */
+  .clue-display {
+    flex: 1;
+    display: flex; flex-direction: column;
+    background: var(--jeo-blue);
+    padding: 20px;
+    text-align: center;
+  }
+  .clue-value {
+    font-size: clamp(24px, 6vw, 32px); font-weight: 700;
+    color: var(--jeo-gold);
+    text-shadow: 2px 2px 0 var(--jeo-blue-dark);
+    margin-bottom: 24px;
+  }
+  .clue-text {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(20px, 5vw, 28px);
+    line-height: 1.4;
+    text-shadow: 2px 2px 0 var(--jeo-blue-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 16px;
+    font-weight: 600;
+  }
+  .reveal-btn {
+    background: var(--jeo-gold); color: var(--jeo-blue-dark);
+    border: none; border-radius: 12px;
+    padding: 18px 24px;
+    font-size: 18px; font-weight: 700; font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--jeo-gold-dim);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .reveal-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--jeo-gold-dim);
+  }
+
+  .answer-text {
+    font-size: clamp(20px, 5vw, 28px); font-weight: 700;
+    color: var(--jeo-gold);
+    margin-top: 16px;
+    padding: 20px; border: 2px solid var(--jeo-gold);
+    border-radius: 12px;
+    background: var(--jeo-blue-dark);
+  }
+  .answer-text.hidden { display: none; }
+
+  .scoring-section { margin-top: 20px; }
+  .scoring-prompt {
+    text-align: center; font-size: 14px; color: var(--text-dim);
+    margin-bottom: 12px; font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .scoring-buttons { display: grid; gap: 8px; }
+  .score-btn {
+    background: var(--tile-bg); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 14px;
+    color: var(--text); font-family: inherit; font-size: 15px;
+    cursor: pointer; display: flex; align-items: center; gap: 12px;
+    text-align: left;
+  }
+  .score-btn:hover { background: var(--tile-hover); border-color: var(--jeo-gold); }
+  .score-btn .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .score-btn .label { flex: 1; }
+  .score-btn .delta {
+    font-weight: 700; font-variant-numeric: tabular-nums;
+    font-family: 'Korinna', serif;
+  }
+  .score-btn.correct .delta { color: var(--correct); }
+  .score-btn.wrong .delta { color: var(--wrong); }
+  .score-btn.skip {
+    background: transparent;
+    text-align: center; justify-content: center;
+    color: var(--text-dim);
+  }
+
+  /* Game over screen */
+  .gameover {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 16px; text-align: center;
+  }
+  .gameover-title {
+    font-size: clamp(32px, 8vw, 48px); font-weight: 700;
+    color: var(--jeo-gold);
+    text-shadow: 3px 3px 0 var(--jeo-blue-dark);
+    margin-bottom: 8px;
+  }
+  .winner-row {
+    display: flex; gap: 12px; align-items: center;
+    background: var(--jeo-blue-dark); padding: 16px 24px;
+    border-radius: 12px; margin: 24px 0 16px;
+    border: 2px solid var(--jeo-gold);
+  }
+  .winner-emoji { font-size: 40px; }
+  .winner-name { font-size: 22px; font-weight: 700; color: var(--jeo-gold); }
+  .winner-score {
+    font-size: 16px; color: var(--text-dim);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  .final-scores { width: 100%; max-width: 320px; margin: 16px 0; }
+  .final-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 16px;
+  }
+  .final-row:last-child { border-bottom: none; }
+  .final-name { display: flex; align-items: center; gap: 8px; }
+  .final-score {
+    font-variant-numeric: tabular-nums; font-weight: 700;
+    font-family: 'Korinna', serif;
+  }
+  .final-score.positive { color: var(--correct); }
+  .final-score.negative { color: var(--wrong); }
+  .gameover-btns { display: grid; gap: 10px; width: 100%; max-width: 320px; }
+
+  /* Generic buttons */
+  .primary-btn {
+    background: var(--jeo-gold); color: var(--jeo-blue-dark);
+    border: none; border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 17px; font-weight: 700; font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--jeo-gold-dim);
+    width: 100%;
+  }
+  .primary-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--jeo-gold-dim);
+  }
+  .secondary-btn {
+    background: transparent; color: var(--text);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 12px; padding: 14px 24px;
+    font-size: 15px; font-family: inherit;
+    cursor: pointer; width: 100%;
+  }
+  .secondary-btn:hover { border-color: var(--text); }
+
+  @media (max-width: 380px) {
+    .board-grid { gap: 4px; }
+    .clue-tile { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button class="back-btn" id="back-btn" style="visibility: hidden;">← Back</button>
+    <div class="header-title" id="header-title">FAMILY JEOPARDY!</div>
+    <button class="back-btn" id="info-btn" aria-label="Info">ⓘ</button>
+  </header>
+
+  <!-- HOME SCREEN -->
+  <section class="screen active" id="screen-home">
+    <div class="home-hero">
+      <div class="logo-stack">
+        <div class="logo-text">JEOPARDY!<span class="small">FAMILY EDITION</span></div>
+      </div>
+      <div class="home-tagline">Pick a category. Read the clue. Answer in the form of a question.</div>
+    </div>
+
+    <div class="players-section">
+      <div class="section-title">Players</div>
+      <div id="players-list"></div>
+      <button class="add-player-btn" id="add-player-btn">+ Add player</button>
+    </div>
+
+    <div class="section-title">Pick a Category</div>
+    <div class="pack-grid" id="pack-grid"></div>
+  </section>
+
+  <!-- BOARD SCREEN -->
+  <section class="screen" id="screen-board">
+    <div class="board-header">
+      <div class="pack-title" id="pack-title">CATEGORY</div>
+      <div class="scores" id="scores"></div>
+    </div>
+    <div class="board-grid" id="board-grid"></div>
+    <button class="end-game-btn" id="end-game-btn">End game →</button>
+  </section>
+
+  <!-- CLUE SCREEN -->
+  <section class="screen" id="screen-clue">
+    <div class="clue-display">
+      <div class="clue-value" id="clue-value">$200</div>
+      <div class="clue-text" id="clue-text"></div>
+      <button class="reveal-btn" id="reveal-btn">Reveal answer</button>
+      <div class="answer-text hidden" id="answer-text"></div>
+      <div class="scoring-section" id="scoring-section" style="display: none;">
+        <div class="scoring-prompt">Who got it?</div>
+        <div class="scoring-buttons" id="scoring-buttons"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME OVER SCREEN -->
+  <section class="screen" id="screen-gameover">
+    <div class="gameover">
+      <div class="gameover-title">Game over!</div>
+      <div class="winner-row" id="winner-row">
+        <div class="winner-emoji">🏆</div>
+        <div>
+          <div class="winner-name" id="winner-name">—</div>
+          <div class="winner-score" id="winner-score">—</div>
+        </div>
+      </div>
+      <div class="final-scores" id="final-scores"></div>
+      <div class="gameover-btns">
+        <button class="primary-btn" id="play-again-btn">Play another category</button>
+        <button class="secondary-btn" id="reset-btn">Reset all scores</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// =============================================================
+// QUESTION PACKS — middle-school appropriate, family-friendly
+// Format: each pack has 5 categories × 5 clues at $100/200/300/400/500
+// For mobile: we simplify to 1 category × 5 clues per "round"
+// =============================================================
+const PACKS = [
+  {
+    id: 'space',
+    name: 'Space Exploration',
+    emoji: '🚀',
+    description: 'Planets, astronauts, the cosmos',
+    clues: [
+      { value: 100, clue: 'This planet, fourth from the sun, is known as the Red Planet.', answer: 'What is Mars?' },
+      { value: 200, clue: 'In 1969, this American astronaut became the first person to walk on the moon.', answer: 'Who is Neil Armstrong?' },
+      { value: 300, clue: 'This dwarf planet was reclassified from being the ninth planet in 2006.', answer: 'What is Pluto?' },
+      { value: 400, clue: 'This NASA telescope, launched in 2021, captures the deepest images of space ever recorded.', answer: 'What is the James Webb Space Telescope?' },
+      { value: 500, clue: 'This galaxy is the closest spiral galaxy to our own Milky Way and is on a collision course with it.', answer: 'What is Andromeda?' }
+    ]
+  },
+  {
+    id: 'movies',
+    name: 'Movies & Shows',
+    emoji: '🎬',
+    description: 'Family-friendly films and series',
+    clues: [
+      { value: 100, clue: 'In Frozen, this snowman dreams of summer and warm hugs.', answer: 'Who is Olaf?' },
+      { value: 200, clue: 'This Pixar film features a rat who dreams of becoming a chef in Paris.', answer: 'What is Ratatouille?' },
+      { value: 300, clue: 'In Star Wars, this small green Jedi master trained Luke Skywalker on Dagobah.', answer: 'Who is Yoda?' },
+      { value: 400, clue: 'This Studio Ghibli film features a girl named Chihiro trapped in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
+      { value: 500, clue: 'In The Princess Bride, this Spaniard seeks revenge on the six-fingered man.', answer: 'Who is Inigo Montoya?' }
+    ]
+  },
+  {
+    id: 'animals',
+    name: 'Animal Kingdom',
+    emoji: '🦒',
+    description: 'Wild and wonderful creatures',
+    clues: [
+      { value: 100, clue: 'This is the largest mammal on Earth, living in the ocean.', answer: 'What is the blue whale?' },
+      { value: 200, clue: 'This African mammal has a long neck that can reach leaves up to 18 feet high.', answer: 'What is a giraffe?' },
+      { value: 300, clue: 'This is the only mammal that can truly fly.', answer: 'What is a bat?' },
+      { value: 400, clue: 'This Australian marsupial carries its baby in a pouch and can hop up to 30 mph.', answer: 'What is a kangaroo?' },
+      { value: 500, clue: 'This animal, sometimes called the "ship of the desert," can drink up to 30 gallons of water in 13 minutes.', answer: 'What is a camel?' }
+    ]
+  },
+  {
+    id: 'science',
+    name: 'Science',
+    emoji: '🔬',
+    description: 'Physics, biology, chemistry, more',
+    clues: [
+      { value: 100, clue: 'This gas, with the chemical symbol O, makes up about 21% of Earth\'s atmosphere.', answer: 'What is oxygen?' },
+      { value: 200, clue: 'This force pulls objects toward the center of the Earth.', answer: 'What is gravity?' },
+      { value: 300, clue: 'This process is how plants make their food using sunlight.', answer: 'What is photosynthesis?' },
+      { value: 400, clue: 'This is the smallest unit of an element that retains its properties.', answer: 'What is an atom?' },
+      { value: 500, clue: 'This famous physicist developed the theory of relativity and the equation E=mc².', answer: 'Who is Albert Einstein?' }
+    ]
+  },
+  {
+    id: 'world',
+    name: 'World Geography',
+    emoji: '🌍',
+    description: 'Countries, capitals, landmarks',
+    clues: [
+      { value: 100, clue: 'This is the longest river in the world, flowing through Egypt.', answer: 'What is the Nile?' },
+      { value: 200, clue: 'This European country is shaped like a boot.', answer: 'What is Italy?' },
+      { value: 300, clue: 'This Asian wall, built over 2,000 years ago, is visible from space (sort of).', answer: 'What is the Great Wall of China?' },
+      { value: 400, clue: 'This is the smallest country in the world by area.', answer: 'What is Vatican City?' },
+      { value: 500, clue: 'This South American country is home to most of the Amazon rainforest.', answer: 'What is Brazil?' }
+    ]
+  },
+  {
+    id: 'history',
+    name: 'History',
+    emoji: '📜',
+    description: 'People and events that shaped the world',
+    clues: [
+      { value: 100, clue: 'This U.S. president signed the Emancipation Proclamation in 1863.', answer: 'Who is Abraham Lincoln?' },
+      { value: 200, clue: 'These ancient Egyptian tombs at Giza are wonders of the ancient world.', answer: 'What are the pyramids?' },
+      { value: 300, clue: 'This Italian explorer reached the Americas in 1492 sailing for Spain.', answer: 'Who is Christopher Columbus?' },
+      { value: 400, clue: 'This wall divided a German city from 1961 until it fell in 1989.', answer: 'What is the Berlin Wall?' },
+      { value: 500, clue: 'This civil rights leader gave the "I Have a Dream" speech in 1963.', answer: 'Who is Martin Luther King Jr.?' }
+    ]
+  },
+  {
+    id: 'music',
+    name: 'Music',
+    emoji: '🎸',
+    description: 'Songs, artists, instruments',
+    clues: [
+      { value: 100, clue: 'This British band sang "Hey Jude" and "Let It Be."', answer: 'Who are The Beatles?' },
+      { value: 200, clue: 'This brass instrument is curled into a circle and played in marching bands.', answer: 'What is a tuba?' },
+      { value: 300, clue: 'This composer wrote symphonies even after he became deaf.', answer: 'Who is Beethoven?' },
+      { value: 400, clue: 'This Broadway musical tells the story of one of America\'s founding fathers through hip-hop.', answer: 'What is Hamilton?' },
+      { value: 500, clue: 'This pop star\'s real name is Stefani Germanotta.', answer: 'Who is Lady Gaga?' }
+    ]
+  },
+  {
+    id: 'food',
+    name: 'Food & Cooking',
+    emoji: '🍕',
+    description: 'Tasty trivia from around the world',
+    clues: [
+      { value: 100, clue: 'This Italian dish features a flat round bread topped with sauce and cheese.', answer: 'What is pizza?' },
+      { value: 200, clue: 'This Japanese dish features raw fish on small mounds of rice.', answer: 'What is sushi?' },
+      { value: 300, clue: 'This French pastry is buttery, flaky, and shaped like a crescent moon.', answer: 'What is a croissant?' },
+      { value: 400, clue: 'This spice, more valuable than gold by weight, comes from a crocus flower.', answer: 'What is saffron?' },
+      { value: 500, clue: 'This Mexican spicy sauce, named for a state, is made from chocolate and chili peppers.', answer: 'What is mole?' }
+    ]
+  }
+];
+
+// Player colors
+const COLORS = ['#FF6B9D', '#4DD0E1', '#FFCC00', '#7DDDB7', '#B5A4FF', '#FFB48C'];
+const STORAGE_KEY = 'family-jeopardy-v1';
+
+// State
+let state = {
+  players: [
+    { id: 'p1', name: 'Amber', color: '#FF6B9D', score: 0 },
+    { id: 'p2', name: 'William', color: '#4DD0E1', score: 0 },
+    { id: 'p3', name: 'Zev', color: '#FFCC00', score: 0 }
+  ],
+  currentPack: null,
+  usedClues: {},  // packId -> [clueIndexes]
+  currentClue: null
+};
+
+// Load from storage
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (saved.players) state.players = saved.players;
+  if (saved.usedClues) state.usedClues = saved.usedClues;
+} catch (e) {}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    players: state.players,
+    usedClues: state.usedClues
+  }));
+}
+
+// =================== Screen routing ===================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const back = document.getElementById('back-btn');
+  back.style.visibility = (name === 'home') ? 'hidden' : 'visible';
+  back.onclick = () => {
+    if (name === 'clue') showScreen('board');
+    else showScreen('home');
+  };
+  if (name === 'home') renderHome();
+  if (name === 'board') renderBoard();
+}
+
+// =================== Home screen ===================
+function renderHome() {
+  // Render players
+  const list = document.getElementById('players-list');
+  list.innerHTML = state.players.map((p, i) => `
+    <div class="player-row">
+      <input class="player-input" data-id="${p.id}" data-field="name" type="text" value="${escapeHtml(p.name)}" maxlength="20" placeholder="Name">
+      <button class="player-color" data-id="${p.id}" style="background: ${p.color}"></button>
+      ${state.players.length > 1 ? `<button class="player-remove" data-id="${p.id}" aria-label="Remove">×</button>` : '<span></span>'}
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.player-input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const p = state.players.find(x => x.id === e.target.dataset.id);
+      if (p) { p.name = e.target.value; persist(); }
+    });
+  });
+  list.querySelectorAll('.player-color').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = state.players.find(x => x.id === btn.dataset.id);
+      if (!p) return;
+      const idx = COLORS.indexOf(p.color);
+      p.color = COLORS[(idx + 1) % COLORS.length];
+      persist(); renderHome();
+    });
+  });
+  list.querySelectorAll('.player-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.players = state.players.filter(p => p.id !== btn.dataset.id);
+      persist(); renderHome();
+    });
+  });
+
+  // Render packs
+  const grid = document.getElementById('pack-grid');
+  grid.innerHTML = PACKS.map(pack => {
+    const used = (state.usedClues[pack.id] || []).length;
+    const total = pack.clues.length;
+    const status = used >= total ? '✓ Completed' : `${used}/${total} played`;
+    return `
+      <button class="pack-card" data-id="${pack.id}">
+        <div class="pack-emoji">${pack.emoji}</div>
+        <div class="pack-info">
+          <div class="pack-name">${pack.name}</div>
+          <div class="pack-meta">${pack.description} · ${status}</div>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.pack-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const pack = PACKS.find(p => p.id === card.dataset.id);
+      if (!pack) return;
+      // If pack is fully used, reset it
+      if ((state.usedClues[pack.id] || []).length >= pack.clues.length) {
+        state.usedClues[pack.id] = [];
+        persist();
+      }
+      state.currentPack = pack;
+      showScreen('board');
+    });
+  });
+}
+
+document.getElementById('add-player-btn').addEventListener('click', () => {
+  if (state.players.length >= 6) return;
+  const usedColors = state.players.map(p => p.color);
+  const color = COLORS.find(c => !usedColors.includes(c)) || COLORS[0];
+  state.players.push({
+    id: 'p' + Date.now(),
+    name: 'Player ' + (state.players.length + 1),
+    color, score: 0
+  });
+  persist(); renderHome();
+});
+
+// =================== Board screen ===================
+function renderBoard() {
+  const pack = state.currentPack;
+  if (!pack) { showScreen('home'); return; }
+  document.getElementById('pack-title').textContent = pack.name.toUpperCase();
+  document.getElementById('header-title').textContent = pack.emoji + ' ' + pack.name;
+
+  // Scores (in pill form)
+  const maxScore = Math.max(...state.players.map(p => p.score), 0);
+  const hasLeader = state.players.some(p => p.score > 0);
+  document.getElementById('scores').innerHTML = state.players.map(p => `
+    <div class="score-pill ${hasLeader && p.score === maxScore ? 'lead' : ''}">
+      <span class="score-dot" style="background: ${p.color}"></span>
+      <span>${escapeHtml(p.name)}</span>
+      <span style="color: ${p.score < 0 ? 'var(--wrong)' : 'inherit'}">${p.score < 0 ? '−$' + Math.abs(p.score) : '$' + p.score}</span>
+    </div>
+  `).join('');
+
+  // Board (5 clues in a column for mobile, but we'll show grid)
+  const used = state.usedClues[pack.id] || [];
+  const grid = document.getElementById('board-grid');
+  grid.style.gridTemplateColumns = `repeat(${pack.clues.length}, 1fr)`;
+  grid.innerHTML = pack.clues.map((clue, i) => {
+    const isUsed = used.includes(i);
+    return `<button class="clue-tile ${isUsed ? 'used' : ''}" data-idx="${i}" ${isUsed ? 'disabled' : ''}>$${clue.value}</button>`;
+  }).join('');
+
+  grid.querySelectorAll('.clue-tile:not(.used)').forEach(tile => {
+    tile.addEventListener('click', () => {
+      const idx = Number(tile.dataset.idx);
+      openClue(idx);
+    });
+  });
+
+  // If all used, jump to game over after a moment? Let user end manually.
+}
+
+document.getElementById('end-game-btn').addEventListener('click', () => {
+  showScreen('gameover');
+  renderGameOver();
+});
+
+// =================== Clue screen ===================
+function openClue(idx) {
+  const pack = state.currentPack;
+  const clue = pack.clues[idx];
+  state.currentClue = { idx, clue };
+
+  document.getElementById('clue-value').textContent = '$' + clue.value;
+  document.getElementById('clue-text').textContent = clue.clue;
+  document.getElementById('answer-text').textContent = clue.answer;
+  document.getElementById('answer-text').classList.add('hidden');
+  document.getElementById('reveal-btn').style.display = '';
+  document.getElementById('scoring-section').style.display = 'none';
+  showScreen('clue');
+}
+
+document.getElementById('reveal-btn').addEventListener('click', () => {
+  document.getElementById('answer-text').classList.remove('hidden');
+  document.getElementById('reveal-btn').style.display = 'none';
+  renderScoringButtons();
+  document.getElementById('scoring-section').style.display = 'block';
+});
+
+function renderScoringButtons() {
+  const value = state.currentClue.clue.value;
+  const container = document.getElementById('scoring-buttons');
+  container.innerHTML = state.players.map(p => `
+    <button class="score-btn correct" data-id="${p.id}" data-result="correct">
+      <span class="dot" style="background: ${p.color}"></span>
+      <span class="label">${escapeHtml(p.name)}</span>
+      <span class="delta">+$${value}</span>
+    </button>
+    <button class="score-btn wrong" data-id="${p.id}" data-result="wrong">
+      <span class="dot" style="background: ${p.color}"></span>
+      <span class="label">${escapeHtml(p.name)} got it wrong</span>
+      <span class="delta">−$${value}</span>
+    </button>
+  `).join('') + `
+    <button class="score-btn skip" data-result="skip">
+      Nobody got it · skip
+    </button>
+  `;
+
+  container.querySelectorAll('.score-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const result = btn.dataset.result;
+      const id = btn.dataset.id;
+      const value = state.currentClue.clue.value;
+      if (result === 'correct') {
+        const p = state.players.find(x => x.id === id);
+        if (p) p.score += value;
+      } else if (result === 'wrong') {
+        const p = state.players.find(x => x.id === id);
+        if (p) p.score -= value;
+      }
+      // mark clue used
+      const pack = state.currentPack;
+      if (!state.usedClues[pack.id]) state.usedClues[pack.id] = [];
+      if (!state.usedClues[pack.id].includes(state.currentClue.idx)) {
+        state.usedClues[pack.id].push(state.currentClue.idx);
+      }
+      persist();
+      // Back to board, or game over if all used
+      const allUsed = state.usedClues[pack.id].length >= pack.clues.length;
+      if (allUsed) {
+        showScreen('gameover');
+        renderGameOver();
+      } else {
+        showScreen('board');
+      }
+    });
+  });
+}
+
+// =================== Game over ===================
+function renderGameOver() {
+  const sorted = [...state.players].sort((a, b) => b.score - a.score);
+  const winner = sorted[0];
+  document.getElementById('winner-name').textContent = winner ? winner.name : '—';
+  document.getElementById('winner-score').textContent = winner
+    ? (winner.score < 0 ? '−$' + Math.abs(winner.score) : '$' + winner.score)
+    : '—';
+  document.getElementById('header-title').textContent = 'GAME OVER';
+
+  document.getElementById('final-scores').innerHTML = sorted.map((p, i) => `
+    <div class="final-row">
+      <div class="final-name">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color}"></span>
+        ${i === 0 && p.score > 0 ? '🏆' : ''}
+        ${escapeHtml(p.name)}
+      </div>
+      <div class="final-score ${p.score > 0 ? 'positive' : p.score < 0 ? 'negative' : ''}">${p.score < 0 ? '−$' + Math.abs(p.score) : '$' + p.score}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+  showScreen('home');
+});
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Reset all scores and clear played clues?')) {
+    state.players.forEach(p => p.score = 0);
+    state.usedClues = {};
+    persist();
+    showScreen('home');
+  }
+});
+
+document.getElementById('info-btn').addEventListener('click', () => {
+  alert('Family Jeopardy!\n\nHow to play:\n1. Pick a category\n2. Tap a dollar value\n3. Read the clue out loud\n4. Someone answers (in the form of a question!)\n5. Tap "Reveal answer"\n6. Tap who got it right\n\nScores save automatically. Reset anytime from the game-over screen.\n\nMade with 🦄 by Ada for Amber, William, and Zev.');
+});
+
+// Helper
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+// Init
+showScreen('home');
+</script>
+</body>
+</html>

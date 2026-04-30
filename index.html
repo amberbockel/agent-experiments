@@ -144,8 +144,9 @@ async function load() {
 
     list.innerHTML = apps.map(app => {
       const tagClass = TAG_CLASS[(app.category || '').toLowerCase()] || '';
+      const href = app.path || `apps/${app.date}/`;
       return `
-        <a class="app" href="apps/${app.date}/" aria-label="${app.title}">
+        <a class="app" href="${href}" aria-label="${app.title}">
           <div class="app-top">
             <div class="app-title">${app.title}</div>
             <div class="app-date">${formatDate(app.date)}</div>
