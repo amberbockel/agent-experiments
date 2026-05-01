@@ -1400,7 +1400,8 @@ function openImageStudio(piece, isNewPiece) {
       autoBalance: false
     },
     activeTab: 'upload',       // 'upload' | 'correct' | 'crop' | 'detail'
-    selectedCrops: { square: null, vertical: null, portrait: null },
+    selectedCrops: { square: true, vertical: true, portrait: false, wide: false },
+    cropDefaultsApplied: true,
     detailPoints: [],          // [{x, y}] in source coords (max 3)
     detailCanvases: []         // generated detail crops
   };
@@ -1660,7 +1661,7 @@ function renderStudioCrop(s) {
   const previews = cropDefs.map(c => {
     const cropped = cropToAspect(s.correctedCanvas, c.aspect, 480);
     const dataUrl = canvasToDataUrl(cropped, 0.85);
-    const active = !!s.selectedCrops[c.id === 'wide' ? 'wide' : c.id];
+    const active = !!s.selectedCrops[c.id];
     return `
       <div class="crop-option ${active ? 'active' : ''}" data-crop="${c.id}" data-aspect="${c.aspect}">
         <div class="crop-preview"><img src="${dataUrl}" alt="${c.label}"></div>
@@ -1679,16 +1680,16 @@ function renderStudioCrop(s) {
 }
 
 function wireCropTab(studio, piece, isNewPiece) {
-  // Default selections if first visit
-  if (Object.values(studio.selectedCrops).every(v => !v)) {
-    studio.selectedCrops = { square: true, vertical: true, portrait: false, wide: false };
-  }
+  // selectedCrops always has all 4 keys, defaults applied at studio creation
   $$('.crop-option').forEach(opt => {
     const id = opt.dataset.crop;
-    if (studio.selectedCrops[id]) opt.classList.add('active');
+    // Make sure visual state matches data
+    opt.classList.toggle('active', !!studio.selectedCrops[id]);
     opt.addEventListener('click', () => {
       studio.selectedCrops[id] = !studio.selectedCrops[id];
-      opt.classList.toggle('active', studio.selectedCrops[id]);
+      opt.classList.toggle('active', !!studio.selectedCrops[id]);
+      // Re-render so the save-summary count updates immediately
+      renderStudio(studio, piece, isNewPiece);
     });
   });
 }
