@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-01",
+      "slug": "2026-05-01",
+      "title": "Magic Decision Maker",
+      "category": "delightful",
+      "oneLiner": "Mystical toy for trivial decisions — ask a question, shake your phone, get delightfully dramatic guidance with personality.",
+      "path": "apps/2026-05-01/"
+    },
+    {
       "date": "2026-04-30",
       "slug": "portfolio-builder",
       "title": "Portfolio Builder",

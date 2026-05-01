@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Magic Decision Maker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #1a0033 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow-x: hidden;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #b8a4d4;
+      font-weight: 400;
+    }
+
+    .orb-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .orb {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #9d7dce 0%, #5a3d7a 50%, #2d1b4e 100%);
+      box-shadow: 
+        0 0 40px rgba(157, 125, 206, 0.6),
+        0 0 80px rgba(157, 125, 206, 0.3),
+        inset 0 0 60px rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .orb:active {
+      transform: scale(0.95);
+    }
+
+    .orb.shaking {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    .orb.revealing {
+      animation: pulse 1s ease-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      10% { transform: translateX(-10px) rotate(-2deg); }
+      20% { transform: translateX(10px) rotate(2deg); }
+      30% { transform: translateX(-10px) rotate(-2deg); }
+      40% { transform: translateX(10px) rotate(2deg); }
+      50% { transform: translateX(-10px) rotate(-2deg); }
+      60% { transform: translateX(10px) rotate(2deg); }
+      70% { transform: translateX(-10px) rotate(-2deg); }
+      80% { transform: translateX(10px) rotate(2deg); }
+      90% { transform: translateX(-10px) rotate(-2deg); }
+    }
+
+    @keyframes pulse {
+      0% { 
+        box-shadow: 0 0 40px rgba(157, 125, 206, 0.6), 0 0 80px rgba(157, 125, 206, 0.3);
+      }
+      50% { 
+        box-shadow: 0 0 80px rgba(255, 215, 0, 0.8), 0 0 120px rgba(255, 215, 0, 0.5);
+        transform: scale(1.05);
+      }
+      100% { 
+        box-shadow: 0 0 40px rgba(157, 125, 206, 0.6), 0 0 80px rgba(157, 125, 206, 0.3);
+      }
+    }
+
+    .orb-text {
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      padding: 20px;
+      max-width: 160px;
+    }
+
+    .answer {
+      font-size: 20px;
+      font-weight: 600;
+      color: #ffd700;
+      text-align: center;
+      padding: 20px;
+      line-height: 1.3;
+    }
+
+    .input-section {
+      margin-bottom: 20px;
+    }
+
+    .question-input {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 17px;
+      font-family: inherit;
+      backdrop-filter: blur(10px);
+    }
+
+    .question-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .question-input:focus {
+      outline: none;
+      border-color: #ffd700;
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    }
+
+    .suggestions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .suggestion {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      font-size: 14px;
+      color: #b8a4d4;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .suggestion:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .history {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #b8a4d4;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .history-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .history-question {
+      color: #b8a4d4;
+      margin-bottom: 4px;
+    }
+
+    .history-answer {
+      color: #ffd700;
+      font-weight: 500;
+    }
+
+    .instruction {
+      text-align: center;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .clear-btn {
+      margin-top: 12px;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .clear-btn:active {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✨ Magic Decision Maker ✨</h1>
+      <p class="subtitle">Ask a question, shake your phone, receive wisdom</p>
+    </header>
+
+    <div class="input-section">
+      <input 
+        type="text" 
+        class="question-input" 
+        id="questionInput"
+        placeholder="Should I get coffee?"
+        maxlength="100"
+      >
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <p class="instruction" id="instruction">Shake your phone or tap the orb</p>
+
+    <div class="orb-container">
+      <div class="orb" id="orb">
+        <div class="orb-text" id="orbText">Ask and you shall receive</div>
+      </div>
+    </div>
+
+    <div class="history" id="historySection" style="display: none;">
+      <div class="history-title">Recent Consultations</div>
+      <div id="historyList"></div>
+      <button class="clear-btn" id="clearBtn">Clear History</button>
+    </div>
+  </div>
+
+  <script>
+    const responses = [
+      { text: "Absolutely! Life's too short for hesitation.", tone: "enthusiastic" },
+      { text: "Nah, skip it. You've got better things to do.", tone: "playful" },
+      { text: "You already know the answer. Trust yourself.", tone: "wise" },
+      { text: "Do it. You won't regret this one.", tone: "confident" },
+      { text: "Maybe tomorrow? Today's not the day.", tone: "gentle" },
+      { text: "Yes, but only if you really want to.", tone: "conditional" },
+      { text: "The universe says no. But the universe is sometimes wrong.", tone: "playful" },
+      { text: "Go for it! What's the worst that could happen?", tone: "encouraging" },
+      { text: "Hard pass. Save your energy.", tone: "firm" },
+      { text: "Follow your gut. It knows.", tone: "wise" },
+      { text: "Sure, why not? YOLO.", tone: "casual" },
+      { text: "Not today, friend. Rest instead.", tone: "caring" },
+      { text: "100% yes. Don't even think twice.", tone: "emphatic" },
+      { text: "Ask me again in 5 minutes.", tone: "playful" },
+      { text: "The stars align. It's a yes.", tone: "mystical" },
+      { text: "Probably not the best idea, honestly.", tone: "honest" },
+      { text: "Do it now before you change your mind.", tone: "urgent" },
+      { text: "Sleep on it. The answer will come.", tone: "patient" },
+      { text: "Yes! And bring a friend.", tone: "social" },
+      { text: "Nope. Your future self will thank you.", tone: "protective" }
+    ];
+
+    const suggestions = [
+      "Should I get coffee?",
+      "Order takeout tonight?",
+      "Watch another episode?",
+      "Text them first?",
+      "Start that project today?"
+    ];
+
+    let history = JSON.parse(localStorage.getItem('magicHistory') || '[]');
+    let lastShake = 0;
+    let currentQuestion = '';
+
+    const orb = document.getElementById('orb');
+    const orbText = document.getElementById('orbText');
+    const questionInput = document.getElementById('questionInput');
+    const suggestionsEl = document.getElementById('suggestions');
+    const historySection = document.getElementById('historySection');
+    const historyList = document.getElementById('historyList');
+    const clearBtn = document.getElementById('clearBtn');
+    const instruction = document.getElementById('instruction');
+
+    // Render suggestions
+    suggestions.forEach(q => {
+      const btn = document.createElement('div');
+      btn.className = 'suggestion';
+      btn.textContent = q;
+      btn.onclick = () => {
+        questionInput.value = q;
+        currentQuestion = q;
+      };
+      suggestionsEl.appendChild(btn);
+    });
+
+    // Shake detection
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      // iOS 13+ requires permission
+      orb.addEventListener('click', async () => {
+        const permission = await DeviceMotionEvent.requestPermission();
+        if (permission === 'granted') {
+          enableShakeDetection();
+        }
+        revealAnswer();
+      });
+    } else {
+      enableShakeDetection();
+      orb.addEventListener('click', revealAnswer);
+    }
+
+    function enableShakeDetection() {
+      window.addEventListener('devicemotion', handleShake);
+    }
+
+    function handleShake(event) {
+      const acceleration = event.accelerationIncludingGravity;
+      const current = Date.now();
+      
+      if (current - lastShake < 1000) return;
+
+      const threshold = 15;
+      if (Math.abs(acceleration.x) > threshold || 
+          Math.abs(acceleration.y) > threshold || 
+          Math.abs(acceleration.z) > threshold) {
+        lastShake = current;
+        orb.classList.add('shaking');
+        setTimeout(() => {
+          orb.classList.remove('shaking');
+          revealAnswer();
+        }, 500);
+      }
+    }
+
+    function revealAnswer() {
+      const question = questionInput.value.trim() || 'A mystery question';
+      const response = responses[Math.floor(Math.random() * responses.length)];
+      
+      orb.classList.add('revealing');
+      orbText.innerHTML = `<div class="answer">${response.text}</div>`;
+      instruction.style.display = 'none';
+
+      // Add to history
+      history.unshift({ question, answer: response.text, timestamp: Date.now() });
+      if (history.length > 10) history = history.slice(0, 10);
+      localStorage.setItem('magicHistory', JSON.stringify(history));
+      renderHistory();
+
+      // Reset after a moment
+      setTimeout(() => {
+        orb.classList.remove('revealing');
+      }, 1000);
+
+      setTimeout(() => {
+        orbText.innerHTML = '<div class="orb-text">Ask again?</div>';
+        instruction.style.display = 'block';
+      }, 4000);
+    }
+
+    function renderHistory() {
+      if (history.length === 0) {
+        historySection.style.display = 'none';
+        return;
+      }
+
+      historySection.style.display = 'block';
+      historyList.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div class="history-question">${item.question}</div>
+          <div class="history-answer">${item.answer}</div>
+        </div>
+      `).join('');
+    }
+
+    clearBtn.onclick = () => {
+      history = [];
+      localStorage.removeItem('magicHistory');
+      renderHistory();
+    };
+
+    questionInput.addEventListener('input', (e) => {
+      currentQuestion = e.target.value;
+    });
+
+    // Initial render
+    renderHistory();
+  </script>
+</body>
+</html>
