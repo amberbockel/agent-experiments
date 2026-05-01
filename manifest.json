@@ -5,6 +5,15 @@
   "apps": [
     {
       "date": "2026-04-30",
+      "slug": "portfolio-builder",
+      "title": "Portfolio Builder",
+      "category": "productivity",
+      "oneLiner": "Shared CMS for Amber Miro's portfolio system — 12 pieces, 9 documents, 19 tasks, all sync'd via Telegram. Flagship.",
+      "path": "apps/portfolio-builder/",
+      "flagship": true
+    },
+    {
+      "date": "2026-04-30",
       "slug": "2026-04-30-jeopardy",
       "title": "Family Jeopardy!",
       "category": "delightful",

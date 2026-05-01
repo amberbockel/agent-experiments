@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "owner": "Amber Heinbockel",
+  "brand": "Amber Miro Creative",
+  "lastUpdated": "2026-04-30",
+  "categories": [
+    {
+      "id": "florals",
+      "name": "Florals",
+      "emoji": "🌸",
+      "description": "Mid-century modern + Rifle Paper Co.-inspired florals with controlled palettes",
+      "color": "#E8A5A5"
+    },
+    {
+      "id": "abstracts",
+      "name": "Abstracts",
+      "emoji": "🎨",
+      "description": "Bold geometric and color-driven abstract work",
+      "color": "#B5A4FF"
+    },
+    {
+      "id": "landscapes",
+      "name": "Landscapes",
+      "emoji": "🏞️",
+      "description": "Atmospheric landscapes with City Pop / Mid-Century influence",
+      "color": "#7DDDB7"
+    }
+  ],
+  "tiers": [
+    { "id": "print", "name": "Print", "minPrice": 25, "maxPrice": 75 },
+    { "id": "small", "name": "Small Original", "minPrice": 200, "maxPrice": 600 },
+    { "id": "mid", "name": "Mid Original", "minPrice": 800, "maxPrice": 2500 },
+    { "id": "statement", "name": "Statement Piece", "minPrice": 3000, "maxPrice": 10000 }
+  ],
+  "pieces": [],
+  "documents": [
+    {
+      "id": "gallery-packet",
+      "name": "Gallery Submission Packet",
+      "type": "pdf",
+      "audience": "Galleries, juried shows, journalists",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "designer-sales",
+      "name": "Designer / Hospitality Sales Sheet",
+      "type": "pdf",
+      "audience": "Interior designers, hotels, hospitality buyers",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "press-onepager",
+      "name": "Press One-Pager",
+      "type": "pdf",
+      "audience": "Local arts journalists",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "cafe-outreach",
+      "name": "Café Outreach Email + Image Set",
+      "type": "email",
+      "audience": "Cafés, restaurants, salons",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "collector-brief",
+      "name": "Collector Brief",
+      "type": "pdf",
+      "audience": "Serious buyers, commission inquiries",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "show-kit",
+      "name": "Show Display Kit",
+      "type": "physical",
+      "audience": "In-person foot traffic at shows / fairs / pop-ups",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "website-upgrade",
+      "name": "ambermiro.com Upgrade",
+      "type": "web",
+      "audience": "Anyone who Googles you",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "etsy-listings",
+      "name": "Etsy Listings",
+      "type": "listings",
+      "audience": "Decorators, gifters, search-driven buyers",
+      "status": "not-started",
+      "pieceIds": []
+    },
+    {
+      "id": "pinterest-pins",
+      "name": "Pinterest Pins",
+      "type": "pins",
+      "audience": "Decorators, gifters with high intent",
+      "status": "not-started",
+      "pieceIds": []
+    }
+  ],
+  "brand": {
+    "artistStatement": "",
+    "bio": "",
+    "voiceNotes": "Mid-Century Modern + 80s Japanese City Pop. Forest Green / Blush / Warm Grey / Gold. Rifle Paper Co. positioning — controlled, collectible, gift-worthy.",
+    "primaryColors": ["#2D4A3E", "#E8A5A5", "#A8A29E", "#D4A574"]
+  },
+  "outreach": [],
+  "tasks": []
+}
