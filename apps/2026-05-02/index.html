@@ -184,37 +184,114 @@
   .slide-nav .btn-ghost { flex: 0 1 auto; }
 
   /* Fill-in-the-blank game */
-  .fitb-row {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    font-size: 22px; line-height: 1.5;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
+  .fitb-question {
+    font-size: clamp(20px, 4.5vw, 26px);
+    line-height: 1.5;
+    margin: 16px 0 20px;
+    color: var(--text);
   }
-  .fitb-row:last-child { border-bottom: none; }
-  .fitb-blank {
+  .fitb-question .blank-token {
     display: inline-block;
     background: rgba(255,214,10,0.15);
     border: 2px dashed var(--accent);
     border-radius: var(--r-sm);
-    padding: 4px 16px;
-    min-width: 100px; min-height: 32px;
+    padding: 2px 14px;
+    min-width: 80px;
+    margin: 0 4px;
     font-weight: 600;
     color: var(--accent);
+  }
+  .fitb-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 2px solid var(--border-strong);
+    color: var(--text);
+    padding: 16px 18px;
+    border-radius: var(--r-md);
+    font-size: 18px;
     text-align: center;
   }
-  .fitb-blank.revealed {
-    background: rgba(52,211,153,0.15);
-    border: 2px solid var(--success);
-    color: var(--success);
-    border-style: solid;
-    animation: pop 300ms var(--spring);
+  .fitb-input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+  .fitb-input:disabled { opacity: 0.7; }
+  .fitb-controls { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  .fitb-result {
+    margin-top: 20px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    animation: slide-in 300ms var(--ease-out);
   }
-  @keyframes pop {
-    0% { transform: scale(0.9); }
-    50% { transform: scale(1.08); }
-    100% { transform: scale(1); }
+  .fitb-result-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 12px; align-items: center;
+    margin-bottom: 10px;
+    font-size: 16px;
   }
-  .fitb-controls { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+  .fitb-result-row:last-of-type { margin-bottom: 0; }
+  .fitb-result-label {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-3);
+    text-align: right;
+  }
+  .fitb-result-value {
+    font-weight: 600; color: var(--text);
+    padding: 8px 14px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    display: inline-block;
+  }
+  .fitb-result-value.you { background: rgba(100,210,255,0.12); color: var(--accent-2); }
+  .fitb-result-value.ai { background: rgba(255,214,10,0.12); color: var(--accent); }
+  .fitb-verdict {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: var(--r-sm);
+    font-size: 15px;
+    color: var(--text);
+  }
+  .fitb-verdict.match {
+    background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+  .fitb-verdict.miss {
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.25);
+  }
+  .fitb-verdict.divergent {
+    background: rgba(255,100,130,0.08);
+    border: 1px solid rgba(255,100,130,0.25);
+  }
+  .fitb-progress {
+    display: flex; gap: 6px;
+    margin-bottom: 16px;
+  }
+  .fitb-progress-pip {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+  }
+  .fitb-progress-pip.done { background: var(--success); }
+  .fitb-progress-pip.active { background: var(--accent); }
+  .fitb-final {
+    text-align: center;
+    padding: 20px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, rgba(100,210,255,0.08), rgba(255,214,10,0.06));
+    border-radius: var(--r-md);
+    border: 1px solid rgba(100,210,255,0.2);
+  }
+  .fitb-final-num {
+    font-size: 48px; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    line-height: 1;
+  }
+  .fitb-final-label { font-size: 13px; color: var(--text-3); margin-top: 4px; }
+  .fitb-final-msg { font-size: 16px; color: var(--text-2); margin-top: 12px; }
 
   /* Probability viz */
   .prob-stack {
@@ -481,46 +558,26 @@
   <section class="slide" data-slide="2">
     <div class="slide-eyebrow">Activity 1 · 5 min</div>
     <h2>Guess the missing word.</h2>
-    <p>For each sentence, tap "Reveal" and see if the most common answer matches yours. AI does exactly this — it predicts the next word.</p>
+    <p>Type your best guess for each sentence. We'll compare your answer to AI's most likely guess.</p>
 
     <div class="activity">
-      <div id="fitb-list">
-        <div class="fitb-row" data-fitb="cat">
-          <span>The cat sat on the</span>
-          <span class="fitb-blank" data-blank="mat">___</span>
-          <span>.</span>
+      <div class="fitb-progress" id="fitb-progress"></div>
+
+      <div id="fitb-game">
+        <div class="fitb-question" id="fitb-question">Loading...</div>
+        <input type="text" class="fitb-input" id="fitb-input" placeholder="Type your guess here..." autocomplete="off" />
+        <div class="fitb-controls">
+          <button class="btn btn-primary btn-block" id="fitb-submit">Compare with AI →</button>
         </div>
-        <div class="fitb-row" data-fitb="bday">
-          <span>I'm having a birthday</span>
-          <span class="fitb-blank" data-blank="party">___</span>
-          <span>at the park.</span>
-        </div>
-        <div class="fitb-row" data-fitb="ice">
-          <span>For dessert, we had ice</span>
-          <span class="fitb-blank" data-blank="cream">___</span>
-          <span>.</span>
-        </div>
-        <div class="fitb-row" data-fitb="book">
-          <span>I went to the</span>
-          <span class="fitb-blank" data-blank="library">___</span>
-          <span>to borrow a book.</span>
-        </div>
-        <div class="fitb-row" data-fitb="weird">
-          <span>Yesterday I saw a purple</span>
-          <span class="fitb-blank" data-blank="?">___</span>
-          <span>walking down my street.</span>
-        </div>
+        <div id="fitb-result-area"></div>
       </div>
 
-      <div class="fitb-controls">
-        <button class="btn btn-secondary" id="fitb-reveal-next">Reveal next →</button>
-        <button class="btn btn-ghost" id="fitb-reveal-all">Reveal all</button>
-      </div>
+      <div id="fitb-final" hidden></div>
     </div>
 
     <div class="card" style="margin-top:24px;">
-      <h3 style="margin-top:0;">Notice the last one?</h3>
-      <p style="margin-bottom:0;">Most students disagree on that sentence. AI does the same thing — when the answer is obvious, it's confident. When it isn't, it <strong>guesses</strong>. And sometimes it guesses wrong.</p>
+      <h3 style="margin-top:0;">What just happened?</h3>
+      <p style="margin-bottom:0;">When the answer is obvious ("ice ___"), almost everyone agrees — including AI. When the answer is open ("a purple ___"), everyone disagrees and so does AI. <strong>That's the whole trick.</strong> AI predicts the most likely next word from patterns. When patterns are clear, it's reliable. When they aren't, it guesses.</p>
     </div>
 
     <div class="slide-nav">
@@ -820,37 +877,190 @@ document.querySelectorAll('.progress-dot').forEach(d => {
 });
 
 // ============================================================
-// SLIDE 2 — Fill in the blank
+// SLIDE 2 — Fill in the blank (interactive)
 // ============================================================
-const fitbAnswers = {
-  cat: 'mat',
-  bday: 'party',
-  ice: 'cream',
-  book: 'library',
-  weird: '... ?'
-};
-let fitbRevealed = 0;
-const fitbOrder = ['cat', 'bday', 'ice', 'book', 'weird'];
+const FITB_QUESTIONS = [
+  {
+    before: 'The cat sat on the',
+    after: '.',
+    aiAnswer: 'mat',
+    obvious: true,
+    accept: ['mat', 'rug', 'floor', 'couch', 'sofa', 'chair', 'bed', 'windowsill', 'porch'],
+    note: "Easy one. Almost everyone — including AI — picks 'mat' or 'floor'. The pattern is everywhere in books and online."
+  },
+  {
+    before: "I'm having a birthday",
+    after: 'at the park.',
+    aiAnswer: 'party',
+    obvious: true,
+    accept: ['party', 'celebration', 'picnic', 'gathering'],
+    note: "'Party' is so dominant in birthday-related text that AI is over 80% confident."
+  },
+  {
+    before: 'For dessert, we had ice',
+    after: '.',
+    aiAnswer: 'cream',
+    obvious: true,
+    accept: ['cream'],
+    note: "'Ice cream' appears together so often it's basically one word to the AI. This is as confident as AI gets."
+  },
+  {
+    before: 'I went to the',
+    after: 'to borrow a book.',
+    aiAnswer: 'library',
+    obvious: true,
+    accept: ['library', 'bookstore', 'store', 'shop'],
+    note: "'Library' wins because of the 'borrow a book' clue. AI uses the WHOLE sentence, not just the words right before the blank."
+  },
+  {
+    before: 'Yesterday I saw a purple',
+    after: 'walking down my street.',
+    aiAnswer: 'cow',
+    obvious: false,
+    accept: [], // anything goes
+    note: "This is the one. There's no obvious answer — purple cows, purple dinosaurs, purple cats... AI makes a guess and so do you. When AI doesn't know, it picks SOMETHING anyway. That's how hallucinations happen."
+  }
+];
 
-document.getElementById('fitb-reveal-next').addEventListener('click', () => {
-  if (fitbRevealed >= fitbOrder.length) return;
-  const key = fitbOrder[fitbRevealed];
-  const blank = document.querySelector(`[data-fitb="${key}"] .fitb-blank`);
-  blank.textContent = fitbAnswers[key];
-  blank.classList.add('revealed');
-  fitbRevealed++;
-});
+let fitbIndex = 0;
+let fitbResults = []; // [{user, ai, match}]
 
-document.getElementById('fitb-reveal-all').addEventListener('click', () => {
-  fitbOrder.forEach((key, i) => {
-    setTimeout(() => {
-      const blank = document.querySelector(`[data-fitb="${key}"] .fitb-blank`);
-      blank.textContent = fitbAnswers[key];
-      blank.classList.add('revealed');
-    }, i * 250);
+function renderFitbProgress() {
+  const root = document.getElementById('fitb-progress');
+  if (!root) return;
+  root.innerHTML = FITB_QUESTIONS.map((_, i) => {
+    let cls = '';
+    if (i < fitbIndex) cls = 'done';
+    else if (i === fitbIndex) cls = 'active';
+    return `<div class="fitb-progress-pip ${cls}"></div>`;
+  }).join('');
+}
+
+function showFitbQuestion() {
+  if (fitbIndex >= FITB_QUESTIONS.length) {
+    showFitbFinal();
+    return;
+  }
+  const q = FITB_QUESTIONS[fitbIndex];
+  const game = document.getElementById('fitb-game');
+  if (!game) return;
+  game.hidden = false;
+  document.getElementById('fitb-final').hidden = true;
+
+  document.getElementById('fitb-question').innerHTML =
+    `${q.before} <span class="blank-token">___</span> ${q.after}`;
+  const input = document.getElementById('fitb-input');
+  input.value = '';
+  input.disabled = false;
+  input.focus();
+  document.getElementById('fitb-submit').disabled = false;
+  document.getElementById('fitb-submit').textContent = fitbIndex === FITB_QUESTIONS.length - 1
+    ? 'Compare with AI →'
+    : 'Compare with AI →';
+  document.getElementById('fitb-result-area').innerHTML = '';
+  renderFitbProgress();
+}
+
+function submitFitb() {
+  const input = document.getElementById('fitb-input');
+  const userAnswer = input.value.trim().toLowerCase();
+  if (!userAnswer) {
+    input.focus();
+    return;
+  }
+
+  const q = FITB_QUESTIONS[fitbIndex];
+  const aiPick = q.aiAnswer;
+
+  // Compare
+  const exactMatch = userAnswer === aiPick.toLowerCase();
+  const acceptable = q.accept.map(a => a.toLowerCase()).includes(userAnswer);
+  let verdict, verdictClass;
+  if (exactMatch) {
+    verdict = `🎯 <strong>Match!</strong> You and AI both went with "${aiPick}".`;
+    verdictClass = 'match';
+  } else if (acceptable) {
+    verdict = `🤝 <strong>Close.</strong> Your answer is reasonable, and so is AI's. When the pattern is clear, multiple answers can work.`;
+    verdictClass = 'miss';
+  } else if (!q.obvious) {
+    verdict = `🌀 <strong>Different answers!</strong> When there's no clear pattern, you and AI both make guesses. Neither is wrong — but neither is reliable either. <em>This is what happens when AI doesn't know.</em>`;
+    verdictClass = 'divergent';
+  } else {
+    verdict = `🤔 <strong>You went a different direction.</strong> AI picked the most common answer in its training data. Your answer might be more creative, but AI plays it safe.`;
+    verdictClass = 'miss';
+  }
+
+  fitbResults.push({
+    user: userAnswer,
+    ai: aiPick,
+    match: exactMatch || acceptable
   });
-  fitbRevealed = fitbOrder.length;
+
+  // Show result
+  document.getElementById('fitb-result-area').innerHTML = `
+    <div class="fitb-result">
+      <div class="fitb-result-row">
+        <div class="fitb-result-label">You said</div>
+        <div><span class="fitb-result-value you">${escapeHtml(userAnswer)}</span></div>
+      </div>
+      <div class="fitb-result-row">
+        <div class="fitb-result-label">AI said</div>
+        <div><span class="fitb-result-value ai">${escapeHtml(aiPick)}</span></div>
+      </div>
+      <div class="fitb-verdict ${verdictClass}">${verdict}</div>
+      <div style="margin-top:10px;font-size:14px;color:var(--text-3);">${q.note}</div>
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        <button class="btn btn-primary btn-block" id="fitb-next">${fitbIndex >= FITB_QUESTIONS.length - 1 ? 'See results →' : 'Next →'}</button>
+      </div>
+    </div>
+  `;
+
+  input.disabled = true;
+  document.getElementById('fitb-submit').disabled = true;
+  document.getElementById('fitb-next').addEventListener('click', () => {
+    fitbIndex++;
+    showFitbQuestion();
+  });
+}
+
+function showFitbFinal() {
+  document.getElementById('fitb-game').hidden = true;
+  const matches = fitbResults.filter(r => r.match).length;
+  let msg;
+  if (matches >= 4) msg = "You think a lot like AI! That's not always a compliment — it means you went with the obvious answer too.";
+  else if (matches >= 2) msg = "You agreed on the obvious ones, disagreed when the answer was open. That's exactly how AI works.";
+  else msg = "You went your own way. AI plays it safer than you. Both have their place.";
+
+  document.getElementById('fitb-final').hidden = false;
+  document.getElementById('fitb-final').innerHTML = `
+    <div class="fitb-final">
+      <div class="fitb-final-num">${matches}/${FITB_QUESTIONS.length}</div>
+      <div class="fitb-final-label">Times you matched the AI</div>
+      <div class="fitb-final-msg">${msg}</div>
+      <button class="btn btn-secondary" id="fitb-restart" style="margin-top:16px;">Play again</button>
+    </div>
+  `;
+  document.getElementById('fitb-restart').addEventListener('click', () => {
+    fitbIndex = 0;
+    fitbResults = [];
+    showFitbQuestion();
+  });
+  renderFitbProgress();
+}
+
+// Wire up submit
+document.getElementById('fitb-submit').addEventListener('click', submitFitb);
+document.getElementById('fitb-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitFitb();
 });
+
+// HTML escape helper (used by fitb)
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+// Init the first question
+showFitbQuestion();
 
 // ============================================================
 // SLIDE 3 — Vocab cards
