@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-02",
+      "slug": "2026-05-02",
+      "title": "Prompt Sharpener",
+      "category": "trend",
+      "oneLiner": "Paste any AI prompt and get instant critique + rewrite — learn what makes prompts sharp vs sloppy, with before/after examples.",
+      "path": "apps/2026-05-02/"
+    },
+    {
       "date": "2026-05-01",
       "slug": "2026-05-01",
       "title": "Magic Decision Maker",
