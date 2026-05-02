@@ -95,7 +95,183 @@
     font-family: ui-sans-serif, system-ui, sans-serif;
   }
 
-  .pack-grid { display: grid; gap: 12px; margin: 24px 0; }
+  .pack-grid { display: grid; gap: 12px; margin: 16px 0 24px; }
+  .filter-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .filter-pill {
+    background: var(--jeo-blue-dark); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-dim); padding: 7px 14px; border-radius: 999px;
+    font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600;
+    transition: all 0.15s ease;
+  }
+  .filter-pill.active { background: var(--jeo-gold); color: var(--jeo-blue-dark); border-color: var(--jeo-gold); }
+  .filter-pill:hover:not(.active) { color: var(--text); }
+
+  .pack-special {
+    background: linear-gradient(135deg, rgba(255,204,0,0.15), rgba(255,204,0,0.05)) !important;
+    border-color: var(--jeo-gold) !important;
+  }
+  .pack-name-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 2px;
+  }
+  .pack-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .pack-badge.lvl-easy { background: rgba(125,221,183,0.2); color: #7DDDB7; }
+  .pack-badge.lvl-medium { background: rgba(100,210,255,0.2); color: #64D2FF; }
+  .pack-badge.lvl-hard { background: rgba(255,180,140,0.2); color: #FFB48C; }
+  .pack-badge.lvl-mixed { background: rgba(255,204,0,0.2); color: #FFCC00; }
+  .pack-badge.custom { background: rgba(181,164,255,0.2); color: #B5A4FF; }
+  .pack-delete {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,0.3);
+    border: none; color: rgba(255,255,255,0.6);
+    width: 24px; height: 24px; border-radius: 50%;
+    font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pack-delete:hover { background: var(--wrong); color: white; }
+  .pack-card { position: relative; }
+
+  .home-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin: 8px 0 24px;
+  }
+  .home-action-btn {
+    flex: 1; min-width: 200px;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    background: var(--jeo-blue-dark);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .home-action-btn.primary {
+    background: linear-gradient(135deg, rgba(181,164,255,0.2), rgba(100,210,255,0.15));
+    border-color: rgba(181,164,255,0.5);
+  }
+  .home-action-btn:hover { transform: translateY(-1px); border-color: var(--jeo-gold); }
+
+  /* Request modal */
+  .req-modal {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: req-fade 200ms ease-out;
+  }
+  @media (min-width: 640px) {
+    .req-modal { align-items: center; padding: 20px; }
+  }
+  @keyframes req-fade { from { opacity: 0; } to { opacity: 1; } }
+  .req-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+  }
+  .req-card {
+    position: relative;
+    background: var(--jeo-blue);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 520px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    animation: req-slide 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (min-width: 640px) {
+    .req-card { border-radius: 20px; }
+  }
+  @keyframes req-slide {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .req-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .req-title {
+    font-size: 18px; font-weight: 700;
+    color: var(--jeo-gold);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .req-close {
+    background: rgba(255,255,255,0.1);
+    border: none; color: var(--text);
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .req-body {
+    padding: 20px 24px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .req-help {
+    font-size: 14px; color: var(--text-dim);
+    margin-bottom: 20px; line-height: 1.5;
+  }
+  .req-label {
+    display: block;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--jeo-gold);
+    margin: 16px 0 6px;
+  }
+  .req-input {
+    width: 100%;
+    background: var(--jeo-blue-dark);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .req-input:focus { outline: none; border-color: var(--jeo-gold); }
+  textarea.req-input { resize: vertical; min-height: 70px; }
+  .req-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .req-btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 700;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    border: none;
+  }
+  .req-btn.ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .req-btn.primary {
+    background: var(--jeo-gold);
+    color: var(--jeo-blue-dark);
+    box-shadow: 0 3px 0 var(--jeo-gold-dim);
+  }
+  .req-btn.primary:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--jeo-gold-dim);
+  }
   .pack-card {
     background: var(--tile-bg);
     border: 2px solid rgba(255,255,255,0.1);
@@ -389,8 +565,49 @@
     </div>
 
     <div class="section-title">Pick a Category</div>
+    <div class="filter-row" id="level-filter"></div>
     <div class="pack-grid" id="pack-grid"></div>
+    <div class="home-actions">
+      <button class="home-action-btn primary" id="request-btn">
+        ✨ Request a custom pack from Ada
+      </button>
+      <label class="home-action-btn ghost">
+        📥 Import pack
+        <input type="file" id="import-input" accept=".json" hidden>
+      </label>
+    </div>
   </section>
+
+  <!-- REQUEST MODAL -->
+  <div class="req-modal" id="request-modal" hidden>
+    <div class="req-backdrop" data-close-request></div>
+    <div class="req-card">
+      <div class="req-header">
+        <div class="req-title">✨ Request a Pack from Ada</div>
+        <button class="req-close" data-close-request aria-label="Close">×</button>
+      </div>
+      <div class="req-body">
+        <p class="req-help">Tell Ada what kind of pack you want. She'll generate 5 clues at $100–$500, then send you a JSON file you can import here.</p>
+
+        <label class="req-label">Topic</label>
+        <input type="text" class="req-input" id="request-topic" placeholder="e.g. Greek Mythology, Hamilton, Pokemon, NBA history" autocomplete="off">
+
+        <label class="req-label">Difficulty</label>
+        <select class="req-input" id="request-level">
+          <option value="easy">Easy — for younger kids</option>
+          <option value="medium" selected>Medium — middle school sweet spot</option>
+          <option value="hard">Hard — stump the parents</option>
+        </select>
+
+        <label class="req-label">Notes (optional)</label>
+        <textarea class="req-input" id="request-notes" rows="3" placeholder="e.g. focus on the original Greek myths, no movies; or: include a really hard $500 about Apollo"></textarea>
+      </div>
+      <div class="req-footer">
+        <button class="req-btn ghost" data-close-request>Cancel</button>
+        <button class="req-btn primary" id="request-submit">Download → Send to Ada</button>
+      </div>
+    </div>
+  </div>
 
   <!-- BOARD SCREEN -->
   <section class="screen" id="screen-board">
@@ -444,36 +661,9 @@
 // For mobile: we simplify to 1 category × 5 clues per "round"
 // =============================================================
 const PACKS = [
+  // ===== EASY =====
   {
-    id: 'space',
-    name: 'Space Exploration',
-    emoji: '🚀',
-    description: 'Planets, astronauts, the cosmos',
-    clues: [
-      { value: 100, clue: 'This planet, fourth from the sun, is known as the Red Planet.', answer: 'What is Mars?' },
-      { value: 200, clue: 'In 1969, this American astronaut became the first person to walk on the moon.', answer: 'Who is Neil Armstrong?' },
-      { value: 300, clue: 'This dwarf planet was reclassified from being the ninth planet in 2006.', answer: 'What is Pluto?' },
-      { value: 400, clue: 'This NASA telescope, launched in 2021, captures the deepest images of space ever recorded.', answer: 'What is the James Webb Space Telescope?' },
-      { value: 500, clue: 'This galaxy is the closest spiral galaxy to our own Milky Way and is on a collision course with it.', answer: 'What is Andromeda?' }
-    ]
-  },
-  {
-    id: 'movies',
-    name: 'Movies & Shows',
-    emoji: '🎬',
-    description: 'Family-friendly films and series',
-    clues: [
-      { value: 100, clue: 'In Frozen, this snowman dreams of summer and warm hugs.', answer: 'Who is Olaf?' },
-      { value: 200, clue: 'This Pixar film features a rat who dreams of becoming a chef in Paris.', answer: 'What is Ratatouille?' },
-      { value: 300, clue: 'In Star Wars, this small green Jedi master trained Luke Skywalker on Dagobah.', answer: 'Who is Yoda?' },
-      { value: 400, clue: 'This Studio Ghibli film features a girl named Chihiro trapped in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
-      { value: 500, clue: 'In The Princess Bride, this Spaniard seeks revenge on the six-fingered man.', answer: 'Who is Inigo Montoya?' }
-    ]
-  },
-  {
-    id: 'animals',
-    name: 'Animal Kingdom',
-    emoji: '🦒',
+    id: 'animals', name: 'Animal Kingdom', emoji: '🦒', level: 'easy',
     description: 'Wild and wonderful creatures',
     clues: [
       { value: 100, clue: 'This is the largest mammal on Earth, living in the ocean.', answer: 'What is the blue whale?' },
@@ -484,9 +674,97 @@ const PACKS = [
     ]
   },
   {
-    id: 'science',
-    name: 'Science',
-    emoji: '🔬',
+    id: 'food', name: 'Food & Cooking', emoji: '🍕', level: 'easy',
+    description: 'Tasty trivia from around the world',
+    clues: [
+      { value: 100, clue: 'This Italian dish features a flat round bread topped with sauce and cheese.', answer: 'What is pizza?' },
+      { value: 200, clue: 'This Japanese dish features raw fish on small mounds of rice.', answer: 'What is sushi?' },
+      { value: 300, clue: 'This French pastry is buttery, flaky, and shaped like a crescent moon.', answer: 'What is a croissant?' },
+      { value: 400, clue: 'This spice, more valuable than gold by weight, comes from a crocus flower.', answer: 'What is saffron?' },
+      { value: 500, clue: 'This Mexican spicy sauce, named for a state, is made from chocolate and chili peppers.', answer: 'What is mole?' }
+    ]
+  },
+  {
+    id: 'disney', name: 'Disney Classics', emoji: '🏰', level: 'easy',
+    description: 'Princesses, parks, and animation magic',
+    clues: [
+      { value: 100, clue: 'In The Little Mermaid, this is the name of Ariel\'s crab friend who sings "Under the Sea."', answer: 'Who is Sebastian?' },
+      { value: 200, clue: 'This Disney princess has long magical hair that glows when she sings.', answer: 'Who is Rapunzel?' },
+      { value: 300, clue: 'In Encanto, this is the name of the magical mountain town where the Madrigals live.', answer: 'What is the Encanto?' },
+      { value: 400, clue: 'This was the first full-length animated film ever made, released by Disney in 1937.', answer: 'What is Snow White and the Seven Dwarfs?' },
+      { value: 500, clue: 'This French phrase, the title of a Disney song, means "the carefree life."', answer: 'What is Hakuna Matata? (Swahili, not French — trick clue!)' }
+    ]
+  },
+  {
+    id: 'pixar', name: 'Pixar Films', emoji: '💡', level: 'easy',
+    description: 'Toys, monsters, and emotional rollercoasters',
+    clues: [
+      { value: 100, clue: 'In Toy Story, this cowboy doll is Andy\'s favorite toy.', answer: 'Who is Woody?' },
+      { value: 200, clue: 'This 2008 Pixar film features a small robot left alone on Earth to clean up trash.', answer: 'What is WALL-E?' },
+      { value: 300, clue: 'In Finding Nemo, this forgetful blue tang fish helps Marlin search for his son.', answer: 'Who is Dory?' },
+      { value: 400, clue: 'This Pixar film takes place inside the mind of a girl named Riley, with characters like Joy and Sadness.', answer: 'What is Inside Out?' },
+      { value: 500, clue: 'In Monsters, Inc., this is the name of the little girl Sulley accidentally lets into the monster world.', answer: 'Who is Boo?' }
+    ]
+  },
+  {
+    id: 'frozen', name: 'Frozen, Encanto, Moana', emoji: '❄️', level: 'easy',
+    description: 'Modern Disney musical favorites',
+    clues: [
+      { value: 100, clue: 'In Frozen, this princess has ice powers and rules the kingdom of Arendelle.', answer: 'Who is Elsa?' },
+      { value: 200, clue: 'In Moana, this demigod with magical tattoos joins her on her ocean journey.', answer: 'Who is Maui?' },
+      { value: 300, clue: 'In Encanto, this Madrigal sister has super-human strength.', answer: 'Who is Luisa?' },
+      { value: 400, clue: 'In Frozen 2, Elsa and Anna travel north to this enchanted forest.', answer: 'What is the Enchanted Forest?' },
+      { value: 500, clue: 'In Encanto, this song about an unmentioned uncle became a huge global hit in 2022.', answer: 'What is "We Don\'t Talk About Bruno"?' }
+    ]
+  },
+  {
+    id: 'dinosaurs', name: 'Dinosaurs', emoji: '🦖', level: 'easy',
+    description: 'Prehistoric giants',
+    clues: [
+      { value: 100, clue: 'This three-horned dinosaur had a large bony frill behind its head.', answer: 'What is a Triceratops?' },
+      { value: 200, clue: 'Often called "T. rex," this massive predator lived in what is now North America.', answer: 'What is a Tyrannosaurus rex?' },
+      { value: 300, clue: 'This long-necked plant-eater was one of the largest animals ever to walk Earth.', answer: 'What is a Brachiosaurus? (or Brontosaurus)' },
+      { value: 400, clue: 'This era, sometimes called the "Age of Reptiles," lasted from 252 to 66 million years ago.', answer: 'What is the Mesozoic Era?' },
+      { value: 500, clue: 'Most scientists agree this caused the dinosaurs\' extinction 66 million years ago.', answer: 'What is an asteroid impact?' }
+    ]
+  },
+  {
+    id: 'sports', name: 'Sports', emoji: '⚽', level: 'easy',
+    description: 'Games, teams, and athletes',
+    clues: [
+      { value: 100, clue: 'In this sport, players try to score by getting a ball into a hoop 10 feet off the ground.', answer: 'What is basketball?' },
+      { value: 200, clue: 'These international games take place every four years, alternating between summer and winter.', answer: 'What are the Olympics?' },
+      { value: 300, clue: 'In baseball, hitting the ball over the outfield fence scores this.', answer: 'What is a home run?' },
+      { value: 400, clue: 'This American gymnast won 7 Olympic medals between 2016 and 2024.', answer: 'Who is Simone Biles?' },
+      { value: 500, clue: 'In soccer, this trophy is awarded to the world champion every four years.', answer: 'What is the World Cup?' }
+    ]
+  },
+
+  // ===== MEDIUM =====
+  {
+    id: 'movies', name: 'Movies & Shows', emoji: '🎬', level: 'medium',
+    description: 'Family-friendly films and series',
+    clues: [
+      { value: 100, clue: 'In Frozen, this snowman dreams of summer and warm hugs.', answer: 'Who is Olaf?' },
+      { value: 200, clue: 'This Pixar film features a rat who dreams of becoming a chef in Paris.', answer: 'What is Ratatouille?' },
+      { value: 300, clue: 'In Star Wars, this small green Jedi master trained Luke Skywalker on Dagobah.', answer: 'Who is Yoda?' },
+      { value: 400, clue: 'This Studio Ghibli film features a girl named Chihiro trapped in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
+      { value: 500, clue: 'In The Princess Bride, this Spaniard seeks revenge on the six-fingered man.', answer: 'Who is Inigo Montoya?' }
+    ]
+  },
+  {
+    id: 'space', name: 'Space Exploration', emoji: '🚀', level: 'medium',
+    description: 'Planets, astronauts, the cosmos',
+    clues: [
+      { value: 100, clue: 'This planet, fourth from the sun, is known as the Red Planet.', answer: 'What is Mars?' },
+      { value: 200, clue: 'In 1969, this American astronaut became the first person to walk on the moon.', answer: 'Who is Neil Armstrong?' },
+      { value: 300, clue: 'This dwarf planet was reclassified from being the ninth planet in 2006.', answer: 'What is Pluto?' },
+      { value: 400, clue: 'This NASA telescope, launched in 2021, captures the deepest images of space ever recorded.', answer: 'What is the James Webb Space Telescope?' },
+      { value: 500, clue: 'This galaxy is the closest spiral galaxy to our own Milky Way and is on a collision course with it.', answer: 'What is Andromeda?' }
+    ]
+  },
+  {
+    id: 'science', name: 'Science', emoji: '🔬', level: 'medium',
     description: 'Physics, biology, chemistry, more',
     clues: [
       { value: 100, clue: 'This gas, with the chemical symbol O, makes up about 21% of Earth\'s atmosphere.', answer: 'What is oxygen?' },
@@ -497,9 +775,7 @@ const PACKS = [
     ]
   },
   {
-    id: 'world',
-    name: 'World Geography',
-    emoji: '🌍',
+    id: 'world', name: 'World Geography', emoji: '🌍', level: 'medium',
     description: 'Countries, capitals, landmarks',
     clues: [
       { value: 100, clue: 'This is the longest river in the world, flowing through Egypt.', answer: 'What is the Nile?' },
@@ -510,22 +786,18 @@ const PACKS = [
     ]
   },
   {
-    id: 'history',
-    name: 'History',
-    emoji: '📜',
-    description: 'People and events that shaped the world',
+    id: 'history', name: 'US History', emoji: '🇺🇸', level: 'medium',
+    description: 'People and events that shaped America',
     clues: [
       { value: 100, clue: 'This U.S. president signed the Emancipation Proclamation in 1863.', answer: 'Who is Abraham Lincoln?' },
-      { value: 200, clue: 'These ancient Egyptian tombs at Giza are wonders of the ancient world.', answer: 'What are the pyramids?' },
-      { value: 300, clue: 'This Italian explorer reached the Americas in 1492 sailing for Spain.', answer: 'Who is Christopher Columbus?' },
-      { value: 400, clue: 'This wall divided a German city from 1961 until it fell in 1989.', answer: 'What is the Berlin Wall?' },
+      { value: 200, clue: 'This 1776 document declared the colonies free from British rule.', answer: 'What is the Declaration of Independence?' },
+      { value: 300, clue: 'This first African American Supreme Court Justice was appointed in 1967.', answer: 'Who is Thurgood Marshall?' },
+      { value: 400, clue: 'This 1969 event in upstate New York drew 400,000 people for a music festival.', answer: 'What is Woodstock?' },
       { value: 500, clue: 'This civil rights leader gave the "I Have a Dream" speech in 1963.', answer: 'Who is Martin Luther King Jr.?' }
     ]
   },
   {
-    id: 'music',
-    name: 'Music',
-    emoji: '🎸',
+    id: 'music', name: 'Music', emoji: '🎸', level: 'medium',
     description: 'Songs, artists, instruments',
     clues: [
       { value: 100, clue: 'This British band sang "Hey Jude" and "Let It Be."', answer: 'Who are The Beatles?' },
@@ -536,16 +808,104 @@ const PACKS = [
     ]
   },
   {
-    id: 'food',
-    name: 'Food & Cooking',
-    emoji: '🍕',
-    description: 'Tasty trivia from around the world',
+    id: 'harry-potter', name: 'Harry Potter', emoji: '⚡', level: 'medium',
+    description: 'Wizarding world trivia',
     clues: [
-      { value: 100, clue: 'This Italian dish features a flat round bread topped with sauce and cheese.', answer: 'What is pizza?' },
-      { value: 200, clue: 'This Japanese dish features raw fish on small mounds of rice.', answer: 'What is sushi?' },
-      { value: 300, clue: 'This French pastry is buttery, flaky, and shaped like a crescent moon.', answer: 'What is a croissant?' },
-      { value: 400, clue: 'This spice, more valuable than gold by weight, comes from a crocus flower.', answer: 'What is saffron?' },
-      { value: 500, clue: 'This Mexican spicy sauce, named for a state, is made from chocolate and chili peppers.', answer: 'What is mole?' }
+      { value: 100, clue: 'This is the name of the wizarding school Harry attends.', answer: 'What is Hogwarts?' },
+      { value: 200, clue: 'This Hogwarts house values bravery and is symbolized by a lion.', answer: 'What is Gryffindor?' },
+      { value: 300, clue: 'This bushy-haired know-it-all becomes one of Harry\'s best friends.', answer: 'Who is Hermione Granger?' },
+      { value: 400, clue: 'This dark wizard, often called "He-Who-Must-Not-Be-Named," is Harry\'s archenemy.', answer: 'Who is Voldemort?' },
+      { value: 500, clue: 'These three magical objects — a wand, a stone, and a cloak — grant their owner mastery over death.', answer: 'What are the Deathly Hallows?' }
+    ]
+  },
+  {
+    id: 'marvel', name: 'Marvel Universe', emoji: '🦸', level: 'medium',
+    description: 'Superheroes and the MCU',
+    clues: [
+      { value: 100, clue: 'This billionaire genius builds a suit of armor and becomes the founding Avenger.', answer: 'Who is Iron Man / Tony Stark?' },
+      { value: 200, clue: 'This Asgardian god of thunder wields a hammer named Mjølnir.', answer: 'Who is Thor?' },
+      { value: 300, clue: 'This vibranium-rich African nation is ruled by King T\'Challa.', answer: 'What is Wakanda?' },
+      { value: 400, clue: 'This 2019 film concluded the Infinity Saga with the line "Avengers... assemble."', answer: 'What is Avengers: Endgame?' },
+      { value: 500, clue: 'These six powerful gems control aspects of existence: Mind, Power, Reality, Soul, Space, and Time.', answer: 'What are the Infinity Stones?' }
+    ]
+  },
+  {
+    id: 'ghibli', name: 'Studio Ghibli', emoji: '🍃', level: 'medium',
+    description: 'Japanese animation classics',
+    clues: [
+      { value: 100, clue: 'This big fluffy forest spirit appears to two sisters in a 1988 Ghibli film.', answer: 'Who is Totoro?' },
+      { value: 200, clue: 'In Kiki\'s Delivery Service, Kiki uses this magical method to deliver packages.', answer: 'What is flying on a broomstick?' },
+      { value: 300, clue: 'In Howl\'s Moving Castle, this fire demon powers the castle.', answer: 'Who is Calcifer?' },
+      { value: 400, clue: 'This Ghibli film features a spirited girl named Chihiro working in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
+      { value: 500, clue: 'This co-founder of Studio Ghibli directed Princess Mononoke and My Neighbor Totoro.', answer: 'Who is Hayao Miyazaki?' }
+    ]
+  },
+  {
+    id: 'mythology', name: 'Mythology', emoji: '⚡️', level: 'medium',
+    description: 'Greek, Norse, and Egyptian gods',
+    clues: [
+      { value: 100, clue: 'This king of the Greek gods rules from Mount Olympus and wields lightning bolts.', answer: 'Who is Zeus?' },
+      { value: 200, clue: 'This Norse god of mischief is Thor\'s adopted brother.', answer: 'Who is Loki?' },
+      { value: 300, clue: 'This Greek hero killed the Minotaur in the labyrinth of Crete.', answer: 'Who is Theseus?' },
+      { value: 400, clue: 'This Egyptian god has the head of a jackal and oversees the dead.', answer: 'Who is Anubis?' },
+      { value: 500, clue: 'This Greek hero\'s only weakness was his heel.', answer: 'Who is Achilles?' }
+    ]
+  },
+  {
+    id: 'art', name: 'Famous Art', emoji: '🎨', level: 'medium',
+    description: 'Paintings, sculptures, artists',
+    clues: [
+      { value: 100, clue: 'This Italian artist painted the Mona Lisa.', answer: 'Who is Leonardo da Vinci?' },
+      { value: 200, clue: 'This Dutch artist painted Starry Night and famously cut off part of his ear.', answer: 'Who is Vincent van Gogh?' },
+      { value: 300, clue: 'This Mexican artist painted self-portraits with bold eyebrows and bright colors.', answer: 'Who is Frida Kahlo?' },
+      { value: 400, clue: 'This 17-foot-tall marble sculpture by Michelangelo depicts a Biblical hero.', answer: 'What is the statue of David?' },
+      { value: 500, clue: 'This Spanish artist co-founded Cubism and painted Guernica.', answer: 'Who is Pablo Picasso?' }
+    ]
+  },
+  {
+    id: 'books', name: 'Books & Authors', emoji: '📚', level: 'medium',
+    description: 'Famous novels and the people who wrote them',
+    clues: [
+      { value: 100, clue: 'This author wrote Charlie and the Chocolate Factory and Matilda.', answer: 'Who is Roald Dahl?' },
+      { value: 200, clue: 'In this Newbery-winning book, Bruno befriends a Jewish boy named Shmuel through a fence.', answer: 'What is The Boy in the Striped Pajamas?' },
+      { value: 300, clue: 'This Greek poet is credited with writing The Iliad and The Odyssey.', answer: 'Who is Homer?' },
+      { value: 400, clue: 'This author wrote The Hobbit and The Lord of the Rings.', answer: 'Who is J.R.R. Tolkien?' },
+      { value: 500, clue: 'This Newbery-winning author wrote A Wrinkle in Time.', answer: 'Who is Madeleine L\'Engle?' }
+    ]
+  },
+
+  // ===== HARD =====
+  {
+    id: 'capitals-hard', name: 'World Capitals (Hard)', emoji: '🌐', level: 'hard',
+    description: 'For the seasoned geographers',
+    clues: [
+      { value: 100, clue: 'This is the capital of Australia (hint: not Sydney).', answer: 'What is Canberra?' },
+      { value: 200, clue: 'This is the capital of Canada.', answer: 'What is Ottawa?' },
+      { value: 300, clue: 'This is the capital of Turkey (hint: not Istanbul).', answer: 'What is Ankara?' },
+      { value: 400, clue: 'This is the capital of South Africa, sort of — it has three.', answer: 'What is Pretoria? (or Cape Town, or Bloemfontein)' },
+      { value: 500, clue: 'This is the capital of Kazakhstan, formerly known as Astana, renamed in 2019.', answer: 'What is Nur-Sultan? (now back to Astana again)' }
+    ]
+  },
+  {
+    id: 'math', name: 'Math & Numbers', emoji: '📐', level: 'hard',
+    description: 'Mathematicians and concepts',
+    clues: [
+      { value: 100, clue: 'This Greek philosopher\'s theorem describes the relationship between the sides of a right triangle.', answer: 'Who is Pythagoras?' },
+      { value: 200, clue: 'This irrational number, approximately 3.14159, is the ratio of a circle\'s circumference to its diameter.', answer: 'What is pi?' },
+      { value: 300, clue: 'This Italian mathematician\'s sequence starts 0, 1, 1, 2, 3, 5, 8, 13...', answer: 'Who is Fibonacci?' },
+      { value: 400, clue: 'This British mathematician helped break the Enigma code in WWII and is considered the father of computer science.', answer: 'Who is Alan Turing?' },
+      { value: 500, clue: 'This African American NASA mathematician calculated trajectories for John Glenn\'s orbital flight in 1962.', answer: 'Who is Katherine Johnson?' }
+    ]
+  },
+  {
+    id: 'world-history', name: 'World History (Hard)', emoji: '🏛️', level: 'hard',
+    description: 'Empires, revolutions, civilizations',
+    clues: [
+      { value: 100, clue: 'This wall, built over 2,000 years ago, stretches more than 13,000 miles across northern China.', answer: 'What is the Great Wall of China?' },
+      { value: 200, clue: 'This Macedonian king conquered most of the known world before dying at age 32.', answer: 'Who is Alexander the Great?' },
+      { value: 300, clue: 'This wall divided a German city from 1961 until it fell in 1989.', answer: 'What is the Berlin Wall?' },
+      { value: 400, clue: 'This 14-year-old French girl led the French army to victory at Orléans in 1429.', answer: 'Who is Joan of Arc?' },
+      { value: 500, clue: 'This 1804 leader of Haiti\'s independence was the first to defeat a European colonial power in a slave-led revolution.', answer: 'Who is Toussaint L\'Ouverture? (or Jean-Jacques Dessalines)' }
     ]
   }
 ];
@@ -563,7 +923,9 @@ let state = {
   ],
   currentPack: null,
   usedClues: {},  // packId -> [clueIndexes]
-  currentClue: null
+  currentClue: null,
+  customPacks: [],
+  activeFilter: 'all'
 };
 
 // Load from storage
@@ -571,12 +933,16 @@ try {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   if (saved.players) state.players = saved.players;
   if (saved.usedClues) state.usedClues = saved.usedClues;
+  if (saved.customPacks) state.customPacks = saved.customPacks;
+  if (saved.activeFilter) state.activeFilter = saved.activeFilter;
 } catch (e) {}
 
 function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     players: state.players,
-    usedClues: state.usedClues
+    usedClues: state.usedClues,
+    customPacks: state.customPacks,
+    activeFilter: state.activeFilter
   }));
 }
 
@@ -595,6 +961,41 @@ function showScreen(name) {
 }
 
 // =================== Home screen ===================
+function getAllPacks() {
+  return [...PACKS, ...(state.customPacks || [])];
+}
+
+function generateMixedBag() {
+  // Pick 5 random clues from random packs at varying values
+  const all = getAllPacks();
+  const targetValues = [100, 200, 300, 400, 500];
+  const clues = [];
+  const usedKeys = new Set();
+  for (const v of targetValues) {
+    // Try up to 30 times to find a clue at this value not already picked
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const pack = all[Math.floor(Math.random() * all.length)];
+      const candidates = pack.clues.filter(c => c.value === v);
+      if (!candidates.length) continue;
+      const clue = candidates[Math.floor(Math.random() * candidates.length)];
+      const key = pack.id + '::' + clue.clue;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+      clues.push({ ...clue, sourcePack: pack.name, sourceEmoji: pack.emoji });
+      break;
+    }
+  }
+  return {
+    id: 'mixed-bag-' + Date.now(),
+    name: 'Mixed Bag',
+    emoji: '🎲',
+    level: 'mixed',
+    description: '5 random questions from across the library',
+    clues,
+    isVirtual: true
+  };
+}
+
 function renderHome() {
   // Render players
   const list = document.getElementById('players-list');
@@ -628,28 +1029,90 @@ function renderHome() {
     });
   });
 
+  // Render filter pills + action buttons in the level filter section
+  const filterRoot = document.getElementById('level-filter');
+  if (filterRoot) {
+    const filter = state.activeFilter || 'all';
+    const filters = [
+      { id: 'all', label: 'All' },
+      { id: 'easy', label: 'Easy' },
+      { id: 'medium', label: 'Medium' },
+      { id: 'hard', label: 'Hard' },
+      { id: 'custom', label: 'Custom' }
+    ];
+    filterRoot.innerHTML = filters.map(f => `
+      <button class="filter-pill ${filter === f.id ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>
+    `).join('');
+    filterRoot.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.activeFilter = btn.dataset.filter;
+        persist();
+        renderHome();
+      });
+    });
+  }
+
   // Render packs
+  const filter = state.activeFilter || 'all';
+  const all = getAllPacks();
+  let visiblePacks;
+  if (filter === 'all') visiblePacks = all;
+  else if (filter === 'custom') visiblePacks = (state.customPacks || []);
+  else visiblePacks = all.filter(p => p.level === filter);
+
   const grid = document.getElementById('pack-grid');
-  grid.innerHTML = PACKS.map(pack => {
+  const levelLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' };
+  const levelClass = { easy: 'lvl-easy', medium: 'lvl-medium', hard: 'lvl-hard', mixed: 'lvl-mixed' };
+
+  // Mixed Bag tile (only on All / non-custom views)
+  let mixedTile = '';
+  if (filter === 'all' || filter === 'mixed') {
+    mixedTile = `
+      <button class="pack-card pack-special" data-mixed>
+        <div class="pack-emoji">🎲</div>
+        <div class="pack-info">
+          <div class="pack-name">Mixed Bag</div>
+          <div class="pack-meta">5 random questions from across the library · fresh every round</div>
+        </div>
+      </button>
+    `;
+  }
+
+  // Pack tiles
+  const packTiles = visiblePacks.map(pack => {
     const used = (state.usedClues[pack.id] || []).length;
     const total = pack.clues.length;
     const status = used >= total ? '✓ Completed' : `${used}/${total} played`;
+    const lvl = pack.level || 'medium';
+    const isCustom = pack.isCustom;
     return `
       <button class="pack-card" data-id="${pack.id}">
         <div class="pack-emoji">${pack.emoji}</div>
         <div class="pack-info">
-          <div class="pack-name">${pack.name}</div>
-          <div class="pack-meta">${pack.description} · ${status}</div>
+          <div class="pack-name-row">
+            <span class="pack-name">${escapeHtml(pack.name)}</span>
+            <span class="pack-badge ${levelClass[lvl] || ''}">${levelLabel[lvl] || lvl}</span>
+            ${isCustom ? '<span class="pack-badge custom">Custom</span>' : ''}
+          </div>
+          <div class="pack-meta">${escapeHtml(pack.description)} · ${status}</div>
         </div>
+        ${isCustom ? `<button class="pack-delete" data-delete="${pack.id}" aria-label="Delete">×</button>` : ''}
       </button>
     `;
   }).join('');
 
-  grid.querySelectorAll('.pack-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const pack = PACKS.find(p => p.id === card.dataset.id);
+  grid.innerHTML = mixedTile + packTiles + (visiblePacks.length === 0 && !mixedTile ? `
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-dim); font-family: ui-sans-serif, system-ui, sans-serif;">
+      ${filter === 'custom' ? 'No custom packs yet. Tap "Request from Ada" to make one.' : 'No packs at this level.'}
+    </div>
+  ` : '');
+
+  // Pack click handler
+  grid.querySelectorAll('.pack-card[data-id]').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('[data-delete]')) return;
+      const pack = getAllPacks().find(p => p.id === card.dataset.id);
       if (!pack) return;
-      // If pack is fully used, reset it
       if ((state.usedClues[pack.id] || []).length >= pack.clues.length) {
         state.usedClues[pack.id] = [];
         persist();
@@ -658,6 +1121,118 @@ function renderHome() {
       showScreen('board');
     });
   });
+
+  // Mixed Bag handler
+  const mixedBtn = grid.querySelector('[data-mixed]');
+  if (mixedBtn) {
+    mixedBtn.addEventListener('click', () => {
+      const pack = generateMixedBag();
+      if (pack.clues.length === 0) return;
+      state.usedClues[pack.id] = [];
+      state.currentPack = pack;
+      showScreen('board');
+    });
+  }
+
+  // Custom pack delete
+  grid.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.delete;
+      if (!confirm('Delete this custom pack?')) return;
+      state.customPacks = (state.customPacks || []).filter(p => p.id !== id);
+      delete state.usedClues[id];
+      persist();
+      renderHome();
+    });
+  });
+}
+
+// =================== Custom pack: request from Ada ===================
+function openRequestModal() {
+  const modal = document.getElementById('request-modal');
+  if (!modal) return;
+  modal.hidden = false;
+  document.getElementById('request-topic').focus();
+}
+
+function closeRequestModal() {
+  const modal = document.getElementById('request-modal');
+  if (modal) modal.hidden = true;
+}
+
+function submitRequest() {
+  const topic = document.getElementById('request-topic').value.trim();
+  const level = document.getElementById('request-level').value;
+  const notes = document.getElementById('request-notes').value.trim();
+  if (!topic) { document.getElementById('request-topic').focus(); return; }
+
+  const request = {
+    type: 'family-jeopardy-pack-request',
+    version: 1,
+    requestedAt: new Date().toISOString(),
+    topic,
+    level,
+    notes,
+    instructions: 'Please generate a Family Jeopardy pack with 5 clues at $100/200/300/400/500. Each clue is middle-school appropriate. Each answer is in the form of a question (e.g., "What is...?" or "Who is...?"). Return as JSON matching the schema below, then send back so it can be imported.',
+    schema: {
+      id: 'string-slug',
+      name: 'Display Name',
+      emoji: '🌟',
+      level: 'easy | medium | hard',
+      description: 'short description',
+      isCustom: true,
+      clues: [
+        { value: 100, clue: 'Clue text.', answer: 'What/Who is...?' }
+      ]
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(request, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0, 10);
+  const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
+  a.download = `jeopardy-request-${slug}-${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  closeRequestModal();
+  alert('Request downloaded! Send it to Ada on Telegram. She\'ll send back a JSON file you can import with the "Import Pack" button.');
+  document.getElementById('request-topic').value = '';
+  document.getElementById('request-notes').value = '';
+}
+
+function handlePackImport(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      // Accept either a single pack or an array
+      const packs = Array.isArray(data) ? data : (data.pack ? [data.pack] : (data.clues ? [data] : null));
+      if (!packs) throw new Error('Not a recognizable pack file');
+      let imported = 0;
+      packs.forEach(pack => {
+        if (!pack.id || !pack.name || !Array.isArray(pack.clues)) return;
+        pack.isCustom = true;
+        // Replace existing custom pack with same id, or add new
+        state.customPacks = state.customPacks || [];
+        const idx = state.customPacks.findIndex(p => p.id === pack.id);
+        if (idx >= 0) state.customPacks[idx] = pack;
+        else state.customPacks.push(pack);
+        imported++;
+      });
+      if (imported === 0) throw new Error('No valid packs found');
+      state.activeFilter = 'custom';
+      persist();
+      renderHome();
+      alert(`Imported ${imported} pack${imported === 1 ? '' : 's'}! Look in the Custom filter.`);
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 document.getElementById('add-player-btn').addEventListener('click', () => {
@@ -829,6 +1404,18 @@ document.getElementById('info-btn').addEventListener('click', () => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
+
+// Wire up request modal + import
+document.getElementById('request-btn').addEventListener('click', openRequestModal);
+document.querySelectorAll('[data-close-request]').forEach(el =>
+  el.addEventListener('click', closeRequestModal)
+);
+document.getElementById('request-submit').addEventListener('click', submitRequest);
+document.getElementById('import-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) handlePackImport(file);
+  e.target.value = '';
+});
 
 // Init
 showScreen('home');
