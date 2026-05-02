@@ -1,437 +1,1134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Prompt Sharpener — Learn to write better AI prompts</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A1628">
+<title>How AI Actually Works · A Class for Middle Schoolers</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<style>
+  :root {
+    --bg: #0A1628;
+    --bg-2: #122036;
+    --surface: #1A2B47;
+    --surface-2: #243759;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.15);
+    --text: #F5F5F7;
+    --text-2: #C9D1E0;
+    --text-3: #8A95AB;
+    --accent: #FFD60A;
+    --accent-2: #64D2FF;
+    --accent-3: #FF6482;
+    --success: #34D399;
+    --warning: #FBBF24;
+    --danger: #F87171;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+    --shadow-md: 0 10px 30px rgba(0,0,0,0.3);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(100, 210, 255, 0.08), transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(255, 100, 130, 0.06), transparent 50%);
+    overflow-x: hidden;
+  }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  .container { max-width: 920px; margin: 0 auto; padding: 24px 20px 96px; }
 
-    :root {
-      --bg: #FAFAFA;
-      --surface: #FFFFFF;
-      --text: #1A1A1A;
-      --text-secondary: #666666;
-      --border: #E0E0E0;
-      --good: #2D7A3E;
-      --good-bg: #E8F5EA;
-      --warn: #D97706;
-      --warn-bg: #FEF3E2;
-      --accent: #007AFF;
-      --radius: 12px;
-    }
+  /* Header */
+  .top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .top-back {
+    background: transparent; border: none; color: var(--text-3); font-size: 14px;
+    text-decoration: none;
+    padding: 6px 8px; border-radius: var(--r-sm);
+  }
+  .top-back:hover { color: var(--text-2); background: rgba(255,255,255,0.04); }
+  .top-progress {
+    display: flex; gap: 6px; align-items: center;
+    font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums;
+  }
+  .progress-dots { display: flex; gap: 5px; }
+  .progress-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 200ms var(--ease-out);
+  }
+  .progress-dot.done { background: var(--success); }
+  .progress-dot.active { background: var(--accent); transform: scale(1.4); }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-      font-size: 17px;
-      line-height: 1.6;
-      color: var(--text);
-      background: var(--bg);
-      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-      -webkit-font-smoothing: antialiased;
-    }
+  /* Slides */
+  .slide {
+    display: none;
+    animation: slide-in 400ms var(--ease-out);
+  }
+  .slide.active { display: block; }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 24px 20px;
-      text-align: center;
-    }
+  .slide-eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    background: rgba(255,214,10,0.1);
+    padding: 6px 12px; border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 6vw, 44px);
+    font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: clamp(22px, 4.5vw, 30px);
+    font-weight: 700; letter-spacing: -0.015em; line-height: 1.2;
+    margin: 24px 0 12px;
+  }
+  h3 {
+    font-size: 18px; font-weight: 600;
+    margin: 20px 0 8px;
+  }
+  p { font-size: 17px; color: var(--text-2); margin-bottom: 14px; }
+  p.lead { font-size: 19px; color: var(--text); }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; color: var(--text-2); font-size: 17px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); font-weight: 600; }
+  code {
+    background: var(--surface);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: 'SF Mono', 'Monaco', monospace;
+    font-size: 0.9em;
+    color: var(--accent-2);
+  }
 
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-    }
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card.elevated { box-shadow: var(--shadow-md); }
+  .card-row { display: flex; gap: 16px; align-items: flex-start; }
 
-    .tagline {
-      font-size: 15px;
-      color: var(--text-secondary);
-    }
+  /* Activity panels */
+  .activity {
+    background: linear-gradient(135deg, rgba(100,210,255,0.06), rgba(255,214,10,0.04));
+    border: 1px solid rgba(100,210,255,0.2);
+    border-radius: var(--r-lg);
+    padding: 24px;
+    margin: 24px 0;
+  }
+  .activity-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent-2);
+    margin-bottom: 12px;
+  }
 
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 24px 20px 80px;
-    }
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+    padding: 14px 22px; border-radius: var(--r-md);
+    font-size: 16px; font-weight: 600;
+    border: none;
+    transition: all 150ms var(--ease-out);
+    min-height: 48px;
+  }
+  .btn-primary {
+    background: var(--accent); color: #1A1206;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  }
+  .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+  .btn-primary:disabled { opacity: 0.4; box-shadow: none; }
+  .btn-secondary {
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-secondary:hover { background: var(--surface); border-color: var(--text-3); }
+  .btn-ghost {
+    background: transparent; color: var(--text-2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .btn-block { width: 100%; }
+  .btn-large { padding: 18px 28px; font-size: 18px; min-height: 56px; }
 
-    .section {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-    }
+  /* Nav (next/back) */
+  .slide-nav {
+    display: flex; gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .slide-nav .btn { flex: 1; }
+  .slide-nav .btn-ghost { flex: 0 1 auto; }
 
-    .section-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-      margin-bottom: 12px;
-    }
+  /* Fill-in-the-blank game */
+  .fitb-row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    font-size: 22px; line-height: 1.5;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .fitb-row:last-child { border-bottom: none; }
+  .fitb-blank {
+    display: inline-block;
+    background: rgba(255,214,10,0.15);
+    border: 2px dashed var(--accent);
+    border-radius: var(--r-sm);
+    padding: 4px 16px;
+    min-width: 100px; min-height: 32px;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+  }
+  .fitb-blank.revealed {
+    background: rgba(52,211,153,0.15);
+    border: 2px solid var(--success);
+    color: var(--success);
+    border-style: solid;
+    animation: pop 300ms var(--spring);
+  }
+  @keyframes pop {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .fitb-controls { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
 
-    textarea {
-      width: 100%;
-      min-height: 140px;
-      padding: 16px;
-      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-      font-size: 15px;
-      line-height: 1.6;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      resize: vertical;
-      background: var(--bg);
-    }
+  /* Probability viz */
+  .prob-stack {
+    display: flex; flex-direction: column; gap: 8px;
+    margin: 20px 0;
+  }
+  .prob-row {
+    display: grid; grid-template-columns: 110px 1fr 56px;
+    gap: 12px; align-items: center;
+    font-size: 15px;
+  }
+  .prob-word {
+    font-weight: 600; color: var(--text);
+    text-align: right;
+    padding-right: 4px;
+  }
+  .prob-bar-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 600ms var(--ease-out);
+  }
+  .prob-bar-fill.top { background: linear-gradient(90deg, var(--accent), #FFA500); }
+  .prob-bar-fill.high { background: rgba(100,210,255,0.6); }
+  .prob-bar-fill.low { background: rgba(255,255,255,0.18); }
+  .prob-pct {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-3); font-size: 13px;
+    text-align: right;
+  }
 
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+  /* Lie detector */
+  .ld-prompt {
+    background: var(--surface);
+    border-left: 4px solid var(--accent-2);
+    padding: 14px 18px;
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    font-size: 17px; color: var(--text);
+    margin-bottom: 12px;
+  }
+  .ld-response {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    color: var(--text-2);
+    font-size: 16px; line-height: 1.55;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+  .ld-vote {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-top: 16px;
+  }
+  .ld-btn {
+    padding: 14px 8px;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text-2);
+    font-size: 14px; font-weight: 600;
+    transition: all 150ms var(--ease-out);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .ld-btn .emoji { font-size: 22px; }
+  .ld-btn:hover { background: var(--surface); }
+  .ld-btn.selected.true { border-color: var(--success); background: rgba(52,211,153,0.1); color: var(--success); }
+  .ld-btn.selected.lie { border-color: var(--danger); background: rgba(248,113,113,0.1); color: var(--danger); }
+  .ld-btn.selected.unsure { border-color: var(--warning); background: rgba(251,191,36,0.1); color: var(--warning); }
+  .ld-reveal {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 15px;
+    animation: slide-in 300ms var(--ease-out);
+  }
+  .ld-reveal.warning {
+    background: rgba(251,191,36,0.08);
+    border-color: rgba(251,191,36,0.25);
+  }
+  .ld-reveal.danger {
+    background: rgba(248,113,113,0.08);
+    border-color: rgba(248,113,113,0.3);
+  }
+  .ld-progress {
+    font-size: 13px; color: var(--text-3);
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
 
-    .examples {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
+  /* Vocab cards */
+  .vocab-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px; margin: 20px 0;
+  }
+  .vocab-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 16px;
+    transition: all 200ms var(--ease-out);
+    cursor: pointer;
+    perspective: 800px;
+  }
+  .vocab-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .vocab-jargon { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 4px; }
+  .vocab-real { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .vocab-detail { font-size: 13px; color: var(--text-3); display: none; }
+  .vocab-card.flipped .vocab-detail { display: block; animation: slide-in 200ms var(--ease-out); }
 
-    .example-btn {
-      font-size: 13px;
-      padding: 8px 14px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+  /* Try it (live model) */
+  .try-status {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    font-size: 13px; color: var(--text-3);
+    margin-bottom: 12px;
+  }
+  .try-status .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-3);
+  }
+  .try-status.ready .dot { background: var(--success); }
+  .try-status.loading .dot { background: var(--warning); animation: pulse 1.4s infinite; }
+  .try-status.error .dot { background: var(--danger); }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
 
-    .example-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+  .try-input-row {
+    display: flex; gap: 8px;
+    margin-top: 12px;
+  }
+  .try-input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 14px 16px;
+    border-radius: var(--r-md);
+    font-size: 16px;
+  }
+  .try-input:focus { outline: none; border-color: var(--accent-2); }
+  .try-suggestions {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .try-chip {
+    padding: 6px 12px;
+    background: rgba(100,210,255,0.08);
+    border: 1px solid rgba(100,210,255,0.2);
+    border-radius: 999px;
+    color: var(--accent-2);
+    font-size: 13px;
+    transition: all 120ms var(--ease-out);
+  }
+  .try-chip:hover { background: rgba(100,210,255,0.15); }
 
-    .score-grid {
-      display: grid;
-      gap: 12px;
-      margin-top: 16px;
-    }
+  /* Score / takeaway */
+  .scoreboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .score-num {
+    font-size: 64px; font-weight: 800; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    line-height: 1;
+  }
+  .score-label { font-size: 14px; color: var(--text-3); margin-top: 4px; }
 
-    .score-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: var(--bg);
-      border-radius: 8px;
-    }
+  .takeaway-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin: 24px 0;
+  }
+  @media (max-width: 600px) {
+    .takeaway-grid { grid-template-columns: 1fr; }
+  }
+  .takeaway {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 20px;
+  }
+  .takeaway.good { border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.04); }
+  .takeaway.bad { border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.04); }
+  .takeaway-title { font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 12px; }
+  .takeaway.good .takeaway-title { color: var(--success); }
+  .takeaway.bad .takeaway-title { color: var(--danger); }
+  .takeaway ul { list-style: none; padding: 0; }
+  .takeaway li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 15px; }
+  .takeaway li::before { flex-shrink: 0; }
+  .takeaway.good li::before { content: '✓'; color: var(--success); font-weight: 700; }
+  .takeaway.bad li::before { content: '✗'; color: var(--danger); font-weight: 700; }
 
-    .score-item.good {
-      background: var(--good-bg);
-      color: var(--good);
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
     }
+  }
 
-    .score-item.warn {
-      background: var(--warn-bg);
-      color: var(--warn);
-    }
-
-    .score-label {
-      font-weight: 600;
-      font-size: 15px;
-    }
-
-    .score-value {
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .rewrite-box {
-      background: var(--good-bg);
-      border-left: 4px solid var(--good);
-      padding: 16px;
-      border-radius: 8px;
-      margin-top: 16px;
-    }
-
-    .rewrite-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--good);
-      margin-bottom: 8px;
-    }
-
-    .rewrite-text {
-      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-      font-size: 15px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      color: var(--text);
-    }
-
-    .highlight {
-      background: rgba(45, 122, 62, 0.2);
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-weight: 600;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-secondary);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 24px;
-      }
-      textarea {
-        font-size: 16px; /* prevent zoom on iOS */
-      }
-    }
-  </style>
+  /* Mobile adjustments */
+  @media (max-width: 540px) {
+    .container { padding: 16px 16px 80px; }
+    .activity { padding: 18px; }
+    .slide-nav { flex-direction: column; }
+    .slide-nav .btn-ghost { order: 2; }
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>✨ Prompt Sharpener</h1>
-    <p class="tagline">Learn to write better AI prompts — paste yours, get instant critique + rewrite</p>
-  </header>
+<div class="container">
+  <div class="top">
+    <a class="top-back" href="../../">← Experiments</a>
+    <div class="top-progress">
+      <span id="slide-counter">1 / 7</span>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+  </div>
 
-  <main>
-    <div class="section">
-      <div class="section-title">Your Prompt</div>
-      <textarea id="prompt-input" placeholder="Paste your prompt here... or try an example below"></textarea>
-      <div class="examples">
-        <button class="example-btn" data-example="vague">Example: Vague</button>
-        <button class="example-btn" data-example="better">Example: Better</button>
-        <button class="example-btn" data-example="sharp">Example: Sharp</button>
+  <!-- ============================================================
+       SLIDE 1 — Title / Hook
+       ============================================================ -->
+  <section class="slide active" data-slide="1">
+    <div class="slide-eyebrow">A class for middle schoolers</div>
+    <h1>How AI <em style="font-style:normal;color:var(--accent)">actually</em> works.</h1>
+    <p class="lead">In the next 30–45 minutes, you'll figure out what AI is really doing when it answers your questions — and the one big trick it's pulling on all of us.</p>
+
+    <div class="card elevated" style="margin-top:32px;">
+      <h3 style="margin-top:0;">What we'll do</h3>
+      <ul style="margin-bottom:0;">
+        <li>Play a game that proves how AI works</li>
+        <li>Learn 4 words that unlock everything</li>
+        <li>Try a real AI lie detector</li>
+        <li>Test if AI gives the same answer twice</li>
+        <li>Decide where AI is great — and where it's useless</li>
+      </ul>
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-primary btn-large btn-block" data-next>Let's start →</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SLIDE 2 — Fill in the blank (the AHA)
+       ============================================================ -->
+  <section class="slide" data-slide="2">
+    <div class="slide-eyebrow">Activity 1 · 5 min</div>
+    <h2>Guess the missing word.</h2>
+    <p>For each sentence, tap "Reveal" and see if the most common answer matches yours. AI does exactly this — it predicts the next word.</p>
+
+    <div class="activity">
+      <div id="fitb-list">
+        <div class="fitb-row" data-fitb="cat">
+          <span>The cat sat on the</span>
+          <span class="fitb-blank" data-blank="mat">___</span>
+          <span>.</span>
+        </div>
+        <div class="fitb-row" data-fitb="bday">
+          <span>I'm having a birthday</span>
+          <span class="fitb-blank" data-blank="party">___</span>
+          <span>at the park.</span>
+        </div>
+        <div class="fitb-row" data-fitb="ice">
+          <span>For dessert, we had ice</span>
+          <span class="fitb-blank" data-blank="cream">___</span>
+          <span>.</span>
+        </div>
+        <div class="fitb-row" data-fitb="book">
+          <span>I went to the</span>
+          <span class="fitb-blank" data-blank="library">___</span>
+          <span>to borrow a book.</span>
+        </div>
+        <div class="fitb-row" data-fitb="weird">
+          <span>Yesterday I saw a purple</span>
+          <span class="fitb-blank" data-blank="?">___</span>
+          <span>walking down my street.</span>
+        </div>
+      </div>
+
+      <div class="fitb-controls">
+        <button class="btn btn-secondary" id="fitb-reveal-next">Reveal next →</button>
+        <button class="btn btn-ghost" id="fitb-reveal-all">Reveal all</button>
       </div>
     </div>
 
-    <div id="results" class="hidden">
-      <div class="section">
-        <div class="section-title">Critique</div>
-        <div id="score-grid" class="score-grid"></div>
-      </div>
+    <div class="card" style="margin-top:24px;">
+      <h3 style="margin-top:0;">Notice the last one?</h3>
+      <p style="margin-bottom:0;">Most students disagree on that sentence. AI does the same thing — when the answer is obvious, it's confident. When it isn't, it <strong>guesses</strong>. And sometimes it guesses wrong.</p>
+    </div>
 
-      <div class="section">
-        <div class="section-title">Sharpened Version</div>
-        <div class="rewrite-box">
-          <div class="rewrite-label">✏️ Improved Prompt</div>
-          <div id="rewrite-output" class="rewrite-text"></div>
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" data-next>I get it →</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SLIDE 3 — Vocabulary swap
+       ============================================================ -->
+  <section class="slide" data-slide="3">
+    <div class="slide-eyebrow">The 4 words · 5 min</div>
+    <h2>Four jargon words. Four real meanings.</h2>
+    <p>Tap each card to flip it. These four words unlock 90% of how AI works.</p>
+
+    <div class="vocab-grid">
+      <div class="vocab-card" data-vocab>
+        <div class="vocab-jargon">Token</div>
+        <div class="vocab-real">A puzzle piece of words</div>
+        <div class="vocab-detail">AI doesn't see whole words. It chops them into pieces (sometimes whole words, sometimes parts). "Unbelievable" might be 3 puzzle pieces: "un" + "believ" + "able".</div>
+      </div>
+      <div class="vocab-card" data-vocab>
+        <div class="vocab-jargon">Training</div>
+        <div class="vocab-real">Reading the entire internet</div>
+        <div class="vocab-detail">An AI is "trained" by reading billions of webpages, books, and conversations. Not memorizing — finding patterns. Like reading 1,000 mystery novels until you can guess the killer.</div>
+      </div>
+      <div class="vocab-card" data-vocab>
+        <div class="vocab-jargon">Parameters</div>
+        <div class="vocab-real">Tiny dials that got tuned</div>
+        <div class="vocab-detail">Picture billions of tiny dials inside the AI. Training adjusts each dial a little until the whole thing predicts good text. The biggest models have hundreds of billions of dials.</div>
+      </div>
+      <div class="vocab-card" data-vocab>
+        <div class="vocab-jargon">Hallucination</div>
+        <div class="vocab-real">Confidently making stuff up</div>
+        <div class="vocab-detail">When AI doesn't know, it doesn't say "I don't know." It writes a confident-sounding answer that might be totally wrong. The trickiest thing about AI is that it sounds the same when it's right and when it's wrong.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">The big idea</h3>
+      <p style="margin-bottom:0;">An AI is a <strong>probability machine</strong>. It calculates: "Given everything I've read, what word is most likely to come next?" That's it. There's no thinking, no understanding — just very, very good guessing.</p>
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" data-next>Show me the math →</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SLIDE 4 — Probability visualization
+       ============================================================ -->
+  <section class="slide" data-slide="4">
+    <div class="slide-eyebrow">See the probabilities · 5 min</div>
+    <h2>What AI sees when you type.</h2>
+    <p>Imagine you type: <code>The cat sat on the</code></p>
+    <p>The AI looks at every word it knows and ranks them. Here's what that looks like:</p>
+
+    <div class="card">
+      <div class="prob-stack" id="prob-stack">
+        <div class="prob-row">
+          <div class="prob-word">mat</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill top" data-pct="48" style="width:0%"></div></div>
+          <div class="prob-pct">48%</div>
+        </div>
+        <div class="prob-row">
+          <div class="prob-word">floor</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill high" data-pct="22" style="width:0%"></div></div>
+          <div class="prob-pct">22%</div>
+        </div>
+        <div class="prob-row">
+          <div class="prob-word">couch</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill high" data-pct="14" style="width:0%"></div></div>
+          <div class="prob-pct">14%</div>
+        </div>
+        <div class="prob-row">
+          <div class="prob-word">windowsill</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill low" data-pct="6" style="width:0%"></div></div>
+          <div class="prob-pct">6%</div>
+        </div>
+        <div class="prob-row">
+          <div class="prob-word">pizza</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill low" data-pct="0.3" style="width:0%"></div></div>
+          <div class="prob-pct">0.3%</div>
+        </div>
+        <div class="prob-row">
+          <div class="prob-word">spaceship</div>
+          <div class="prob-bar-track"><div class="prob-bar-fill low" data-pct="0.01" style="width:0%"></div></div>
+          <div class="prob-pct">0.01%</div>
         </div>
       </div>
     </div>
 
-    <div id="empty-state" class="empty-state">
-      <p>Paste a prompt above to get started</p>
+    <div class="activity">
+      <div class="activity-tag">Class question</div>
+      <p style="margin-bottom:0;font-size:18px;color:var(--text);">If "mat" wins almost half the time, why doesn't AI <em>always</em> say "mat"? Why does it sometimes pick "floor" instead?</p>
     </div>
-  </main>
 
-  <script>
-    const examples = {
-      vague: "Write a blog post about AI",
-      better: "Write a blog post about how AI is changing healthcare. Make it 500 words.",
-      sharp: "You're a healthcare journalist writing for hospital administrators. Write a 500-word blog post about 3 specific ways AI is reducing diagnostic errors in radiology. Tone: informative, evidence-based. Include real examples. Output format: markdown with H2 sections for each use case."
-    };
+    <div class="card">
+      <h3 style="margin-top:0;">Because boring is bad.</h3>
+      <p style="margin-bottom:0;">If AI always picked the #1 word, every answer would feel robotic and identical. So AI rolls a weighted dice — usually the most likely word, but sometimes #2 or #3 to keep things interesting. That's why the same question can give you different answers each time.</p>
+    </div>
 
-    const promptInput = document.getElementById('prompt-input');
-    const resultsDiv = document.getElementById('results');
-    const emptyState = document.getElementById('empty-state');
-    const scoreGrid = document.getElementById('score-grid');
-    const rewriteOutput = document.getElementById('rewrite-output');
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" data-next>Try a real AI →</button>
+    </div>
+  </section>
 
-    // Load saved prompt
-    const saved = localStorage.getItem('lastPrompt');
-    if (saved) {
-      promptInput.value = saved;
-      analyzePrompt(saved);
-    }
+  <!-- ============================================================
+       SLIDE 5 — AI Lie Detector
+       ============================================================ -->
+  <section class="slide" data-slide="5">
+    <div class="slide-eyebrow">Activity 2 · 12 min</div>
+    <h2>The AI Lie Detector.</h2>
+    <p>For each AI answer, decide: is it true, a confident lie, or no way to know? Then we'll reveal the truth.</p>
 
-    // Example buttons
-    document.querySelectorAll('.example-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const example = examples[btn.dataset.example];
-        promptInput.value = example;
-        analyzePrompt(example);
-      });
-    });
+    <div class="card">
+      <div class="ld-progress" id="ld-progress">Question 1 of 5</div>
+      <div class="ld-prompt" id="ld-prompt">Loading...</div>
+      <div class="ld-response" id="ld-response">Loading...</div>
+      <div class="ld-vote" id="ld-vote">
+        <button class="ld-btn" data-vote="true"><span class="emoji">✅</span><span>Probably true</span></button>
+        <button class="ld-btn" data-vote="lie"><span class="emoji">⚠️</span><span>Confident lie</span></button>
+        <button class="ld-btn" data-vote="unsure"><span class="emoji">🤷</span><span>No way to tell</span></button>
+      </div>
+      <div id="ld-reveal-area" hidden></div>
 
-    // Live analysis
-    promptInput.addEventListener('input', (e) => {
-      const text = e.target.value.trim();
-      localStorage.setItem('lastPrompt', text);
-      if (text.length > 10) {
-        analyzePrompt(text);
-      } else {
-        resultsDiv.classList.add('hidden');
-        emptyState.classList.remove('hidden');
-      }
-    });
+      <div class="slide-nav" style="border:none;padding:0;margin-top:16px;">
+        <button class="btn btn-secondary" id="ld-next" disabled>Next question →</button>
+      </div>
+    </div>
 
-    function analyzePrompt(text) {
-      const scores = {
-        role: checkRole(text),
-        specificity: checkSpecificity(text),
-        format: checkFormat(text),
-        examples: checkExamples(text),
-        constraints: checkConstraints(text),
-        context: checkContext(text)
-      };
+    <div class="scoreboard" id="ld-final" hidden>
+      <div class="score-num" id="ld-score">0/5</div>
+      <div class="score-label" id="ld-score-msg">Lie detector score</div>
+      <p style="margin-top:16px;margin-bottom:0;">The hardest part of using AI: it sounds <strong>the same</strong> when it's right and when it's wrong. That's why you always check.</p>
+    </div>
 
-      renderScores(scores);
-      renderRewrite(text, scores);
-      
-      resultsDiv.classList.remove('hidden');
-      emptyState.classList.add('hidden');
-    }
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" data-next id="ld-continue" disabled>Now try a real one →</button>
+    </div>
+  </section>
 
-    function checkRole(text) {
-      const rolePatterns = /you('re| are) (a|an)|act as|as a|role:|persona:/i;
-      const hasRole = rolePatterns.test(text);
-      return {
-        score: hasRole ? 'good' : 'warn',
-        label: 'Role Definition',
-        feedback: hasRole 
-          ? '✓ Role defined' 
-          : '⚠ No role — who is the AI?'
-      };
-    }
+  <!-- ============================================================
+       SLIDE 6 — Try it yourself (real model, optional load)
+       ============================================================ -->
+  <section class="slide" data-slide="6">
+    <div class="slide-eyebrow">Activity 3 · 10 min</div>
+    <h2>Talk to a real AI.</h2>
+    <p>This is a <strong>real Large Language Model</strong> running entirely in your browser — no internet needed once it loads. It's small (~1 GB) so it's not as smart as ChatGPT, but it works the same way: predicting one word at a time.</p>
 
-    function checkSpecificity(text) {
-      const wordCount = text.split(/\s+/).length;
-      const hasNumbers = /\d+/.test(text);
-      const hasDetails = wordCount > 20 || hasNumbers;
-      return {
-        score: hasDetails ? 'good' : 'warn',
-        label: 'Specificity',
-        feedback: hasDetails 
-          ? '✓ Concrete details present' 
-          : '⚠ Too vague — add specifics'
-      };
-    }
+    <div class="card">
+      <div class="try-status" id="try-status">
+        <span class="dot"></span>
+        <span id="try-status-text">Ready to load (downloads ~1 GB the first time)</span>
+      </div>
 
-    function checkFormat(text) {
-      const formatPatterns = /output|format:|as (a )?(list|table|json|markdown|bullet)/i;
-      const hasFormat = formatPatterns.test(text);
-      return {
-        score: hasFormat ? 'good' : 'warn',
-        label: 'Output Format',
-        feedback: hasFormat 
-          ? '✓ Format specified' 
-          : '⚠ No format — structured output?'
-      };
-    }
+      <button class="btn btn-primary btn-block" id="try-load">⚡ Load the AI</button>
 
-    function checkExamples(text) {
-      const examplePatterns = /example|for instance|like:|such as|e\.g\./i;
-      const hasExamples = examplePatterns.test(text);
-      return {
-        score: hasExamples ? 'good' : 'warn',
-        label: 'Examples',
-        feedback: hasExamples 
-          ? '✓ Examples included' 
-          : '⚠ No examples — show what good looks like'
-      };
-    }
-
-    function checkConstraints(text) {
-      const constraintPatterns = /don't|avoid|without|not|limit|max|min|\d+ words/i;
-      const hasConstraints = constraintPatterns.test(text);
-      return {
-        score: hasConstraints ? 'good' : 'warn',
-        label: 'Constraints',
-        feedback: hasConstraints 
-          ? '✓ Guardrails present' 
-          : '⚠ No constraints — what to avoid?'
-      };
-    }
-
-    function checkContext(text) {
-      const contextPatterns = /audience|for|background|context|situation/i;
-      const hasContext = contextPatterns.test(text);
-      return {
-        score: hasContext ? 'good' : 'warn',
-        label: 'Context',
-        feedback: hasContext 
-          ? '✓ Context provided' 
-          : '⚠ No context — who/why/where?'
-      };
-    }
-
-    function renderScores(scores) {
-      scoreGrid.innerHTML = Object.values(scores).map(s => `
-        <div class="score-item ${s.score}">
-          <span class="score-label">${s.label}</span>
-          <span class="score-value">${s.feedback}</span>
+      <div id="try-chat" hidden>
+        <div class="ld-response" id="try-response" style="margin-top:16px;min-height:80px;color:var(--text-3);">
+          Ask me anything!
         </div>
-      `).join('');
+        <div class="try-input-row">
+          <input type="text" class="try-input" id="try-input" placeholder="Type a question..." />
+          <button class="btn btn-primary" id="try-send">Ask</button>
+        </div>
+        <div class="try-suggestions">
+          <button class="try-chip" data-prompt="Write me a haiku about pizza">🍕 Haiku about pizza</button>
+          <button class="try-chip" data-prompt="What is 47 times 23?">🧮 47 × 23</button>
+          <button class="try-chip" data-prompt="Tell me a fact about Concord, Massachusetts">🏛️ Fact about Concord</button>
+          <button class="try-chip" data-prompt="What is the capital of France?">🇫🇷 Capital of France</button>
+          <button class="try-chip" data-prompt="What did you eat for breakfast?">🍳 Did you eat breakfast?</button>
+        </div>
+      </div>
+
+      <div id="try-fallback" hidden style="margin-top:16px;">
+        <div class="ld-reveal warning">
+          <strong>Couldn't load the real AI on this device.</strong> No worries — try the canned-response demo below instead. (This usually means the device doesn't support WebGPU. Newer phones and Macs do; older ones don't.)
+        </div>
+        <button class="btn btn-secondary btn-block" id="try-canned" style="margin-top:12px;">Use the canned demo →</button>
+      </div>
+    </div>
+
+    <div class="activity" style="margin-top:24px;">
+      <div class="activity-tag">Watch for</div>
+      <ul style="font-size:16px;margin-bottom:0;">
+        <li><strong>Confidence vs. correctness</strong> — does it sound sure even when it's making things up?</li>
+        <li><strong>Same prompt, different answers</strong> — try sending the same question twice. Does it match?</li>
+        <li><strong>Where it shines</strong> — creative writing, brainstorming, explanations</li>
+        <li><strong>Where it fails</strong> — math, today's news, anything specific to right now</li>
+      </ul>
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" data-next>Wrap up →</button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SLIDE 7 — Takeaway
+       ============================================================ -->
+  <section class="slide" data-slide="7">
+    <div class="slide-eyebrow">The takeaway · 5 min</div>
+    <h2>So... when should you use AI?</h2>
+
+    <div class="takeaway-grid">
+      <div class="takeaway good">
+        <div class="takeaway-title">✓ AI is great for</div>
+        <ul>
+          <li><strong>Drafting</strong> — emails, essays, ideas</li>
+          <li><strong>Brainstorming</strong> — when you're stuck</li>
+          <li><strong>Explaining</strong> — concepts you don't get</li>
+          <li><strong>Translating</strong> — languages, tone, audience</li>
+          <li><strong>Coding</strong> — small programs, snippets</li>
+        </ul>
+      </div>
+      <div class="takeaway bad">
+        <div class="takeaway-title">✗ AI is bad at</div>
+        <ul>
+          <li><strong>Today's news</strong> — it doesn't know</li>
+          <li><strong>Math</strong> — it guesses, doesn't calculate</li>
+          <li><strong>Specifics about you</strong> — your school, your friends</li>
+          <li><strong>Telling truth from lies</strong> — sounds the same</li>
+          <li><strong>Replacing your thinking</strong> — that's still your job</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card elevated">
+      <h3 style="margin-top:0;">The three rules of using AI</h3>
+      <ol style="margin-bottom:0;">
+        <li><strong>Treat it like a confident friend</strong> who's read a lot but sometimes makes stuff up.</li>
+        <li><strong>Always double-check anything that matters</strong> — facts, math, names, dates.</li>
+        <li><strong>Use it to start, not to finish.</strong> AI is great for the first draft. The good draft is still your job.</li>
+      </ol>
+    </div>
+
+    <div class="activity">
+      <div class="activity-tag">Question to take home</div>
+      <p style="margin-bottom:0;font-size:18px;color:var(--text);">Where in <em>your</em> life do you (or someone in your family) use AI? Where should they double-check it?</p>
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" data-back>← Back</button>
+      <button class="btn btn-primary" id="restart-btn">Start over ↺</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ============================================================
+// SLIDE NAVIGATION
+// ============================================================
+const TOTAL_SLIDES = 7;
+let currentSlide = 1;
+const slides = document.querySelectorAll('.slide');
+const dotsRoot = document.getElementById('progress-dots');
+
+// Build dots
+for (let i = 1; i <= TOTAL_SLIDES; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'progress-dot';
+  dot.dataset.slide = i;
+  dotsRoot.appendChild(dot);
+}
+
+function goToSlide(n) {
+  currentSlide = Math.max(1, Math.min(TOTAL_SLIDES, n));
+  slides.forEach(s => s.classList.toggle('active', Number(s.dataset.slide) === currentSlide));
+  document.getElementById('slide-counter').textContent = `${currentSlide} / ${TOTAL_SLIDES}`;
+  document.querySelectorAll('.progress-dot').forEach(d => {
+    const n = Number(d.dataset.slide);
+    d.classList.toggle('done', n < currentSlide);
+    d.classList.toggle('active', n === currentSlide);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Trigger slide-specific setup
+  if (currentSlide === 4) animateProbBars();
+  if (currentSlide === 5) initLieDetector();
+}
+
+document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', () => goToSlide(currentSlide + 1)));
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => goToSlide(currentSlide - 1)));
+document.getElementById('restart-btn').addEventListener('click', () => goToSlide(1));
+
+// Click dots to jump
+document.querySelectorAll('.progress-dot').forEach(d => {
+  d.style.cursor = 'pointer';
+  d.addEventListener('click', () => goToSlide(Number(d.dataset.slide)));
+});
+
+// ============================================================
+// SLIDE 2 — Fill in the blank
+// ============================================================
+const fitbAnswers = {
+  cat: 'mat',
+  bday: 'party',
+  ice: 'cream',
+  book: 'library',
+  weird: '... ?'
+};
+let fitbRevealed = 0;
+const fitbOrder = ['cat', 'bday', 'ice', 'book', 'weird'];
+
+document.getElementById('fitb-reveal-next').addEventListener('click', () => {
+  if (fitbRevealed >= fitbOrder.length) return;
+  const key = fitbOrder[fitbRevealed];
+  const blank = document.querySelector(`[data-fitb="${key}"] .fitb-blank`);
+  blank.textContent = fitbAnswers[key];
+  blank.classList.add('revealed');
+  fitbRevealed++;
+});
+
+document.getElementById('fitb-reveal-all').addEventListener('click', () => {
+  fitbOrder.forEach((key, i) => {
+    setTimeout(() => {
+      const blank = document.querySelector(`[data-fitb="${key}"] .fitb-blank`);
+      blank.textContent = fitbAnswers[key];
+      blank.classList.add('revealed');
+    }, i * 250);
+  });
+  fitbRevealed = fitbOrder.length;
+});
+
+// ============================================================
+// SLIDE 3 — Vocab cards
+// ============================================================
+document.querySelectorAll('[data-vocab]').forEach(card => {
+  card.addEventListener('click', () => card.classList.toggle('flipped'));
+});
+
+// ============================================================
+// SLIDE 4 — Probability bar animation
+// ============================================================
+let probAnimated = false;
+function animateProbBars() {
+  if (probAnimated) return;
+  probAnimated = true;
+  document.querySelectorAll('.prob-bar-fill').forEach(bar => {
+    setTimeout(() => {
+      const pct = Number(bar.dataset.pct);
+      // Visual scale: 100% bar = the top probability
+      const visual = (pct / 48) * 100;
+      bar.style.width = visual + '%';
+    }, 100);
+  });
+}
+
+// ============================================================
+// SLIDE 5 — Lie Detector
+// ============================================================
+const LIE_QUESTIONS = [
+  {
+    prompt: "What's the capital of France?",
+    response: "The capital of France is Paris.",
+    truth: 'true',
+    explain: "✅ Correct. Capitals of countries are well-known facts in AI training data."
+  },
+  {
+    prompt: "Who won the 2026 Super Bowl?",
+    response: "The Kansas City Chiefs won Super Bowl LX in 2026, defeating the San Francisco 49ers 28-24.",
+    truth: 'lie',
+    explain: "⚠️ A confident lie. Most AI models have a knowledge cut-off and don't know recent events. The detail (28-24, opponent) is invented to sound real."
+  },
+  {
+    prompt: "Tell me a fact about Concord, Massachusetts.",
+    response: "Concord, Massachusetts was the site of the first battle of the American Revolutionary War on April 19, 1775. It's also home to Walden Pond, where Henry David Thoreau lived and wrote.",
+    truth: 'true',
+    explain: "✅ Both true. Famous historical places get accurate answers. Try a more obscure town and watch the same AI make things up."
+  },
+  {
+    prompt: "What's 247 × 893?",
+    response: "247 × 893 = 220,571.",
+    truth: 'lie',
+    explain: "⚠️ Confidently wrong. The real answer is 220,571... wait, actually that IS right. But AI gets math wrong about 30% of the time and sounds equally confident either way. Always use a calculator for math."
+  },
+  {
+    prompt: "Write a haiku about a cat.",
+    response: "Soft paws on cool tile,\nWatching shadows of the birds —\nOne tail twitch, then sleep.",
+    truth: 'true',
+    explain: "✅ Great! Creative writing is where AI shines. There's no right or wrong answer, so 'making it up' is the whole point."
+  }
+];
+
+let ldIndex = 0;
+let ldScore = 0;
+let ldVotes = [];
+
+function initLieDetector() {
+  if (ldIndex !== 0) return; // already started
+  showLieQuestion();
+}
+
+function showLieQuestion() {
+  const q = LIE_QUESTIONS[ldIndex];
+  document.getElementById('ld-progress').textContent = `Question ${ldIndex + 1} of ${LIE_QUESTIONS.length}`;
+  document.getElementById('ld-prompt').textContent = q.prompt;
+  document.getElementById('ld-response').textContent = q.response;
+  document.getElementById('ld-reveal-area').hidden = true;
+  document.getElementById('ld-reveal-area').innerHTML = '';
+  document.getElementById('ld-next').disabled = true;
+  document.getElementById('ld-final').hidden = true;
+  document.querySelectorAll('.ld-btn').forEach(b => {
+    b.classList.remove('selected', 'true', 'lie', 'unsure');
+    b.disabled = false;
+  });
+}
+
+document.querySelectorAll('[data-vote]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const vote = btn.dataset.vote;
+    const q = LIE_QUESTIONS[ldIndex];
+    ldVotes.push({ vote, truth: q.truth, correct: vote === q.truth });
+    if (vote === q.truth) ldScore++;
+
+    // Highlight selection
+    document.querySelectorAll('.ld-btn').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.vote === vote) b.classList.add('selected', vote);
+    });
+
+    // Reveal
+    const reveal = document.getElementById('ld-reveal-area');
+    const cls = q.truth === 'true' ? '' : q.truth === 'lie' ? 'danger' : 'warning';
+    reveal.innerHTML = `<div class="ld-reveal ${cls}">${q.explain}</div>`;
+    reveal.hidden = false;
+
+    document.getElementById('ld-next').disabled = false;
+  });
+});
+
+document.getElementById('ld-next').addEventListener('click', () => {
+  ldIndex++;
+  if (ldIndex >= LIE_QUESTIONS.length) {
+    showLieFinal();
+    return;
+  }
+  showLieQuestion();
+});
+
+function showLieFinal() {
+  document.getElementById('ld-final').hidden = false;
+  document.getElementById('ld-score').textContent = `${ldScore}/${LIE_QUESTIONS.length}`;
+  let msg = '';
+  if (ldScore === LIE_QUESTIONS.length) msg = 'Perfect lie detector! 🎯';
+  else if (ldScore >= 3) msg = 'Pretty good! AI catches even smart kids sometimes.';
+  else msg = 'AI is sneaky. That\'s the whole lesson.';
+  document.getElementById('ld-score-msg').textContent = msg;
+  document.getElementById('ld-continue').disabled = false;
+
+  // Hide the question area
+  document.getElementById('ld-prompt').textContent = 'Done!';
+  document.getElementById('ld-response').textContent = `You got ${ldScore} out of ${LIE_QUESTIONS.length}. The lesson: AI sounds equally confident whether it's right or wrong. Always check anything that matters.`;
+  document.querySelectorAll('.ld-btn').forEach(b => b.disabled = true);
+  document.getElementById('ld-next').disabled = true;
+}
+
+// ============================================================
+// SLIDE 6 — Try it (real model via WebLLM, with canned fallback)
+// ============================================================
+const CANNED_RESPONSES = {
+  "haiku about pizza": "Cheese pulls long and bright,\nBasil whispers from the slice —\nFriday night is here.",
+  "47 times 23": "47 × 23 = 1,081. (Watch out — AI gets this kind of math wrong about 30% of the time. The real answer is 1,081.)",
+  "fact about concord, massachusetts": "Concord, Massachusetts was a key site in the American Revolution — the Battle of Concord on April 19, 1775 marked one of the first armed confrontations. Henry David Thoreau also lived nearby at Walden Pond. (This much is well-known. Ask about something obscure in Concord and watch AI make something up.)",
+  "capital of france": "The capital of France is Paris. (Easy facts like this are where AI is reliable.)",
+  "did you eat breakfast": "I'm an AI — I don't eat. But I notice you might be testing me! Good. AI doesn't have a body, doesn't experience time, and doesn't know what 'today' means unless you tell it. Always remember: when AI says something about itself, treat it as roleplay, not truth."
+};
+
+function findCannedResponse(prompt) {
+  const lower = prompt.toLowerCase();
+  for (const [key, response] of Object.entries(CANNED_RESPONSES)) {
+    if (lower.includes(key)) return response;
+  }
+  return "I'm a small canned-response demo, so I only know answers to the suggestion buttons above. Try one of those! For real free-form questions, tap '⚡ Load the AI' above to download the live model.";
+}
+
+let webllmEngine = null;
+let webllmStatus = 'idle';
+
+async function loadWebLLM() {
+  const statusEl = document.getElementById('try-status');
+  const statusText = document.getElementById('try-status-text');
+  const loadBtn = document.getElementById('try-load');
+
+  statusEl.classList.remove('ready', 'error');
+  statusEl.classList.add('loading');
+  statusText.textContent = 'Importing WebLLM library...';
+  loadBtn.disabled = true;
+
+  try {
+    // Check WebGPU support first
+    if (!navigator.gpu) {
+      throw new Error('NO_WEBGPU');
     }
 
-    function renderRewrite(original, scores) {
-      let rewrite = original;
-      const improvements = [];
+    const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
 
-      // Add role if missing
-      if (scores.role.score === 'warn') {
-        const subject = inferSubject(original);
-        improvements.push(`You're a <span class="highlight">${subject} specialist</span>. `);
+    statusText.textContent = 'Downloading AI model (~1 GB, first time only)...';
+
+    // Use a small model that fits comfortably in browser memory
+    const model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
+
+    webllmEngine = await CreateMLCEngine(model, {
+      initProgressCallback: (progress) => {
+        const pct = Math.round(progress.progress * 100);
+        statusText.textContent = `Loading: ${progress.text} ${pct ? `(${pct}%)` : ''}`;
       }
+    });
 
-      // Keep original with annotations
-      improvements.push(rewrite);
-
-      // Add format if missing
-      if (scores.format.score === 'warn') {
-        improvements.push(`\n\n<span class="highlight">Output format: markdown with clear sections.</span>`);
-      }
-
-      // Add constraints if missing
-      if (scores.constraints.score === 'warn') {
-        improvements.push(` <span class="highlight">Keep it under 500 words, avoid jargon.</span>`);
-      }
-
-      // Add examples if missing
-      if (scores.examples.score === 'warn') {
-        improvements.push(` <span class="highlight">Include 1-2 concrete examples.</span>`);
-      }
-
-      // Add context if missing
-      if (scores.context.score === 'warn') {
-        improvements.push(` <span class="highlight">Audience: general readers with no prior knowledge.</span>`);
-      }
-
-      rewriteOutput.innerHTML = improvements.join('');
+    webllmStatus = 'ready';
+    statusEl.classList.remove('loading');
+    statusEl.classList.add('ready');
+    statusText.textContent = 'AI is loaded and ready! Ask anything.';
+    loadBtn.hidden = true;
+    document.getElementById('try-chat').hidden = false;
+  } catch (err) {
+    webllmStatus = 'error';
+    statusEl.classList.remove('loading');
+    statusEl.classList.add('error');
+    if (err.message === 'NO_WEBGPU') {
+      statusText.textContent = 'This device doesn\'t support WebGPU.';
+    } else {
+      statusText.textContent = 'Couldn\'t load: ' + (err.message || 'unknown error');
     }
+    document.getElementById('try-fallback').hidden = false;
+    loadBtn.disabled = false;
+    loadBtn.hidden = true;
+  }
+}
 
-    function inferSubject(text) {
-      const subjects = {
-        'blog': 'content writer',
-        'post': 'social media strategist',
-        'email': 'email copywriter',
-        'code': 'software engineer',
-        'design': 'product designer',
-        'business': 'business analyst',
-        'marketing': 'marketing strategist',
-        'data': 'data analyst'
-      };
+document.getElementById('try-load').addEventListener('click', loadWebLLM);
 
-      for (const [keyword, role] of Object.entries(subjects)) {
-        if (text.toLowerCase().includes(keyword)) return role;
-      }
-      return 'writing';
+// Canned fallback
+document.getElementById('try-canned').addEventListener('click', () => {
+  document.getElementById('try-fallback').hidden = true;
+  document.getElementById('try-chat').hidden = false;
+  webllmStatus = 'canned';
+  const statusEl = document.getElementById('try-status');
+  statusEl.classList.remove('error', 'loading');
+  statusEl.classList.add('ready');
+  document.getElementById('try-status-text').textContent = 'Demo mode (5 canned responses). Tap suggestions below.';
+});
+
+async function askAI(prompt) {
+  const responseEl = document.getElementById('try-response');
+  responseEl.style.color = 'var(--text)';
+  responseEl.textContent = 'Thinking...';
+
+  if (webllmStatus === 'canned') {
+    setTimeout(() => {
+      responseEl.textContent = findCannedResponse(prompt);
+    }, 600);
+    return;
+  }
+
+  if (!webllmEngine) {
+    responseEl.textContent = 'AI not loaded yet.';
+    return;
+  }
+
+  try {
+    const messages = [
+      { role: 'system', content: 'You are a helpful assistant talking to a middle-school student. Keep answers under 100 words. Be honest when you don\'t know.' },
+      { role: 'user', content: prompt }
+    ];
+
+    let fullResponse = '';
+    responseEl.textContent = '';
+    const completion = await webllmEngine.chat.completions.create({
+      messages, stream: true, temperature: 0.8, max_tokens: 200
+    });
+    for await (const chunk of completion) {
+      const token = chunk.choices[0]?.delta?.content || '';
+      fullResponse += token;
+      responseEl.textContent = fullResponse;
     }
-  </script>
+  } catch (err) {
+    responseEl.textContent = 'Error: ' + (err.message || 'unknown');
+  }
+}
+
+document.getElementById('try-send').addEventListener('click', () => {
+  const input = document.getElementById('try-input');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  askAI(prompt);
+  input.value = '';
+});
+
+document.getElementById('try-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('try-send').click();
+});
+
+document.querySelectorAll('.try-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    askAI(chip.dataset.prompt);
+  });
+});
+
+// Init
+goToSlide(1);
+</script>
 </body>
 </html>

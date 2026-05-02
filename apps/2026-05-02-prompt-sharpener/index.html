@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Prompt Sharpener — Learn to write better AI prompts</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #FAFAFA;
+      --surface: #FFFFFF;
+      --text: #1A1A1A;
+      --text-secondary: #666666;
+      --border: #E0E0E0;
+      --good: #2D7A3E;
+      --good-bg: #E8F5EA;
+      --warn: #D97706;
+      --warn-bg: #FEF3E2;
+      --accent: #007AFF;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    .section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      resize: vertical;
+      background: var(--bg);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .examples {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .example-btn {
+      font-size: 13px;
+      padding: 8px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .example-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .score-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    .score-item.good {
+      background: var(--good-bg);
+      color: var(--good);
+    }
+
+    .score-item.warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+    }
+
+    .score-label {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .score-value {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .rewrite-box {
+      background: var(--good-bg);
+      border-left: 4px solid var(--good);
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .rewrite-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--good);
+      margin-bottom: 8px;
+    }
+
+    .rewrite-text {
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .highlight {
+      background: rgba(45, 122, 62, 0.2);
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 24px;
+      }
+      textarea {
+        font-size: 16px; /* prevent zoom on iOS */
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✨ Prompt Sharpener</h1>
+    <p class="tagline">Learn to write better AI prompts — paste yours, get instant critique + rewrite</p>
+  </header>
+
+  <main>
+    <div class="section">
+      <div class="section-title">Your Prompt</div>
+      <textarea id="prompt-input" placeholder="Paste your prompt here... or try an example below"></textarea>
+      <div class="examples">
+        <button class="example-btn" data-example="vague">Example: Vague</button>
+        <button class="example-btn" data-example="better">Example: Better</button>
+        <button class="example-btn" data-example="sharp">Example: Sharp</button>
+      </div>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="section">
+        <div class="section-title">Critique</div>
+        <div id="score-grid" class="score-grid"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Sharpened Version</div>
+        <div class="rewrite-box">
+          <div class="rewrite-label">✏️ Improved Prompt</div>
+          <div id="rewrite-output" class="rewrite-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <p>Paste a prompt above to get started</p>
+    </div>
+  </main>
+
+  <script>
+    const examples = {
+      vague: "Write a blog post about AI",
+      better: "Write a blog post about how AI is changing healthcare. Make it 500 words.",
+      sharp: "You're a healthcare journalist writing for hospital administrators. Write a 500-word blog post about 3 specific ways AI is reducing diagnostic errors in radiology. Tone: informative, evidence-based. Include real examples. Output format: markdown with H2 sections for each use case."
+    };
+
+    const promptInput = document.getElementById('prompt-input');
+    const resultsDiv = document.getElementById('results');
+    const emptyState = document.getElementById('empty-state');
+    const scoreGrid = document.getElementById('score-grid');
+    const rewriteOutput = document.getElementById('rewrite-output');
+
+    // Load saved prompt
+    const saved = localStorage.getItem('lastPrompt');
+    if (saved) {
+      promptInput.value = saved;
+      analyzePrompt(saved);
+    }
+
+    // Example buttons
+    document.querySelectorAll('.example-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const example = examples[btn.dataset.example];
+        promptInput.value = example;
+        analyzePrompt(example);
+      });
+    });
+
+    // Live analysis
+    promptInput.addEventListener('input', (e) => {
+      const text = e.target.value.trim();
+      localStorage.setItem('lastPrompt', text);
+      if (text.length > 10) {
+        analyzePrompt(text);
+      } else {
+        resultsDiv.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      }
+    });
+
+    function analyzePrompt(text) {
+      const scores = {
+        role: checkRole(text),
+        specificity: checkSpecificity(text),
+        format: checkFormat(text),
+        examples: checkExamples(text),
+        constraints: checkConstraints(text),
+        context: checkContext(text)
+      };
+
+      renderScores(scores);
+      renderRewrite(text, scores);
+      
+      resultsDiv.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+    }
+
+    function checkRole(text) {
+      const rolePatterns = /you('re| are) (a|an)|act as|as a|role:|persona:/i;
+      const hasRole = rolePatterns.test(text);
+      return {
+        score: hasRole ? 'good' : 'warn',
+        label: 'Role Definition',
+        feedback: hasRole 
+          ? '✓ Role defined' 
+          : '⚠ No role — who is the AI?'
+      };
+    }
+
+    function checkSpecificity(text) {
+      const wordCount = text.split(/\s+/).length;
+      const hasNumbers = /\d+/.test(text);
+      const hasDetails = wordCount > 20 || hasNumbers;
+      return {
+        score: hasDetails ? 'good' : 'warn',
+        label: 'Specificity',
+        feedback: hasDetails 
+          ? '✓ Concrete details present' 
+          : '⚠ Too vague — add specifics'
+      };
+    }
+
+    function checkFormat(text) {
+      const formatPatterns = /output|format:|as (a )?(list|table|json|markdown|bullet)/i;
+      const hasFormat = formatPatterns.test(text);
+      return {
+        score: hasFormat ? 'good' : 'warn',
+        label: 'Output Format',
+        feedback: hasFormat 
+          ? '✓ Format specified' 
+          : '⚠ No format — structured output?'
+      };
+    }
+
+    function checkExamples(text) {
+      const examplePatterns = /example|for instance|like:|such as|e\.g\./i;
+      const hasExamples = examplePatterns.test(text);
+      return {
+        score: hasExamples ? 'good' : 'warn',
+        label: 'Examples',
+        feedback: hasExamples 
+          ? '✓ Examples included' 
+          : '⚠ No examples — show what good looks like'
+      };
+    }
+
+    function checkConstraints(text) {
+      const constraintPatterns = /don't|avoid|without|not|limit|max|min|\d+ words/i;
+      const hasConstraints = constraintPatterns.test(text);
+      return {
+        score: hasConstraints ? 'good' : 'warn',
+        label: 'Constraints',
+        feedback: hasConstraints 
+          ? '✓ Guardrails present' 
+          : '⚠ No constraints — what to avoid?'
+      };
+    }
+
+    function checkContext(text) {
+      const contextPatterns = /audience|for|background|context|situation/i;
+      const hasContext = contextPatterns.test(text);
+      return {
+        score: hasContext ? 'good' : 'warn',
+        label: 'Context',
+        feedback: hasContext 
+          ? '✓ Context provided' 
+          : '⚠ No context — who/why/where?'
+      };
+    }
+
+    function renderScores(scores) {
+      scoreGrid.innerHTML = Object.values(scores).map(s => `
+        <div class="score-item ${s.score}">
+          <span class="score-label">${s.label}</span>
+          <span class="score-value">${s.feedback}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderRewrite(original, scores) {
+      let rewrite = original;
+      const improvements = [];
+
+      // Add role if missing
+      if (scores.role.score === 'warn') {
+        const subject = inferSubject(original);
+        improvements.push(`You're a <span class="highlight">${subject} specialist</span>. `);
+      }
+
+      // Keep original with annotations
+      improvements.push(rewrite);
+
+      // Add format if missing
+      if (scores.format.score === 'warn') {
+        improvements.push(`\n\n<span class="highlight">Output format: markdown with clear sections.</span>`);
+      }
+
+      // Add constraints if missing
+      if (scores.constraints.score === 'warn') {
+        improvements.push(` <span class="highlight">Keep it under 500 words, avoid jargon.</span>`);
+      }
+
+      // Add examples if missing
+      if (scores.examples.score === 'warn') {
+        improvements.push(` <span class="highlight">Include 1-2 concrete examples.</span>`);
+      }
+
+      // Add context if missing
+      if (scores.context.score === 'warn') {
+        improvements.push(` <span class="highlight">Audience: general readers with no prior knowledge.</span>`);
+      }
+
+      rewriteOutput.innerHTML = improvements.join('');
+    }
+
+    function inferSubject(text) {
+      const subjects = {
+        'blog': 'content writer',
+        'post': 'social media strategist',
+        'email': 'email copywriter',
+        'code': 'software engineer',
+        'design': 'product designer',
+        'business': 'business analyst',
+        'marketing': 'marketing strategist',
+        'data': 'data analyst'
+      };
+
+      for (const [keyword, role] of Object.entries(subjects)) {
+        if (text.toLowerCase().includes(keyword)) return role;
+      }
+      return 'writing';
+    }
+  </script>
+</body>
+</html>

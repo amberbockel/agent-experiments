@@ -6,10 +6,18 @@
     {
       "date": "2026-05-02",
       "slug": "2026-05-02",
+      "title": "How AI Actually Works",
+      "category": "delightful",
+      "oneLiner": "A 30-minute interactive class for middle schoolers — fill-in-the-blank game, jargon-busting vocab, AI lie detector, and a real LLM running in the browser.",
+      "path": "apps/2026-05-02/"
+    },
+    {
+      "date": "2026-05-02",
+      "slug": "2026-05-02-prompt-sharpener",
       "title": "Prompt Sharpener",
       "category": "trend",
       "oneLiner": "Paste any AI prompt and get instant critique + rewrite — learn what makes prompts sharp vs sloppy, with before/after examples.",
-      "path": "apps/2026-05-02/"
+      "path": "apps/2026-05-02-prompt-sharpener/"
     },
     {
       "date": "2026-05-01",
