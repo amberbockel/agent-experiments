@@ -187,112 +187,6 @@
     border-color: rgba(181,164,255,0.7);
   }
 
-  /* Request modal */
-  .req-modal {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: flex-end;
-    justify-content: center;
-    padding: 0;
-    animation: req-fade 200ms ease-out;
-  }
-  @media (min-width: 640px) {
-    .req-modal { align-items: center; padding: 20px; }
-  }
-  @keyframes req-fade { from { opacity: 0; } to { opacity: 1; } }
-  .req-backdrop {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
-  }
-  .req-card {
-    position: relative;
-    background: var(--jeo-blue);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px 20px 0 0;
-    width: 100%; max-width: 520px;
-    max-height: 90dvh;
-    overflow-y: auto;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-    animation: req-slide 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @media (min-width: 640px) {
-    .req-card { border-radius: 20px; }
-  }
-  @keyframes req-slide {
-    from { transform: translateY(40px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  .req-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-  .req-title {
-    font-size: 18px; font-weight: 700;
-    color: var(--jeo-gold);
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-  .req-close {
-    background: rgba(255,255,255,0.1);
-    border: none; color: var(--text);
-    width: 32px; height: 32px; border-radius: 50%;
-    font-size: 18px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .req-body {
-    padding: 20px 24px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-  .req-help {
-    font-size: 14px; color: var(--text-dim);
-    margin-bottom: 20px; line-height: 1.5;
-  }
-  .req-label {
-    display: block;
-    font-size: 12px; font-weight: 700;
-    letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--jeo-gold);
-    margin: 16px 0 6px;
-  }
-  .req-input {
-    width: 100%;
-    background: var(--jeo-blue-dark);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: var(--text);
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 15px;
-    font-family: inherit;
-  }
-  .req-input:focus { outline: none; border-color: var(--jeo-gold); }
-  textarea.req-input { resize: vertical; min-height: 70px; }
-  .req-footer {
-    display: flex; gap: 10px; justify-content: flex-end;
-    padding: 16px 24px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  .req-btn {
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 14px; font-weight: 700;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    cursor: pointer;
-    border: none;
-  }
-  .req-btn.ghost {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid rgba(255,255,255,0.2);
-  }
-  .req-btn.primary {
-    background: var(--jeo-gold);
-    color: var(--jeo-blue-dark);
-    box-shadow: 0 3px 0 var(--jeo-gold-dim);
-  }
-  .req-btn.primary:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 var(--jeo-gold-dim);
-  }
   .pack-card {
     background: var(--tile-bg);
     border: 2px solid rgba(255,255,255,0.1);
@@ -595,48 +489,14 @@
       <div class="pack-grid" id="custom-pack-grid"></div>
     </div>
 
-    <!-- Quiet utility actions at bottom -->
+    <!-- Quiet utility action at bottom: import a custom pack -->
     <div class="home-footer">
-      <button class="footer-btn primary" id="request-btn">
-        ✨ Request a custom pack from Ada
-      </button>
       <label class="footer-btn">
-        📥 Import pack
+        📥 Import a custom pack
         <input type="file" id="import-input" accept=".json" hidden>
       </label>
     </div>
   </section>
-
-  <!-- REQUEST MODAL -->
-  <div class="req-modal" id="request-modal" hidden>
-    <div class="req-backdrop" data-close-request></div>
-    <div class="req-card">
-      <div class="req-header">
-        <div class="req-title">✨ Request a Pack from Ada</div>
-        <button class="req-close" data-close-request aria-label="Close">×</button>
-      </div>
-      <div class="req-body">
-        <p class="req-help">Tell Ada what kind of pack you want. She'll generate 5 clues at $100–$500, then send you a JSON file you can import here.</p>
-
-        <label class="req-label">Topic</label>
-        <input type="text" class="req-input" id="request-topic" placeholder="e.g. Greek Mythology, Hamilton, Pokemon, NBA history" autocomplete="off">
-
-        <label class="req-label">Difficulty</label>
-        <select class="req-input" id="request-level">
-          <option value="easy">Easy — for younger kids</option>
-          <option value="medium" selected>Medium — middle school sweet spot</option>
-          <option value="hard">Hard — stump the parents</option>
-        </select>
-
-        <label class="req-label">Notes (optional)</label>
-        <textarea class="req-input" id="request-notes" rows="3" placeholder="e.g. focus on the original Greek myths, no movies; or: include a really hard $500 about Apollo"></textarea>
-      </div>
-      <div class="req-footer">
-        <button class="req-btn ghost" data-close-request>Cancel</button>
-        <button class="req-btn primary" id="request-submit">Download → Send to Ada</button>
-      </div>
-    </div>
-  </div>
 
   <!-- BOARD SCREEN -->
   <section class="screen" id="screen-board">
@@ -1218,62 +1078,6 @@ function wirePackGrid(grid) {
   });
 }
 
-// =================== Custom pack: request from Ada ===================
-function openRequestModal() {
-  const modal = document.getElementById('request-modal');
-  if (!modal) return;
-  modal.hidden = false;
-  document.getElementById('request-topic').focus();
-}
-
-function closeRequestModal() {
-  const modal = document.getElementById('request-modal');
-  if (modal) modal.hidden = true;
-}
-
-function submitRequest() {
-  const topic = document.getElementById('request-topic').value.trim();
-  const level = document.getElementById('request-level').value;
-  const notes = document.getElementById('request-notes').value.trim();
-  if (!topic) { document.getElementById('request-topic').focus(); return; }
-
-  const request = {
-    type: 'family-jeopardy-pack-request',
-    version: 1,
-    requestedAt: new Date().toISOString(),
-    topic,
-    level,
-    notes,
-    instructions: 'Please generate a Family Jeopardy pack with 5 clues at $100/200/300/400/500. Each clue is middle-school appropriate. Each answer is in the form of a question (e.g., "What is...?" or "Who is...?"). Return as JSON matching the schema below, then send back so it can be imported.',
-    schema: {
-      id: 'string-slug',
-      name: 'Display Name',
-      emoji: '🌟',
-      level: 'easy | medium | hard',
-      description: 'short description',
-      isCustom: true,
-      clues: [
-        { value: 100, clue: 'Clue text.', answer: 'What/Who is...?' }
-      ]
-    }
-  };
-
-  const blob = new Blob([JSON.stringify(request, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const stamp = new Date().toISOString().slice(0, 10);
-  const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
-  a.download = `jeopardy-request-${slug}-${stamp}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  closeRequestModal();
-  alert('Request downloaded! Send it to Ada on Telegram. She\'ll send back a JSON file you can import with the "Import Pack" button.');
-  document.getElementById('request-topic').value = '';
-  document.getElementById('request-notes').value = '';
-}
-
 function handlePackImport(file) {
   const reader = new FileReader();
   reader.onload = () => {
@@ -1475,12 +1279,7 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// Wire up request modal + import
-document.getElementById('request-btn').addEventListener('click', openRequestModal);
-document.querySelectorAll('[data-close-request]').forEach(el =>
-  el.addEventListener('click', closeRequestModal)
-);
-document.getElementById('request-submit').addEventListener('click', submitRequest);
+// Wire up custom-pack import
 document.getElementById('import-input').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file) handlePackImport(file);
