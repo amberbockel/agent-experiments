@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Workshop Pricing Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #FFFFFF;
+      --surface: #F9FAFB;
+      --border: #E5E7EB;
+      --text: #111827;
+      --text-secondary: #6B7280;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --success: #059669;
+      --warning: #D97706;
+      --radius: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F172A;
+        --surface: #1E293B;
+        --border: #334155;
+        --text: #F1F5F9;
+        --text-secondary: #94A3B8;
+        --accent: #3B82F6;
+        --accent-hover: #2563EB;
+        --success: #10B981;
+        --warning: #F59E0B;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .input-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 17px;
+      font-variant-numeric: tabular-nums;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .results {
+      margin-top: 24px;
+    }
+
+    .result-card {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .result-card.recommended {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--bg) 0%, var(--surface) 100%);
+    }
+
+    .result-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .result-card.break-even .result-label {
+      color: var(--text-secondary);
+    }
+
+    .result-card.competitive .result-label {
+      color: var(--accent);
+    }
+
+    .result-card.premium .result-label {
+      color: var(--success);
+    }
+
+    .price {
+      font-size: 42px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .price-detail {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .breakdown {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cta {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 16px 60px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .price {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Workshop Pricing Calculator</h1>
+      <p class="subtitle">Price with confidence — factor in your time, materials, and expertise</p>
+    </header>
+
+    <div class="section">
+      <div class="section-title">Time Investment</div>
+      
+      <div class="input-group">
+        <label for="prep">Prep Time (hours)</label>
+        <input type="number" id="prep" min="0" step="0.5" value="4">
+        <div class="input-hint">Curriculum design, materials prep, platform setup</div>
+      </div>
+
+      <div class="input-group">
+        <label for="teaching">Teaching Time (hours)</label>
+        <input type="number" id="teaching" min="0" step="0.5" value="2">
+        <div class="input-hint">Actual workshop duration</div>
+      </div>
+
+      <div class="input-group">
+        <label for="hourly">Desired Hourly Rate ($)</label>
+        <input type="number" id="hourly" min="0" step="5" value="75">
+        <div class="input-hint">What your time is worth</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Costs & Logistics</div>
+      
+      <div class="input-group">
+        <label for="materials">Materials Cost per Student ($)</label>
+        <input type="number" id="materials" min="0" step="1" value="15">
+        <div class="input-hint">Supplies, handouts, etc.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="platform">Platform Fee (%)</label>
+        <input type="number" id="platform" min="0" max="100" step="1" value="10">
+        <div class="input-hint">Zoom, Teachable, Eventbrite, payment processor</div>
+      </div>
+
+      <div class="input-group">
+        <label for="students">Number of Students</label>
+        <input type="number" id="students" min="1" step="1" value="10">
+      </div>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <div class="cta">
+      Adjust the numbers above to see pricing tiers update in real-time
+    </div>
+  </div>
+
+  <script>
+    const inputs = {
+      prep: document.getElementById('prep'),
+      teaching: document.getElementById('teaching'),
+      hourly: document.getElementById('hourly'),
+      materials: document.getElementById('materials'),
+      platform: document.getElementById('platform'),
+      students: document.getElementById('students')
+    };
+
+    const resultsContainer = document.getElementById('results');
+
+    // Load saved values
+    function loadValues() {
+      Object.keys(inputs).forEach(key => {
+        const saved = localStorage.getItem(`workshop_${key}`);
+        if (saved !== null) {
+          inputs[key].value = saved;
+        }
+      });
+    }
+
+    // Save values
+    function saveValues() {
+      Object.keys(inputs).forEach(key => {
+        localStorage.setItem(`workshop_${key}`, inputs[key].value);
+      });
+    }
+
+    // Calculate pricing
+    function calculate() {
+      const prep = parseFloat(inputs.prep.value) || 0;
+      const teaching = parseFloat(inputs.teaching.value) || 0;
+      const hourly = parseFloat(inputs.hourly.value) || 0;
+      const materials = parseFloat(inputs.materials.value) || 0;
+      const platformPct = parseFloat(inputs.platform.value) || 0;
+      const students = parseInt(inputs.students.value) || 1;
+
+      const totalHours = prep + teaching;
+      const laborCost = totalHours * hourly;
+      const totalMaterialsCost = materials * students;
+      const totalCost = laborCost + totalMaterialsCost;
+
+      // Break-even: cover costs + platform fee
+      const breakEven = totalCost / students / (1 - platformPct / 100);
+
+      // Competitive: 30% margin
+      const competitive = (totalCost * 1.3) / students / (1 - platformPct / 100);
+
+      // Premium: 50% margin
+      const premium = (totalCost * 1.5) / students / (1 - platformPct / 100);
+
+      const totalRevenue = competitive * students;
+      const platformFee = totalRevenue * (platformPct / 100);
+      const netRevenue = totalRevenue - platformFee;
+      const profit = netRevenue - totalCost;
+      const hourlyEarned = profit / totalHours;
+
+      renderResults({
+        breakEven,
+        competitive,
+        premium,
+        totalCost,
+        platformFee,
+        netRevenue,
+        profit,
+        hourlyEarned,
+        students,
+        totalHours
+      });
+
+      saveValues();
+    }
+
+    function renderResults(data) {
+      resultsContainer.innerHTML = `
+        <div class="result-card break-even">
+          <div class="result-label">Break-Even</div>
+          <div class="price">$${data.breakEven.toFixed(0)}</div>
+          <div class="price-detail">per student · covers costs, no profit</div>
+        </div>
+
+        <div class="result-card competitive recommended">
+          <div class="result-label">Competitive <span class="badge">Recommended</span></div>
+          <div class="price">$${data.competitive.toFixed(0)}</div>
+          <div class="price-detail">per student · 30% margin</div>
+          <div class="breakdown">
+            <div class="breakdown-row">
+              <span>Total Revenue (${data.students} students)</span>
+              <strong>$${(data.competitive * data.students).toFixed(0)}</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>Platform Fee</span>
+              <span>–$${data.platformFee.toFixed(0)}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Total Costs</span>
+              <span>–$${data.totalCost.toFixed(0)}</span>
+            </div>
+            <div class="breakdown-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+              <span><strong>Your Profit</strong></span>
+              <strong style="color: var(--success);">$${data.profit.toFixed(0)}</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>Effective Hourly Rate</span>
+              <span>${data.hourlyEarned > 0 ? '$' + data.hourlyEarned.toFixed(0) : '$0'}/hr</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-card premium">
+          <div class="result-label">Premium</div>
+          <div class="price">$${data.premium.toFixed(0)}</div>
+          <div class="price-detail">per student · 50% margin · high-value positioning</div>
+        </div>
+      `;
+    }
+
+    // Initialize
+    loadValues();
+    calculate();
+
+    // Listen for changes
+    Object.values(inputs).forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+  </script>
+</body>
+</html>
