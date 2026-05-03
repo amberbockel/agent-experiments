@@ -9,7 +9,26 @@
       "title": "How AI Actually Works",
       "category": "delightful",
       "oneLiner": "A 30-minute interactive class for middle schoolers — fill-in-the-blank game, jargon-busting vocab, AI lie detector, and a real LLM running in the browser.",
-      "path": "apps/2026-05-02/"
+      "path": "apps/2026-05-02/",
+      "flagship": true
+    },
+    {
+      "date": "2026-04-30",
+      "slug": "portfolio-builder",
+      "title": "Portfolio Builder",
+      "category": "productivity",
+      "oneLiner": "Shared CMS for Amber Miro's portfolio system — 12 pieces, 9 documents, 19 tasks, all sync'd via Telegram.",
+      "path": "apps/portfolio-builder/",
+      "flagship": true
+    },
+    {
+      "date": "2026-04-30",
+      "slug": "2026-04-30-jeopardy",
+      "title": "Family Jeopardy!",
+      "category": "delightful",
+      "oneLiner": "Mobile Jeopardy board for the family — 47 categories, 705 questions, fresh 5×5 board every round.",
+      "path": "apps/2026-04-30-jeopardy/",
+      "flagship": true
     },
     {
       "date": "2026-05-02",
@@ -26,23 +45,6 @@
       "category": "delightful",
       "oneLiner": "Mystical toy for trivial decisions — ask a question, shake your phone, get delightfully dramatic guidance with personality.",
       "path": "apps/2026-05-01/"
-    },
-    {
-      "date": "2026-04-30",
-      "slug": "portfolio-builder",
-      "title": "Portfolio Builder",
-      "category": "productivity",
-      "oneLiner": "Shared CMS for Amber Miro's portfolio system — 12 pieces, 9 documents, 19 tasks, all sync'd via Telegram. Flagship.",
-      "path": "apps/portfolio-builder/",
-      "flagship": true
-    },
-    {
-      "date": "2026-04-30",
-      "slug": "2026-04-30-jeopardy",
-      "title": "Family Jeopardy!",
-      "category": "delightful",
-      "oneLiner": "Mobile Jeopardy for Amber, William, and Zev — 8 family-friendly categories, pass one phone, answer in the form of a question.",
-      "path": "apps/2026-04-30-jeopardy/"
     },
     {
       "date": "2026-04-30",

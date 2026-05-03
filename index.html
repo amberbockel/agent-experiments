@@ -91,6 +91,42 @@
     border-radius: 16px; padding: 48px 24px; text-align: center;
     color: var(--muted);
   }
+  /* Flagship cards — elevated, larger, more prominent */
+  .flagships {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .flagship {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1px solid rgba(181, 164, 255, 0.18);
+    border-radius: 18px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+  }
+  .flagship:hover, .flagship:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(181, 164, 255, 0.4);
+    box-shadow: 0 8px 24px rgba(181, 164, 255, 0.12);
+    outline: none;
+  }
+  .flagship-emoji { font-size: 28px; margin-bottom: 8px; line-height: 1; }
+  .flagship-title {
+    font-size: 20px; font-weight: 700; letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .flagship-line { font-size: 14px; color: var(--muted); line-height: 1.45; margin-bottom: 14px; }
+  .flagship-link {
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .section-block { margin-bottom: 32px; }
   footer {
     margin-top: 64px; padding-top: 24px;
     border-top: 1px solid var(--border);
@@ -112,9 +148,16 @@
       </div>
     </header>
 
-    <div class="section-label">Recent drops</div>
-    <div class="apps" id="apps-list">
-      <div class="empty">Loading…</div>
+    <div class="section-block" id="flagships-section" hidden>
+      <div class="section-label">⭐ Flagships</div>
+      <div class="flagships" id="flagships-list"></div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">Recent drops</div>
+      <div class="apps" id="apps-list">
+        <div class="empty">Loading…</div>
+      </div>
     </div>
 
     <footer>
@@ -126,8 +169,17 @@
 <script>
 const TAG_CLASS = { productivity: '', delightful: 'delightful', trend: 'trend', business: 'business' };
 
+// Map flagship slugs to emojis (kept here, not in manifest, to avoid touching content schema)
+const FLAGSHIP_EMOJI = {
+  'portfolio-builder': '🌸',
+  '2026-04-30-jeopardy': '🎤',
+  '2026-05-02': '🤖'
+};
+
 async function load() {
   const list = document.getElementById('apps-list');
+  const flagshipSection = document.getElementById('flagships-section');
+  const flagshipList = document.getElementById('flagships-list');
   try {
     const res = await fetch('manifest.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('manifest missing');
@@ -142,21 +194,45 @@ async function load() {
       return;
     }
 
-    list.innerHTML = apps.map(app => {
-      const tagClass = TAG_CLASS[(app.category || '').toLowerCase()] || '';
-      const href = app.path || `apps/${app.date}/`;
-      return `
-        <a class="app" href="${href}" aria-label="${app.title}">
-          <div class="app-top">
-            <div class="app-title">${app.title}</div>
-            <div class="app-date">${formatDate(app.date)}</div>
-          </div>
-          <span class="app-tag ${tagClass}">${app.category || 'app'}</span>
-          <div class="app-line">${app.oneLiner || ''}</div>
-          <div class="app-meta"><span class="app-link">Open →</span></div>
-        </a>
-      `;
-    }).join('');
+    // Split into flagships and recent drops
+    const flagships = apps.filter(a => a.flagship);
+    const recent = apps.filter(a => !a.flagship);
+
+    if (flagships.length > 0) {
+      flagshipSection.hidden = false;
+      flagshipList.innerHTML = flagships.map(app => {
+        const href = app.path || `apps/${app.date}/`;
+        const emoji = FLAGSHIP_EMOJI[app.slug] || '⭐';
+        return `
+          <a class="flagship" href="${href}" aria-label="${app.title}">
+            <div class="flagship-emoji">${emoji}</div>
+            <div class="flagship-title">${app.title}</div>
+            <div class="flagship-line">${app.oneLiner || ''}</div>
+            <div class="flagship-link">Open →</div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    if (recent.length === 0) {
+      list.innerHTML = '<div class="empty">All apps shown above.</div>';
+    } else {
+      list.innerHTML = recent.map(app => {
+        const tagClass = TAG_CLASS[(app.category || '').toLowerCase()] || '';
+        const href = app.path || `apps/${app.date}/`;
+        return `
+          <a class="app" href="${href}" aria-label="${app.title}">
+            <div class="app-top">
+              <div class="app-title">${app.title}</div>
+              <div class="app-date">${formatDate(app.date)}</div>
+            </div>
+            <span class="app-tag ${tagClass}">${app.category || 'app'}</span>
+            <div class="app-line">${app.oneLiner || ''}</div>
+            <div class="app-meta"><span class="app-link">Open →</span></div>
+          </a>
+        `;
+      }).join('');
+    }
   } catch (e) {
     list.innerHTML = '<div class="empty">First app drops tomorrow morning. ☕</div>';
     document.getElementById('stat-count').textContent = '0';
