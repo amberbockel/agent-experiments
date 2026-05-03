@@ -142,97 +142,14 @@
   .pack-delete:hover { background: var(--wrong); color: white; }
   .pack-card { position: relative; }
 
-  /* Primary play block */
-  .play-block {
-    margin: 24px 0;
+  /* Random tile (first card in pack grid) */
+  .pack-random {
+    background: linear-gradient(135deg, rgba(255,204,0,0.18), rgba(255,184,0,0.08)) !important;
+    border-color: var(--jeo-gold) !important;
+    box-shadow: 0 0 0 1px rgba(255,204,0,0.3);
   }
-  .play-btn {
-    width: 100%;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px;
-    background: linear-gradient(135deg, var(--jeo-gold), #FFB800);
-    color: var(--jeo-blue-dark);
-    border: none;
-    border-radius: 16px;
-    padding: 24px 20px;
-    font-family: 'Korinna', 'Times New Roman', serif;
-    cursor: pointer;
-    box-shadow: 0 6px 0 var(--jeo-gold-dim), 0 8px 24px rgba(255,204,0,0.25);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-  .play-btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 3px 0 var(--jeo-gold-dim), 0 4px 12px rgba(255,204,0,0.25);
-  }
-  .play-emoji { font-size: 36px; line-height: 1; margin-bottom: 4px; }
-  .play-label {
-    font-size: 24px; font-weight: 800;
-    letter-spacing: 0.04em;
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
-  }
-  .play-sub {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 13px; font-weight: 600;
-    color: rgba(0,0,40,0.7);
-  }
-
-  .diff-row {
-    display: flex; gap: 8px;
-    margin-top: 12px;
-    justify-content: center;
-  }
-  .diff-chip {
-    flex: 1;
-    background: var(--jeo-blue-dark);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text-dim);
-    padding: 10px 12px;
-    border-radius: 999px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 13px; font-weight: 600;
-    cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 6px;
-    transition: all 0.15s ease;
-  }
-  .diff-chip:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
-  .diff-chip.active {
-    background: rgba(255,204,0,0.12);
-    border-color: var(--jeo-gold);
-    color: var(--jeo-gold);
-  }
-  .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  /* Browse toggle */
-  .browse-toggle {
-    width: 100%;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text-dim);
-    padding: 14px 18px;
-    border-radius: 12px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 14px; font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-    display: flex; justify-content: space-between; align-items: center;
-    transition: all 0.15s ease;
-  }
-  .browse-toggle:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
-  .browse-toggle.expanded { border-color: var(--jeo-gold); color: var(--jeo-gold); }
-  .browse-chevron {
-    font-size: 16px; line-height: 1;
-    transition: transform 0.2s ease;
-    display: inline-block;
-  }
-  .browse-toggle.expanded .browse-chevron {
-    transform: rotate(180deg);
-  }
-
-  /* Section title size variant */
-  .section-title.small {
-    margin-top: 24px; margin-bottom: 8px;
-    font-size: 11px;
+  .pack-random:hover {
+    background: linear-gradient(135deg, rgba(255,204,0,0.28), rgba(255,184,0,0.12)) !important;
   }
 
   /* Footer (quiet utility actions) */
@@ -256,10 +173,18 @@
     cursor: pointer;
     transition: all 0.15s ease;
   }
+  .footer-btn.primary {
+    background: linear-gradient(135deg, rgba(181,164,255,0.15), rgba(100,210,255,0.08));
+    border-color: rgba(181,164,255,0.4);
+    color: var(--text);
+  }
   .footer-btn:hover {
     color: var(--text);
     border-color: rgba(255,255,255,0.2);
     background: rgba(255,255,255,0.03);
+  }
+  .footer-btn.primary:hover {
+    border-color: rgba(181,164,255,0.7);
   }
 
   /* Request modal */
@@ -651,7 +576,7 @@
       <div class="logo-stack">
         <div class="logo-text">JEOPARDY!<span class="small">FAMILY EDITION</span></div>
       </div>
-      <div class="home-tagline">Read the clue. Answer in the form of a question.</div>
+      <div class="home-tagline">Pick a category. Read the clue. Answer in the form of a question.</div>
     </div>
 
     <div class="players-section">
@@ -660,45 +585,19 @@
       <button class="add-player-btn" id="add-player-btn">+ Add player</button>
     </div>
 
-    <!-- Primary play action -->
-    <div class="play-block">
-      <button class="play-btn" id="start-game-btn">
-        <span class="play-emoji">🎲</span>
-        <span class="play-label">Start a game</span>
-        <span class="play-sub">5 random questions · fresh every round</span>
-      </button>
-      <div class="diff-row" id="diff-row">
-        <button class="diff-chip" data-diff="easy">
-          <span class="chip-dot" style="background:#7DDDB7"></span>Easy
-        </button>
-        <button class="diff-chip active" data-diff="mixed">
-          <span class="chip-dot" style="background:#FFCC00"></span>Mixed
-        </button>
-        <button class="diff-chip" data-diff="hard">
-          <span class="chip-dot" style="background:#FFB48C"></span>Hard
-        </button>
-      </div>
-    </div>
+    <div class="section-title">Pick a Category</div>
+    <div class="filter-row" id="level-filter"></div>
+    <div class="pack-grid" id="pack-grid"></div>
 
     <!-- Custom packs row (only shown if any exist) -->
     <div id="custom-packs-section" hidden>
-      <div class="section-title small">Your custom packs</div>
+      <div class="section-title">Your custom packs</div>
       <div class="pack-grid" id="custom-pack-grid"></div>
     </div>
 
-    <!-- Browse all (collapsed/expanded library) -->
-    <button class="browse-toggle" id="browse-toggle">
-      <span>Or pick a theme</span>
-      <span class="browse-chevron" id="browse-chevron">⌄</span>
-    </button>
-    <div id="browse-region" hidden>
-      <div class="filter-row" id="level-filter"></div>
-      <div class="pack-grid" id="pack-grid"></div>
-    </div>
-
-    <!-- Footer: quiet utility actions -->
+    <!-- Quiet utility actions at bottom -->
     <div class="home-footer">
-      <button class="footer-btn" id="request-btn">
+      <button class="footer-btn primary" id="request-btn">
         ✨ Request a custom pack from Ada
       </button>
       <label class="footer-btn">
@@ -1201,48 +1100,7 @@ function renderHome() {
     });
   });
 
-  // ====== Difficulty chips for Start a Game ======
-  const diffRoot = document.getElementById('diff-row');
-  if (diffRoot) {
-    const pref = state.difficultyPref || 'mixed';
-    diffRoot.querySelectorAll('[data-diff]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.diff === pref);
-      btn.onclick = () => {
-        state.difficultyPref = btn.dataset.diff;
-        persist();
-        renderHome();
-      };
-    });
-  }
-
-  // ====== Custom packs section ======
-  const customSection = document.getElementById('custom-packs-section');
-  const customGrid = document.getElementById('custom-pack-grid');
-  const customPacks = state.customPacks || [];
-  if (customSection && customGrid) {
-    if (customPacks.length === 0) {
-      customSection.hidden = true;
-    } else {
-      customSection.hidden = false;
-      customGrid.innerHTML = customPacks.map(pack => renderPackCard(pack)).join('');
-      wirePackGrid(customGrid);
-    }
-  }
-
-  // ====== Browse all themes (collapsible) ======
-  const browseRegion = document.getElementById('browse-region');
-  const browseToggle = document.getElementById('browse-toggle');
-  if (browseToggle && browseRegion) {
-    browseRegion.hidden = !state.browseExpanded;
-    browseToggle.classList.toggle('expanded', !!state.browseExpanded);
-    browseToggle.onclick = () => {
-      state.browseExpanded = !state.browseExpanded;
-      persist();
-      renderHome();
-    };
-  }
-
-  // Filter pills (only relevant when browsing is expanded)
+  // ====== Filter pills ======
   const filterRoot = document.getElementById('level-filter');
   if (filterRoot) {
     const filter = state.activeFilter || 'all';
@@ -1264,7 +1122,7 @@ function renderHome() {
     });
   }
 
-  // Themed packs grid (no Mixed Bag tile, no custom packs — those have their own home)
+  // ====== Pack grid: Random tile + themed packs ======
   const filter = state.activeFilter || 'all';
   let visiblePacks;
   if (filter === 'all') visiblePacks = PACKS;
@@ -1272,10 +1130,40 @@ function renderHome() {
 
   const grid = document.getElementById('pack-grid');
   if (grid) {
-    grid.innerHTML = visiblePacks.length
+    // Random tile is always first — instant random play, no prompts
+    const randomTile = `
+      <button class="pack-card pack-random" data-random>
+        <div class="pack-emoji">🎲</div>
+        <div class="pack-info">
+          <div class="pack-name-row">
+            <span class="pack-name">Random</span>
+            <span class="pack-badge lvl-mixed">Mixed</span>
+          </div>
+          <div class="pack-meta">5 random questions · fresh every round</div>
+        </div>
+      </button>
+    `;
+    grid.innerHTML = randomTile + (visiblePacks.length
       ? visiblePacks.map(pack => renderPackCard(pack)).join('')
-      : `<div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-dim); font-family: ui-sans-serif, system-ui, sans-serif;">No packs at this level.</div>`;
+      : ''
+    );
     wirePackGrid(grid);
+    const randomBtn = grid.querySelector('[data-random]');
+    if (randomBtn) randomBtn.addEventListener('click', startMixedGame);
+  }
+
+  // ====== Custom packs section (only if any exist) ======
+  const customSection = document.getElementById('custom-packs-section');
+  const customGrid = document.getElementById('custom-pack-grid');
+  const customPacks = state.customPacks || [];
+  if (customSection && customGrid) {
+    if (customPacks.length === 0) {
+      customSection.hidden = true;
+    } else {
+      customSection.hidden = false;
+      customGrid.innerHTML = customPacks.map(pack => renderPackCard(pack)).join('');
+      wirePackGrid(customGrid);
+    }
   }
 }
 
@@ -1586,9 +1474,6 @@ document.getElementById('info-btn').addEventListener('click', () => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
-
-// Wire up Start Game (front-door action)
-document.getElementById('start-game-btn').addEventListener('click', startMixedGame);
 
 // Wire up request modal + import
 document.getElementById('request-btn').addEventListener('click', openRequestModal);
