@@ -568,5 +568,409 @@ window.JEOPARDY_CATEGORIES = [
       { value: 500, clue: 'This natural phenomenon is called Aurora Borealis in the north.', answer: 'What is the Northern Lights?' },
       { value: 500, clue: 'This is the Latin term for "blank slate" used in philosophy.', answer: 'What is tabula rasa?' }
     ]
+  },
+
+  // ======================================================================
+  // BATCH 2 — added 2026-05-02 (20 new categories)
+  // ======================================================================
+  {
+    id: 'birds', name: 'BIRDS', level: 'easy',
+    clues: [
+      { value: 100, clue: 'This bird is a national symbol of the United States.', answer: 'What is the bald eagle?' },
+      { value: 100, clue: 'This pink bird stands on one leg and gets its color from shrimp.', answer: 'What is a flamingo?' },
+      { value: 100, clue: 'This nocturnal bird is known for its "who-who" call.', answer: 'What is an owl?' },
+      { value: 200, clue: 'This is the fastest bird in the world when diving.', answer: 'What is the peregrine falcon?' },
+      { value: 200, clue: 'This Antarctic bird waddles on land but is graceful in water.', answer: 'What is a penguin?' },
+      { value: 200, clue: 'This tiny bird can hover and fly backwards.', answer: 'What is a hummingbird?' },
+      { value: 300, clue: 'This is the largest bird in the world, native to Africa.', answer: 'What is an ostrich?' },
+      { value: 300, clue: 'This brightly colored tropical bird can mimic human speech.', answer: 'What is a parrot?' },
+      { value: 300, clue: 'This Australian bird laughs like a person.', answer: 'What is a kookaburra?' },
+      { value: 400, clue: 'This New Zealand flightless bird shares its name with a fruit.', answer: 'What is a kiwi?' },
+      { value: 400, clue: 'This bird is famous for delivering babies in folklore.', answer: 'What is a stork?' },
+      { value: 400, clue: 'This bird, considered extinct, was once native to Mauritius.', answer: 'What is a dodo?' },
+      { value: 500, clue: 'This South American bird has the longest beak relative to body size.', answer: 'What is the toucan? (or sword-billed hummingbird)' },
+      { value: 500, clue: 'This species of penguin is the largest, standing about 4 feet tall.', answer: 'What is the emperor penguin?' },
+      { value: 500, clue: 'This term refers to the migration of birds between summer and winter homes.', answer: 'What is migration?' }
+    ]
+  },
+  {
+    id: 'weather', name: 'WEATHER', level: 'easy',
+    clues: [
+      { value: 100, clue: 'This is the natural electrical discharge during a thunderstorm.', answer: 'What is lightning?' },
+      { value: 100, clue: 'These white fluffy formations float in the sky.', answer: 'What are clouds?' },
+      { value: 100, clue: 'This colorful arc appears after rain when sun shines through droplets.', answer: 'What is a rainbow?' },
+      { value: 200, clue: 'This violent rotating column of air can devastate towns in seconds.', answer: 'What is a tornado?' },
+      { value: 200, clue: 'This tropical storm has winds over 74 mph and forms over warm oceans.', answer: 'What is a hurricane?' },
+      { value: 200, clue: 'This six-sided crystal of frozen water falls from clouds in winter.', answer: 'What is a snowflake?' },
+      { value: 300, clue: 'This unit measures atmospheric pressure.', answer: 'What is a barometer? (or millibars/hPa)' },
+      { value: 300, clue: 'This is the name for very small hailstones, also called "soft hail."', answer: 'What is graupel?' },
+      { value: 300, clue: 'This is the term for the boundary between two different air masses.', answer: 'What is a front?' },
+      { value: 400, clue: 'This Pacific weather pattern brings warmer ocean temperatures and changes weather worldwide.', answer: 'What is El Niño?' },
+      { value: 400, clue: 'This polar wind storm can have temperatures below −50°F.', answer: 'What is a polar vortex?' },
+      { value: 400, clue: 'This is the visible mass of water droplets that forms close to the ground.', answer: 'What is fog?' },
+      { value: 500, clue: 'This scale, ranked F0–F5, measures tornado intensity.', answer: 'What is the Fujita Scale? (or Enhanced Fujita)' },
+      { value: 500, clue: 'This atmospheric layer contains most weather phenomena.', answer: 'What is the troposphere?' },
+      { value: 500, clue: 'This Saffir-Simpson scale categorizes hurricanes from 1 to 5 based on this.', answer: 'What is sustained wind speed?' }
+    ]
+  },
+  {
+    id: 'plants', name: 'PLANTS & TREES', level: 'easy',
+    clues: [
+      { value: 100, clue: 'These trees lose their leaves in fall.', answer: 'What are deciduous trees?' },
+      { value: 100, clue: 'This is the largest type of flower in the world.', answer: 'What is the Rafflesia? (or sunflower for accessible answer)' },
+      { value: 100, clue: 'These plants make their own food using sunlight.', answer: 'What are plants? (or simply, all plants do this via photosynthesis)' },
+      { value: 200, clue: 'These trees stay green year-round.', answer: 'What are evergreens?' },
+      { value: 200, clue: 'This is the world\'s largest tree by volume, in California.', answer: 'What is the giant sequoia? (General Sherman)' },
+      { value: 200, clue: 'This African tree can live 1000+ years and store water in its trunk.', answer: 'What is the baobab?' },
+      { value: 300, clue: 'These plants get nutrients by trapping insects.', answer: 'What are carnivorous plants? (e.g. Venus flytrap)' },
+      { value: 300, clue: 'This Japanese spring tradition celebrates these pink blossoms.', answer: 'What are cherry blossoms? (sakura)' },
+      { value: 300, clue: 'This is the part of a flower that produces pollen.', answer: 'What is the stamen?' },
+      { value: 400, clue: 'This sticky substance from pine trees was used to make rosin and turpentine.', answer: 'What is sap? (or resin)' },
+      { value: 400, clue: 'This tropical fruit-bearing tree has a name meaning "food of the gods" in Greek.', answer: 'What is cacao? (Theobroma)' },
+      { value: 400, clue: 'This is the term for plants that complete their life cycle in one year.', answer: 'What are annuals?' },
+      { value: 500, clue: 'This African tree has a thorny crown and is associated with dramatic sunsets.', answer: 'What is the acacia?' },
+      { value: 500, clue: 'This white fungus, often used in cooking, is technically a mushroom.', answer: 'What are mushrooms? (or specific: enoki, oyster, etc.)' },
+      { value: 500, clue: 'This single-celled algae produces about half the oxygen on Earth.', answer: 'What are diatoms? (or phytoplankton)' }
+    ]
+  },
+  {
+    id: 'colors', name: 'COLORS & ART TERMS', level: 'easy',
+    clues: [
+      { value: 100, clue: 'These three colors are called primary because they can\'t be made by mixing.', answer: 'What are red, yellow, and blue?' },
+      { value: 100, clue: 'You get this color by mixing red and yellow.', answer: 'What is orange?' },
+      { value: 100, clue: 'You get this color by mixing blue and yellow.', answer: 'What is green?' },
+      { value: 200, clue: 'These colors — black, white, and gray — are called this.', answer: 'What are neutrals?' },
+      { value: 200, clue: 'This term describes how light or dark a color is.', answer: 'What is value?' },
+      { value: 200, clue: 'This circular diagram shows how colors relate to each other.', answer: 'What is a color wheel?' },
+      { value: 300, clue: 'These pairs of colors sit opposite each other on the color wheel.', answer: 'What are complementary colors?' },
+      { value: 300, clue: 'This term describes the brightness or dullness of a color.', answer: 'What is saturation?' },
+      { value: 300, clue: 'This is the technical term for the actual color itself.', answer: 'What is hue?' },
+      { value: 400, clue: 'This Italian painter is known for using sfumato — the soft blending of colors.', answer: 'Who is Leonardo da Vinci?' },
+      { value: 400, clue: 'This deep red pigment was once made from the cochineal insect.', answer: 'What is carmine? (or crimson)' },
+      { value: 400, clue: 'This blue pigment, prized in the Renaissance, was made from lapis lazuli.', answer: 'What is ultramarine?' },
+      { value: 500, clue: 'This is the medical term for being unable to distinguish certain colors.', answer: 'What is color blindness?' },
+      { value: 500, clue: 'This French art movement, including Monet, is named after a painting called Impression, Sunrise.', answer: 'What is Impressionism?' },
+      { value: 500, clue: 'This is the highest-pitched range of color the human eye can detect.', answer: 'What is violet? (or ultraviolet, but we can\'t see UV)' }
+    ]
+  },
+  {
+    id: 'spies', name: 'SPIES & MYSTERIES', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This British secret agent goes by the code 007.', answer: 'Who is James Bond?' },
+      { value: 100, clue: 'This famous fictional detective lives at 221B Baker Street.', answer: 'Who is Sherlock Holmes?' },
+      { value: 100, clue: 'This kid spy organization is featured in Spy Kids.', answer: 'What is the OSS? (or Spy Kids Agency)' },
+      { value: 200, clue: 'This American intelligence agency is headquartered in Langley, Virginia.', answer: 'What is the CIA?' },
+      { value: 200, clue: 'This author created the character Hercule Poirot.', answer: 'Who is Agatha Christie?' },
+      { value: 200, clue: 'This British WWII facility broke the Enigma code.', answer: 'What is Bletchley Park?' },
+      { value: 300, clue: 'This Cold War spy was a British double agent who defected to the Soviet Union.', answer: 'Who is Kim Philby?' },
+      { value: 300, clue: 'This series of children\'s books features Encyclopedia Brown solving mysteries.', answer: 'What is Encyclopedia Brown?' },
+      { value: 300, clue: 'This is the term for a secret message hidden in plain sight.', answer: 'What is steganography? (or a code)' },
+      { value: 400, clue: 'This famous Dutch dancer was executed by France as a German spy in WWI.', answer: 'Who is Mata Hari?' },
+      { value: 400, clue: 'This 1962 Cuban Missile Crisis confrontation was tracked partly through these covert photos.', answer: 'What are U-2 spy plane photos?' },
+      { value: 400, clue: 'This 18th-century American boy was hanged by the British and said "I only regret that I have but one life to lose for my country."', answer: 'Who is Nathan Hale?' },
+      { value: 500, clue: 'This American FBI agent infiltrated the New York mob as Donnie Brasco.', answer: 'Who is Joseph Pistone?' },
+      { value: 500, clue: 'This female American Civil War spy ran a Confederate spy ring in Washington, D.C.', answer: 'Who is Rose O\'Neal Greenhow?' },
+      { value: 500, clue: 'This 1970s break-in scandal at the Watergate complex toppled President Nixon.', answer: 'What is Watergate?' }
+    ]
+  },
+  {
+    id: 'medicine', name: 'MEDICINE & HEALTH', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This vitamin, found in citrus fruits, helps prevent scurvy.', answer: 'What is vitamin C?' },
+      { value: 100, clue: 'This is the medical term for a doctor who treats children.', answer: 'What is a pediatrician?' },
+      { value: 100, clue: 'This common medicine, also called paracetamol, treats pain and fever.', answer: 'What is acetaminophen? (or Tylenol)' },
+      { value: 200, clue: 'This Greek physician\'s oath is still recited by new doctors today.', answer: 'Who is Hippocrates?' },
+      { value: 200, clue: 'This 1928 discovery by Alexander Fleming revolutionized medicine.', answer: 'What is penicillin?' },
+      { value: 200, clue: 'This founder of modern nursing rose to fame during the Crimean War.', answer: 'Who is Florence Nightingale?' },
+      { value: 300, clue: 'This African-American surgeon pioneered open-heart surgery in 1893.', answer: 'Who is Daniel Hale Williams?' },
+      { value: 300, clue: 'This American doctor invented the polio vaccine in 1955.', answer: 'Who is Jonas Salk?' },
+      { value: 300, clue: 'This is the medical term for a routine yearly checkup.', answer: 'What is a physical?' },
+      { value: 400, clue: 'This Russian physiologist showed conditioned response with dogs and bells.', answer: 'Who is Ivan Pavlov?' },
+      { value: 400, clue: 'This is the medical term for a doctor who specializes in the heart.', answer: 'What is a cardiologist?' },
+      { value: 400, clue: 'This African doctor performed the first successful human-to-human heart transplant in 1967.', answer: 'Who is Christiaan Barnard?' },
+      { value: 500, clue: 'This 19th-century Hungarian doctor pioneered antiseptic procedures by promoting hand-washing.', answer: 'Who is Ignaz Semmelweis?' },
+      { value: 500, clue: 'This African-American medical pioneer developed blood plasma storage techniques used in WWII.', answer: 'Who is Charles Drew?' },
+      { value: 500, clue: 'This is the international medical organization that helps in emergencies and conflicts.', answer: 'What is Doctors Without Borders? (or Médecins Sans Frontières)' }
+    ]
+  },
+  {
+    id: 'languages', name: 'LANGUAGES OF THE WORLD', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This is the most-spoken language in the world by native speakers.', answer: 'What is Mandarin Chinese?' },
+      { value: 100, clue: 'This is the most widely spoken language in South America.', answer: 'What is Spanish? (or Portuguese in Brazil)' },
+      { value: 100, clue: 'This is the official language of Brazil.', answer: 'What is Portuguese?' },
+      { value: 200, clue: 'This Romance language is spoken in Italy.', answer: 'What is Italian?' },
+      { value: 200, clue: 'This script is used to write Russian and Ukrainian.', answer: 'What is Cyrillic?' },
+      { value: 200, clue: 'This is the official language of Egypt.', answer: 'What is Arabic?' },
+      { value: 300, clue: 'This sign language is the primary one used in the United States.', answer: 'What is American Sign Language? (ASL)' },
+      { value: 300, clue: 'This Indo-European language is the ancestor of most European languages.', answer: 'What is Proto-Indo-European?' },
+      { value: 300, clue: 'This is the official language of Egypt before Arabic, written in hieroglyphs.', answer: 'What is Ancient Egyptian?' },
+      { value: 400, clue: 'This artificial language was created in 1887 by L.L. Zamenhof to be a universal second language.', answer: 'What is Esperanto?' },
+      { value: 400, clue: 'This Indian language has the most native speakers among Indian languages.', answer: 'What is Hindi?' },
+      { value: 400, clue: 'This South African language\'s name means "language of the people of the south."', answer: 'What is Afrikaans?' },
+      { value: 500, clue: 'This now-extinct language was spoken by the Romans.', answer: 'What is Latin?' },
+      { value: 500, clue: 'This African language family includes Swahili, Zulu, and Yoruba.', answer: 'What is Niger-Congo? (or Bantu)' },
+      { value: 500, clue: 'This indigenous Andean language was the language of the Inca Empire.', answer: 'What is Quechua?' }
+    ]
+  },
+  {
+    id: 'transportation', name: 'TRANSPORTATION', level: 'easy',
+    clues: [
+      { value: 100, clue: 'These two-wheeled vehicles are powered by pedaling.', answer: 'What are bicycles?' },
+      { value: 100, clue: 'These large vehicles fly people across continents.', answer: 'What are airplanes?' },
+      { value: 100, clue: 'This horse-drawn vehicle is associated with old Europe and is now mostly a tourist ride.', answer: 'What is a carriage?' },
+      { value: 200, clue: 'This Italian city is famous for its canals and gondolas.', answer: 'What is Venice?' },
+      { value: 200, clue: 'This Japanese high-speed train is sometimes called the "bullet train."', answer: 'What is the Shinkansen?' },
+      { value: 200, clue: 'This New York City subway car is the most common type, instantly recognizable.', answer: 'What is the R32 / R train? (or generally a subway car)' },
+      { value: 300, clue: 'These San Francisco vehicles, pulled by underground cables, climb the city\'s hills.', answer: 'What are cable cars?' },
+      { value: 300, clue: 'This longest road in the world stretches from Alaska to Argentina.', answer: 'What is the Pan-American Highway?' },
+      { value: 300, clue: 'This is the world\'s busiest airport for passengers, in Atlanta.', answer: 'What is Hartsfield–Jackson?' },
+      { value: 400, clue: 'This is the world\'s longest underwater rail tunnel, connecting England and France.', answer: 'What is the Channel Tunnel? (Chunnel)' },
+      { value: 400, clue: 'This Indian three-wheeled taxi is also called a tuk-tuk.', answer: 'What is an auto rickshaw?' },
+      { value: 400, clue: 'This American highway, also called the "Main Street of America," stretched from Chicago to Santa Monica.', answer: 'What is Route 66?' },
+      { value: 500, clue: 'This 1869 event at Promontory Summit, Utah connected the U.S. coast-to-coast by rail.', answer: 'What is the Transcontinental Railroad? (Golden Spike)' },
+      { value: 500, clue: 'This famous British ocean liner sank on April 15, 1912.', answer: 'What is the RMS Titanic?' },
+      { value: 500, clue: 'This Japanese train system uses magnetic levitation, traveling over 300 mph.', answer: 'What is the maglev? (specifically L0 Series)' }
+    ]
+  },
+  {
+    id: 'olympics', name: 'OLYMPIC GAMES', level: 'medium',
+    clues: [
+      { value: 100, clue: 'These five interlocking colored rings are the Olympic symbol.', answer: 'What are the Olympic rings?' },
+      { value: 100, clue: 'This Greek city is where the ancient Olympics began.', answer: 'What is Olympia? (or Athens for first modern)' },
+      { value: 100, clue: 'These Olympic Games happen on snow and ice every four years.', answer: 'What are the Winter Olympics?' },
+      { value: 200, clue: 'This city hosted the 2024 Summer Olympics.', answer: 'What is Paris?' },
+      { value: 200, clue: 'This sport, in the Summer Olympics, is sometimes called the "sweet science."', answer: 'What is boxing?' },
+      { value: 200, clue: 'This American gymnast won 7 Olympic medals between 2016 and 2024.', answer: 'Who is Simone Biles?' },
+      { value: 300, clue: 'This is the oldest Olympic running race, originally about 200 yards long in Greek times.', answer: 'What is the stade? (or sprint, the oldest distance)' },
+      { value: 300, clue: 'This Black American athlete won 4 gold medals at the 1936 Berlin Olympics.', answer: 'Who is Jesse Owens?' },
+      { value: 300, clue: 'This is the only sport in the Summer Olympics that is held entirely on water.', answer: 'What is rowing? (or others like swimming, sailing)' },
+      { value: 400, clue: 'This French baron founded the modern Olympic Games in 1896.', answer: 'Who is Pierre de Coubertin?' },
+      { value: 400, clue: 'This Olympic motto means "Faster, Higher, Stronger" in Latin.', answer: 'What is Citius, Altius, Fortius?' },
+      { value: 400, clue: 'This Norwegian skier holds the record for most Winter Olympic medals.', answer: 'Who is Marit Bjørgen?' },
+      { value: 500, clue: 'This Greek city hosted the first modern Olympics in 1896.', answer: 'What is Athens?' },
+      { value: 500, clue: 'This event was added to the Summer Olympics in 2020 and features riding waves.', answer: 'What is surfing?' },
+      { value: 500, clue: 'This Romanian gymnast was the first to score a perfect 10.0 at the Olympics in 1976.', answer: 'Who is Nadia Comăneci?' }
+    ]
+  },
+  {
+    id: 'famous-women', name: 'FAMOUS WOMEN', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This British monarch reigned for 70 years before passing in 2022.', answer: 'Who is Queen Elizabeth II?' },
+      { value: 100, clue: 'This British WWII Prime Minister was actually a man, but his successor and predecessor were not. (Trick — name a famous female PM.)', answer: 'Who is Margaret Thatcher? (or Theresa May)' },
+      { value: 100, clue: 'This American First Lady married Barack Obama and wrote the book Becoming.', answer: 'Who is Michelle Obama?' },
+      { value: 200, clue: 'This Polish-French scientist won Nobel Prizes in both Physics and Chemistry.', answer: 'Who is Marie Curie?' },
+      { value: 200, clue: 'This English author wrote Pride and Prejudice and Sense and Sensibility.', answer: 'Who is Jane Austen?' },
+      { value: 200, clue: 'This American suffragist was the first woman to run for U.S. president, in 1872.', answer: 'Who is Victoria Woodhull?' },
+      { value: 300, clue: 'This Mexican painter is known for vivid self-portraits with strong brows.', answer: 'Who is Frida Kahlo?' },
+      { value: 300, clue: 'This Egyptian queen ruled with Mark Antony and is famous for her beauty.', answer: 'Who is Cleopatra?' },
+      { value: 300, clue: 'This American activist refused to give up her bus seat in 1955 Montgomery.', answer: 'Who is Rosa Parks?' },
+      { value: 400, clue: 'This Pakistani teen activist won the Nobel Peace Prize at age 17 for her advocacy of girls\' education.', answer: 'Who is Malala Yousafzai?' },
+      { value: 400, clue: 'This American astronomer discovered evidence of the existence of dark matter.', answer: 'Who is Vera Rubin?' },
+      { value: 400, clue: 'This American chef brought French cooking to American TV in the 1960s.', answer: 'Who is Julia Child?' },
+      { value: 500, clue: 'This Greek poet from the island of Lesbos is considered one of the greatest lyric poets.', answer: 'Who is Sappho?' },
+      { value: 500, clue: 'This Indian doctor was India\'s first female heart-lung transplant surgeon.', answer: 'Who is Tinku Joshi? (or another notable surgeon)' },
+      { value: 500, clue: 'This American writer won the Nobel Prize in Literature in 1993, the first African American woman to do so.', answer: 'Who is Toni Morrison?' }
+    ]
+  },
+  {
+    id: 'famous-men', name: 'FAMOUS MEN', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This Italian Renaissance artist painted the Mona Lisa.', answer: 'Who is Leonardo da Vinci?' },
+      { value: 100, clue: 'This American inventor patented the light bulb and the phonograph.', answer: 'Who is Thomas Edison?' },
+      { value: 100, clue: 'This British scientist was famously hit on the head by a falling apple.', answer: 'Who is Isaac Newton?' },
+      { value: 200, clue: 'This South African leader spent 27 years in prison before becoming president.', answer: 'Who is Nelson Mandela?' },
+      { value: 200, clue: 'This American civil rights leader gave the "I Have a Dream" speech.', answer: 'Who is Martin Luther King Jr.?' },
+      { value: 200, clue: 'This Indian leader led nonviolent resistance against British rule.', answer: 'Who is Mahatma Gandhi?' },
+      { value: 300, clue: 'This Greek philosopher was the teacher of Plato.', answer: 'Who is Socrates?' },
+      { value: 300, clue: 'This Russian writer is known for War and Peace and Anna Karenina.', answer: 'Who is Leo Tolstoy?' },
+      { value: 300, clue: 'This Spanish artist co-founded Cubism and painted Guernica.', answer: 'Who is Pablo Picasso?' },
+      { value: 400, clue: 'This French general crowned himself emperor in 1804.', answer: 'Who is Napoleon Bonaparte?' },
+      { value: 400, clue: 'This African American Tuskegee Airman pilot was a 1940s WWII hero.', answer: 'Who is Benjamin O. Davis Jr.? (or another notable Tuskegee Airman)' },
+      { value: 400, clue: 'This British naturalist proposed the theory of evolution by natural selection.', answer: 'Who is Charles Darwin?' },
+      { value: 500, clue: 'This Persian poet wrote the Rubaiyat in the 11th century.', answer: 'Who is Omar Khayyam?' },
+      { value: 500, clue: 'This Italian explorer was the first European to reach what is now Brazil.', answer: 'Who is Pedro Álvares Cabral?' },
+      { value: 500, clue: 'This Yugoslav-American inventor pioneered alternating current electricity.', answer: 'Who is Nikola Tesla?' }
+    ]
+  },
+  {
+    id: 'continents', name: 'CONTINENTS', level: 'easy',
+    clues: [
+      { value: 100, clue: 'This is the largest continent by area.', answer: 'What is Asia?' },
+      { value: 100, clue: 'This is the smallest continent.', answer: 'What is Australia? (or Oceania)' },
+      { value: 100, clue: 'This continent is south of the equator and contains the Amazon.', answer: 'What is South America?' },
+      { value: 200, clue: 'This icy continent is home to penguins and research stations.', answer: 'What is Antarctica?' },
+      { value: 200, clue: 'This is the second-largest continent and home to the Sahara.', answer: 'What is Africa?' },
+      { value: 200, clue: 'These two continents are sometimes considered one supercontinent.', answer: 'What are Europe and Asia? (Eurasia)' },
+      { value: 300, clue: 'This was the only continent untouched by humans until 1820.', answer: 'What is Antarctica?' },
+      { value: 300, clue: 'This continent\'s name comes from a Greek mythological figure.', answer: 'What is Europe? (Europa)' },
+      { value: 300, clue: 'This continent has the most countries, with 54 sovereign nations.', answer: 'What is Africa?' },
+      { value: 400, clue: 'This is the highest mountain on each continent, called the Seven Summits collective.', answer: 'What are the Seven Summits?' },
+      { value: 400, clue: 'This is the lowest point on land, located in the Middle East.', answer: 'What is the Dead Sea?' },
+      { value: 400, clue: 'This continent contains both the wettest and driest places on Earth.', answer: 'What is South America? (Atacama and Amazon)' },
+      { value: 500, clue: 'This was the supercontinent that existed before all the continents drifted apart.', answer: 'What is Pangaea?' },
+      { value: 500, clue: 'This is the only continent that is also a single country.', answer: 'What is Australia?' },
+      { value: 500, clue: 'These two continents have a meeting point at the Bering Strait.', answer: 'What are North America and Asia?' }
+    ]
+  },
+  {
+    id: 'rivers', name: 'GREAT RIVERS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This longest river in the world flows north through Egypt.', answer: 'What is the Nile?' },
+      { value: 100, clue: 'This longest river in South America gives its name to a region of rainforest.', answer: 'What is the Amazon?' },
+      { value: 100, clue: 'This American river forms much of the border between Iowa and Wisconsin.', answer: 'What is the Mississippi?' },
+      { value: 200, clue: 'This river runs through London.', answer: 'What is the Thames?' },
+      { value: 200, clue: 'This river runs through Paris.', answer: 'What is the Seine?' },
+      { value: 200, clue: 'This Russian river is the longest in Europe.', answer: 'What is the Volga?' },
+      { value: 300, clue: 'This river flows through Egypt and Sudan; the Aswan Dam is on it.', answer: 'What is the Nile?' },
+      { value: 300, clue: 'This South American river forms much of the border between Brazil and Paraguay.', answer: 'What is the Paraná?' },
+      { value: 300, clue: 'This river\'s mouth on the Black Sea is in Romania, but it begins in Germany.', answer: 'What is the Danube?' },
+      { value: 400, clue: 'This third-longest river in the world flows through China.', answer: 'What is the Yangtze?' },
+      { value: 400, clue: 'This river system is the second-longest in Africa, in central Africa.', answer: 'What is the Congo?' },
+      { value: 400, clue: 'This African river flows through 11 countries and is the longest in Africa.', answer: 'What is the Nile?' },
+      { value: 500, clue: 'This Indian river is sacred in Hinduism and is the longest in India.', answer: 'What is the Ganges?' },
+      { value: 500, clue: 'This river flows through more national capitals than any other in the world.', answer: 'What is the Danube?' },
+      { value: 500, clue: 'This river system\'s waters are about 1/5 of all freshwater discharge to the world\'s oceans.', answer: 'What is the Amazon?' }
+    ]
+  },
+  {
+    id: 'astronauts', name: 'ASTRONAUTS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This American astronaut was the first person to walk on the moon, in 1969.', answer: 'Who is Neil Armstrong?' },
+      { value: 100, clue: 'This astronaut joined Armstrong on the moon and is famous for the line "Magnificent desolation."', answer: 'Who is Buzz Aldrin?' },
+      { value: 100, clue: 'This Russian was the first human in space, in 1961.', answer: 'Who is Yuri Gagarin?' },
+      { value: 200, clue: 'This American was the first woman in space, in 1983.', answer: 'Who is Sally Ride?' },
+      { value: 200, clue: 'This Russian was the first woman in space, in 1963.', answer: 'Who is Valentina Tereshkova?' },
+      { value: 200, clue: 'This American astronaut was the first African American in space, in 1983.', answer: 'Who is Guion Bluford?' },
+      { value: 300, clue: 'This American command pilot of Apollo 13 famously said "Houston, we have a problem."', answer: 'Who is Jim Lovell?' },
+      { value: 300, clue: 'This Canadian astronaut became famous on social media for music videos from the ISS.', answer: 'Who is Chris Hadfield?' },
+      { value: 300, clue: 'This American astronaut was the first African American woman in space, in 1992.', answer: 'Who is Mae Jemison?' },
+      { value: 400, clue: 'This American astronaut spent nearly a year on the ISS in 2015–2016.', answer: 'Who is Scott Kelly?' },
+      { value: 400, clue: 'This American spacewalker holds the record for total time spent on EVAs.', answer: 'Who is Peggy Whitson?' },
+      { value: 400, clue: 'This astronaut commanded the first female-only spacewalk in 2019.', answer: 'Who is Christina Koch? (alongside Jessica Meir)' },
+      { value: 500, clue: 'This Soviet cosmonaut was the first person to perform a spacewalk, in 1965.', answer: 'Who is Alexei Leonov?' },
+      { value: 500, clue: 'This astronaut was the first American to orbit Earth, in 1962.', answer: 'Who is John Glenn?' },
+      { value: 500, clue: 'These three Apollo 11 astronauts went to the moon together.', answer: 'Who are Neil Armstrong, Buzz Aldrin, and Michael Collins?' }
+    ]
+  },
+  {
+    id: 'natural-wonders', name: 'NATURAL WONDERS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This Arizona canyon was carved by the Colorado River.', answer: 'What is the Grand Canyon?' },
+      { value: 100, clue: 'These massive falls form the border between Zambia and Zimbabwe.', answer: 'What are Victoria Falls?' },
+      { value: 100, clue: 'This northern lights phenomenon is named for a Roman goddess of dawn.', answer: 'What is the Aurora Borealis?' },
+      { value: 200, clue: 'This is the largest coral reef system on Earth, off Australia.', answer: 'What is the Great Barrier Reef?' },
+      { value: 200, clue: 'This is the deepest lake in the world, in Russia.', answer: 'What is Lake Baikal?' },
+      { value: 200, clue: 'This volcano in Tanzania is Africa\'s tallest mountain.', answer: 'What is Mount Kilimanjaro?' },
+      { value: 300, clue: 'These Brazilian and Argentinian waterfalls form a 1.7-mile-wide curtain.', answer: 'What are Iguazu Falls?' },
+      { value: 300, clue: 'This New Zealand fjord is featured in Lord of the Rings.', answer: 'What is Milford Sound? (or Fiordland)' },
+      { value: 300, clue: 'This Vietnamese bay is famous for its limestone karst pillars.', answer: 'What is Halong Bay?' },
+      { value: 400, clue: 'This Bolivian salt flat is the largest in the world.', answer: 'What is Salar de Uyuni?' },
+      { value: 400, clue: 'This island chain inspired Darwin\'s theory of evolution.', answer: 'What are the Galápagos Islands?' },
+      { value: 400, clue: 'This Greenland phenomenon explains why the sun doesn\'t set for months.', answer: 'What is the Midnight Sun?' },
+      { value: 500, clue: 'This Arctic phenomenon causes the ice to crack with thunderous sounds.', answer: 'What is the icequake? (or polar dawn)' },
+      { value: 500, clue: 'This Vietnamese cave is the largest in the world.', answer: 'What is Hang Sơn Đoòng?' },
+      { value: 500, clue: 'This area in Africa\'s Rift Valley contains the world\'s lowest land point at −1,360 feet.', answer: 'What is the Afar Triangle? (or Danakil Depression)' }
+    ]
+  },
+  {
+    id: 'islands', name: 'ISLANDS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This island state is the only U.S. state made entirely of islands.', answer: 'What is Hawaii?' },
+      { value: 100, clue: 'This Italian island is shaped like a triangle and home to Mount Etna.', answer: 'What is Sicily?' },
+      { value: 100, clue: 'This Caribbean island is home to reggae music.', answer: 'What is Jamaica?' },
+      { value: 200, clue: 'This is the largest island in the world.', answer: 'What is Greenland?' },
+      { value: 200, clue: 'This Indonesian island is the world\'s most populous, with over 150 million people.', answer: 'What is Java?' },
+      { value: 200, clue: 'This island is the second-largest in the world, in Southeast Asia.', answer: 'What is New Guinea?' },
+      { value: 300, clue: 'These Galapagos islands inspired Darwin and belong to which country?', answer: 'What is Ecuador?' },
+      { value: 300, clue: 'This Pacific island is the world\'s most isolated, home to the Moai statues.', answer: 'What is Easter Island?' },
+      { value: 300, clue: 'This African island is home to lemurs and is the world\'s 4th-largest.', answer: 'What is Madagascar?' },
+      { value: 400, clue: 'This Atlantic Portuguese island is famous for its volcanic landscapes.', answer: 'What are the Azores?' },
+      { value: 400, clue: 'This is the smallest country in Oceania, a tiny island nation.', answer: 'What is Nauru?' },
+      { value: 400, clue: 'This Polynesian island is the most populous in French Polynesia.', answer: 'What is Tahiti?' },
+      { value: 500, clue: 'This Norwegian archipelago has a global seed vault carved into a mountain.', answer: 'What is Svalbard?' },
+      { value: 500, clue: 'This British island in the South Atlantic was the site of Napoleon\'s exile and death.', answer: 'What is St. Helena?' },
+      { value: 500, clue: 'This Indonesian island is famous as a film and tourist destination.', answer: 'What is Bali?' }
+    ]
+  },
+  {
+    id: 'kid-classics', name: 'KIDS\' BOOK CLASSICS', level: 'easy',
+    clues: [
+      { value: 100, clue: 'In this Maurice Sendak book, Max becomes king of where the wild things are.', answer: 'What is Where the Wild Things Are?' },
+      { value: 100, clue: 'This Eric Carle book features a tiny insect eating its way through fruits.', answer: 'What is The Very Hungry Caterpillar?' },
+      { value: 100, clue: 'This Beatrix Potter rabbit gets in trouble in Mr. McGregor\'s garden.', answer: 'Who is Peter Rabbit?' },
+      { value: 200, clue: 'In Charlotte\'s Web, this is the name of the pig who befriends a spider.', answer: 'Who is Wilbur?' },
+      { value: 200, clue: 'This Dr. Seuss book features a green character who hates Christmas.', answer: 'What is How the Grinch Stole Christmas?' },
+      { value: 200, clue: 'This Roald Dahl book features a giant peach.', answer: 'What is James and the Giant Peach?' },
+      { value: 300, clue: 'In The Secret Garden, this is the country where the story begins.', answer: 'What is India?' },
+      { value: 300, clue: 'This boy in The Phantom Tollbooth travels through a magical kingdom.', answer: 'Who is Milo?' },
+      { value: 300, clue: 'This Gary Paulsen novel features a 13-year-old boy stranded after a plane crash.', answer: 'What is Hatchet?' },
+      { value: 400, clue: 'This Newbery-winning book features Brian Robeson surviving in the Canadian wilderness.', answer: 'What is Hatchet?' },
+      { value: 400, clue: 'In The Giver, this is the role given to Jonas at the Ceremony of Twelve.', answer: 'What is Receiver of Memory?' },
+      { value: 400, clue: 'This Newbery winner by Madeleine L\'Engle features Meg Murry and the tesseract.', answer: 'What is A Wrinkle in Time?' },
+      { value: 500, clue: 'This Newbery-winning Christopher Paul Curtis novel takes place in 1936 Flint, Michigan.', answer: 'What is Bud, Not Buddy?' },
+      { value: 500, clue: 'This author wrote Ramona Quimby and Beezus and Ramona.', answer: 'Who is Beverly Cleary?' },
+      { value: 500, clue: 'This Lois Lowry novel won the Newbery Medal in 1990 and is set in WWII Denmark.', answer: 'What is Number the Stars?' }
+    ]
+  },
+  {
+    id: 'famous-firsts', name: 'FAMOUS FIRSTS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This Italian explorer is credited with reaching the Americas in 1492.', answer: 'Who is Christopher Columbus?' },
+      { value: 100, clue: 'These two American brothers achieved the first powered flight in 1903.', answer: 'Who are the Wright Brothers?' },
+      { value: 100, clue: 'This American president was the first.', answer: 'Who is George Washington?' },
+      { value: 200, clue: 'This American was the first to circumnavigate the world solo by air, in 1933.', answer: 'Who is Wiley Post?' },
+      { value: 200, clue: 'This Norwegian explorer was the first to reach the South Pole, in 1911.', answer: 'Who is Roald Amundsen?' },
+      { value: 200, clue: 'This American was the first woman to fly solo across the Atlantic.', answer: 'Who is Amelia Earhart?' },
+      { value: 300, clue: 'This American climber was the first known to summit Mount Everest from the U.S., in 1963.', answer: 'Who is Jim Whittaker?' },
+      { value: 300, clue: 'This New Zealander and his Sherpa partner were the first confirmed to summit Everest, in 1953.', answer: 'Who is Edmund Hillary? (with Tenzing Norgay)' },
+      { value: 300, clue: 'This Englishman was the first to solo-circumnavigate the world, in 1968–1969.', answer: 'Who is Robin Knox-Johnston?' },
+      { value: 400, clue: 'This American journalist was the first woman to swim the English Channel, in 1926.', answer: 'Who is Gertrude Ederle?' },
+      { value: 400, clue: 'This American Hispanic woman was the first Hispanic American astronaut to go to space, in 1993.', answer: 'Who is Ellen Ochoa?' },
+      { value: 400, clue: 'This Indian-American woman was the first U.S. Vice President of color, taking office in 2021.', answer: 'Who is Kamala Harris?' },
+      { value: 500, clue: 'This Japanese physicist won the first Asian Nobel Prize in Physics, in 1949.', answer: 'Who is Hideki Yukawa?' },
+      { value: 500, clue: 'This Liberian woman was the first elected female head of state in Africa, in 2006.', answer: 'Who is Ellen Johnson Sirleaf?' },
+      { value: 500, clue: 'This American doctor was the first African American woman in space, in 1992.', answer: 'Who is Mae Jemison?' }
+    ]
+  },
+  {
+    id: 'broadway', name: 'BROADWAY MUSICALS', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This Lin-Manuel Miranda hip-hop musical is about a founding father.', answer: 'What is Hamilton?' },
+      { value: 100, clue: 'This Andrew Lloyd Webber musical features a chandelier crash.', answer: 'What is The Phantom of the Opera?' },
+      { value: 100, clue: 'This musical features the song "Tomorrow" sung by an orphan girl.', answer: 'What is Annie?' },
+      { value: 200, clue: 'This Wicked musical tells the story of two women who would become which two famous witches?', answer: 'Who are Glinda and the Wicked Witch of the West? (Elphaba)' },
+      { value: 200, clue: 'This musical features the song "Memory" and a chorus of felines.', answer: 'What is Cats?' },
+      { value: 200, clue: 'This musical, set in 1789 Paris, features Jean Valjean.', answer: 'What is Les Misérables?' },
+      { value: 300, clue: 'This Lin-Manuel Miranda musical features the song "96,000" set in Washington Heights.', answer: 'What is In the Heights?' },
+      { value: 300, clue: 'This 1957 musical sets Romeo and Juliet in 1950s New York.', answer: 'What is West Side Story?' },
+      { value: 300, clue: 'This Stephen Schwartz musical opens with "No One Mourns the Wicked."', answer: 'What is Wicked?' },
+      { value: 400, clue: 'This Stephen Sondheim musical features Sweeney Todd, the demon barber.', answer: 'What is Sweeney Todd?' },
+      { value: 400, clue: 'This 1968 musical is famous for its "hippie" themes and the song "Aquarius."', answer: 'What is Hair?' },
+      { value: 400, clue: 'This is the longest-running Broadway show in history.', answer: 'What is The Phantom of the Opera?' },
+      { value: 500, clue: 'This 1949 Rodgers and Hammerstein musical is set in WWII South Pacific.', answer: 'What is South Pacific?' },
+      { value: 500, clue: 'This 1987 Stephen Sondheim musical features fairy tale characters.', answer: 'What is Into the Woods?' },
+      { value: 500, clue: 'This Broadway musical opened in 1957 and is based on T.S. Eliot poems.', answer: 'What is Cats?' }
+    ]
+  },
+  {
+    id: 'world-religions', name: 'WORLD CULTURES', level: 'medium',
+    clues: [
+      { value: 100, clue: 'This Hindu festival of lights is celebrated annually.', answer: 'What is Diwali?' },
+      { value: 100, clue: 'This Jewish holiday commemorates the Exodus and lasts 7 or 8 days.', answer: 'What is Passover?' },
+      { value: 100, clue: 'This Chinese holiday is the most important and includes red envelopes.', answer: 'What is Chinese New Year?' },
+      { value: 200, clue: 'This Mexican Day of the Dead celebration involves marigolds and ofrendas.', answer: 'What is Día de los Muertos?' },
+      { value: 200, clue: 'This Indian holy book of Hinduism includes the Bhagavad Gita.', answer: 'What is the Mahabharata?' },
+      { value: 200, clue: 'This African American cultural celebration in late December was created in 1966.', answer: 'What is Kwanzaa?' },
+      { value: 300, clue: 'This Japanese tea ceremony emphasizes harmony, respect, purity, and tranquility.', answer: 'What is chanoyu? (the Way of Tea / sadō)' },
+      { value: 300, clue: 'This South Korean traditional dress is called this and worn for special occasions.', answer: 'What is hanbok?' },
+      { value: 300, clue: 'This Brazilian celebration features samba, parades, and lasts 5 days.', answer: 'What is Carnival?' },
+      { value: 400, clue: 'This Indian festival of colors is celebrated in spring.', answer: 'What is Holi?' },
+      { value: 400, clue: 'This African ceremony, often performed before harvest, involves drumming and dance.', answer: 'What is a harvest festival? (varies by culture)' },
+      { value: 400, clue: 'This Norwegian word for the cozy feeling of being indoors during winter.', answer: 'What is hygge? (actually Danish, but accepted)' },
+      { value: 500, clue: 'This term refers to the formal greeting between Maori in New Zealand, with foreheads pressed together.', answer: 'What is hongi?' },
+      { value: 500, clue: 'This Japanese practice of forest bathing is called this.', answer: 'What is shinrin-yoku?' },
+      { value: 500, clue: 'This Aboriginal Australian belief about the creation of the world is called this.', answer: 'What is the Dreamtime? (or Dreaming)' }
+    ]
   }
 ];
