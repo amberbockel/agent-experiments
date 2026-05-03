@@ -6,11 +6,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="2026-05-02-no-modal">
+<meta name="build-version" content="2026-05-02-board-generator">
 <meta name="theme-color" content="#060CE9">
 <title>Family Jeopardy! 🎤</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
-<link rel="manifest" href='data:application/manifest+json,{"name":"Family Jeopardy","short_name":"Jeopardy","display":"standalone","background_color":"%23060CE9","theme_color":"%23060CE9"}'>
 <style>
   :root {
     --jeo-blue: #060CE9;
@@ -24,6 +23,8 @@
     --text-dim: #B8C4FF;
     --correct: #2BCB6E;
     --wrong: #FF4D6D;
+    --warn: #FFB48C;
+    --custom: #B5A4FF;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { -webkit-text-size-adjust: 100%; }
@@ -31,192 +32,70 @@
     font-family: 'Korinna', 'Times New Roman', Georgia, serif;
     background: var(--jeo-blue);
     color: var(--text);
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100vh; min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    user-select: none;
-    -webkit-user-select: none;
+    user-select: none; -webkit-user-select: none;
   }
   .app {
-    max-width: 720px; margin: 0 auto;
-    min-height: 100vh; min-height: 100dvh;
+    max-width: 980px; margin: 0 auto;
+    min-height: 100dvh;
     display: flex; flex-direction: column;
     padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
   }
 
-  /* Header */
+  /* ===== HEADER ===== */
   header {
-    padding: 16px 16px 12px;
+    padding: 16px;
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 2px solid var(--jeo-blue-dark);
   }
   .back-btn {
     background: transparent; border: none; color: var(--text-dim);
     font-size: 14px; font-family: inherit; cursor: pointer;
-    padding: 6px 10px; border-radius: 6px;
+    padding: 6px 10px; border-radius: 6px; min-width: 60px; text-align: left;
   }
   .back-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
   .header-title {
-    font-family: 'Korinna', 'Times New Roman', serif;
-    font-weight: 700;
-    font-size: 18px;
+    font-weight: 700; font-size: 18px;
     color: var(--jeo-gold);
     text-shadow: 2px 2px 0 var(--jeo-blue-dark);
     letter-spacing: 0.05em;
   }
+  .info-btn {
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; padding: 4px 10px;
+    min-width: 60px; text-align: right;
+  }
+  .info-btn:hover { color: var(--text); }
 
-  /* Screens */
+  /* ===== SCREENS ===== */
   .screen { flex: 1; display: none; flex-direction: column; padding: 16px; }
   .screen.active { display: flex; }
 
-  /* Home screen */
-  .home-hero {
-    text-align: center; padding: 32px 16px 16px;
-  }
+  /* ===== HOME ===== */
   .logo-stack {
-    display: inline-block;
-    background: var(--jeo-blue-dark);
-    padding: 24px 32px;
-    border-radius: 12px;
-    box-shadow: 0 8px 0 #000033, inset 0 0 0 4px var(--jeo-blue);
+    text-align: center;
+    margin: 16px 0 24px;
   }
   .logo-text {
-    font-family: 'Korinna', 'Times New Roman', serif;
+    display: inline-block;
+    background: var(--jeo-blue-dark);
+    padding: 16px 28px;
+    border-radius: 12px;
+    box-shadow: 0 6px 0 #000033, inset 0 0 0 3px var(--jeo-blue);
     font-weight: 700;
-    font-size: clamp(32px, 8vw, 48px);
+    font-size: clamp(28px, 7vw, 40px);
     color: var(--jeo-gold);
     text-shadow: 3px 3px 0 #000033;
     letter-spacing: 0.04em;
     line-height: 1;
   }
   .logo-text .small {
-    display: block; font-size: 0.55em; color: var(--text); margin-top: 4px;
+    display: block; font-size: 0.5em; color: var(--text); margin-top: 4px;
     letter-spacing: 0.15em;
   }
-  .home-tagline {
-    margin-top: 24px; font-size: 16px; color: var(--text-dim);
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
 
-  .pack-grid { display: grid; gap: 12px; margin: 16px 0 24px; }
-  .filter-row {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .filter-pill {
-    background: var(--jeo-blue-dark); border: 1px solid rgba(255,255,255,0.15);
-    color: var(--text-dim); padding: 7px 14px; border-radius: 999px;
-    font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600;
-    transition: all 0.15s ease;
-  }
-  .filter-pill.active { background: var(--jeo-gold); color: var(--jeo-blue-dark); border-color: var(--jeo-gold); }
-  .filter-pill:hover:not(.active) { color: var(--text); }
-
-  .pack-special {
-    background: linear-gradient(135deg, rgba(255,204,0,0.15), rgba(255,204,0,0.05)) !important;
-    border-color: var(--jeo-gold) !important;
-  }
-  .pack-name-row {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    margin-bottom: 2px;
-  }
-  .pack-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    border-radius: 999px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-  .pack-badge.lvl-easy { background: rgba(125,221,183,0.2); color: #7DDDB7; }
-  .pack-badge.lvl-medium { background: rgba(100,210,255,0.2); color: #64D2FF; }
-  .pack-badge.lvl-hard { background: rgba(255,180,140,0.2); color: #FFB48C; }
-  .pack-badge.lvl-mixed { background: rgba(255,204,0,0.2); color: #FFCC00; }
-  .pack-badge.custom { background: rgba(181,164,255,0.2); color: #B5A4FF; }
-  .pack-delete {
-    position: absolute;
-    top: 8px; right: 8px;
-    background: rgba(0,0,0,0.3);
-    border: none; color: rgba(255,255,255,0.6);
-    width: 24px; height: 24px; border-radius: 50%;
-    font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .pack-delete:hover { background: var(--wrong); color: white; }
-  .pack-card { position: relative; }
-
-  /* Random tile (first card in pack grid) */
-  .pack-random {
-    background: linear-gradient(135deg, rgba(255,204,0,0.18), rgba(255,184,0,0.08)) !important;
-    border-color: var(--jeo-gold) !important;
-    box-shadow: 0 0 0 1px rgba(255,204,0,0.3);
-  }
-  .pack-random:hover {
-    background: linear-gradient(135deg, rgba(255,204,0,0.28), rgba(255,184,0,0.12)) !important;
-  }
-
-  /* Footer (quiet utility actions) */
-  .home-footer {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex; gap: 8px; flex-wrap: wrap;
-  }
-  .footer-btn {
-    flex: 1; min-width: 160px;
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 6px;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.08);
-    color: var(--text-dim);
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 13px; font-weight: 500;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .footer-btn.primary {
-    background: linear-gradient(135deg, rgba(181,164,255,0.15), rgba(100,210,255,0.08));
-    border-color: rgba(181,164,255,0.4);
-    color: var(--text);
-  }
-  .footer-btn:hover {
-    color: var(--text);
-    border-color: rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.03);
-  }
-  .footer-btn.primary:hover {
-    border-color: rgba(181,164,255,0.7);
-  }
-
-  .pack-card {
-    background: var(--tile-bg);
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 12px; padding: 18px 20px;
-    text-align: left; cursor: pointer; color: inherit;
-    font-family: inherit;
-    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
-    display: flex; align-items: center; gap: 14px;
-  }
-  .pack-card:hover, .pack-card:active {
-    background: var(--tile-hover);
-    border-color: var(--jeo-gold);
-    transform: translateY(-2px);
-  }
-  .pack-emoji { font-size: 32px; flex-shrink: 0; }
-  .pack-info { flex: 1; min-width: 0; }
-  .pack-name {
-    font-weight: 700; font-size: 18px; color: var(--jeo-gold);
-    letter-spacing: 0.02em;
-  }
-  .pack-meta {
-    font-size: 13px; color: var(--text-dim); margin-top: 2px;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-
-  /* Players section */
   .players-section { margin-bottom: 20px; }
   .section-title {
     font-size: 12px; font-weight: 700; letter-spacing: 0.15em;
@@ -249,43 +128,42 @@
   }
   .add-player-btn:hover { border-color: var(--jeo-gold); background: rgba(255,204,0,0.05); }
 
-  /* Board screen */
-  .board-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  /* ===== BOARD (the new home and play) ===== */
+  .board-wrap {
+    background: var(--jeo-blue-dark);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 0 #000033;
   }
-  .pack-title {
-    font-size: 22px; font-weight: 700; color: var(--jeo-gold);
-    text-shadow: 2px 2px 0 var(--jeo-blue-dark);
-  }
-  .scores {
-    display: flex; gap: 8px; flex-wrap: wrap;
-  }
-  .score-pill {
-    background: var(--jeo-blue-dark); border: 2px solid var(--jeo-gold-dim);
-    border-radius: 999px; padding: 6px 14px;
-    font-size: 14px; font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .score-pill.lead { border-color: var(--jeo-gold); box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
-  .score-dot { width: 10px; height: 10px; border-radius: 50%; }
-
   .board-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
-    margin-bottom: 16px;
+  }
+  .cat-header {
+    background: var(--jeo-blue);
+    border: 2px solid var(--jeo-blue-dark);
+    border-radius: 8px;
+    aspect-ratio: 1 / 0.55;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-weight: 700;
+    font-size: clamp(10px, 1.8vw, 14px);
+    color: var(--jeo-gold);
+    text-shadow: 1px 1px 0 #000033;
+    padding: 6px 4px;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
   }
   .clue-tile {
     background: var(--tile-bg);
     border: 2px solid var(--jeo-blue-dark);
     border-radius: 8px;
-    aspect-ratio: 1 / 1.2;
+    aspect-ratio: 1 / 0.95;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Korinna', 'Times New Roman', serif;
     font-weight: 700;
-    font-size: clamp(14px, 4vw, 22px);
+    font-size: clamp(13px, 3vw, 22px);
     color: var(--jeo-gold);
     text-shadow: 2px 2px 0 #000033;
     cursor: pointer;
@@ -293,7 +171,7 @@
     box-shadow: inset 0 0 0 2px var(--jeo-blue);
   }
   .clue-tile:hover, .clue-tile:active {
-    transform: scale(1.05);
+    transform: scale(1.03);
     background: var(--tile-hover);
   }
   .clue-tile.used {
@@ -301,25 +179,69 @@
     color: transparent;
     cursor: default;
     box-shadow: inset 0 0 0 2px var(--jeo-blue-dark);
+    pointer-events: none;
   }
-  .clue-tile.used:hover { transform: none; }
 
-  .end-game-btn {
-    background: transparent; color: var(--text-dim);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px; padding: 10px 16px;
-    font-family: inherit; font-size: 13px;
-    cursor: pointer; align-self: center; margin-top: auto;
+  /* ===== SCORES BAR ===== */
+  .scores {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 12px;
   }
-  .end-game-btn:hover { color: var(--text); border-color: var(--text); }
+  .score-pill {
+    background: var(--jeo-blue-dark); border: 2px solid var(--jeo-gold-dim);
+    border-radius: 999px; padding: 6px 14px;
+    font-size: 13px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Korinna', serif;
+  }
+  .score-pill.lead { border-color: var(--jeo-gold); box-shadow: 0 0 0 2px rgba(255,204,0,0.3); }
+  .score-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-  /* Clue screen */
+  /* ===== ACTION ROW (under board) ===== */
+  .action-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .action-btn {
+    flex: 1; min-width: 140px;
+    background: var(--jeo-gold); color: var(--jeo-blue-dark);
+    border: none; border-radius: 12px;
+    padding: 14px 16px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--jeo-gold-dim);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .action-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--jeo-gold-dim);
+  }
+  .action-btn.secondary {
+    background: transparent; color: var(--text);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: none;
+  }
+  .action-btn.secondary:hover { border-color: var(--text); background: rgba(255,255,255,0.05); }
+  .action-btn.danger { background: transparent; color: var(--text-dim); box-shadow: none; border: 1px solid rgba(255,255,255,0.1); }
+  .action-btn.danger:hover { color: var(--wrong); border-color: var(--wrong); background: rgba(255,77,109,0.05); }
+
+  /* ===== CLUE SCREEN ===== */
   .clue-display {
     flex: 1;
     display: flex; flex-direction: column;
     background: var(--jeo-blue);
     padding: 20px;
     text-align: center;
+  }
+  .clue-cat {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 4px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
   }
   .clue-value {
     font-size: clamp(24px, 6vw, 32px); font-weight: 700;
@@ -351,7 +273,6 @@
     transform: translateY(3px);
     box-shadow: 0 3px 0 var(--jeo-gold-dim);
   }
-
   .answer-text {
     font-size: clamp(20px, 5vw, 28px); font-weight: 700;
     color: var(--jeo-gold);
@@ -361,7 +282,6 @@
     background: var(--jeo-blue-dark);
   }
   .answer-text.hidden { display: none; }
-
   .scoring-section { margin-top: 20px; }
   .scoring-prompt {
     text-align: center; font-size: 14px; color: var(--text-dim);
@@ -378,10 +298,7 @@
   .score-btn:hover { background: var(--tile-hover); border-color: var(--jeo-gold); }
   .score-btn .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .score-btn .label { flex: 1; }
-  .score-btn .delta {
-    font-weight: 700; font-variant-numeric: tabular-nums;
-    font-family: 'Korinna', serif;
-  }
+  .score-btn .delta { font-weight: 700; font-variant-numeric: tabular-nums; font-family: 'Korinna', serif; }
   .score-btn.correct .delta { color: var(--correct); }
   .score-btn.wrong .delta { color: var(--wrong); }
   .score-btn.skip {
@@ -390,7 +307,7 @@
     color: var(--text-dim);
   }
 
-  /* Game over screen */
+  /* ===== GAME OVER ===== */
   .gameover {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -431,7 +348,7 @@
   .final-score.negative { color: var(--wrong); }
   .gameover-btns { display: grid; gap: 10px; width: 100%; max-width: 320px; }
 
-  /* Generic buttons */
+  /* ===== BUTTONS ===== */
   .primary-btn {
     background: var(--jeo-gold); color: var(--jeo-blue-dark);
     border: none; border-radius: 12px;
@@ -445,18 +362,36 @@
     transform: translateY(3px);
     box-shadow: 0 3px 0 var(--jeo-gold-dim);
   }
-  .secondary-btn {
-    background: transparent; color: var(--text);
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 12px; padding: 14px 24px;
-    font-size: 15px; font-family: inherit;
-    cursor: pointer; width: 100%;
+
+  /* ===== FOOTER ===== */
+  .home-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; gap: 8px; flex-wrap: wrap;
   }
-  .secondary-btn:hover { border-color: var(--text); }
+  .footer-btn {
+    flex: 1; min-width: 160px;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-dim);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .footer-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); }
 
   @media (max-width: 380px) {
     .board-grid { gap: 4px; }
-    .clue-tile { font-size: 14px; }
+    .clue-tile { font-size: 13px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 </style>
 </head>
@@ -465,16 +400,13 @@
   <header>
     <button class="back-btn" id="back-btn" style="visibility: hidden;">← Back</button>
     <div class="header-title" id="header-title">FAMILY JEOPARDY!</div>
-    <button class="back-btn" id="info-btn" aria-label="Info">ⓘ</button>
+    <button class="info-btn" id="info-btn" aria-label="Info">ⓘ</button>
   </header>
 
-  <!-- HOME SCREEN -->
+  <!-- HOME = THE BOARD -->
   <section class="screen active" id="screen-home">
-    <div class="home-hero">
-      <div class="logo-stack">
-        <div class="logo-text">JEOPARDY!<span class="small">FAMILY EDITION</span></div>
-      </div>
-      <div class="home-tagline">Pick a category. Read the clue. Answer in the form of a question.</div>
+    <div class="logo-stack">
+      <div class="logo-text">JEOPARDY!<span class="small">FAMILY EDITION</span></div>
     </div>
 
     <div class="players-section">
@@ -483,17 +415,17 @@
       <button class="add-player-btn" id="add-player-btn">+ Add player</button>
     </div>
 
-    <div class="section-title">Pick a Category</div>
-    <div class="filter-row" id="level-filter"></div>
-    <div class="pack-grid" id="pack-grid"></div>
-
-    <!-- Custom packs row (only shown if any exist) -->
-    <div id="custom-packs-section" hidden>
-      <div class="section-title">Your custom packs</div>
-      <div class="pack-grid" id="custom-pack-grid"></div>
+    <div class="section-title">Today's Board</div>
+    <div class="scores" id="scores"></div>
+    <div class="board-wrap">
+      <div class="board-grid" id="home-board"></div>
     </div>
 
-    <!-- Quiet utility action at bottom: import a custom pack -->
+    <div class="action-row">
+      <button class="action-btn" id="new-board-btn">🎲 New board</button>
+      <button class="action-btn secondary" id="end-game-btn">End round</button>
+    </div>
+
     <div class="home-footer">
       <label class="footer-btn">
         📥 Import a custom pack
@@ -502,19 +434,10 @@
     </div>
   </section>
 
-  <!-- BOARD SCREEN -->
-  <section class="screen" id="screen-board">
-    <div class="board-header">
-      <div class="pack-title" id="pack-title">CATEGORY</div>
-      <div class="scores" id="scores"></div>
-    </div>
-    <div class="board-grid" id="board-grid"></div>
-    <button class="end-game-btn" id="end-game-btn">End game →</button>
-  </section>
-
   <!-- CLUE SCREEN -->
   <section class="screen" id="screen-clue">
     <div class="clue-display">
+      <div class="clue-cat" id="clue-cat">CATEGORY</div>
       <div class="clue-value" id="clue-value">$200</div>
       <div class="clue-text" id="clue-text"></div>
       <button class="reveal-btn" id="reveal-btn">Reveal answer</button>
@@ -526,10 +449,10 @@
     </div>
   </section>
 
-  <!-- GAME OVER SCREEN -->
+  <!-- GAME OVER -->
   <section class="screen" id="screen-gameover">
     <div class="gameover">
-      <div class="gameover-title">Game over!</div>
+      <div class="gameover-title">Round over!</div>
       <div class="winner-row" id="winner-row">
         <div class="winner-emoji">🏆</div>
         <div>
@@ -539,402 +462,163 @@
       </div>
       <div class="final-scores" id="final-scores"></div>
       <div class="gameover-btns">
-        <button class="primary-btn" id="play-again-btn">Play another category</button>
-        <button class="secondary-btn" id="reset-btn">Reset all scores</button>
+        <button class="primary-btn" id="play-again-btn">🎲 New board, keep scores</button>
+        <button class="footer-btn" id="reset-btn" style="margin-top: 4px;">Reset all scores</button>
       </div>
     </div>
   </section>
-
 </div>
 
+<!-- LOAD CATEGORIES -->
+<script src="categories.js"></script>
+
 <script>
-// =============================================================
-// QUESTION PACKS — middle-school appropriate, family-friendly
-// Format: each pack has 5 categories × 5 clues at $100/200/300/400/500
-// For mobile: we simplify to 1 category × 5 clues per "round"
-// =============================================================
-const PACKS = [
-  // ===== EASY =====
-  {
-    id: 'animals', name: 'Animal Kingdom', emoji: '🦒', level: 'easy',
-    description: 'Wild and wonderful creatures',
-    clues: [
-      { value: 100, clue: 'This is the largest mammal on Earth, living in the ocean.', answer: 'What is the blue whale?' },
-      { value: 200, clue: 'This African mammal has a long neck that can reach leaves up to 18 feet high.', answer: 'What is a giraffe?' },
-      { value: 300, clue: 'This is the only mammal that can truly fly.', answer: 'What is a bat?' },
-      { value: 400, clue: 'This Australian marsupial carries its baby in a pouch and can hop up to 30 mph.', answer: 'What is a kangaroo?' },
-      { value: 500, clue: 'This animal, sometimes called the "ship of the desert," can drink up to 30 gallons of water in 13 minutes.', answer: 'What is a camel?' }
-    ]
-  },
-  {
-    id: 'food', name: 'Food & Cooking', emoji: '🍕', level: 'easy',
-    description: 'Tasty trivia from around the world',
-    clues: [
-      { value: 100, clue: 'This Italian dish features a flat round bread topped with sauce and cheese.', answer: 'What is pizza?' },
-      { value: 200, clue: 'This Japanese dish features raw fish on small mounds of rice.', answer: 'What is sushi?' },
-      { value: 300, clue: 'This French pastry is buttery, flaky, and shaped like a crescent moon.', answer: 'What is a croissant?' },
-      { value: 400, clue: 'This spice, more valuable than gold by weight, comes from a crocus flower.', answer: 'What is saffron?' },
-      { value: 500, clue: 'This Mexican spicy sauce, named for a state, is made from chocolate and chili peppers.', answer: 'What is mole?' }
-    ]
-  },
-  {
-    id: 'disney', name: 'Disney Classics', emoji: '🏰', level: 'easy',
-    description: 'Princesses, parks, and animation magic',
-    clues: [
-      { value: 100, clue: 'In The Little Mermaid, this is the name of Ariel\'s crab friend who sings "Under the Sea."', answer: 'Who is Sebastian?' },
-      { value: 200, clue: 'This Disney princess has long magical hair that glows when she sings.', answer: 'Who is Rapunzel?' },
-      { value: 300, clue: 'In Encanto, this is the name of the magical mountain town where the Madrigals live.', answer: 'What is the Encanto?' },
-      { value: 400, clue: 'This was the first full-length animated film ever made, released by Disney in 1937.', answer: 'What is Snow White and the Seven Dwarfs?' },
-      { value: 500, clue: 'This French phrase, the title of a Disney song, means "the carefree life."', answer: 'What is Hakuna Matata? (Swahili, not French — trick clue!)' }
-    ]
-  },
-  {
-    id: 'pixar', name: 'Pixar Films', emoji: '💡', level: 'easy',
-    description: 'Toys, monsters, and emotional rollercoasters',
-    clues: [
-      { value: 100, clue: 'In Toy Story, this cowboy doll is Andy\'s favorite toy.', answer: 'Who is Woody?' },
-      { value: 200, clue: 'This 2008 Pixar film features a small robot left alone on Earth to clean up trash.', answer: 'What is WALL-E?' },
-      { value: 300, clue: 'In Finding Nemo, this forgetful blue tang fish helps Marlin search for his son.', answer: 'Who is Dory?' },
-      { value: 400, clue: 'This Pixar film takes place inside the mind of a girl named Riley, with characters like Joy and Sadness.', answer: 'What is Inside Out?' },
-      { value: 500, clue: 'In Monsters, Inc., this is the name of the little girl Sulley accidentally lets into the monster world.', answer: 'Who is Boo?' }
-    ]
-  },
-  {
-    id: 'frozen', name: 'Frozen, Encanto, Moana', emoji: '❄️', level: 'easy',
-    description: 'Modern Disney musical favorites',
-    clues: [
-      { value: 100, clue: 'In Frozen, this princess has ice powers and rules the kingdom of Arendelle.', answer: 'Who is Elsa?' },
-      { value: 200, clue: 'In Moana, this demigod with magical tattoos joins her on her ocean journey.', answer: 'Who is Maui?' },
-      { value: 300, clue: 'In Encanto, this Madrigal sister has super-human strength.', answer: 'Who is Luisa?' },
-      { value: 400, clue: 'In Frozen 2, Elsa and Anna travel north to this enchanted forest.', answer: 'What is the Enchanted Forest?' },
-      { value: 500, clue: 'In Encanto, this song about an unmentioned uncle became a huge global hit in 2022.', answer: 'What is "We Don\'t Talk About Bruno"?' }
-    ]
-  },
-  {
-    id: 'dinosaurs', name: 'Dinosaurs', emoji: '🦖', level: 'easy',
-    description: 'Prehistoric giants',
-    clues: [
-      { value: 100, clue: 'This three-horned dinosaur had a large bony frill behind its head.', answer: 'What is a Triceratops?' },
-      { value: 200, clue: 'Often called "T. rex," this massive predator lived in what is now North America.', answer: 'What is a Tyrannosaurus rex?' },
-      { value: 300, clue: 'This long-necked plant-eater was one of the largest animals ever to walk Earth.', answer: 'What is a Brachiosaurus? (or Brontosaurus)' },
-      { value: 400, clue: 'This era, sometimes called the "Age of Reptiles," lasted from 252 to 66 million years ago.', answer: 'What is the Mesozoic Era?' },
-      { value: 500, clue: 'Most scientists agree this caused the dinosaurs\' extinction 66 million years ago.', answer: 'What is an asteroid impact?' }
-    ]
-  },
-  {
-    id: 'sports', name: 'Sports', emoji: '⚽', level: 'easy',
-    description: 'Games, teams, and athletes',
-    clues: [
-      { value: 100, clue: 'In this sport, players try to score by getting a ball into a hoop 10 feet off the ground.', answer: 'What is basketball?' },
-      { value: 200, clue: 'These international games take place every four years, alternating between summer and winter.', answer: 'What are the Olympics?' },
-      { value: 300, clue: 'In baseball, hitting the ball over the outfield fence scores this.', answer: 'What is a home run?' },
-      { value: 400, clue: 'This American gymnast won 7 Olympic medals between 2016 and 2024.', answer: 'Who is Simone Biles?' },
-      { value: 500, clue: 'In soccer, this trophy is awarded to the world champion every four years.', answer: 'What is the World Cup?' }
-    ]
-  },
-
-  // ===== MEDIUM =====
-  {
-    id: 'movies', name: 'Movies & Shows', emoji: '🎬', level: 'medium',
-    description: 'Family-friendly films and series',
-    clues: [
-      { value: 100, clue: 'In Frozen, this snowman dreams of summer and warm hugs.', answer: 'Who is Olaf?' },
-      { value: 200, clue: 'This Pixar film features a rat who dreams of becoming a chef in Paris.', answer: 'What is Ratatouille?' },
-      { value: 300, clue: 'In Star Wars, this small green Jedi master trained Luke Skywalker on Dagobah.', answer: 'Who is Yoda?' },
-      { value: 400, clue: 'This Studio Ghibli film features a girl named Chihiro trapped in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
-      { value: 500, clue: 'In The Princess Bride, this Spaniard seeks revenge on the six-fingered man.', answer: 'Who is Inigo Montoya?' }
-    ]
-  },
-  {
-    id: 'space', name: 'Space Exploration', emoji: '🚀', level: 'medium',
-    description: 'Planets, astronauts, the cosmos',
-    clues: [
-      { value: 100, clue: 'This planet, fourth from the sun, is known as the Red Planet.', answer: 'What is Mars?' },
-      { value: 200, clue: 'In 1969, this American astronaut became the first person to walk on the moon.', answer: 'Who is Neil Armstrong?' },
-      { value: 300, clue: 'This dwarf planet was reclassified from being the ninth planet in 2006.', answer: 'What is Pluto?' },
-      { value: 400, clue: 'This NASA telescope, launched in 2021, captures the deepest images of space ever recorded.', answer: 'What is the James Webb Space Telescope?' },
-      { value: 500, clue: 'This galaxy is the closest spiral galaxy to our own Milky Way and is on a collision course with it.', answer: 'What is Andromeda?' }
-    ]
-  },
-  {
-    id: 'science', name: 'Science', emoji: '🔬', level: 'medium',
-    description: 'Physics, biology, chemistry, more',
-    clues: [
-      { value: 100, clue: 'This gas, with the chemical symbol O, makes up about 21% of Earth\'s atmosphere.', answer: 'What is oxygen?' },
-      { value: 200, clue: 'This force pulls objects toward the center of the Earth.', answer: 'What is gravity?' },
-      { value: 300, clue: 'This process is how plants make their food using sunlight.', answer: 'What is photosynthesis?' },
-      { value: 400, clue: 'This is the smallest unit of an element that retains its properties.', answer: 'What is an atom?' },
-      { value: 500, clue: 'This famous physicist developed the theory of relativity and the equation E=mc².', answer: 'Who is Albert Einstein?' }
-    ]
-  },
-  {
-    id: 'world', name: 'World Geography', emoji: '🌍', level: 'medium',
-    description: 'Countries, capitals, landmarks',
-    clues: [
-      { value: 100, clue: 'This is the longest river in the world, flowing through Egypt.', answer: 'What is the Nile?' },
-      { value: 200, clue: 'This European country is shaped like a boot.', answer: 'What is Italy?' },
-      { value: 300, clue: 'This Asian wall, built over 2,000 years ago, is visible from space (sort of).', answer: 'What is the Great Wall of China?' },
-      { value: 400, clue: 'This is the smallest country in the world by area.', answer: 'What is Vatican City?' },
-      { value: 500, clue: 'This South American country is home to most of the Amazon rainforest.', answer: 'What is Brazil?' }
-    ]
-  },
-  {
-    id: 'history', name: 'US History', emoji: '🇺🇸', level: 'medium',
-    description: 'People and events that shaped America',
-    clues: [
-      { value: 100, clue: 'This U.S. president signed the Emancipation Proclamation in 1863.', answer: 'Who is Abraham Lincoln?' },
-      { value: 200, clue: 'This 1776 document declared the colonies free from British rule.', answer: 'What is the Declaration of Independence?' },
-      { value: 300, clue: 'This first African American Supreme Court Justice was appointed in 1967.', answer: 'Who is Thurgood Marshall?' },
-      { value: 400, clue: 'This 1969 event in upstate New York drew 400,000 people for a music festival.', answer: 'What is Woodstock?' },
-      { value: 500, clue: 'This civil rights leader gave the "I Have a Dream" speech in 1963.', answer: 'Who is Martin Luther King Jr.?' }
-    ]
-  },
-  {
-    id: 'music', name: 'Music', emoji: '🎸', level: 'medium',
-    description: 'Songs, artists, instruments',
-    clues: [
-      { value: 100, clue: 'This British band sang "Hey Jude" and "Let It Be."', answer: 'Who are The Beatles?' },
-      { value: 200, clue: 'This brass instrument is curled into a circle and played in marching bands.', answer: 'What is a tuba?' },
-      { value: 300, clue: 'This composer wrote symphonies even after he became deaf.', answer: 'Who is Beethoven?' },
-      { value: 400, clue: 'This Broadway musical tells the story of one of America\'s founding fathers through hip-hop.', answer: 'What is Hamilton?' },
-      { value: 500, clue: 'This pop star\'s real name is Stefani Germanotta.', answer: 'Who is Lady Gaga?' }
-    ]
-  },
-  {
-    id: 'harry-potter', name: 'Harry Potter', emoji: '⚡', level: 'medium',
-    description: 'Wizarding world trivia',
-    clues: [
-      { value: 100, clue: 'This is the name of the wizarding school Harry attends.', answer: 'What is Hogwarts?' },
-      { value: 200, clue: 'This Hogwarts house values bravery and is symbolized by a lion.', answer: 'What is Gryffindor?' },
-      { value: 300, clue: 'This bushy-haired know-it-all becomes one of Harry\'s best friends.', answer: 'Who is Hermione Granger?' },
-      { value: 400, clue: 'This dark wizard, often called "He-Who-Must-Not-Be-Named," is Harry\'s archenemy.', answer: 'Who is Voldemort?' },
-      { value: 500, clue: 'These three magical objects — a wand, a stone, and a cloak — grant their owner mastery over death.', answer: 'What are the Deathly Hallows?' }
-    ]
-  },
-  {
-    id: 'marvel', name: 'Marvel Universe', emoji: '🦸', level: 'medium',
-    description: 'Superheroes and the MCU',
-    clues: [
-      { value: 100, clue: 'This billionaire genius builds a suit of armor and becomes the founding Avenger.', answer: 'Who is Iron Man / Tony Stark?' },
-      { value: 200, clue: 'This Asgardian god of thunder wields a hammer named Mjølnir.', answer: 'Who is Thor?' },
-      { value: 300, clue: 'This vibranium-rich African nation is ruled by King T\'Challa.', answer: 'What is Wakanda?' },
-      { value: 400, clue: 'This 2019 film concluded the Infinity Saga with the line "Avengers... assemble."', answer: 'What is Avengers: Endgame?' },
-      { value: 500, clue: 'These six powerful gems control aspects of existence: Mind, Power, Reality, Soul, Space, and Time.', answer: 'What are the Infinity Stones?' }
-    ]
-  },
-  {
-    id: 'ghibli', name: 'Studio Ghibli', emoji: '🍃', level: 'medium',
-    description: 'Japanese animation classics',
-    clues: [
-      { value: 100, clue: 'This big fluffy forest spirit appears to two sisters in a 1988 Ghibli film.', answer: 'Who is Totoro?' },
-      { value: 200, clue: 'In Kiki\'s Delivery Service, Kiki uses this magical method to deliver packages.', answer: 'What is flying on a broomstick?' },
-      { value: 300, clue: 'In Howl\'s Moving Castle, this fire demon powers the castle.', answer: 'Who is Calcifer?' },
-      { value: 400, clue: 'This Ghibli film features a spirited girl named Chihiro working in a bathhouse for spirits.', answer: 'What is Spirited Away?' },
-      { value: 500, clue: 'This co-founder of Studio Ghibli directed Princess Mononoke and My Neighbor Totoro.', answer: 'Who is Hayao Miyazaki?' }
-    ]
-  },
-  {
-    id: 'mythology', name: 'Mythology', emoji: '⚡️', level: 'medium',
-    description: 'Greek, Norse, and Egyptian gods',
-    clues: [
-      { value: 100, clue: 'This king of the Greek gods rules from Mount Olympus and wields lightning bolts.', answer: 'Who is Zeus?' },
-      { value: 200, clue: 'This Norse god of mischief is Thor\'s adopted brother.', answer: 'Who is Loki?' },
-      { value: 300, clue: 'This Greek hero killed the Minotaur in the labyrinth of Crete.', answer: 'Who is Theseus?' },
-      { value: 400, clue: 'This Egyptian god has the head of a jackal and oversees the dead.', answer: 'Who is Anubis?' },
-      { value: 500, clue: 'This Greek hero\'s only weakness was his heel.', answer: 'Who is Achilles?' }
-    ]
-  },
-  {
-    id: 'art', name: 'Famous Art', emoji: '🎨', level: 'medium',
-    description: 'Paintings, sculptures, artists',
-    clues: [
-      { value: 100, clue: 'This Italian artist painted the Mona Lisa.', answer: 'Who is Leonardo da Vinci?' },
-      { value: 200, clue: 'This Dutch artist painted Starry Night and famously cut off part of his ear.', answer: 'Who is Vincent van Gogh?' },
-      { value: 300, clue: 'This Mexican artist painted self-portraits with bold eyebrows and bright colors.', answer: 'Who is Frida Kahlo?' },
-      { value: 400, clue: 'This 17-foot-tall marble sculpture by Michelangelo depicts a Biblical hero.', answer: 'What is the statue of David?' },
-      { value: 500, clue: 'This Spanish artist co-founded Cubism and painted Guernica.', answer: 'Who is Pablo Picasso?' }
-    ]
-  },
-  {
-    id: 'books', name: 'Books & Authors', emoji: '📚', level: 'medium',
-    description: 'Famous novels and the people who wrote them',
-    clues: [
-      { value: 100, clue: 'This author wrote Charlie and the Chocolate Factory and Matilda.', answer: 'Who is Roald Dahl?' },
-      { value: 200, clue: 'In this Newbery-winning book, Bruno befriends a Jewish boy named Shmuel through a fence.', answer: 'What is The Boy in the Striped Pajamas?' },
-      { value: 300, clue: 'This Greek poet is credited with writing The Iliad and The Odyssey.', answer: 'Who is Homer?' },
-      { value: 400, clue: 'This author wrote The Hobbit and The Lord of the Rings.', answer: 'Who is J.R.R. Tolkien?' },
-      { value: 500, clue: 'This Newbery-winning author wrote A Wrinkle in Time.', answer: 'Who is Madeleine L\'Engle?' }
-    ]
-  },
-
-  // ===== HARD =====
-  {
-    id: 'capitals-hard', name: 'World Capitals (Hard)', emoji: '🌐', level: 'hard',
-    description: 'For the seasoned geographers',
-    clues: [
-      { value: 100, clue: 'This is the capital of Australia (hint: not Sydney).', answer: 'What is Canberra?' },
-      { value: 200, clue: 'This is the capital of Canada.', answer: 'What is Ottawa?' },
-      { value: 300, clue: 'This is the capital of Turkey (hint: not Istanbul).', answer: 'What is Ankara?' },
-      { value: 400, clue: 'This is the capital of South Africa, sort of — it has three.', answer: 'What is Pretoria? (or Cape Town, or Bloemfontein)' },
-      { value: 500, clue: 'This is the capital of Kazakhstan, formerly known as Astana, renamed in 2019.', answer: 'What is Nur-Sultan? (now back to Astana again)' }
-    ]
-  },
-  {
-    id: 'math', name: 'Math & Numbers', emoji: '📐', level: 'hard',
-    description: 'Mathematicians and concepts',
-    clues: [
-      { value: 100, clue: 'This Greek philosopher\'s theorem describes the relationship between the sides of a right triangle.', answer: 'Who is Pythagoras?' },
-      { value: 200, clue: 'This irrational number, approximately 3.14159, is the ratio of a circle\'s circumference to its diameter.', answer: 'What is pi?' },
-      { value: 300, clue: 'This Italian mathematician\'s sequence starts 0, 1, 1, 2, 3, 5, 8, 13...', answer: 'Who is Fibonacci?' },
-      { value: 400, clue: 'This British mathematician helped break the Enigma code in WWII and is considered the father of computer science.', answer: 'Who is Alan Turing?' },
-      { value: 500, clue: 'This African American NASA mathematician calculated trajectories for John Glenn\'s orbital flight in 1962.', answer: 'Who is Katherine Johnson?' }
-    ]
-  },
-  {
-    id: 'world-history', name: 'World History (Hard)', emoji: '🏛️', level: 'hard',
-    description: 'Empires, revolutions, civilizations',
-    clues: [
-      { value: 100, clue: 'This wall, built over 2,000 years ago, stretches more than 13,000 miles across northern China.', answer: 'What is the Great Wall of China?' },
-      { value: 200, clue: 'This Macedonian king conquered most of the known world before dying at age 32.', answer: 'Who is Alexander the Great?' },
-      { value: 300, clue: 'This wall divided a German city from 1961 until it fell in 1989.', answer: 'What is the Berlin Wall?' },
-      { value: 400, clue: 'This 14-year-old French girl led the French army to victory at Orléans in 1429.', answer: 'Who is Joan of Arc?' },
-      { value: 500, clue: 'This 1804 leader of Haiti\'s independence was the first to defeat a European colonial power in a slave-led revolution.', answer: 'Who is Toussaint L\'Ouverture? (or Jean-Jacques Dessalines)' }
-    ]
-  }
-];
-
-// Player colors
+// ============================================================
+// STATE
+// ============================================================
 const COLORS = ['#FF6B9D', '#4DD0E1', '#FFCC00', '#7DDDB7', '#B5A4FF', '#FFB48C'];
-const STORAGE_KEY = 'family-jeopardy-v1';
+const STORAGE_KEY = 'family-jeopardy-v2';
+const HISTORY_LIMIT_CATEGORIES = 3;  // Don't repeat categories from the last N boards
+const HISTORY_LIMIT_CLUES = 60;       // Don't repeat clues from the last N plays
 
-// State
+const ALL_CATEGORIES = window.JEOPARDY_CATEGORIES || [];
+
 let state = {
   players: [
     { id: 'p1', name: 'Amber', color: '#FF6B9D', score: 0 },
     { id: 'p2', name: 'William', color: '#4DD0E1', score: 0 },
     { id: 'p3', name: 'Zev', color: '#FFCC00', score: 0 }
   ],
-  currentPack: null,
-  usedClues: {},  // packId -> [clueIndexes]
-  currentClue: null,
+  currentBoard: null,        // { categories: [{ id, name, clues: [{ value, clue, answer, used }] }] }
+  currentClue: null,         // { catIdx, value, clue, answer }
   customPacks: [],
-  activeFilter: 'all',
-  difficultyPref: 'mixed',
-  browseExpanded: false
+  recentCategoryIds: [],     // Cycle through to avoid repeats across boards
+  recentClueKeys: []         // Cycle through to avoid repeating individual clues
 };
 
-// Load from storage
+// Load saved state
 try {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  if (saved.players) state.players = saved.players;
-  if (saved.usedClues) state.usedClues = saved.usedClues;
-  if (saved.customPacks) state.customPacks = saved.customPacks;
-  if (saved.activeFilter) state.activeFilter = saved.activeFilter;
-  if (saved.difficultyPref) state.difficultyPref = saved.difficultyPref;
-  if (typeof saved.browseExpanded === 'boolean') state.browseExpanded = saved.browseExpanded;
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  if (saved) {
+    if (saved.players) state.players = saved.players;
+    if (saved.customPacks) state.customPacks = saved.customPacks;
+    if (saved.recentCategoryIds) state.recentCategoryIds = saved.recentCategoryIds;
+    if (saved.recentClueKeys) state.recentClueKeys = saved.recentClueKeys;
+  }
 } catch (e) {}
 
 function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     players: state.players,
-    usedClues: state.usedClues,
     customPacks: state.customPacks,
-    activeFilter: state.activeFilter,
-    difficultyPref: state.difficultyPref,
-    browseExpanded: state.browseExpanded
+    recentCategoryIds: state.recentCategoryIds,
+    recentClueKeys: state.recentClueKeys
   }));
 }
 
-// =================== Screen routing ===================
+// ============================================================
+// HELPERS
+// ============================================================
+function $(s, root = document) { return root.querySelector(s); }
+function $$(s, root = document) { return [...root.querySelectorAll(s)]; }
+function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getAllCats() {
+  return [...ALL_CATEGORIES, ...(state.customPacks || [])];
+}
+
+// ============================================================
+// BOARD GENERATION (the new core)
+// ============================================================
+function generateBoard() {
+  const all = getAllCats();
+  if (all.length < 5) {
+    // Fallback: use everything
+    return buildBoardFromCats(all);
+  }
+
+  // 1. Pick 5 categories preferring ones not in recent history
+  const recent = new Set(state.recentCategoryIds);
+  const fresh = all.filter(c => !recent.has(c.id));
+  const stale = all.filter(c => recent.has(c.id));
+  const pool = fresh.length >= 5 ? fresh : [...fresh, ...stale];
+  const pickedCats = shuffle(pool).slice(0, 5);
+
+  // 2. Update recent-category ring buffer
+  const newRecent = [...pickedCats.map(c => c.id), ...state.recentCategoryIds];
+  state.recentCategoryIds = [...new Set(newRecent)].slice(0, HISTORY_LIMIT_CATEGORIES * 5);
+
+  return buildBoardFromCats(pickedCats);
+}
+
+function buildBoardFromCats(cats) {
+  // For each category, pick one clue per value level ($100/$200/$300/$400/$500),
+  // preferring clues not in recent history.
+  const recentClues = new Set(state.recentClueKeys);
+  const valueOrder = [100, 200, 300, 400, 500];
+  const newClueKeys = [];
+
+  const boardCats = cats.slice(0, 5).map(cat => {
+    const cluesByValue = {};
+    valueOrder.forEach(v => {
+      cluesByValue[v] = (cat.clues || []).filter(c => c.value === v);
+    });
+
+    const pickedClues = valueOrder.map(value => {
+      const candidates = cluesByValue[value] || [];
+      if (candidates.length === 0) {
+        // No clue at this value? Use any clue from the category.
+        const fallback = (cat.clues || [])[0];
+        return fallback ? { ...fallback, value } : { value, clue: '(no clue available)', answer: 'N/A' };
+      }
+      // Prefer fresh
+      const keyOf = c => `${cat.id}::${c.clue}`;
+      const fresh = candidates.filter(c => !recentClues.has(keyOf(c)));
+      const pool = fresh.length > 0 ? fresh : candidates;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      newClueKeys.push(keyOf(pick));
+      return { value, clue: pick.clue, answer: pick.answer, used: false };
+    });
+
+    return { id: cat.id, name: cat.name, clues: pickedClues };
+  });
+
+  // Update recent-clue ring buffer
+  state.recentClueKeys = [...newClueKeys, ...state.recentClueKeys].slice(0, HISTORY_LIMIT_CLUES);
+
+  return { categories: boardCats };
+}
+
+// ============================================================
+// SCREEN ROUTING
+// ============================================================
 function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  const back = document.getElementById('back-btn');
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-' + name).classList.add('active');
+  const back = $('#back-btn');
   back.style.visibility = (name === 'home') ? 'hidden' : 'visible';
   back.onclick = () => {
-    if (name === 'clue') showScreen('board');
+    if (name === 'clue') showScreen('home');
     else showScreen('home');
   };
   if (name === 'home') renderHome();
-  if (name === 'board') renderBoard();
 }
 
-// =================== Home screen ===================
-function getAllPacks() {
-  return [...PACKS, ...(state.customPacks || [])];
-}
-
-// Session-level history of clues we've already pulled into Mixed Bag rounds.
-// Resets on full app reload — keeps a single sitting fresh, doesn't bloat localStorage.
-const sessionPlayedKeys = new Set();
-
-function generateMixedBag(diffPref = 'mixed') {
-  // diffPref: 'easy' | 'mixed' | 'hard'
-  // Pick 5 random clues at $100/$200/$300/$400/$500 from packs matching the difficulty.
-  const all = getAllPacks();
-  let pool = all;
-  if (diffPref === 'easy') pool = all.filter(p => p.level === 'easy' || p.level === 'medium');
-  else if (diffPref === 'hard') pool = all.filter(p => p.level === 'hard' || p.level === 'medium');
-  // 'mixed' = everything
-  if (pool.length === 0) pool = all;
-
-  const targetValues = [100, 200, 300, 400, 500];
-  const clues = [];
-  const usedThisRound = new Set();
-
-  // Build a flat list of (pack, clue, key) for the matching pool
-  const candidates = [];
-  pool.forEach(pack => {
-    pack.clues.forEach(clue => {
-      candidates.push({
-        pack, clue,
-        key: pack.id + '::' + clue.clue
-      });
-    });
-  });
-
-  for (const v of targetValues) {
-    // Prefer not-yet-played-this-session
-    let bucket = candidates.filter(c => c.clue.value === v && !sessionPlayedKeys.has(c.key) && !usedThisRound.has(c.key));
-    // If we've exhausted the unplayed pool, fall back to anything at this value
-    if (bucket.length === 0) {
-      bucket = candidates.filter(c => c.clue.value === v && !usedThisRound.has(c.key));
-    }
-    if (bucket.length === 0) continue;
-    const pick = bucket[Math.floor(Math.random() * bucket.length)];
-    usedThisRound.add(pick.key);
-    sessionPlayedKeys.add(pick.key);
-    clues.push({
-      ...pick.clue,
-      sourcePack: pick.pack.name,
-      sourceEmoji: pick.pack.emoji
-    });
-  }
-
-  return {
-    id: 'mixed-bag-' + Date.now(),
-    name: 'Mixed Bag',
-    emoji: '🎲',
-    level: 'mixed',
-    description: '5 random questions',
-    clues,
-    isVirtual: true
-  };
-}
-
-function startMixedGame() {
-  const diff = state.difficultyPref || 'mixed';
-  const pack = generateMixedBag(diff);
-  if (pack.clues.length === 0) return;
-  state.usedClues[pack.id] = [];
-  state.currentPack = pack;
-  showScreen('board');
-}
-
+// ============================================================
+// HOME RENDER (the board lives here)
+// ============================================================
 function renderHome() {
-  // Render players
-  const list = document.getElementById('players-list');
-  list.innerHTML = state.players.map((p, i) => `
+  // Players
+  const list = $('#players-list');
+  list.innerHTML = state.players.map(p => `
     <div class="player-row">
       <input class="player-input" data-id="${p.id}" data-field="name" type="text" value="${escapeHtml(p.name)}" maxlength="20" placeholder="Name">
       <button class="player-color" data-id="${p.id}" style="background: ${p.color}"></button>
@@ -942,13 +626,13 @@ function renderHome() {
     </div>
   `).join('');
 
-  list.querySelectorAll('.player-input').forEach(inp => {
+  $$('.player-input', list).forEach(inp => {
     inp.addEventListener('input', e => {
       const p = state.players.find(x => x.id === e.target.dataset.id);
-      if (p) { p.name = e.target.value; persist(); }
+      if (p) { p.name = e.target.value; persist(); updateScores(); }
     });
   });
-  list.querySelectorAll('.player-color').forEach(btn => {
+  $$('.player-color', list).forEach(btn => {
     btn.addEventListener('click', () => {
       const p = state.players.find(x => x.id === btn.dataset.id);
       if (!p) return;
@@ -957,242 +641,97 @@ function renderHome() {
       persist(); renderHome();
     });
   });
-  list.querySelectorAll('.player-remove').forEach(btn => {
+  $$('.player-remove', list).forEach(btn => {
     btn.addEventListener('click', () => {
       state.players = state.players.filter(p => p.id !== btn.dataset.id);
       persist(); renderHome();
     });
   });
 
-  // ====== Filter pills ======
-  const filterRoot = document.getElementById('level-filter');
-  if (filterRoot) {
-    const filter = state.activeFilter || 'all';
-    const filters = [
-      { id: 'all', label: 'All' },
-      { id: 'easy', label: 'Easy' },
-      { id: 'medium', label: 'Medium' },
-      { id: 'hard', label: 'Hard' }
-    ];
-    filterRoot.innerHTML = filters.map(f => `
-      <button class="filter-pill ${filter === f.id ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>
-    `).join('');
-    filterRoot.querySelectorAll('[data-filter]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.activeFilter = btn.dataset.filter;
-        persist();
-        renderHome();
-      });
-    });
+  // Generate board if none exists
+  if (!state.currentBoard || !state.currentBoard.categories || state.currentBoard.categories.length !== 5) {
+    state.currentBoard = generateBoard();
+    persist();
   }
 
-  // ====== Pack grid: Random tile + themed packs ======
-  const filter = state.activeFilter || 'all';
-  let visiblePacks;
-  if (filter === 'all') visiblePacks = PACKS;
-  else visiblePacks = PACKS.filter(p => p.level === filter);
-
-  const grid = document.getElementById('pack-grid');
-  if (grid) {
-    // Random tile is always first — instant random play, no prompts
-    const randomTile = `
-      <button class="pack-card pack-random" data-random>
-        <div class="pack-emoji">🎲</div>
-        <div class="pack-info">
-          <div class="pack-name-row">
-            <span class="pack-name">Random</span>
-            <span class="pack-badge lvl-mixed">Mixed</span>
-          </div>
-          <div class="pack-meta">5 random questions · fresh every round</div>
-        </div>
-      </button>
-    `;
-    grid.innerHTML = randomTile + (visiblePacks.length
-      ? visiblePacks.map(pack => renderPackCard(pack)).join('')
-      : ''
-    );
-    wirePackGrid(grid);
-    const randomBtn = grid.querySelector('[data-random]');
-    if (randomBtn) randomBtn.addEventListener('click', startMixedGame);
-  }
-
-  // ====== Custom packs section (only if any exist) ======
-  const customSection = document.getElementById('custom-packs-section');
-  const customGrid = document.getElementById('custom-pack-grid');
-  const customPacks = state.customPacks || [];
-  if (customSection && customGrid) {
-    if (customPacks.length === 0) {
-      customSection.hidden = true;
-    } else {
-      customSection.hidden = false;
-      customGrid.innerHTML = customPacks.map(pack => renderPackCard(pack)).join('');
-      wirePackGrid(customGrid);
-    }
-  }
+  renderBoard();
+  updateScores();
 }
 
-function renderPackCard(pack) {
-  const levelLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' };
-  const levelClass = { easy: 'lvl-easy', medium: 'lvl-medium', hard: 'lvl-hard', mixed: 'lvl-mixed' };
-  const used = (state.usedClues[pack.id] || []).length;
-  const total = pack.clues.length;
-  const status = used >= total ? '✓ Completed' : `${used}/${total} played`;
-  const lvl = pack.level || 'medium';
-  const isCustom = pack.isCustom;
-  return `
-    <button class="pack-card" data-id="${pack.id}">
-      <div class="pack-emoji">${pack.emoji}</div>
-      <div class="pack-info">
-        <div class="pack-name-row">
-          <span class="pack-name">${escapeHtml(pack.name)}</span>
-          <span class="pack-badge ${levelClass[lvl] || ''}">${levelLabel[lvl] || lvl}</span>
-          ${isCustom ? '<span class="pack-badge custom">Custom</span>' : ''}
-        </div>
-        <div class="pack-meta">${escapeHtml(pack.description)} · ${status}</div>
-      </div>
-      ${isCustom ? `<button class="pack-delete" data-delete="${pack.id}" aria-label="Delete">×</button>` : ''}
-    </button>
-  `;
-}
-
-function wirePackGrid(grid) {
-  grid.querySelectorAll('.pack-card[data-id]').forEach(card => {
-    card.addEventListener('click', e => {
-      if (e.target.closest('[data-delete]')) return;
-      const pack = getAllPacks().find(p => p.id === card.dataset.id);
-      if (!pack) return;
-      if ((state.usedClues[pack.id] || []).length >= pack.clues.length) {
-        state.usedClues[pack.id] = [];
-        persist();
-      }
-      state.currentPack = pack;
-      showScreen('board');
-    });
-  });
-  grid.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const id = btn.dataset.delete;
-      if (!confirm('Delete this custom pack?')) return;
-      state.customPacks = (state.customPacks || []).filter(p => p.id !== id);
-      delete state.usedClues[id];
-      persist();
-      renderHome();
-    });
-  });
-}
-
-function handlePackImport(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      // Accept either a single pack or an array
-      const packs = Array.isArray(data) ? data : (data.pack ? [data.pack] : (data.clues ? [data] : null));
-      if (!packs) throw new Error('Not a recognizable pack file');
-      let imported = 0;
-      packs.forEach(pack => {
-        if (!pack.id || !pack.name || !Array.isArray(pack.clues)) return;
-        pack.isCustom = true;
-        // Replace existing custom pack with same id, or add new
-        state.customPacks = state.customPacks || [];
-        const idx = state.customPacks.findIndex(p => p.id === pack.id);
-        if (idx >= 0) state.customPacks[idx] = pack;
-        else state.customPacks.push(pack);
-        imported++;
-      });
-      if (imported === 0) throw new Error('No valid packs found');
-      state.activeFilter = 'custom';
-      persist();
-      renderHome();
-      alert(`Imported ${imported} pack${imported === 1 ? '' : 's'}! Look in the Custom filter.`);
-    } catch (err) {
-      alert('Import failed: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-document.getElementById('add-player-btn').addEventListener('click', () => {
-  if (state.players.length >= 6) return;
-  const usedColors = state.players.map(p => p.color);
-  const color = COLORS.find(c => !usedColors.includes(c)) || COLORS[0];
-  state.players.push({
-    id: 'p' + Date.now(),
-    name: 'Player ' + (state.players.length + 1),
-    color, score: 0
-  });
-  persist(); renderHome();
-});
-
-// =================== Board screen ===================
 function renderBoard() {
-  const pack = state.currentPack;
-  if (!pack) { showScreen('home'); return; }
-  document.getElementById('pack-title').textContent = pack.name.toUpperCase();
-  document.getElementById('header-title').textContent = pack.emoji + ' ' + pack.name;
+  const board = state.currentBoard;
+  if (!board) return;
+  const grid = $('#home-board');
 
-  // Scores (in pill form)
-  const maxScore = Math.max(...state.players.map(p => p.score), 0);
+  let html = '';
+  // Row 1: category headers
+  board.categories.forEach(cat => {
+    html += `<div class="cat-header">${escapeHtml(cat.name)}</div>`;
+  });
+  // Rows 2-6: clues at each value
+  [100, 200, 300, 400, 500].forEach(value => {
+    board.categories.forEach((cat, catIdx) => {
+      const clue = cat.clues.find(c => c.value === value);
+      const used = clue && clue.used;
+      html += `<button class="clue-tile ${used ? 'used' : ''}" data-cat="${catIdx}" data-value="${value}" ${used ? 'disabled' : ''}>$${value}</button>`;
+    });
+  });
+
+  grid.innerHTML = html;
+  grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+
+  $$('.clue-tile', grid).forEach(tile => {
+    if (tile.classList.contains('used')) return;
+    tile.addEventListener('click', () => {
+      const catIdx = Number(tile.dataset.cat);
+      const value = Number(tile.dataset.value);
+      openClue(catIdx, value);
+    });
+  });
+}
+
+function updateScores() {
+  const max = Math.max(...state.players.map(p => p.score), 0);
   const hasLeader = state.players.some(p => p.score > 0);
-  document.getElementById('scores').innerHTML = state.players.map(p => `
-    <div class="score-pill ${hasLeader && p.score === maxScore ? 'lead' : ''}">
+  $('#scores').innerHTML = state.players.map(p => `
+    <div class="score-pill ${hasLeader && p.score === max ? 'lead' : ''}">
       <span class="score-dot" style="background: ${p.color}"></span>
       <span>${escapeHtml(p.name)}</span>
       <span style="color: ${p.score < 0 ? 'var(--wrong)' : 'inherit'}">${p.score < 0 ? '−$' + Math.abs(p.score) : '$' + p.score}</span>
     </div>
   `).join('');
-
-  // Board (5 clues in a column for mobile, but we'll show grid)
-  const used = state.usedClues[pack.id] || [];
-  const grid = document.getElementById('board-grid');
-  grid.style.gridTemplateColumns = `repeat(${pack.clues.length}, 1fr)`;
-  grid.innerHTML = pack.clues.map((clue, i) => {
-    const isUsed = used.includes(i);
-    return `<button class="clue-tile ${isUsed ? 'used' : ''}" data-idx="${i}" ${isUsed ? 'disabled' : ''}>$${clue.value}</button>`;
-  }).join('');
-
-  grid.querySelectorAll('.clue-tile:not(.used)').forEach(tile => {
-    tile.addEventListener('click', () => {
-      const idx = Number(tile.dataset.idx);
-      openClue(idx);
-    });
-  });
-
-  // If all used, jump to game over after a moment? Let user end manually.
 }
 
-document.getElementById('end-game-btn').addEventListener('click', () => {
-  showScreen('gameover');
-  renderGameOver();
-});
+// ============================================================
+// CLUE FLOW
+// ============================================================
+function openClue(catIdx, value) {
+  const cat = state.currentBoard.categories[catIdx];
+  const clue = cat.clues.find(c => c.value === value);
+  if (!clue || clue.used) return;
+  state.currentClue = { catIdx, value, clue: clue.clue, answer: clue.answer, catName: cat.name };
 
-// =================== Clue screen ===================
-function openClue(idx) {
-  const pack = state.currentPack;
-  const clue = pack.clues[idx];
-  state.currentClue = { idx, clue };
-
-  document.getElementById('clue-value').textContent = '$' + clue.value;
-  document.getElementById('clue-text').textContent = clue.clue;
-  document.getElementById('answer-text').textContent = clue.answer;
-  document.getElementById('answer-text').classList.add('hidden');
-  document.getElementById('reveal-btn').style.display = '';
-  document.getElementById('scoring-section').style.display = 'none';
+  $('#clue-cat').textContent = cat.name;
+  $('#clue-value').textContent = '$' + value;
+  $('#clue-text').textContent = clue.clue;
+  $('#answer-text').textContent = clue.answer;
+  $('#answer-text').classList.add('hidden');
+  $('#reveal-btn').style.display = '';
+  $('#scoring-section').style.display = 'none';
   showScreen('clue');
 }
 
-document.getElementById('reveal-btn').addEventListener('click', () => {
-  document.getElementById('answer-text').classList.remove('hidden');
-  document.getElementById('reveal-btn').style.display = 'none';
+$('#reveal-btn').addEventListener('click', () => {
+  $('#answer-text').classList.remove('hidden');
+  $('#reveal-btn').style.display = 'none';
   renderScoringButtons();
-  document.getElementById('scoring-section').style.display = 'block';
+  $('#scoring-section').style.display = 'block';
 });
 
 function renderScoringButtons() {
-  const value = state.currentClue.clue.value;
-  const container = document.getElementById('scoring-buttons');
-  container.innerHTML = state.players.map(p => `
+  const value = state.currentClue.value;
+  const root = $('#scoring-buttons');
+  root.innerHTML = state.players.map(p => `
     <button class="score-btn correct" data-id="${p.id}" data-result="correct">
       <span class="dot" style="background: ${p.color}"></span>
       <span class="label">${escapeHtml(p.name)}</span>
@@ -1204,16 +743,14 @@ function renderScoringButtons() {
       <span class="delta">−$${value}</span>
     </button>
   `).join('') + `
-    <button class="score-btn skip" data-result="skip">
-      Nobody got it · skip
-    </button>
+    <button class="score-btn skip" data-result="skip">Nobody got it · skip</button>
   `;
 
-  container.querySelectorAll('.score-btn').forEach(btn => {
+  $$('.score-btn', root).forEach(btn => {
     btn.addEventListener('click', () => {
       const result = btn.dataset.result;
       const id = btn.dataset.id;
-      const value = state.currentClue.clue.value;
+      const value = state.currentClue.value;
       if (result === 'correct') {
         const p = state.players.find(x => x.id === id);
         if (p) p.score += value;
@@ -1221,36 +758,48 @@ function renderScoringButtons() {
         const p = state.players.find(x => x.id === id);
         if (p) p.score -= value;
       }
-      // mark clue used
-      const pack = state.currentPack;
-      if (!state.usedClues[pack.id]) state.usedClues[pack.id] = [];
-      if (!state.usedClues[pack.id].includes(state.currentClue.idx)) {
-        state.usedClues[pack.id].push(state.currentClue.idx);
-      }
+      // Mark clue used
+      const cat = state.currentBoard.categories[state.currentClue.catIdx];
+      const c = cat.clues.find(x => x.value === state.currentClue.value);
+      if (c) c.used = true;
       persist();
-      // Back to board, or game over if all used
-      const allUsed = state.usedClues[pack.id].length >= pack.clues.length;
+
+      // All used? End round.
+      const allUsed = state.currentBoard.categories.every(c => c.clues.every(cl => cl.used));
       if (allUsed) {
         showScreen('gameover');
         renderGameOver();
       } else {
-        showScreen('board');
+        showScreen('home');
       }
     });
   });
 }
 
-// =================== Game over ===================
+// ============================================================
+// NEW BOARD / END / GAME OVER
+// ============================================================
+$('#new-board-btn').addEventListener('click', () => {
+  state.currentBoard = generateBoard();
+  persist();
+  renderHome();
+});
+
+$('#end-game-btn').addEventListener('click', () => {
+  showScreen('gameover');
+  renderGameOver();
+});
+
 function renderGameOver() {
   const sorted = [...state.players].sort((a, b) => b.score - a.score);
   const winner = sorted[0];
-  document.getElementById('winner-name').textContent = winner ? winner.name : '—';
-  document.getElementById('winner-score').textContent = winner
+  $('#winner-name').textContent = winner ? winner.name : '—';
+  $('#winner-score').textContent = winner
     ? (winner.score < 0 ? '−$' + Math.abs(winner.score) : '$' + winner.score)
     : '—';
-  document.getElementById('header-title').textContent = 'GAME OVER';
+  $('#header-title').textContent = 'ROUND OVER';
 
-  document.getElementById('final-scores').innerHTML = sorted.map((p, i) => `
+  $('#final-scores').innerHTML = sorted.map((p, i) => `
     <div class="final-row">
       <div class="final-name">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color}"></span>
@@ -1262,35 +811,88 @@ function renderGameOver() {
   `).join('');
 }
 
-document.getElementById('play-again-btn').addEventListener('click', () => {
+$('#play-again-btn').addEventListener('click', () => {
+  // New board, keep scores
+  state.currentBoard = generateBoard();
+  persist();
+  $('#header-title').textContent = 'FAMILY JEOPARDY!';
   showScreen('home');
 });
-document.getElementById('reset-btn').addEventListener('click', () => {
-  if (confirm('Reset all scores and clear played clues?')) {
+
+$('#reset-btn').addEventListener('click', () => {
+  if (confirm('Reset all scores and start a fresh board?')) {
     state.players.forEach(p => p.score = 0);
-    state.usedClues = {};
+    state.currentBoard = generateBoard();
     persist();
+    $('#header-title').textContent = 'FAMILY JEOPARDY!';
     showScreen('home');
   }
 });
 
-document.getElementById('info-btn').addEventListener('click', () => {
-  alert('Family Jeopardy!\n\nHow to play:\n1. Pick a category\n2. Tap a dollar value\n3. Read the clue out loud\n4. Someone answers (in the form of a question!)\n5. Tap "Reveal answer"\n6. Tap who got it right\n\nScores save automatically. Reset anytime from the game-over screen.\n\nMade with 🦄 by Ada for Amber, William, and Zev.');
+// ============================================================
+// ADD PLAYER
+// ============================================================
+$('#add-player-btn').addEventListener('click', () => {
+  if (state.players.length >= 6) return;
+  const usedColors = state.players.map(p => p.color);
+  const color = COLORS.find(c => !usedColors.includes(c)) || COLORS[0];
+  state.players.push({
+    id: 'p' + Date.now(),
+    name: 'Player ' + (state.players.length + 1),
+    color, score: 0
+  });
+  persist(); renderHome();
 });
 
-// Helper
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+// ============================================================
+// IMPORT CUSTOM PACK
+// ============================================================
+function handlePackImport(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const packs = Array.isArray(data) ? data : (data.pack ? [data.pack] : (data.clues ? [data] : null));
+      if (!packs) throw new Error('Not a recognizable pack file');
+      let imported = 0;
+      packs.forEach(pack => {
+        if (!pack.id || !pack.name || !Array.isArray(pack.clues)) return;
+        pack.isCustom = true;
+        const idx = (state.customPacks || []).findIndex(p => p.id === pack.id);
+        if (idx >= 0) state.customPacks[idx] = pack;
+        else state.customPacks.push(pack);
+        imported++;
+      });
+      if (imported === 0) throw new Error('No valid packs found');
+      persist();
+      alert(`Imported ${imported} pack${imported === 1 ? '' : 's'}! It'll show up in future boards.`);
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
-// Wire up custom-pack import
-document.getElementById('import-input').addEventListener('change', e => {
+$('#import-input').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file) handlePackImport(file);
   e.target.value = '';
 });
 
-// Init
+// ============================================================
+// INFO
+// ============================================================
+$('#info-btn').addEventListener('click', () => {
+  alert('Family Jeopardy!\n\n' +
+    'Each round shows 5 random categories with 5 clues each. Tap a clue to play it.\n\n' +
+    '🎲 New board = different categories, different questions.\n\n' +
+    `Total library: ${getAllCats().length} categories, ${getAllCats().reduce((sum, c) => sum + c.clues.length, 0)} questions.\n\n` +
+    'Pure tap-and-play. No menus.\n\nMade with 🦄 by Ada.');
+});
+
+// ============================================================
+// INIT
+// ============================================================
 showScreen('home');
 </script>
 </body>
