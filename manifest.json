@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-04",
+      "slug": "2026-05-04",
+      "title": "Decision Log",
+      "category": "productivity",
+      "oneLiner": "Track key decisions with context, reasoning, and outcomes — see patterns over time and build your decision-making muscle.",
+      "path": "apps/2026-05-04/"
+    },
+    {
       "date": "2026-05-03",
       "slug": "2026-05-03",
       "title": "Workshop Pricing Calculator",

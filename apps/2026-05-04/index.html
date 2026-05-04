@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Decision Log</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --border: #E5E5EA;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --accent-hover: #0051D5;
+      --danger: #FF3B30;
+      --success: #34C759;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --border: #38383A;
+        --text: #F2F2F7;
+        --text-secondary: #8E8E93;
+        --accent: #0A84FF;
+        --accent-hover: #409CFF;
+        --danger: #FF453A;
+        --success: #32D74B;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 17px;
+      color: var(--text-secondary);
+    }
+
+    .form-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 32px;
+      border: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 17px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text);
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea {
+      min-height: 80px;
+    }
+
+    .btn {
+      display: inline-block;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 600;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      padding: 8px 16px;
+      font-size: 15px;
+      width: auto;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .decisions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .decision-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .decision-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .decision-title {
+      font-size: 19px;
+      font-weight: 600;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .decision-date {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .decision-context,
+    .decision-reasoning,
+    .decision-outcome {
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .decision-context p,
+    .decision-reasoning p,
+    .decision-outcome p {
+      color: var(--text);
+    }
+
+    .decision-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .decision-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .decision-actions button {
+      flex: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-subtext {
+      font-size: 15px;
+    }
+
+    .outcome-form {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .outcome-form textarea {
+      margin-bottom: 8px;
+    }
+
+    .outcome-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .outcome-actions button {
+      flex: 1;
+    }
+
+    .has-outcome {
+      background: var(--success);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Decision Log</h1>
+      <p class="tagline">Track decisions, capture context, learn over time.</p>
+    </header>
+
+    <div class="form-card">
+      <form id="decision-form">
+        <div class="form-group">
+          <label for="decision-title">Decision</label>
+          <input type="text" id="decision-title" placeholder="What did you decide?" required>
+        </div>
+        <div class="form-group">
+          <label for="decision-context">Context</label>
+          <textarea id="decision-context" placeholder="Why did it matter? What were the options?"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="decision-reasoning">Reasoning</label>
+          <textarea id="decision-reasoning" placeholder="What led you here?"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Log Decision</button>
+      </form>
+    </div>
+
+    <div id="decisions-section">
+      <h2 class="section-title">Past Decisions</h2>
+      <div id="decisions-list" class="decisions-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'decision-log';
+
+    let decisions = [];
+
+    function loadDecisions() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      decisions = stored ? JSON.parse(stored) : [];
+    }
+
+    function saveDecisions() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+    }
+
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (days === 0) return 'Today';
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return `${days} days ago`;
+      
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function addDecision(title, context, reasoning) {
+      const decision = {
+        id: Date.now(),
+        title: title.trim(),
+        context: context.trim(),
+        reasoning: reasoning.trim(),
+        timestamp: Date.now(),
+        outcome: null
+      };
+
+      decisions.unshift(decision);
+      saveDecisions();
+      renderDecisions();
+    }
+
+    function deleteDecision(id) {
+      if (!confirm('Delete this decision?')) return;
+      decisions = decisions.filter(d => d.id !== id);
+      saveDecisions();
+      renderDecisions();
+    }
+
+    function addOutcome(id, outcome) {
+      const decision = decisions.find(d => d.id === id);
+      if (decision) {
+        decision.outcome = outcome.trim();
+        saveDecisions();
+        renderDecisions();
+      }
+    }
+
+    function renderDecisions() {
+      const list = document.getElementById('decisions-list');
+
+      if (decisions.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-text">No decisions yet</div>
+            <div class="empty-state-subtext">Log your first decision above to start building your decision-making muscle.</div>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = decisions.map(d => {
+        const outcomeHTML = d.outcome 
+          ? `<div class="has-outcome">✓ Outcome tracked</div>
+             <div class="decision-outcome">
+               <div class="decision-label">Outcome</div>
+               <p>${escapeHtml(d.outcome)}</p>
+             </div>`
+          : `<div class="outcome-form" id="outcome-form-${d.id}" style="display: none;">
+               <textarea id="outcome-text-${d.id}" placeholder="How did it turn out?"></textarea>
+               <div class="outcome-actions">
+                 <button type="button" class="btn btn-secondary" onclick="toggleOutcomeForm(${d.id})">Cancel</button>
+                 <button type="button" class="btn btn-primary" onclick="saveOutcome(${d.id})">Save Outcome</button>
+               </div>
+             </div>`;
+
+        return `
+          <div class="decision-card">
+            <div class="decision-header">
+              <div class="decision-title">${escapeHtml(d.title)}</div>
+              <div class="decision-date">${formatDate(d.timestamp)}</div>
+            </div>
+            ${d.context ? `
+              <div class="decision-context">
+                <div class="decision-label">Context</div>
+                <p>${escapeHtml(d.context)}</p>
+              </div>
+            ` : ''}
+            ${d.reasoning ? `
+              <div class="decision-reasoning">
+                <div class="decision-label">Reasoning</div>
+                <p>${escapeHtml(d.reasoning)}</p>
+              </div>
+            ` : ''}
+            ${outcomeHTML}
+            <div class="decision-actions">
+              ${!d.outcome ? `<button type="button" class="btn btn-secondary" onclick="toggleOutcomeForm(${d.id})">Add Outcome</button>` : ''}
+              <button type="button" class="btn btn-danger" onclick="deleteDecision(${d.id})">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleOutcomeForm(id) {
+      const form = document.getElementById(`outcome-form-${id}`);
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+      } else {
+        form.style.display = 'none';
+      }
+    }
+
+    function saveOutcome(id) {
+      const textarea = document.getElementById(`outcome-text-${id}`);
+      const outcome = textarea.value.trim();
+      if (outcome) {
+        addOutcome(id, outcome);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('decision-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('decision-title').value;
+      const context = document.getElementById('decision-context').value;
+      const reasoning = document.getElementById('decision-reasoning').value;
+
+      if (title.trim()) {
+        addDecision(title, context, reasoning);
+        e.target.reset();
+      }
+    });
+
+    loadDecisions();
+    renderDecisions();
+  </script>
+</body>
+</html>
