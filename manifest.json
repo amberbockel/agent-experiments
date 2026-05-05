@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-05",
+      "slug": "2026-05-05",
+      "title": "Dinner Decision Spinner",
+      "category": "delightful",
+      "oneLiner": "A playful spinning wheel to pick what's for dinner when the family can't decide — add options, tap to spin, get dramatic results with sound and flair.",
+      "path": "apps/2026-05-05/"
+    },
+    {
       "date": "2026-05-04",
       "slug": "2026-05-04",
       "title": "Decision Log",
