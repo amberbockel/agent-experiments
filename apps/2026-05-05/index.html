@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dinner Decision Spinner</title>
+    <title>Cuisine Spinner</title>
     <style>
         * {
             margin: 0;
@@ -249,7 +249,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🍕 Dinner Decision Spinner</h1>
+        <h1>🌍 Cuisine Spinner</h1>
         <p class="subtitle">Can't decide? Let the wheel choose!</p>
 
         <div class="wheel-container">
@@ -260,7 +260,7 @@
 
         <div class="input-section">
             <div class="input-row">
-                <input type="text" id="optionInput" placeholder="Add dinner option..." maxlength="30">
+                <input type="text" id="optionInput" placeholder="Add cuisine..." maxlength="30">
                 <button class="add-btn" id="addBtn">+</button>
             </div>
             <p class="error" id="error">Add at least 2 options to spin!</p>
@@ -268,9 +268,9 @@
         </div>
 
         <div class="result" id="result">
-            <h2>Tonight's dinner is...</h2>
+            <h2>Tonight's cuisine is...</h2>
             <div class="choice" id="choice"></div>
-            <p>🎉 Enjoy your meal! 🎉</p>
+            <p>🎉 Bon appétit! 🎉</p>
         </div>
     </div>
 
@@ -296,20 +296,20 @@
         let isSpinning = false;
 
         // Load from localStorage
-        const saved = localStorage.getItem('dinnerOptions');
+        const saved = localStorage.getItem('cuisineOptions');
         if (saved) {
             options = JSON.parse(saved);
             renderOptions();
             drawWheel();
         } else {
-            options = ['Pizza', 'Tacos', 'Pasta', 'Sushi'];
+            options = ['Italian', 'Chinese', 'Mexican', 'Indian', 'Thai', 'French', 'Japanese', 'Mediterranean', 'Spanish', 'Peruvian'];
             saveOptions();
             renderOptions();
             drawWheel();
         }
 
         function saveOptions() {
-            localStorage.setItem('dinnerOptions', JSON.stringify(options));
+            localStorage.setItem('cuisineOptions', JSON.stringify(options));
         }
 
         function renderOptions() {
