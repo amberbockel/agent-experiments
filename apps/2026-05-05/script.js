@@ -1,4 +1,4 @@
-// Trending palettes from Coolors.co
+// Trending palettes from Coolors.co (expanded list)
 const trendingPalettes = [
     { name: 'Olive Garden Feast', colors: ['#606C38', '#283618', '#FEFAE0', '#DDA15E', '#BC6C25'] },
     { name: 'Pastel Dreamland Adventure', colors: ['#CDB4DB', '#FFC8DD', '#FFAFCC', '#BDE0FE', '#A2D2FF'] },
@@ -19,7 +19,28 @@ const trendingPalettes = [
     { name: 'Dark Sunset', colors: ['#335C67', '#FFF3B0', '#E09F3E', '#9E2A2B', '#540B0E'] },
     { name: 'Earthy Forest Hues', colors: ['#DAD7CD', '#A3B18A', '#588157', '#3A5A40', '#344E41'] },
     { name: 'Fresh Greens', colors: ['#386641', '#6A994E', '#A7C957', '#F2E8CF', '#BC4749'] },
-    { name: 'Summer Ocean Breeze', colors: ['#E63946', '#F1FAEE', '#A8DADC', '#457B9D', '#1D3557'] }
+    { name: 'Summer Ocean Breeze', colors: ['#E63946', '#F1FAEE', '#A8DADC', '#457B9D', '#1D3557'] },
+    // Additional trending palettes
+    { name: 'Black & Gold Elegance', colors: ['#000000', '#14213D', '#FCA311', '#E5E5E5', '#FFFFFF'] },
+    { name: 'Soft Lavender', colors: ['#22223B', '#4A4E69', '#9A8C98', '#C9ADA7', '#F2E9E4'] },
+    { name: 'Muted Earthy Tones', colors: ['#FFCDB2', '#FFB4A2', '#E5989B', '#B5838D', '#6D6875'] },
+    { name: 'Golden Twilight', colors: ['#000814', '#001D3D', '#003566', '#FFC300', '#FFD60A'] },
+    { name: 'Bright Green', colors: ['#004B23', '#006400', '#007200', '#008000', '#38B000'] },
+    { name: 'Cool Coastal Vibes', colors: ['#2B2D42', '#8D99AE', '#EDF2F4', '#EF233C', '#D90429'] },
+    { name: 'Fiery Red Sunset', colors: ['#03071E', '#370617', '#6A040F', '#9D0208', '#D00000'] },
+    { name: 'Vibrant Color Fiesta', colors: ['#FFBE0B', '#FB5607', '#FF006E', '#8338EC', '#3A86FF'] },
+    { name: 'Bold Hues', colors: ['#F72585', '#7209B7', '#3A0CA3', '#4361EE', '#4CC9F0'] },
+    { name: 'Neutral Harmony Bliss', colors: ['#F4F1DE', '#E07A5F', '#3D405B', '#81B29A', '#F2CC8F'] },
+    { name: 'Summer Sunset', colors: ['#FF6B35', '#F7C59F', '#EFEFD0', '#004E89', '#1A659E'] },
+    { name: 'Soft Pink Delight', colors: ['#FFE5EC', '#FFC2D1', '#FFB3C6', '#FF8FAB', '#FB6F92'] },
+    { name: 'Vivid Nightfall', colors: ['#10002B', '#240046', '#3C096C', '#5A189A', '#7B2CBF'] },
+    { name: 'Neutral Earth Tones', colors: ['#0A0908', '#22333B', '#EAE0D5', '#C6AC8F', '#5E503F'] },
+    { name: 'Sunset Shades', colors: ['#F7B267', '#F79D65', '#F4845F', '#F27059', '#F25C54'] },
+    { name: 'Warm Autumn Glow', colors: ['#003049', '#D62828', '#F77F00', '#FCBF49', '#EAE2B7'] },
+    { name: 'Meadow Green', colors: ['#D9ED92', '#B5E48C', '#99D98C', '#76C893', '#52B69A'] },
+    { name: 'Rustic Charm', colors: ['#FFFCF2', '#CCC5B9', '#403D39', '#252422', '#EB5E28'] },
+    { name: 'Rose Petal', colors: ['#880D1E', '#DD2D4A', '#F26A8D', '#F49CBB', '#CBEEF3'] },
+    { name: 'Soft Rainbow', colors: ['#FBF8CC', '#FDE4CF', '#FFCFD2', '#F1C0E8', '#CFBAF0'] }
 ];
 
 // Color theory models with descriptions
@@ -265,7 +286,7 @@ function renderSavedPalettes() {
     const container = document.getElementById('saved-list');
     
     if (saved.length === 0) {
-        container.innerHTML = '<p style="color: #666; font-size: 14px;">No saved palettes yet. Generate and save one to get started.</p>';
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">No saved palettes yet. Generate and save one to get started.</p>';
         return;
     }
     
@@ -371,6 +392,9 @@ function loadTrendingPalette(index) {
         card.addEventListener('click', () => copyToClipboard(hex));
         paletteContainer.appendChild(card);
     });
+    
+    // Scroll to generated palette
+    document.getElementById('palette').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Render trending palettes
@@ -399,6 +423,15 @@ function renderTrendingPalettes() {
     });
 }
 
+// Theme toggle
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+}
+
 // Event listeners
 document.getElementById('generate-btn').addEventListener('click', () => {
     generatePalette(true); // Use picked color
@@ -414,8 +447,14 @@ document.getElementById('color-picker').addEventListener('input', () => {
     generatePalette(true); // Live update
 });
 
+document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
 document.getElementById('export-btn').addEventListener('click', exportPalette);
 document.getElementById('copy-btn').addEventListener('click', copyAllHex);
+
+// Initialize theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
 
 // Initialize
 generatePalette(true); // Use default color from picker
