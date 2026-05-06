@@ -575,6 +575,10 @@ document.getElementById('color-picker').addEventListener('input', () => {
     generatePalette(true); // Live update
 });
 
+document.getElementById('model-select').addEventListener('change', () => {
+    generatePalette(true); // Regenerate with new model
+});
+
 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
 document.getElementById('export-btn').addEventListener('click', exportPalette);
