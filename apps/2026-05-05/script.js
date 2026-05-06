@@ -432,6 +432,134 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
 }
 
+// Image picker functionality
+let uploadedImage = null;
+let canvas = null;
+let ctx = null;
+
+function openImagePicker() {
+    document.getElementById('image-picker-modal').style.display = 'flex';
+}
+
+function closeImagePicker() {
+    document.getElementById('image-picker-modal').style.display = 'none';
+    // Reset
+    document.getElementById('image-canvas').style.display = 'none';
+    document.getElementById('upload-zone').style.display = 'block';
+    document.getElementById('picked-color-preview').style.display = 'none';
+    uploadedImage = null;
+}
+
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            // Show canvas
+            canvas = document.getElementById('image-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Calculate dimensions to fit in modal
+            const maxWidth = 550;
+            const maxHeight = 400;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            uploadedImage = img;
+            document.getElementById('upload-zone').style.display = 'none';
+            canvas.style.display = 'block';
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function pickColorFromCanvas(e) {
+    if (!canvas || !ctx) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const imageData = ctx.getImageData(x, y, 1, 1);
+    const pixel = imageData.data;
+    
+    const r = pixel[0];
+    const g = pixel[1];
+    const b = pixel[2];
+    
+    const hex = '#' + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('').toUpperCase();
+    
+    // Show preview
+    document.getElementById('picked-color-preview').style.display = 'block';
+    document.getElementById('color-preview-swatch').style.backgroundColor = hex;
+    document.getElementById('color-preview-hex').textContent = hex;
+    
+    // Store for use
+    window.pickedColor = hex;
+}
+
+function usePickedColor() {
+    if (!window.pickedColor) return;
+    
+    document.getElementById('color-picker').value = window.pickedColor;
+    closeImagePicker();
+    generatePalette(true);
+    savePalette();
+    showNotification(`Using ${window.pickedColor}`);
+}
+
+// Drag and drop support
+function setupDragAndDrop() {
+    const zone = document.getElementById('upload-zone');
+    
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--accent)';
+        zone.style.background = 'var(--bg-tertiary)';
+    });
+    
+    zone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--border-color)';
+        zone.style.background = 'transparent';
+    });
+    
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--border-color)';
+        zone.style.background = 'transparent';
+        
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('image-upload');
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            input.files = dataTransfer.files;
+            handleImageUpload({ target: input });
+        }
+    });
+}
+
 // Event listeners
 document.getElementById('generate-btn').addEventListener('click', () => {
     generatePalette(true); // Use picked color
@@ -451,6 +579,22 @@ document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
 document.getElementById('export-btn').addEventListener('click', exportPalette);
 document.getElementById('copy-btn').addEventListener('click', copyAllHex);
+
+// Image picker events
+document.getElementById('image-picker-btn').addEventListener('click', openImagePicker);
+document.getElementById('close-modal').addEventListener('click', closeImagePicker);
+document.getElementById('image-upload').addEventListener('change', handleImageUpload);
+document.getElementById('image-canvas').addEventListener('click', pickColorFromCanvas);
+document.getElementById('use-picked-color').addEventListener('click', usePickedColor);
+
+// Close modal on backdrop click
+document.getElementById('image-picker-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'image-picker-modal') {
+        closeImagePicker();
+    }
+});
+
+setupDragAndDrop();
 
 // Initialize theme
 const savedTheme = localStorage.getItem('theme') || 'light';
