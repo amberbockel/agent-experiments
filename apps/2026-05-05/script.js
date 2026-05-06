@@ -1,3 +1,27 @@
+// Trending palettes from Coolors.co
+const trendingPalettes = [
+    { name: 'Olive Garden Feast', colors: ['#606C38', '#283618', '#FEFAE0', '#DDA15E', '#BC6C25'] },
+    { name: 'Pastel Dreamland Adventure', colors: ['#CDB4DB', '#FFC8DD', '#FFAFCC', '#BDE0FE', '#A2D2FF'] },
+    { name: 'Sunny Beach Day', colors: ['#264653', '#2A9D8F', '#E9C46A', '#F4A261', '#E76F51'] },
+    { name: 'Golden Summer Fields', colors: ['#CCD5AE', '#E9EDC9', '#FEFAE0', '#FAEDCD', '#D4A373'] },
+    { name: 'Fiery Ocean', colors: ['#780000', '#C1121F', '#FDF0D5', '#003049', '#669BBC'] },
+    { name: 'Watermelon Sorbet', colors: ['#EF476F', '#FFD166', '#06D6A0', '#118AB2', '#073B4C'] },
+    { name: 'Ocean Blue Serenity', colors: ['#03045E', '#023E8A', '#0077B6', '#0096C7', '#00B4D8'] },
+    { name: 'Peachy Delight', colors: ['#D8E2DC', '#FFE5D9', '#FFCAD4', '#F4ACB7', '#9D8189'] },
+    { name: 'Crimson Hues', colors: ['#250902', '#38040E', '#640D14', '#800E13', '#AD2831'] },
+    { name: 'Bold Berry', colors: ['#F9DBBD', '#FFA5AB', '#DA627D', '#A53860', '#450920'] },
+    { name: 'Refreshing Summer Fun', colors: ['#8ECAE6', '#219EBC', '#023047', '#FFB703', '#FB8500'] },
+    { name: 'Ocean Breeze', colors: ['#03045E', '#0077B6', '#00B4D8', '#90E0EF', '#CAF0F8'] },
+    { name: 'Soft Sand', colors: ['#EDEDE9', '#D6CCC2', '#F5EBE0', '#E3D5CA', '#D5BDAF'] },
+    { name: 'Pastel Rainbow', colors: ['#70D6FF', '#FF70A6', '#FF9770', '#FFD670', '#E9FF70'] },
+    { name: 'Autumn Harvest', colors: ['#6F1D1B', '#BB9457', '#432818', '#99582A', '#FFE6A7'] },
+    { name: 'Ocean Pearl Delight', colors: ['#006D77', '#83C5BE', '#EDF6F9', '#FFDDD2', '#E29578'] },
+    { name: 'Dark Sunset', colors: ['#335C67', '#FFF3B0', '#E09F3E', '#9E2A2B', '#540B0E'] },
+    { name: 'Earthy Forest Hues', colors: ['#DAD7CD', '#A3B18A', '#588157', '#3A5A40', '#344E41'] },
+    { name: 'Fresh Greens', colors: ['#386641', '#6A994E', '#A7C957', '#F2E8CF', '#BC4749'] },
+    { name: 'Summer Ocean Breeze', colors: ['#E63946', '#F1FAEE', '#A8DADC', '#457B9D', '#1D3557'] }
+];
+
 // Color theory models with descriptions
 const colorModels = {
     monochromatic: {
@@ -275,6 +299,63 @@ function deletePalette(index) {
     showNotification('Palette deleted');
 }
 
+// Load trending palette
+function loadTrendingPalette(index) {
+    const palette = trendingPalettes[index];
+    
+    window.currentPalette = {
+        model: palette.name,
+        colors: palette.colors
+    };
+    
+    document.getElementById('model-description').textContent = 
+        `Trending: ${palette.name}`;
+    
+    // Render palette
+    const paletteContainer = document.getElementById('palette');
+    paletteContainer.innerHTML = '';
+    
+    palette.colors.forEach((hex, i) => {
+        const card = document.createElement('div');
+        card.className = 'color-card';
+        card.innerHTML = `
+            <div class="color-swatch" style="background-color: ${hex}"></div>
+            <div class="color-info">
+                <div class="color-hex">${hex}</div>
+                <div class="color-role">Color ${i + 1}</div>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => copyToClipboard(hex));
+        paletteContainer.appendChild(card);
+    });
+}
+
+// Render trending palettes
+function renderTrendingPalettes() {
+    const container = document.getElementById('trending-list');
+    container.innerHTML = '';
+    
+    trendingPalettes.slice(0, 10).forEach((palette, index) => {
+        const div = document.createElement('div');
+        div.className = 'saved-palette';
+        
+        const swatches = palette.colors.map(color => 
+            `<div class="saved-swatch" style="background-color: ${color}"></div>`
+        ).join('');
+        
+        div.innerHTML = `
+            <div class="saved-swatches">${swatches}</div>
+            <div class="saved-model">${palette.name}</div>
+            <div class="saved-actions">
+                <button onclick="loadTrendingPalette(${index})">Load</button>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
+}
+
 // Event listeners
 document.getElementById('generate-btn').addEventListener('click', () => {
     generatePalette();
@@ -287,3 +368,4 @@ document.getElementById('copy-btn').addEventListener('click', copyAllHex);
 // Initialize
 generatePalette();
 renderSavedPalettes();
+renderTrendingPalettes();
