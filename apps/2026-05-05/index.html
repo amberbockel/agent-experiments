@@ -14,30 +14,39 @@
         </header>
 
         <div class="controls">
-            <label for="model-select">Color Theory Model</label>
-            <select id="model-select">
-                <option value="monochromatic">Monochromatic</option>
-                <option value="complementary">Complementary</option>
-                <option value="analogous">Analogous</option>
-                <option value="triadic">Triadic</option>
-                <option value="tetradic">Tetradic (Square)</option>
-                <option value="split-complementary">Split Complementary</option>
-            </select>
-            <button id="generate-btn">Generate Palette</button>
+            <div class="control-group">
+                <label for="color-picker">Base Color</label>
+                <input type="color" id="color-picker" value="#2A9D8F">
+            </div>
+            <div class="control-group">
+                <label for="model-select">Color Theory Model</label>
+                <select id="model-select">
+                    <option value="monochromatic">Monochromatic</option>
+                    <option value="complementary">Complementary</option>
+                    <option value="analogous">Analogous</option>
+                    <option value="triadic">Triadic</option>
+                    <option value="tetradic">Tetradic (Square)</option>
+                    <option value="split-complementary">Split Complementary</option>
+                </select>
+            </div>
+            <button id="generate-btn">Generate from Base Color</button>
+            <button id="random-btn" class="secondary">Random Palette</button>
         </div>
 
-        <div class="model-description" id="model-description"></div>
-
-        <div class="palette" id="palette"></div>
-
-        <div class="actions">
-            <button id="export-btn" class="secondary">Export as JSON</button>
-            <button id="copy-btn" class="secondary">Copy Hex Codes</button>
-        </div>
-
-        <div class="saved-palettes">
+        <div class="section">
             <h2>Trending Palettes</h2>
-            <div id="trending-list"></div>
+            <p class="section-subtitle">Popular color combinations from the design community</p>
+            <div id="trending-list" class="trending-grid"></div>
+        </div>
+
+        <div class="section">
+            <h2>Your Generated Palette</h2>
+            <div class="model-description" id="model-description"></div>
+            <div class="palette" id="palette"></div>
+            <div class="actions">
+                <button id="export-btn" class="secondary">Export as JSON</button>
+                <button id="copy-btn" class="secondary">Copy Hex Codes</button>
+            </div>
         </div>
 
         <div class="saved-palettes">

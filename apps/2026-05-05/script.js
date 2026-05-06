@@ -117,13 +117,55 @@ function hslToHex(h, s, l) {
     return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`.toUpperCase();
 }
 
-// Generate palette
-function generatePalette() {
+// Hex to HSL conversion
+function hexToHsl(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return { h: 0, s: 50, l: 50 };
+    
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+        h = s = 0;
+    } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+    
+    return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+    };
+}
+
+// Generate palette from base color
+function generatePalette(usePickedColor = false) {
     const modelKey = document.getElementById('model-select').value;
     const model = colorModels[modelKey];
     
-    // Random base hue
-    const baseHue = Math.floor(Math.random() * 360);
+    let baseHue;
+    if (usePickedColor) {
+        const pickedColor = document.getElementById('color-picker').value;
+        const hsl = hexToHsl(pickedColor);
+        baseHue = hsl.h;
+    } else {
+        // Random base hue
+        baseHue = Math.floor(Math.random() * 360);
+        // Update color picker to match
+        document.getElementById('color-picker').value = hslToHex(baseHue, 60, 50);
+    }
     
     // Generate colors
     const colors = model.generate(baseHue);
@@ -336,19 +378,20 @@ function renderTrendingPalettes() {
     const container = document.getElementById('trending-list');
     container.innerHTML = '';
     
-    trendingPalettes.slice(0, 10).forEach((palette, index) => {
+    trendingPalettes.forEach((palette, index) => {
         const div = document.createElement('div');
-        div.className = 'saved-palette';
+        div.className = 'trending-palette';
+        div.onclick = () => loadTrendingPalette(index);
         
         const swatches = palette.colors.map(color => 
-            `<div class="saved-swatch" style="background-color: ${color}"></div>`
+            `<div class="trending-swatch" style="background-color: ${color}"></div>`
         ).join('');
         
         div.innerHTML = `
-            <div class="saved-swatches">${swatches}</div>
-            <div class="saved-model">${palette.name}</div>
-            <div class="saved-actions">
-                <button onclick="loadTrendingPalette(${index})">Load</button>
+            <div class="trending-swatches">${swatches}</div>
+            <div class="trending-info">
+                <div class="trending-name">${palette.name}</div>
+                <div class="trending-load">Click to load</div>
             </div>
         `;
         
@@ -358,8 +401,17 @@ function renderTrendingPalettes() {
 
 // Event listeners
 document.getElementById('generate-btn').addEventListener('click', () => {
-    generatePalette();
+    generatePalette(true); // Use picked color
     savePalette();
+});
+
+document.getElementById('random-btn').addEventListener('click', () => {
+    generatePalette(false); // Random
+    savePalette();
+});
+
+document.getElementById('color-picker').addEventListener('input', () => {
+    generatePalette(true); // Live update
 });
 
 document.getElementById('export-btn').addEventListener('click', exportPalette);
