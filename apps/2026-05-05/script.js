@@ -418,6 +418,6 @@ document.getElementById('export-btn').addEventListener('click', exportPalette);
 document.getElementById('copy-btn').addEventListener('click', copyAllHex);
 
 // Initialize
-generatePalette();
+generatePalette(true); // Use default color from picker
 renderSavedPalettes();
 renderTrendingPalettes();
