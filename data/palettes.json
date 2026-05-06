@@ -1,0 +1,169 @@
+{
+  "spring": {
+    "name": "Spring",
+    "description": "Fresh, vibrant, and optimistic colors inspired by blooming flowers and new growth",
+    "colors": {
+      "tops": [
+        { "name": "Coral Pink", "hex": "#FF6B6B", "category": "warm" },
+        { "name": "Mint Green", "hex": "#4ECDC4", "category": "cool" },
+        { "name": "Butter Yellow", "hex": "#FFE66D", "category": "warm" },
+        { "name": "Sky Blue", "hex": "#95E1D3", "category": "cool" },
+        { "name": "Lavender", "hex": "#C4A8E8", "category": "cool" },
+        { "name": "Peach", "hex": "#FFCBA4", "category": "warm" },
+        { "name": "Soft White", "hex": "#F8F9FA", "category": "neutral" }
+      ],
+      "bottoms": [
+        { "name": "Light Denim", "hex": "#A4C3D2", "category": "cool" },
+        { "name": "Cream", "hex": "#FFF8E7", "category": "neutral" },
+        { "name": "Sage Green", "hex": "#B5C99A", "category": "cool" },
+        { "name": "Soft Gray", "hex": "#D3D3D3", "category": "neutral" },
+        { "name": "Blush Pink", "hex": "#FFB3BA", "category": "warm" },
+        { "name": "Khaki", "hex": "#C3B091", "category": "neutral" }
+      ],
+      "outerwear": [
+        { "name": "Powder Blue", "hex": "#B0C4DE", "category": "cool" },
+        { "name": "Soft Beige", "hex": "#E8DCC4", "category": "neutral" },
+        { "name": "Light Gray", "hex": "#D8D8D8", "category": "neutral" },
+        { "name": "Mint", "hex": "#98D8C8", "category": "cool" },
+        { "name": "Rose", "hex": "#F4C2C2", "category": "warm" }
+      ],
+      "shoes": [
+        { "name": "White Sneakers", "hex": "#FFFFFF", "category": "neutral" },
+        { "name": "Tan Sandals", "hex": "#D2B48C", "category": "neutral" },
+        { "name": "Nude Flats", "hex": "#E8C4A0", "category": "neutral" },
+        { "name": "Mint Loafers", "hex": "#A8E6CF", "category": "cool" }
+      ],
+      "bags": [
+        { "name": "Natural Straw", "hex": "#E3C878", "category": "neutral" },
+        { "name": "White Canvas", "hex": "#F5F5F5", "category": "neutral" },
+        { "name": "Soft Pink", "hex": "#FFD1DC", "category": "warm" },
+        { "name": "Light Blue", "hex": "#B4D4E1", "category": "cool" }
+      ]
+    }
+  },
+  "summer": {
+    "name": "Summer",
+    "description": "Bold, bright, and energetic colors reflecting sun, sea, and warmth",
+    "colors": {
+      "tops": [
+        { "name": "Bright White", "hex": "#FFFFFF", "category": "neutral" },
+        { "name": "Turquoise", "hex": "#40E0D0", "category": "cool" },
+        { "name": "Coral", "hex": "#FF7F50", "category": "warm" },
+        { "name": "Sunshine Yellow", "hex": "#FFD700", "category": "warm" },
+        { "name": "Hot Pink", "hex": "#FF69B4", "category": "warm" },
+        { "name": "Ocean Blue", "hex": "#00A8E8", "category": "cool" },
+        { "name": "Lime Green", "hex": "#CCFF00", "category": "cool" }
+      ],
+      "bottoms": [
+        { "name": "White Denim", "hex": "#F8F8FF", "category": "neutral" },
+        { "name": "Navy", "hex": "#001F3F", "category": "cool" },
+        { "name": "Bright Coral", "hex": "#FF6F61", "category": "warm" },
+        { "name": "Aqua", "hex": "#7FDBFF", "category": "cool" },
+        { "name": "Khaki", "hex": "#C3B091", "category": "neutral" },
+        { "name": "Black", "hex": "#111111", "category": "neutral" }
+      ],
+      "outerwear": [
+        { "name": "Light Denim Jacket", "hex": "#7BA0C0", "category": "cool" },
+        { "name": "Linen White", "hex": "#FAF0E6", "category": "neutral" },
+        { "name": "Chambray", "hex": "#5B8FA3", "category": "cool" },
+        { "name": "Bright Coral", "hex": "#FF6B6B", "category": "warm" }
+      ],
+      "shoes": [
+        { "name": "White Sneakers", "hex": "#FFFFFF", "category": "neutral" },
+        { "name": "Espadrilles", "hex": "#D2B48C", "category": "neutral" },
+        { "name": "Bright Sandals", "hex": "#FF6B9D", "category": "warm" },
+        { "name": "Navy Canvas", "hex": "#002B5C", "category": "cool" }
+      ],
+      "bags": [
+        { "name": "Straw Tote", "hex": "#E8D5A0", "category": "neutral" },
+        { "name": "Canvas White", "hex": "#F5F5F5", "category": "neutral" },
+        { "name": "Bright Yellow", "hex": "#FFEB3B", "category": "warm" },
+        { "name": "Turquoise", "hex": "#40E0D0", "category": "cool" }
+      ]
+    }
+  },
+  "fall": {
+    "name": "Fall",
+    "description": "Rich, warm, and earthy tones inspired by autumn leaves and harvest",
+    "colors": {
+      "tops": [
+        { "name": "Rust Orange", "hex": "#B7410E", "category": "warm" },
+        { "name": "Forest Green", "hex": "#228B22", "category": "cool" },
+        { "name": "Burgundy", "hex": "#800020", "category": "warm" },
+        { "name": "Mustard", "hex": "#FFDB58", "category": "warm" },
+        { "name": "Chocolate Brown", "hex": "#7B3F00", "category": "warm" },
+        { "name": "Olive", "hex": "#6B8E23", "category": "cool" },
+        { "name": "Cream", "hex": "#FFFDD0", "category": "neutral" }
+      ],
+      "bottoms": [
+        { "name": "Dark Denim", "hex": "#1C3C5A", "category": "cool" },
+        { "name": "Brown Corduroy", "hex": "#6F4E37", "category": "warm" },
+        { "name": "Black", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Camel", "hex": "#C19A6B", "category": "neutral" },
+        { "name": "Plum", "hex": "#8E4585", "category": "cool" },
+        { "name": "Charcoal", "hex": "#36454F", "category": "neutral" }
+      ],
+      "outerwear": [
+        { "name": "Camel Coat", "hex": "#C19A6B", "category": "neutral" },
+        { "name": "Forest Green", "hex": "#014421", "category": "cool" },
+        { "name": "Burgundy", "hex": "#800020", "category": "warm" },
+        { "name": "Charcoal", "hex": "#36454F", "category": "neutral" },
+        { "name": "Rust", "hex": "#B7410E", "category": "warm" }
+      ],
+      "shoes": [
+        { "name": "Brown Leather Boots", "hex": "#6F4E37", "category": "warm" },
+        { "name": "Black Ankle Boots", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Tan Loafers", "hex": "#D2B48C", "category": "neutral" },
+        { "name": "Burgundy Oxfords", "hex": "#800020", "category": "warm" }
+      ],
+      "bags": [
+        { "name": "Cognac Leather", "hex": "#8B4513", "category": "warm" },
+        { "name": "Black Leather", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Olive Canvas", "hex": "#808000", "category": "cool" },
+        { "name": "Burgundy Suede", "hex": "#722F37", "category": "warm" }
+      ]
+    }
+  },
+  "winter": {
+    "name": "Winter",
+    "description": "Deep, cool, and sophisticated colors with icy accents",
+    "colors": {
+      "tops": [
+        { "name": "Crisp White", "hex": "#F8F8FF", "category": "neutral" },
+        { "name": "Navy", "hex": "#000080", "category": "cool" },
+        { "name": "Charcoal", "hex": "#36454F", "category": "neutral" },
+        { "name": "Emerald", "hex": "#50C878", "category": "cool" },
+        { "name": "Deep Purple", "hex": "#301934", "category": "cool" },
+        { "name": "Ice Blue", "hex": "#A5C9D4", "category": "cool" },
+        { "name": "Black", "hex": "#000000", "category": "neutral" }
+      ],
+      "bottoms": [
+        { "name": "Black Jeans", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Gray Wool", "hex": "#808080", "category": "neutral" },
+        { "name": "Navy", "hex": "#000080", "category": "cool" },
+        { "name": "Deep Green", "hex": "#013220", "category": "cool" },
+        { "name": "Charcoal", "hex": "#36454F", "category": "neutral" },
+        { "name": "Burgundy", "hex": "#800020", "category": "warm" }
+      ],
+      "outerwear": [
+        { "name": "Black Wool Coat", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Charcoal Puffer", "hex": "#36454F", "category": "neutral" },
+        { "name": "Navy Peacoat", "hex": "#000080", "category": "cool" },
+        { "name": "Gray Overcoat", "hex": "#808080", "category": "neutral" },
+        { "name": "Camel Coat", "hex": "#C19A6B", "category": "neutral" }
+      ],
+      "shoes": [
+        { "name": "Black Leather Boots", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Gray Suede Boots", "hex": "#808080", "category": "neutral" },
+        { "name": "Navy Chelsea Boots", "hex": "#000080", "category": "cool" },
+        { "name": "Black Sneakers", "hex": "#1A1A1A", "category": "neutral" }
+      ],
+      "bags": [
+        { "name": "Black Leather", "hex": "#0A0A0A", "category": "neutral" },
+        { "name": "Navy Tote", "hex": "#000080", "category": "cool" },
+        { "name": "Gray Suede", "hex": "#808080", "category": "neutral" },
+        { "name": "Burgundy Leather", "hex": "#722F37", "category": "warm" }
+      ]
+    }
+  }
+}
