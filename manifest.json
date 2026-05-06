@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-06",
+      "slug": "2026-05-06",
+      "title": "Context Window Visualizer",
+      "category": "trend",
+      "oneLiner": "Paste any text and see how many tokens it uses across GPT-4, Claude, and Gemini — understand context limits visually and plan your prompts smarter.",
+      "path": "apps/2026-05-06/"
+    },
+    {
       "date": "2026-05-05",
       "slug": "2026-05-05",
       "title": "Dinner Decision Spinner",

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Context Window Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --border: #30363D;
+      --text-primary: #E6EDF3;
+      --text-secondary: #8B949E;
+      --accent: #58A6FF;
+      --green: #3FB950;
+      --yellow: #D29922;
+      --red: #F85149;
+      --mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 16px);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .input-section {
+      margin-bottom: 32px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: var(--mono);
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .models {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .model-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .model-limit {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: var(--mono);
+    }
+
+    .progress-container {
+      background: var(--bg);
+      border-radius: 8px;
+      height: 32px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    .progress-bar.green {
+      background: var(--green);
+      color: #0D1117;
+    }
+
+    .progress-bar.yellow {
+      background: var(--yellow);
+      color: #0D1117;
+    }
+
+    .progress-bar.red {
+      background: var(--red);
+      color: #FFFFFF;
+    }
+
+    .model-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--mono);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-icon {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-icon.green {
+      background: var(--green);
+    }
+
+    .status-icon.yellow {
+      background: var(--yellow);
+    }
+
+    .status-icon.red {
+      background: var(--red);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 48px 20px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        font-size: 14px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .stats {
+        flex-wrap: wrap;
+      }
+
+      .model-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Context Window Visualizer</h1>
+      <p class="subtitle">See how your text fits across GPT-4, Claude, and Gemini</p>
+    </header>
+
+    <div class="input-section">
+      <textarea 
+        id="input" 
+        placeholder="Paste your prompt, document, or any text here...&#10;&#10;The app will estimate token counts for each major LLM and show you what fits where."
+        autofocus
+      ></textarea>
+      <div class="stats">
+        <div class="stat">
+          <span>Characters:</span>
+          <span class="stat-value" id="char-count">0</span>
+        </div>
+        <div class="stat">
+          <span>Words:</span>
+          <span class="stat-value" id="word-count">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="models" id="models">
+      <div class="empty-state">
+        Start typing or paste text above to see token estimates
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const models = [
+      {
+        name: 'GPT-4 Turbo',
+        charsPerToken: 4,
+        limit: 128000,
+        id: 'gpt4'
+      },
+      {
+        name: 'Claude 3.5 Sonnet',
+        charsPerToken: 3.5,
+        limit: 200000,
+        id: 'claude'
+      },
+      {
+        name: 'Gemini 1.5 Pro',
+        charsPerToken: 4,
+        limit: 2000000,
+        id: 'gemini'
+      }
+    ];
+
+    const input = document.getElementById('input');
+    const modelsContainer = document.getElementById('models');
+    const charCount = document.getElementById('char-count');
+    const wordCount = document.getElementById('word-count');
+
+    function estimateTokens(text, charsPerToken) {
+      if (!text.trim()) return 0;
+      return Math.ceil(text.length / charsPerToken);
+    }
+
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    function getStatus(percentage) {
+      if (percentage > 100) return 'red';
+      if (percentage > 80) return 'yellow';
+      return 'green';
+    }
+
+    function getStatusText(percentage) {
+      if (percentage > 100) return 'Exceeds limit';
+      if (percentage > 80) return 'Getting full';
+      return 'Plenty of room';
+    }
+
+    function renderModels(text) {
+      if (!text.trim()) {
+        modelsContainer.innerHTML = '<div class="empty-state">Start typing or paste text above to see token estimates</div>';
+        return;
+      }
+
+      const html = models.map(model => {
+        const tokens = estimateTokens(text, model.charsPerToken);
+        const percentage = (tokens / model.limit) * 100;
+        const status = getStatus(percentage);
+        const statusText = getStatusText(percentage);
+        const displayPercentage = Math.min(percentage, 100);
+
+        return `
+          <div class="model-card">
+            <div class="model-header">
+              <div class="model-name">${model.name}</div>
+              <div class="model-limit">${formatNumber(model.limit)} tokens</div>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar ${status}" style="width: ${displayPercentage}%">
+                ${formatNumber(tokens)} tokens
+              </div>
+            </div>
+            <div class="model-meta">
+              <div class="status">
+                <span class="status-icon ${status}"></span>
+                <span>${statusText}</span>
+              </div>
+              <div>${percentage.toFixed(1)}% full</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      modelsContainer.innerHTML = html;
+    }
+
+    function updateStats(text) {
+      const chars = text.length;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      
+      charCount.textContent = formatNumber(chars);
+      wordCount.textContent = formatNumber(words);
+    }
+
+    function handleInput() {
+      const text = input.value;
+      updateStats(text);
+      renderModels(text);
+      localStorage.setItem('context-viz-text', text);
+    }
+
+    // Load saved text
+    const savedText = localStorage.getItem('context-viz-text');
+    if (savedText) {
+      input.value = savedText;
+      handleInput();
+    }
+
+    // Event listeners
+    input.addEventListener('input', handleInput);
+
+    // Initialize
+    handleInput();
+  </script>
+</body>
+</html>
