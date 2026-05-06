@@ -1,4 +1,16 @@
-import palettes from '../data/palettes.json';
+import palettesData from '../data/palettes.json';
+
+const palettes = palettesData as Record<Season, {
+  name: string;
+  description: string;
+  colors: {
+    tops: ColorItem[];
+    bottoms: ColorItem[];
+    outerwear: ColorItem[];
+    shoes: ColorItem[];
+    bags: ColorItem[];
+  };
+}>;
 
 export interface ColorItem {
   name: string;
@@ -17,6 +29,18 @@ export interface Outfit {
 }
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter';
+
+type SeasonData = {
+  name: string;
+  description: string;
+  colors: {
+    tops: ColorItem[];
+    bottoms: ColorItem[];
+    outerwear: ColorItem[];
+    shoes: ColorItem[];
+    bags: ColorItem[];
+  };
+};
 
 // Color harmony rules
 const harmonyRules = {
