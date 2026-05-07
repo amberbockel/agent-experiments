@@ -1,306 +1,302 @@
 'use client';
 
 import { useState } from 'react';
-import brightWinterData from '../data/bright-winter-palette.json';
-import trendData from '../data/trend-data-2026.json';
 
-type StylePreference = 'edgy' | 'sporty' | 'glam' | 'minimal';
-type Occasion = 'work' | 'weekend' | 'date_night';
+// Bright Winter Color Palette
+const COLORS = {
+  // Icy & Cool
+  ice_blue: { name: 'Ice Blue', hex: '#E0F7FA', category: 'neutral' },
+  silver: { name: 'Silver', hex: '#C0C0C0', category: 'neutral' },
+  charcoal: { name: 'Charcoal', hex: '#36454F', category: 'neutral' },
+  pure_white: { name: 'Pure White', hex: '#FFFFFF', category: 'neutral' },
+  true_black: { name: 'True Black', hex: '#000000', category: 'neutral' },
+  
+  // Bold & Bright
+  electric_blue: { name: 'Electric Blue', hex: '#0096FF', category: 'bold' },
+  hot_pink: { name: 'Hot Pink', hex: '#FF69B4', category: 'bold' },
+  emerald: { name: 'Emerald', hex: '#50C878', category: 'bold' },
+  royal_purple: { name: 'Royal Purple', hex: '#7851A9', category: 'bold' },
+  
+  // Soft Accents
+  soft_pink: { name: 'Soft Pink', hex: '#FFB3D9', category: 'accent' },
+  lavender: { name: 'Lavender', hex: '#E6E6FA', category: 'accent' },
+  mint: { name: 'Mint', hex: '#98FF98', category: 'accent' },
+};
 
-interface ColorItem {
+interface OutfitPiece {
   name: string;
   hex: string;
   category: string;
-  intensity: string;
 }
 
 interface Outfit {
-  id: string;
-  top: ColorItem;
-  bottom: ColorItem;
-  outerwear: ColorItem | null;
-  shoes: ColorItem;
-  accessories: ColorItem;
-  occasion: Occasion;
-  styleNote: string;
-  weatherNote?: string;
+  top: OutfitPiece;
+  bottom: OutfitPiece;
+  shoes: OutfitPiece;
+  accessory: OutfitPiece;
 }
 
-function getRandomItem<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-function generateOutfit(
-  style: StylePreference,
-  occasion: Occasion,
-  temperature?: number
-): Outfit {
-  const palette = brightWinterData.bright_winter.colors;
-  const stylePref = brightWinterData.style_preferences[style];
-  const occasionGuide = trendData.occasion_guidelines[occasion];
-  const trendGuide = trendData.trends[style];
-
-  // Filter colors based on style preference and occasion
-  const preferredColorNames = stylePref.preferred_colors;
+// Simple outfit generator - Bright Winter palette
+function generateOutfit(): Outfit {
+  const colorArray = Object.values(COLORS);
   
-  const tops = palette.tops.filter(c => 
-    preferredColorNames.includes(c.name) && occasionGuide.tops.includes(c.name)
+  // Top: Bold or neutral
+  const topColors = colorArray.filter(c => 
+    c.category === 'bold' || c.category === 'neutral'
   );
-  const bottoms = palette.bottoms.filter(c => 
-    occasionGuide.bottoms.includes(c.name)
-  );
-  const shoes = palette.shoes.filter(c => 
-    occasionGuide.shoes.includes(c.name)
-  );
-  const accessories = palette.accessories.filter(c => 
-    occasionGuide.accessories.includes(c.name)
-  );
-
-  // Weather-based outerwear
-  let outerwear: ColorItem | null = null;
-  let weatherNote: string | undefined;
+  const top = topColors[Math.floor(Math.random() * topColors.length)];
   
-  if (temperature !== undefined && temperature < 70) {
-    const weatherKey = temperature < 40 ? 'cold' : temperature < 55 ? 'cool' : 'mild';
-    const weatherGuide = brightWinterData.weather_guidelines[weatherKey];
-    
-    if (weatherGuide.outerwear) {
-      const outerwearColors = palette.outerwear.filter(c => 
-        weatherGuide.outerwear?.includes(c.name)
-      );
-      outerwear = outerwearColors.length > 0 ? getRandomItem(outerwearColors) : null;
-      weatherNote = weatherGuide.notes;
-    }
-  }
-
-  const outfit: Outfit = {
-    id: Math.random().toString(36).substr(2, 9),
-    top: tops.length > 0 ? getRandomItem(tops) : getRandomItem(palette.tops),
-    bottom: bottoms.length > 0 ? getRandomItem(bottoms) : getRandomItem(palette.bottoms),
-    outerwear,
-    shoes: shoes.length > 0 ? getRandomItem(shoes) : getRandomItem(palette.shoes),
-    accessories: accessories.length > 0 ? getRandomItem(accessories) : getRandomItem(palette.accessories),
-    occasion,
-    styleNote: `${stylePref.styling_notes}. ${trendGuide.styling}`,
-    weatherNote,
-  };
-
-  return outfit;
+  // Bottom: Neutral or complementary
+  const bottomColors = colorArray.filter(c => 
+    c.category === 'neutral' && c.name !== top.name
+  );
+  const bottom = bottomColors[Math.floor(Math.random() * bottomColors.length)];
+  
+  // Shoes: Neutral
+  const shoeColors = [COLORS.true_black, COLORS.pure_white, COLORS.silver, COLORS.charcoal];
+  const shoes = shoeColors[Math.floor(Math.random() * shoeColors.length)];
+  
+  // Accessory: Accent or bold
+  const accessoryColors = colorArray.filter(c => 
+    (c.category === 'accent' || c.category === 'bold') && 
+    c.name !== top.name
+  );
+  const accessory = accessoryColors[Math.floor(Math.random() * accessoryColors.length)];
+  
+  return { top, bottom, shoes, accessory };
 }
 
 export default function Home() {
-  const [style, setStyle] = useState<StylePreference>('minimal');
-  const [occasion, setOccasion] = useState<Occasion>('work');
-  const [currentOutfit, setCurrentOutfit] = useState<Outfit | null>(null);
-  const [outfitHistory, setOutfitHistory] = useState<Outfit[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [outfit, setOutfit] = useState<Outfit | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = () => {
-    const newOutfit = generateOutfit(style, occasion, 50); // Mock temp for now
-    setOutfitHistory([...outfitHistory, newOutfit]);
-    setCurrentIndex(outfitHistory.length);
-    setCurrentOutfit(newOutfit);
-  };
-
-  const handleSwipe = (direction: 'left' | 'right') => {
-    if (direction === 'left' && currentIndex < outfitHistory.length - 1) {
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      setCurrentOutfit(outfitHistory[nextIndex]);
-    } else if (direction === 'right' && currentIndex > 0) {
-      const prevIndex = currentIndex - 1;
-      setCurrentIndex(prevIndex);
-      setCurrentOutfit(outfitHistory[prevIndex]);
-    }
+    setIsGenerating(true);
+    
+    // Simulate brief generation moment for smooth UX
+    setTimeout(() => {
+      setOutfit(generateOutfit());
+      setIsGenerating(false);
+    }, 300);
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="container max-w-md mx-auto px-6 py-8">
+    <main className="min-h-screen flex items-center justify-center p-6" 
+          style={{ background: 'var(--gray-50)' }}>
+      <div className="w-full max-w-md">
         {/* Header */}
-        <header className="mb-12">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-3" 
+              style={{ 
+                color: 'var(--gray-900)',
+                letterSpacing: '-0.02em',
+                lineHeight: '1.2'
+              }}>
             Daily Outfit
           </h1>
-          <p className="text-sm text-gray-500">
-            Bright Winter · Seasonal Color Analysis
+          <p className="text-sm" style={{ color: 'var(--gray-500)' }}>
+            Bright Winter Color Palette
           </p>
         </header>
 
-        {/* Style Toggle */}
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Your Style
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {(['edgy', 'sporty', 'glam', 'minimal'] as StylePreference[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStyle(s)}
-                className={`
-                  px-4 py-3 rounded-xl text-sm font-medium transition-all
-                  ${style === s 
-                    ? 'bg-gray-900 text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }
-                `}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Occasion Toggle */}
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Occasion
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(['work', 'weekend', 'date_night'] as Occasion[]).map((occ) => (
-              <button
-                key={occ}
-                onClick={() => setOccasion(occ)}
-                className={`
-                  px-4 py-3 rounded-xl text-sm font-medium transition-all
-                  ${occasion === occ 
-                    ? 'bg-gray-900 text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }
-                `}
-              >
-                {occ === 'date_night' ? 'Date Night' : occ.charAt(0).toUpperCase() + occ.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Generate Button */}
-        <button
-          onClick={handleGenerate}
-          className="w-full bg-gray-900 text-white py-4 rounded-2xl font-semibold text-base shadow-lg hover:bg-gray-800 transition-all mb-12"
-        >
-          Generate Outfit
-        </button>
-
-        {/* Outfit Display */}
-        {currentOutfit && (
-          <div className="space-y-6">
-            {/* Outfit Card */}
-            <div className="bg-gray-50 rounded-2xl p-6 space-y-5">
-              {/* Top */}
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-16 h-16 rounded-xl shadow-sm border border-gray-200 flex-shrink-0"
-                  style={{ backgroundColor: currentOutfit.top.hex }}
-                />
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Top</div>
-                  <div className="font-semibold text-gray-900">{currentOutfit.top.name}</div>
+        {/* Outfit Card */}
+        {outfit && (
+          <div 
+            className="mb-8 rounded-2xl overflow-hidden"
+            style={{
+              background: 'white',
+              boxShadow: 'var(--shadow-lg)',
+              animation: isGenerating ? 'none' : 'slideUp 300ms var(--ease-out)',
+            }}
+          >
+            {/* Top */}
+            <div className="relative h-48 flex items-end p-6"
+                 style={{ 
+                   background: `linear-gradient(180deg, ${outfit.top.hex} 0%, ${outfit.top.hex}dd 100%)`,
+                   transition: 'all var(--duration-base) var(--ease-out)'
+                 }}>
+              <div className="relative z-10">
+                <div className="text-xs font-semibold uppercase tracking-wider mb-1"
+                     style={{ 
+                       color: outfit.top.hex === '#FFFFFF' || outfit.top.hex === '#E0F7FA' || outfit.top.hex === '#FFB3D9' || outfit.top.hex === '#E6E6FA' || outfit.top.hex === '#98FF98' 
+                         ? 'rgba(0,0,0,0.6)' 
+                         : 'rgba(255,255,255,0.8)',
+                       letterSpacing: '0.08em'
+                     }}>
+                  Top
+                </div>
+                <div className="text-2xl font-bold"
+                     style={{ 
+                       color: outfit.top.hex === '#FFFFFF' || outfit.top.hex === '#E0F7FA' || outfit.top.hex === '#FFB3D9' || outfit.top.hex === '#E6E6FA' || outfit.top.hex === '#98FF98'
+                         ? 'rgba(0,0,0,0.9)' 
+                         : 'white',
+                       letterSpacing: '-0.02em'
+                     }}>
+                  {outfit.top.name}
                 </div>
               </div>
+            </div>
 
-              {/* Bottom */}
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-16 h-16 rounded-xl shadow-sm border border-gray-200 flex-shrink-0"
-                  style={{ backgroundColor: currentOutfit.bottom.hex }}
-                />
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Bottom</div>
-                  <div className="font-semibold text-gray-900">{currentOutfit.bottom.name}</div>
+            {/* Bottom */}
+            <div className="relative h-40 flex items-end p-6"
+                 style={{ 
+                   background: `linear-gradient(180deg, ${outfit.bottom.hex} 0%, ${outfit.bottom.hex}dd 100%)`,
+                   transition: 'all var(--duration-base) var(--ease-out)'
+                 }}>
+              <div className="relative z-10">
+                <div className="text-xs font-semibold uppercase tracking-wider mb-1"
+                     style={{ 
+                       color: outfit.bottom.hex === '#FFFFFF' || outfit.bottom.hex === '#E0F7FA' || outfit.bottom.hex === '#FFB3D9' || outfit.bottom.hex === '#E6E6FA' || outfit.bottom.hex === '#98FF98'
+                         ? 'rgba(0,0,0,0.6)' 
+                         : 'rgba(255,255,255,0.8)',
+                       letterSpacing: '0.08em'
+                     }}>
+                  Bottom
+                </div>
+                <div className="text-2xl font-bold"
+                     style={{ 
+                       color: outfit.bottom.hex === '#FFFFFF' || outfit.bottom.hex === '#E0F7FA' || outfit.bottom.hex === '#FFB3D9' || outfit.bottom.hex === '#E6E6FA' || outfit.bottom.hex === '#98FF98'
+                         ? 'rgba(0,0,0,0.9)' 
+                         : 'white',
+                       letterSpacing: '-0.02em'
+                     }}>
+                  {outfit.bottom.name}
                 </div>
               </div>
+            </div>
 
-              {/* Outerwear */}
-              {currentOutfit.outerwear && (
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-16 h-16 rounded-xl shadow-sm border border-gray-200 flex-shrink-0"
-                    style={{ backgroundColor: currentOutfit.outerwear.hex }}
-                  />
-                  <div className="flex-1">
-                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Outerwear</div>
-                    <div className="font-semibold text-gray-900">{currentOutfit.outerwear.name}</div>
+            {/* Shoes & Accessory Row */}
+            <div className="flex">
+              <div className="relative flex-1 h-32 flex items-end p-5"
+                   style={{ 
+                     background: `linear-gradient(180deg, ${outfit.shoes.hex} 0%, ${outfit.shoes.hex}dd 100%)`,
+                     transition: 'all var(--duration-base) var(--ease-out)'
+                   }}>
+                <div className="relative z-10">
+                  <div className="text-xs font-semibold uppercase tracking-wider mb-1"
+                       style={{ 
+                         color: outfit.shoes.hex === '#FFFFFF' || outfit.shoes.hex === '#C0C0C0' || outfit.shoes.hex === '#E0F7FA'
+                           ? 'rgba(0,0,0,0.6)' 
+                           : 'rgba(255,255,255,0.8)',
+                         letterSpacing: '0.08em'
+                       }}>
+                    Shoes
+                  </div>
+                  <div className="text-lg font-bold leading-tight"
+                       style={{ 
+                         color: outfit.shoes.hex === '#FFFFFF' || outfit.shoes.hex === '#C0C0C0' || outfit.shoes.hex === '#E0F7FA'
+                           ? 'rgba(0,0,0,0.9)' 
+                           : 'white',
+                         letterSpacing: '-0.02em'
+                       }}>
+                    {outfit.shoes.name}
                   </div>
                 </div>
-              )}
-
-              {/* Shoes */}
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-16 h-16 rounded-xl shadow-sm border border-gray-200 flex-shrink-0"
-                  style={{ backgroundColor: currentOutfit.shoes.hex }}
-                />
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Shoes</div>
-                  <div className="font-semibold text-gray-900">{currentOutfit.shoes.name}</div>
-                </div>
               </div>
 
-              {/* Accessories */}
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-16 h-16 rounded-xl shadow-sm border border-gray-200 flex-shrink-0"
-                  style={{ backgroundColor: currentOutfit.accessories.hex }}
-                />
-                <div className="flex-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Accessories</div>
-                  <div className="font-semibold text-gray-900">{currentOutfit.accessories.name}</div>
+              <div className="relative flex-1 h-32 flex items-end p-5"
+                   style={{ 
+                     background: `linear-gradient(180deg, ${outfit.accessory.hex} 0%, ${outfit.accessory.hex}dd 100%)`,
+                     transition: 'all var(--duration-base) var(--ease-out)'
+                   }}>
+                <div className="relative z-10">
+                  <div className="text-xs font-semibold uppercase tracking-wider mb-1"
+                       style={{ 
+                         color: outfit.accessory.hex === '#FFFFFF' || outfit.accessory.hex === '#E0F7FA' || outfit.accessory.hex === '#FFB3D9' || outfit.accessory.hex === '#E6E6FA' || outfit.accessory.hex === '#98FF98'
+                           ? 'rgba(0,0,0,0.6)' 
+                           : 'rgba(255,255,255,0.8)',
+                         letterSpacing: '0.08em'
+                       }}>
+                    Accent
+                  </div>
+                  <div className="text-lg font-bold leading-tight"
+                       style={{ 
+                         color: outfit.accessory.hex === '#FFFFFF' || outfit.accessory.hex === '#E0F7FA' || outfit.accessory.hex === '#FFB3D9' || outfit.accessory.hex === '#E6E6FA' || outfit.accessory.hex === '#98FF98'
+                           ? 'rgba(0,0,0,0.9)' 
+                           : 'white',
+                         letterSpacing: '-0.02em'
+                       }}>
+                    {outfit.accessory.name}
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Styling Notes */}
-            <div className="bg-blue-50 rounded-2xl p-5">
-              <div className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
-                Styling Note
-              </div>
-              <p className="text-sm text-blue-800 leading-relaxed">
-                {currentOutfit.styleNote}
-              </p>
-              {currentOutfit.weatherNote && (
-                <p className="text-sm text-blue-700 leading-relaxed mt-3 italic">
-                  {currentOutfit.weatherNote}
-                </p>
-              )}
-            </div>
-
-            {/* Navigation */}
-            {outfitHistory.length > 1 && (
-              <div className="flex justify-between items-center pt-4">
-                <button
-                  onClick={() => handleSwipe('right')}
-                  disabled={currentIndex === 0}
-                  className="text-sm text-gray-500 disabled:opacity-30"
-                >
-                  ← Previous
-                </button>
-                <div className="text-xs text-gray-400">
-                  {currentIndex + 1} / {outfitHistory.length}
-                </div>
-                <button
-                  onClick={() => handleSwipe('left')}
-                  disabled={currentIndex === outfitHistory.length - 1}
-                  className="text-sm text-gray-500 disabled:opacity-30"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
           </div>
         )}
 
         {/* Empty State */}
-        {!currentOutfit && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">✨</div>
-            <p className="text-gray-500">
-              Select your style and occasion, then generate your first outfit
+        {!outfit && (
+          <div className="text-center py-20 mb-8"
+               style={{ 
+                 animation: 'fadeIn 300ms var(--ease-out)',
+               }}>
+            <div className="text-7xl mb-5">✨</div>
+            <p style={{ color: 'var(--gray-500)' }}>
+              Generate your first outfit
             </p>
           </div>
         )}
+
+        {/* Generate Button */}
+        <button
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          className="w-full rounded-2xl font-semibold text-lg"
+          style={{
+            background: 'var(--gray-900)',
+            color: 'white',
+            height: '52px',
+            boxShadow: 'var(--shadow-md)',
+            transition: 'all var(--duration-base) var(--ease-out)',
+            opacity: isGenerating ? 0.6 : 1,
+            cursor: isGenerating ? 'not-allowed' : 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            if (!isGenerating) {
+              e.currentTarget.style.transform = 'scale(1.01)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          }}
+          onMouseDown={(e) => {
+            if (!isGenerating) {
+              e.currentTarget.style.transform = 'scale(0.99)';
+            }
+          }}
+          onMouseUp={(e) => {
+            if (!isGenerating) {
+              e.currentTarget.style.transform = 'scale(1.01)';
+            }
+          }}
+        >
+          {isGenerating ? 'Generating...' : 'Generate Outfit'}
+        </button>
       </div>
+
+      <style jsx>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
     </main>
   );
 }
