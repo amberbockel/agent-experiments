@@ -1,0 +1,131 @@
+{
+  "bright_winter": {
+    "name": "Bright Winter",
+    "description": "High-contrast, cool-toned, saturated colors. Bold and striking.",
+    "characteristics": ["high contrast", "cool undertones", "saturated", "icy accents"],
+    "colors": {
+      "tops": [
+        { "name": "True White", "hex": "#FFFFFF", "category": "neutral", "intensity": "bright" },
+        { "name": "True Black", "hex": "#000000", "category": "neutral", "intensity": "bright" },
+        { "name": "Icy Pink", "hex": "#FFB3D9", "category": "cool", "intensity": "bright" },
+        { "name": "Electric Blue", "hex": "#0096FF", "category": "cool", "intensity": "bright" },
+        { "name": "Magenta", "hex": "#FF00FF", "category": "cool", "intensity": "bright" },
+        { "name": "Royal Purple", "hex": "#7851A9", "category": "cool", "intensity": "bright" },
+        { "name": "Pine Green", "hex": "#01796F", "category": "cool", "intensity": "bright" },
+        { "name": "Hot Pink", "hex": "#FF1493", "category": "cool", "intensity": "bright" }
+      ],
+      "bottoms": [
+        { "name": "True Black", "hex": "#000000", "category": "neutral", "intensity": "bright" },
+        { "name": "Charcoal", "hex": "#36454F", "category": "neutral", "intensity": "medium" },
+        { "name": "Navy", "hex": "#000080", "category": "cool", "intensity": "bright" },
+        { "name": "Dark Emerald", "hex": "#0C4B33", "category": "cool", "intensity": "bright" },
+        { "name": "Pure White Denim", "hex": "#F8F8FF", "category": "neutral", "intensity": "bright" },
+        { "name": "Silver Gray", "hex": "#C0C0C0", "category": "neutral", "intensity": "medium" }
+      ],
+      "outerwear": [
+        { "name": "True Black Wool", "hex": "#0A0A0A", "category": "neutral", "intensity": "bright" },
+        { "name": "Icy Blue", "hex": "#A5F2F3", "category": "cool", "intensity": "bright" },
+        { "name": "Bright Red", "hex": "#FF0000", "category": "cool", "intensity": "bright" },
+        { "name": "Royal Blue", "hex": "#4169E1", "category": "cool", "intensity": "bright" },
+        { "name": "Pure White", "hex": "#FFFFFF", "category": "neutral", "intensity": "bright" },
+        { "name": "Emerald", "hex": "#50C878", "category": "cool", "intensity": "bright" }
+      ],
+      "shoes": [
+        { "name": "Black Leather", "hex": "#000000", "category": "neutral", "intensity": "bright" },
+        { "name": "White Sneakers", "hex": "#FFFFFF", "category": "neutral", "intensity": "bright" },
+        { "name": "Silver Metallic", "hex": "#C0C0C0", "category": "neutral", "intensity": "bright" },
+        { "name": "Navy Suede", "hex": "#000080", "category": "cool", "intensity": "bright" },
+        { "name": "Hot Pink Patent", "hex": "#FF1493", "category": "cool", "intensity": "bright" }
+      ],
+      "accessories": [
+        { "name": "Silver Chain", "hex": "#C0C0C0", "category": "neutral", "intensity": "bright" },
+        { "name": "Black Leather Bag", "hex": "#000000", "category": "neutral", "intensity": "bright" },
+        { "name": "White Canvas Tote", "hex": "#FFFFFF", "category": "neutral", "intensity": "bright" },
+        { "name": "Fuchsia Scarf", "hex": "#FF00FF", "category": "cool", "intensity": "bright" },
+        { "name": "Icy Blue Sunglasses", "hex": "#A5F2F3", "category": "cool", "intensity": "bright" }
+      ]
+    }
+  },
+  "complementary_palettes": {
+    "true_winter": {
+      "name": "True Winter",
+      "description": "Deep, cool, jewel tones that harmonize with Bright Winter's intensity",
+      "works_with": "bright_winter",
+      "colors": {
+        "tops": [
+          { "name": "Deep Navy", "hex": "#000C66", "category": "cool", "intensity": "deep" },
+          { "name": "Ruby Red", "hex": "#9B111E", "category": "cool", "intensity": "deep" },
+          { "name": "Sapphire", "hex": "#0F52BA", "category": "cool", "intensity": "deep" }
+        ],
+        "bottoms": [
+          { "name": "Black", "hex": "#000000", "category": "neutral", "intensity": "deep" },
+          { "name": "Charcoal", "hex": "#36454F", "category": "neutral", "intensity": "deep" }
+        ],
+        "outerwear": [
+          { "name": "Forest Green", "hex": "#014421", "category": "cool", "intensity": "deep" }
+        ]
+      }
+    },
+    "cool_summer": {
+      "name": "Cool Summer",
+      "description": "Soft, muted cool tones that balance Bright Winter's boldness",
+      "works_with": "bright_winter",
+      "colors": {
+        "tops": [
+          { "name": "Soft Rose", "hex": "#E8B5CE", "category": "cool", "intensity": "soft" },
+          { "name": "Powder Blue", "hex": "#B0E0E6", "category": "cool", "intensity": "soft" },
+          { "name": "Lavender Gray", "hex": "#C4C3D0", "category": "cool", "intensity": "soft" }
+        ],
+        "bottoms": [
+          { "name": "Soft Gray", "hex": "#B8B8B8", "category": "neutral", "intensity": "soft" },
+          { "name": "Slate Blue", "hex": "#6A7B8B", "category": "cool", "intensity": "soft" }
+        ]
+      }
+    }
+  },
+  "style_preferences": {
+    "edgy": {
+      "description": "Bold contrasts, structured silhouettes, urban edge",
+      "preferred_colors": ["True Black", "True White", "Hot Pink", "Electric Blue", "Silver Metallic"],
+      "styling_notes": "High contrast pairings, leather accents, asymmetric cuts"
+    },
+    "sporty": {
+      "description": "Athletic-inspired, functional, clean lines",
+      "preferred_colors": ["True White", "Navy", "Electric Blue", "Charcoal", "Silver Gray"],
+      "styling_notes": "Technical fabrics, sneakers, streamlined silhouettes"
+    },
+    "glam": {
+      "description": "Luxe, polished, statement-making",
+      "preferred_colors": ["Magenta", "Royal Purple", "Icy Pink", "Silver Metallic", "True Black"],
+      "styling_notes": "Metallic accents, bold jewelry, high-shine fabrics"
+    },
+    "minimal": {
+      "description": "Clean, understated, refined",
+      "preferred_colors": ["True White", "True Black", "Charcoal", "Navy", "Silver Gray"],
+      "styling_notes": "Monochromatic looks, simple lines, quality fabrics"
+    }
+  },
+  "weather_guidelines": {
+    "cold": {
+      "temp_range": "below 40°F",
+      "outerwear": ["True Black Wool", "Emerald", "Royal Blue"],
+      "shoes": ["Black Leather", "Navy Suede"],
+      "accessories": ["Fuchsia Scarf", "Silver Chain"],
+      "notes": "Layer with structured coats, add warm accessories"
+    },
+    "cool": {
+      "temp_range": "40-55°F",
+      "outerwear": ["Bright Red", "Icy Blue", "Pure White"],
+      "shoes": ["White Sneakers", "Black Leather"],
+      "accessories": ["Black Leather Bag", "Icy Blue Sunglasses"],
+      "notes": "Light layers, transitional pieces"
+    },
+    "mild": {
+      "temp_range": "55-70°F",
+      "outerwear": null,
+      "shoes": ["White Sneakers", "Silver Metallic"],
+      "accessories": ["White Canvas Tote", "Silver Chain"],
+      "notes": "No outerwear needed, focus on top + bottom harmony"
+    }
+  }
+}

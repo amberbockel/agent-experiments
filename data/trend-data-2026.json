@@ -1,0 +1,57 @@
+{
+  "season": "Spring 2026",
+  "source": "Curated from Pinterest, Instagram runway trends",
+  "last_updated": "2026-05-07",
+  "trends": {
+    "edgy": {
+      "colors": ["Electric Blue", "Hot Pink", "True Black", "Silver Metallic"],
+      "patterns": ["Monochrome blocking", "Leather + neon accents", "High contrast pairings"],
+      "key_pieces": ["Oversized blazers", "Combat boots", "Statement jewelry"],
+      "styling": "Mix structured tailoring with bold color pops. Black base + one saturated accent."
+    },
+    "sporty": {
+      "colors": ["Electric Blue", "True White", "Navy", "Charcoal"],
+      "patterns": ["Color blocking", "Minimalist athleisure", "Clean lines"],
+      "key_pieces": ["Technical joggers", "Sleek sneakers", "Zip-up track jackets"],
+      "styling": "Streamlined silhouettes. Monochrome or two-tone color stories."
+    },
+    "glam": {
+      "colors": ["Magenta", "Royal Purple", "Icy Pink", "Silver Metallic"],
+      "patterns": ["Metallic accents", "Bold prints", "High-shine fabrics"],
+      "key_pieces": ["Satin blouses", "Statement heels", "Oversized sunglasses"],
+      "styling": "Saturated color + metallic or neutral base. High contrast for drama."
+    },
+    "minimal": {
+      "colors": ["True White", "True Black", "Charcoal", "Navy"],
+      "patterns": ["Monochromatic", "Tonal layering", "Clean silhouettes"],
+      "key_pieces": ["Tailored trousers", "Crisp white shirts", "Leather loafers"],
+      "styling": "One or two colors max. Focus on fit and fabric quality."
+    }
+  },
+  "occasion_guidelines": {
+    "work": {
+      "tops": ["True White", "Navy", "Charcoal"],
+      "bottoms": ["True Black", "Navy", "Charcoal"],
+      "outerwear": ["True Black Wool", "Navy"],
+      "shoes": ["Black Leather", "Navy Suede"],
+      "accessories": ["Black Leather Bag", "Silver Chain"],
+      "notes": "Polished, professional. High contrast or tonal."
+    },
+    "weekend": {
+      "tops": ["Electric Blue", "Icy Pink", "True White"],
+      "bottoms": ["True Black", "Navy", "Pure White Denim"],
+      "outerwear": ["Bright Red", "Icy Blue"],
+      "shoes": ["White Sneakers", "Silver Metallic"],
+      "accessories": ["White Canvas Tote", "Icy Blue Sunglasses"],
+      "notes": "Relaxed but put-together. Play with color."
+    },
+    "date_night": {
+      "tops": ["Magenta", "Hot Pink", "Royal Purple"],
+      "bottoms": ["True Black", "Dark Emerald"],
+      "outerwear": ["Royal Blue", "Emerald"],
+      "shoes": ["Hot Pink Patent", "Black Leather"],
+      "accessories": ["Silver Chain", "Fuchsia Scarf"],
+      "notes": "Bold, confident. High contrast + one statement piece."
+    }
+  }
+}
