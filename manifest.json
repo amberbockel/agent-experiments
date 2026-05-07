@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-07",
+      "slug": "2026-05-07",
+      "title": "Creative Product Pricer",
+      "category": "business",
+      "oneLiner": "Price your creative work with confidence across originals, prints, licensing, and workshops — calculate value-based rates using materials, time, experience, and market positioning.",
+      "path": "apps/2026-05-07/"
+    },
+    {
       "date": "2026-05-06",
       "slug": "2026-05-06",
       "title": "Context Window Visualizer",
