@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-08",
+      "slug": "2026-05-08",
+      "title": "Weekly Review Template",
+      "category": "productivity",
+      "oneLiner": "A structured weekly review ritual — reflect on wins, learnings, and what's next with a mobile-first checklist that saves your progress locally.",
+      "path": "apps/2026-05-08/"
+    },
+    {
       "date": "2026-05-07",
       "slug": "2026-05-07",
       "title": "Creative Product Pricer",

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Weekly Review Template</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --radius: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --accent: #0A84FF;
+        --border: #38383A;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.47;
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .week-label {
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px 20px 40px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+
+    .btn:active {
+      opacity: 0.7;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .past-review {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .past-review-date {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .past-review-section {
+      margin-bottom: 12px;
+    }
+
+    .past-review-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .past-review-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .past-review-text {
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 40px 20px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Weekly Review</h1>
+    <div class="week-label" id="weekLabel"></div>
+  </header>
+
+  <main>
+    <div class="section">
+      <div class="section-title">🎉 Wins</div>
+      <div class="section-subtitle">What went well this week?</div>
+      <textarea id="wins" placeholder="Shipped new feature, hit revenue goal, great family dinner..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-title">💡 Learnings</div>
+      <div class="section-subtitle">Key insights or lessons from the past week</div>
+      <textarea id="learnings" placeholder="Customer feedback taught me X, tried Y approach and it worked..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📋 Carry Forward</div>
+      <div class="section-subtitle">Tasks or ideas to move into next week</div>
+      <textarea id="carryForward" placeholder="Finish blog post, follow up with collaborator, schedule meeting..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🎯 Next Week</div>
+      <div class="section-subtitle">Intentions or focus areas for the week ahead</div>
+      <textarea id="nextWeek" placeholder="Focus on content creation, launch new product, rest and recharge..."></textarea>
+    </div>
+  </main>
+
+  <div class="footer">
+    <button class="btn btn-secondary" onclick="showPastReviews()">View Past Reviews</button>
+  </div>
+
+  <div class="modal" id="pastReviewsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Past Reviews</div>
+        <button class="close-btn" onclick="closePastReviews()">×</button>
+      </div>
+      <div id="pastReviewsList"></div>
+    </div>
+  </div>
+
+  <script>
+    // Get current week label
+    function getWeekLabel() {
+      const now = new Date();
+      const options = { month: 'short', day: 'numeric', year: 'numeric' };
+      return `Week of ${now.toLocaleDateString('en-US', options)}`;
+    }
+
+    // Get week key for storage
+    function getWeekKey() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const oneJan = new Date(year, 0, 1);
+      const weekNum = Math.ceil((((now - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+      return `${year}-W${String(weekNum).padStart(2, '0')}`;
+    }
+
+    // Initialize
+    const weekKey = getWeekKey();
+    document.getElementById('weekLabel').textContent = getWeekLabel();
+
+    // Load saved data for this week
+    function loadReview() {
+      const saved = localStorage.getItem(`review-${weekKey}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('wins').value = data.wins || '';
+        document.getElementById('learnings').value = data.learnings || '';
+        document.getElementById('carryForward').value = data.carryForward || '';
+        document.getElementById('nextWeek').value = data.nextWeek || '';
+      }
+    }
+
+    // Save on blur
+    function saveReview() {
+      const data = {
+        wins: document.getElementById('wins').value,
+        learnings: document.getElementById('learnings').value,
+        carryForward: document.getElementById('carryForward').value,
+        nextWeek: document.getElementById('nextWeek').value,
+        date: new Date().toISOString()
+      };
+      localStorage.setItem(`review-${weekKey}`, JSON.stringify(data));
+    }
+
+    // Attach save handlers
+    ['wins', 'learnings', 'carryForward', 'nextWeek'].forEach(id => {
+      document.getElementById(id).addEventListener('blur', saveReview);
+    });
+
+    // Show past reviews
+    function showPastReviews() {
+      const modal = document.getElementById('pastReviewsModal');
+      const list = document.getElementById('pastReviewsList');
+      list.innerHTML = '';
+
+      // Get all review keys
+      const keys = Object.keys(localStorage)
+        .filter(k => k.startsWith('review-'))
+        .sort()
+        .reverse();
+
+      if (keys.length === 0) {
+        list.innerHTML = '<div class="empty-state">No past reviews yet. Start your first one above!</div>';
+      } else {
+        keys.forEach(key => {
+          const data = JSON.parse(localStorage.getItem(key));
+          const weekStr = key.replace('review-', '');
+          
+          const div = document.createElement('div');
+          div.className = 'past-review';
+          
+          let html = `<div class="past-review-date">${weekStr}</div>`;
+          
+          if (data.wins) {
+            html += `<div class="past-review-section">
+              <div class="past-review-label">Wins</div>
+              <div class="past-review-text">${escapeHtml(data.wins)}</div>
+            </div>`;
+          }
+          
+          if (data.learnings) {
+            html += `<div class="past-review-section">
+              <div class="past-review-label">Learnings</div>
+              <div class="past-review-text">${escapeHtml(data.learnings)}</div>
+            </div>`;
+          }
+          
+          if (data.carryForward) {
+            html += `<div class="past-review-section">
+              <div class="past-review-label">Carry Forward</div>
+              <div class="past-review-text">${escapeHtml(data.carryForward)}</div>
+            </div>`;
+          }
+          
+          if (data.nextWeek) {
+            html += `<div class="past-review-section">
+              <div class="past-review-label">Next Week</div>
+              <div class="past-review-text">${escapeHtml(data.nextWeek)}</div>
+            </div>`;
+          }
+          
+          div.innerHTML = html;
+          list.appendChild(div);
+        });
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closePastReviews() {
+      document.getElementById('pastReviewsModal').classList.remove('active');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('pastReviewsModal').addEventListener('click', (e) => {
+      if (e.target.id === 'pastReviewsModal') {
+        closePastReviews();
+      }
+    });
+
+    // Load current week on start
+    loadReview();
+  </script>
+</body>
+</html>
