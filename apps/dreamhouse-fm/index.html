@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dreamhouse FM - Burnout Recovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            height: 100vh;
+        }
+
+        .viewport {
+            position: relative;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            background: #111;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .scenario {
+            padding: 24px;
+            border-bottom: 1px solid #333;
+        }
+
+        .scenario h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .scenario p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #999;
+        }
+
+        .controls {
+            padding: 24px;
+            border-bottom: 1px solid #333;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .value-display {
+            display: inline-block;
+            font-size: 13px;
+            color: #fff;
+            margin-left: 8px;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 16px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .analyze-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .analyze-btn:active {
+            transform: scale(0.98);
+        }
+
+        .feedback {
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .feedback h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .feedback-section {
+            margin-bottom: 24px;
+        }
+
+        .feedback-section h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .feedback-section p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+        }
+
+        .feedback-section ul {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .feedback-section li {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .feedback-section li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .loading:after {
+            content: "...";
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="viewport">
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <div class="scenario">
+                <h1>Burnout Recovery Bedroom</h1>
+                <p>Design a healing space for Morgan, a 34-year-old designer recovering from severe burnout.</p>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Lighting Warmth <span class="value-display" id="warmth-value">50%</span></label>
+                    <input type="range" id="warmth" min="0" max="100" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label>Lighting Intensity <span class="value-display" id="intensity-value">50%</span></label>
+                    <input type="range" id="intensity" min="0" max="100" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label>Clutter Level <span class="value-display" id="clutter-value">50%</span></label>
+                    <input type="range" id="clutter" min="0" max="100" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label>Wall Color</label>
+                    <select id="wall-color">
+                        <option value="white">White</option>
+                        <option value="warm-beige">Warm Beige</option>
+                        <option value="soft-gray">Soft Gray</option>
+                        <option value="sage-green">Sage Green</option>
+                        <option value="dusty-blue">Dusty Blue</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Materiality</label>
+                    <select id="materiality">
+                        <option value="minimal-metal">Minimal (Metal & Glass)</option>
+                        <option value="mixed">Mixed Materials</option>
+                        <option value="warm-wood">Warm (Wood & Fabric)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Sound Environment</label>
+                    <select id="sound">
+                        <option value="traffic">Urban Traffic Noise</option>
+                        <option value="minimal">Minimal (Quiet)</option>
+                        <option value="gentle-ambient">Gentle Ambient Sound</option>
+                        <option value="nature">Nature Sounds</option>
+                    </select>
+                </div>
+
+                <button class="analyze-btn" onclick="analyzeSpace()">Analyze Space</button>
+            </div>
+
+            <div class="feedback" id="feedback">
+                <div class="loading">Waiting for analysis</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

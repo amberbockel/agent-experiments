@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-09",
+      "slug": "dreamhouse-fm",
+      "title": "Dreamhouse FM",
+      "category": "trend",
+      "oneLiner": "Design spaces for how they make people feel, not just how they look — adjust lighting, materials, and layout, then get AI emotional analysis for healing environments.",
+      "path": "apps/dreamhouse-fm/",
+      "flagship": true
+    },
+    {
       "date": "2026-05-08",
       "slug": "2026-05-08",
       "title": "Weekly Review Template",
