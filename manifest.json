@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-10",
+      "slug": "2026-05-10",
+      "title": "AI Reasoning Inspector",
+      "category": "trend",
+      "oneLiner": "Paste any AI response and get an instant breakdown of its reasoning patterns, confidence signals, logical structure, and potential biases — learn to read AI output critically.",
+      "path": "apps/2026-05-10/"
+    },
+    {
       "date": "2026-05-09",
       "slug": "dreamhouse-fm",
       "title": "Dreamhouse FM",
