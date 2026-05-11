@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-11",
+      "slug": "2026-05-11",
+      "title": "Wholesale Calculator",
+      "category": "business",
+      "oneLiner": "Price your creative work for wholesale and gallery channels — calculate what to charge retailers and galleries so you still make money after their cut.",
+      "path": "apps/2026-05-11/"
+    },
+    {
       "date": "2026-05-10",
       "slug": "2026-05-10",
       "title": "AI Reasoning Inspector",

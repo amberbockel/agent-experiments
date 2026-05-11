@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Wholesale Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #D1D1D6;
+      --accent: #007AFF;
+      --green: #34C759;
+      --amber: #FF9500;
+      --red: #FF3B30;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+        --shadow: 0 2px 12px rgba(0,0,0,0.4);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+      padding-top: max(env(safe-area-inset-top), 20px);
+      padding-bottom: max(env(safe-area-inset-bottom), 40px);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      font-size: 17px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input[type="number"] {
+      text-align: right;
+    }
+
+    .scenarios {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .scenarios {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .scenario {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid var(--border);
+    }
+
+    .scenario.active {
+      border-color: var(--accent);
+    }
+
+    .scenario-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .scenario-price {
+      font-size: 32px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 4px;
+    }
+
+    .scenario-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .scenario-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 15px;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .scenario-row.profit {
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .scenario-row .value.positive {
+      color: var(--green);
+    }
+
+    .scenario-row .value.negative {
+      color: var(--red);
+    }
+
+    .scenario-row .value.warning {
+      color: var(--amber);
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .preset-btn {
+      padding: 8px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 15px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .save-btn:active {
+      opacity: 0.8;
+    }
+
+    .saved-products {
+      margin-top: 20px;
+    }
+
+    .saved-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .saved-item:last-child {
+      border-bottom: none;
+    }
+
+    .saved-name {
+      font-weight: 500;
+    }
+
+    .saved-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .delete-btn {
+      color: var(--red);
+      background: none;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Wholesale Calculator</h1>
+    <p class="tagline">Price your creative work for galleries and retailers</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Your Product</div>
+    
+    <div class="input-group">
+      <label>Product Name</label>
+      <input type="text" id="productName" placeholder="e.g. 16×20 Original Painting">
+    </div>
+
+    <div class="input-group">
+      <label>Direct Retail Price</label>
+      <input type="number" id="retailPrice" value="200" min="0" step="1">
+    </div>
+
+    <div class="input-group">
+      <label>Production Cost</label>
+      <input type="number" id="productionCost" value="40" min="0" step="1">
+    </div>
+
+    <div class="input-group">
+      <label>Gallery Commission %</label>
+      <select id="galleryCommission">
+        <option value="40">40%</option>
+        <option value="45">45%</option>
+        <option value="50" selected>50%</option>
+        <option value="55">55%</option>
+        <option value="60">60%</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Wholesale Discount %</label>
+      <select id="wholesaleDiscount">
+        <option value="40">40%</option>
+        <option value="45">45%</option>
+        <option value="50" selected>50%</option>
+        <option value="55">55%</option>
+        <option value="60">60%</option>
+      </select>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" onclick="loadPreset(200, 40)">Original Painting</button>
+      <button class="preset-btn" onclick="loadPreset(45, 8)">11×14 Print</button>
+      <button class="preset-btn" onclick="loadPreset(30, 12)">T-Shirt</button>
+    </div>
+  </div>
+
+  <div class="scenarios" id="scenarios"></div>
+
+  <div class="card">
+    <button class="save-btn" onclick="saveProduct()">💾 Save This Product</button>
+  </div>
+
+  <div class="card saved-products" id="savedProductsCard" style="display: none;">
+    <div class="card-title">Saved Products</div>
+    <div id="savedProductsList"></div>
+  </div>
+
+  <footer>
+    Built for Amber Miro Creative · 2026
+  </footer>
+
+  <script>
+    const retailPriceInput = document.getElementById('retailPrice');
+    const productionCostInput = document.getElementById('productionCost');
+    const galleryCommissionInput = document.getElementById('galleryCommission');
+    const wholesaleDiscountInput = document.getElementById('wholesaleDiscount');
+    const productNameInput = document.getElementById('productName');
+
+    function calculate() {
+      const retail = parseFloat(retailPriceInput.value) || 0;
+      const cost = parseFloat(productionCostInput.value) || 0;
+      const galleryRate = parseFloat(galleryCommissionInput.value) / 100;
+      const wholesaleRate = parseFloat(wholesaleDiscountInput.value) / 100;
+
+      // Direct scenario
+      const directProfit = retail - cost;
+      const directMargin = retail > 0 ? (directProfit / retail * 100) : 0;
+
+      // Gallery scenario (consignment)
+      const galleryYourCut = retail * (1 - galleryRate);
+      const galleryProfit = galleryYourCut - cost;
+      const galleryMargin = retail > 0 ? (galleryProfit / retail * 100) : 0;
+
+      // Wholesale scenario
+      const wholesalePrice = retail * (1 - wholesaleRate);
+      const wholesaleProfit = wholesalePrice - cost;
+      const wholesaleMargin = wholesalePrice > 0 ? (wholesaleProfit / wholesalePrice * 100) : 0;
+
+      const scenarios = [
+        {
+          title: 'Direct Sale',
+          price: retail,
+          priceLabel: 'You charge',
+          rows: [
+            { label: 'Revenue', value: retail },
+            { label: 'Cost', value: -cost },
+          ],
+          profit: directProfit,
+          margin: directMargin,
+          active: true
+        },
+        {
+          title: 'Gallery (Consignment)',
+          price: retail,
+          priceLabel: 'Gallery charges',
+          rows: [
+            { label: 'Gallery takes', value: -(retail * galleryRate) },
+            { label: 'You receive', value: galleryYourCut },
+            { label: 'Cost', value: -cost },
+          ],
+          profit: galleryProfit,
+          margin: galleryMargin,
+          active: false
+        },
+        {
+          title: 'Wholesale',
+          price: wholesalePrice,
+          priceLabel: 'You charge retailer',
+          rows: [
+            { label: 'Revenue', value: wholesalePrice },
+            { label: 'Cost', value: -cost },
+          ],
+          profit: wholesaleProfit,
+          margin: wholesaleMargin,
+          active: false
+        }
+      ];
+
+      renderScenarios(scenarios);
+    }
+
+    function renderScenarios(scenarios) {
+      const container = document.getElementById('scenarios');
+      container.innerHTML = scenarios.map(s => `
+        <div class="scenario ${s.active ? 'active' : ''}">
+          <div class="scenario-title">${s.title}</div>
+          <div class="scenario-price">$${s.price.toFixed(0)}</div>
+          <div class="scenario-label">${s.priceLabel}</div>
+          ${s.rows.map(r => `
+            <div class="scenario-row">
+              <span>${r.label}</span>
+              <span class="value">${r.value >= 0 ? '$' : '-$'}${Math.abs(r.value).toFixed(0)}</span>
+            </div>
+          `).join('')}
+          <div class="scenario-row profit">
+            <span>Your Profit</span>
+            <span class="value ${s.profit > 0 ? 'positive' : s.profit < 0 ? 'negative' : ''}">
+              ${s.profit >= 0 ? '$' : '-$'}${Math.abs(s.profit).toFixed(0)}
+            </span>
+          </div>
+          <div class="scenario-row">
+            <span>Margin</span>
+            <span class="value ${s.margin >= 30 ? 'positive' : s.margin >= 15 ? 'warning' : 'negative'}">
+              ${s.margin.toFixed(0)}%
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadPreset(retail, cost) {
+      retailPriceInput.value = retail;
+      productionCostInput.value = cost;
+      calculate();
+    }
+
+    function saveProduct() {
+      const name = productNameInput.value || 'Untitled Product';
+      const retail = parseFloat(retailPriceInput.value) || 0;
+      const cost = parseFloat(productionCostInput.value) || 0;
+      
+      const saved = JSON.parse(localStorage.getItem('wholesaleProducts') || '[]');
+      saved.unshift({
+        id: Date.now(),
+        name,
+        retail,
+        cost,
+        galleryCommission: galleryCommissionInput.value,
+        wholesaleDiscount: wholesaleDiscountInput.value
+      });
+      localStorage.setItem('wholesaleProducts', JSON.stringify(saved.slice(0, 20)));
+      renderSavedProducts();
+    }
+
+    function loadProduct(id) {
+      const saved = JSON.parse(localStorage.getItem('wholesaleProducts') || '[]');
+      const product = saved.find(p => p.id === id);
+      if (product) {
+        productNameInput.value = product.name;
+        retailPriceInput.value = product.retail;
+        productionCostInput.value = product.cost;
+        galleryCommissionInput.value = product.galleryCommission;
+        wholesaleDiscountInput.value = product.wholesaleDiscount;
+        calculate();
+      }
+    }
+
+    function deleteProduct(id) {
+      const saved = JSON.parse(localStorage.getItem('wholesaleProducts') || '[]');
+      localStorage.setItem('wholesaleProducts', JSON.stringify(saved.filter(p => p.id !== id)));
+      renderSavedProducts();
+    }
+
+    function renderSavedProducts() {
+      const saved = JSON.parse(localStorage.getItem('wholesaleProducts') || '[]');
+      const card = document.getElementById('savedProductsCard');
+      const list = document.getElementById('savedProductsList');
+      
+      if (saved.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+      
+      card.style.display = 'block';
+      list.innerHTML = saved.map(p => `
+        <div class="saved-item">
+          <div onclick="loadProduct(${p.id})" style="flex: 1; cursor: pointer;">
+            <div class="saved-name">${p.name}</div>
+            <div class="saved-meta">$${p.retail} retail · $${p.cost} cost</div>
+          </div>
+          <button class="delete-btn" onclick="deleteProduct(${p.id})">✕</button>
+        </div>
+      `).join('');
+    }
+
+    retailPriceInput.addEventListener('input', calculate);
+    productionCostInput.addEventListener('input', calculate);
+    galleryCommissionInput.addEventListener('change', calculate);
+    wholesaleDiscountInput.addEventListener('change', calculate);
+
+    calculate();
+    renderSavedProducts();
+  </script>
+</body>
+</html>
