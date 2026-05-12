@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Outreach Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --shadow: rgba(0,0,0,0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text-primary: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+        --shadow: rgba(0,0,0,0.4);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0 24px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .stat {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 12px 16px;
+      min-width: 100px;
+      box-shadow: 0 1px 3px var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      font-size: 15px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .contacts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 80px;
+    }
+
+    .contact-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px var(--shadow);
+      position: relative;
+      border-left: 4px solid transparent;
+    }
+
+    .contact-card.needs-followup {
+      border-left-color: var(--warning);
+    }
+
+    .contact-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      gap: 12px;
+    }
+
+    .contact-name {
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .contact-date {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .contact-context {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .contact-notes {
+      font-size: 15px;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .contact-footer {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .status-awaiting {
+      background: rgba(255, 149, 0, 0.15);
+      color: var(--warning);
+    }
+
+    .status-progress {
+      background: rgba(0, 122, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .status-done {
+      background: rgba(52, 199, 89, 0.15);
+      color: var(--success);
+    }
+
+    .status-no-response {
+      background: rgba(142, 142, 147, 0.15);
+      color: var(--text-secondary);
+    }
+
+    .followup-tag {
+      font-size: 13px;
+      color: var(--warning);
+      font-weight: 500;
+    }
+
+    .contact-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+
+    .icon-btn:active {
+      color: var(--accent);
+    }
+
+    .fab {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      z-index: 10;
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-primary);
+      font-size: 17px;
+      font-family: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn:active {
+      opacity: 0.8;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-hint {
+      font-size: 15px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Outreach Tracker</h1>
+      <p class="subtitle">Track pitches, partnerships & follow-ups</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-awaiting">0</div>
+        <div class="stat-label">Awaiting</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-followup">0</div>
+        <div class="stat-label">Need Follow-up</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="awaiting">Awaiting Reply</button>
+      <button class="filter-btn" data-filter="progress">In Progress</button>
+      <button class="filter-btn" data-filter="done">Done</button>
+      <button class="filter-btn" data-filter="no-response">No Response</button>
+    </div>
+
+    <div class="contacts-list" id="contactsList"></div>
+  </div>
+
+  <button class="fab" id="addBtn">+</button>
+
+  <div class="modal" id="contactModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">New Contact</h2>
+        <button class="close-btn" id="closeModal">×</button>
+      </div>
+      <form id="contactForm">
+        <input type="hidden" id="contactId">
+        <div class="form-group">
+          <label for="contactName">Name</label>
+          <input type="text" id="contactName" required placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label for="contactContext">Context</label>
+          <input type="text" id="contactContext" required placeholder="Substack collaboration pitch">
+        </div>
+        <div class="form-group">
+          <label for="contactNotes">Notes (optional)</label>
+          <textarea id="contactNotes" placeholder="Sent via email on May 12..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="contactStatus">Status</label>
+          <select id="contactStatus">
+            <option value="awaiting">Awaiting Reply</option>
+            <option value="progress">In Progress</option>
+            <option value="done">Done</option>
+            <option value="no-response">No Response</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="contactDate">Date Reached Out</label>
+          <input type="date" id="contactDate" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Contact</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STATE_KEY = 'outreach-tracker-contacts';
+    let contacts = [];
+    let currentFilter = 'all';
+    let editingId = null;
+
+    // Initialize
+    loadContacts();
+    setDefaultDate();
+    render();
+
+    // Event listeners
+    document.getElementById('addBtn').addEventListener('click', openModal);
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('contactModal').addEventListener('click', (e) => {
+      if (e.target.id === 'contactModal') closeModal();
+    });
+    document.getElementById('contactForm').addEventListener('submit', saveContact);
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        render();
+      });
+    });
+
+    function loadContacts() {
+      const stored = localStorage.getItem(STATE_KEY);
+      contacts = stored ? JSON.parse(stored) : [];
+    }
+
+    function saveContacts() {
+      localStorage.setItem(STATE_KEY, JSON.stringify(contacts));
+    }
+
+    function setDefaultDate() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('contactDate').value = today;
+    }
+
+    function openModal(contact = null) {
+      editingId = contact ? contact.id : null;
+      const modal = document.getElementById('contactModal');
+      const title = document.getElementById('modalTitle');
+      
+      if (contact) {
+        title.textContent = 'Edit Contact';
+        document.getElementById('contactId').value = contact.id;
+        document.getElementById('contactName').value = contact.name;
+        document.getElementById('contactContext').value = contact.context;
+        document.getElementById('contactNotes').value = contact.notes || '';
+        document.getElementById('contactStatus').value = contact.status;
+        document.getElementById('contactDate').value = contact.date;
+      } else {
+        title.textContent = 'New Contact';
+        document.getElementById('contactForm').reset();
+        setDefaultDate();
+      }
+      
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('contactModal').classList.remove('active');
+      document.getElementById('contactForm').reset();
+      editingId = null;
+    }
+
+    function saveContact(e) {
+      e.preventDefault();
+      
+      const contact = {
+        id: editingId || Date.now().toString(),
+        name: document.getElementById('contactName').value,
+        context: document.getElementById('contactContext').value,
+        notes: document.getElementById('contactNotes').value,
+        status: document.getElementById('contactStatus').value,
+        date: document.getElementById('contactDate').value,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingId) {
+        const index = contacts.findIndex(c => c.id === editingId);
+        contacts[index] = contact;
+      } else {
+        contacts.unshift(contact);
+      }
+
+      saveContacts();
+      closeModal();
+      render();
+    }
+
+    function deleteContact(id) {
+      if (confirm('Delete this contact?')) {
+        contacts = contacts.filter(c => c.id !== id);
+        saveContacts();
+        render();
+      }
+    }
+
+    function needsFollowup(contact) {
+      if (contact.status !== 'awaiting') return false;
+      const contactDate = new Date(contact.date);
+      const now = new Date();
+      const daysSince = Math.floor((now - contactDate) / (1000 * 60 * 60 * 24));
+      return daysSince >= 7;
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const daysSince = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+      
+      if (daysSince === 0) return 'Today';
+      if (daysSince === 1) return 'Yesterday';
+      if (daysSince < 7) return `${daysSince}d ago`;
+      if (daysSince < 30) return `${Math.floor(daysSince / 7)}w ago`;
+      
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function render() {
+      // Update stats
+      document.getElementById('stat-total').textContent = contacts.length;
+      document.getElementById('stat-awaiting').textContent = 
+        contacts.filter(c => c.status === 'awaiting').length;
+      document.getElementById('stat-followup').textContent = 
+        contacts.filter(needsFollowup).length;
+
+      // Filter contacts
+      let filtered = contacts;
+      if (currentFilter !== 'all') {
+        filtered = contacts.filter(c => c.status === currentFilter);
+      }
+
+      // Sort by date (newest first)
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Render list
+      const list = document.getElementById('contactsList');
+      
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📬</div>
+            <div class="empty-state-text">No contacts yet</div>
+            <div class="empty-state-hint">Tap + to add your first outreach</div>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(contact => {
+        const followup = needsFollowup(contact);
+        const statusClass = `status-${contact.status}`;
+        const statusLabel = {
+          awaiting: 'Awaiting Reply',
+          progress: 'In Progress',
+          done: 'Done',
+          'no-response': 'No Response'
+        }[contact.status];
+
+        return `
+          <div class="contact-card ${followup ? 'needs-followup' : ''}">
+            <div class="contact-header">
+              <div class="contact-name">${escapeHtml(contact.name)}</div>
+              <div class="contact-date">${formatDate(contact.date)}</div>
+            </div>
+            <div class="contact-context">${escapeHtml(contact.context)}</div>
+            ${contact.notes ? `<div class="contact-notes">${escapeHtml(contact.notes)}</div>` : ''}
+            <div class="contact-footer">
+              <span class="status-badge ${statusClass}">${statusLabel}</span>
+              ${followup ? '<span class="followup-tag">⚠️ Follow up</span>' : ''}
+              <div class="contact-actions">
+                <button class="icon-btn" onclick="openModal(${escapeHtml(JSON.stringify(contact))})">✏️</button>
+                <button class="icon-btn" onclick="deleteContact('${contact.id}')">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      if (typeof text !== 'string') return text;
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Make functions global for inline handlers
+    window.openModal = openModal;
+    window.deleteContact = deleteContact;
+  </script>
+</body>
+</html>

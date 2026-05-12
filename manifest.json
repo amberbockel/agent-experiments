@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-12",
+      "slug": "2026-05-12",
+      "title": "Outreach Tracker",
+      "category": "productivity",
+      "oneLiner": "Track who you've reached out to, when, and why — log pitches, partnerships, and collaborations with smart follow-up reminders so nothing falls through the cracks.",
+      "path": "apps/2026-05-12/"
+    },
+    {
       "date": "2026-05-11",
       "slug": "2026-05-11",
       "title": "Wholesale Calculator",
