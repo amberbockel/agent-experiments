@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-05-13",
+      "slug": "2026-05-13",
+      "title": "Story Starter Dice",
+      "category": "delightful",
+      "oneLiner": "Roll the dice to generate creative story prompts — pick your character, setting, object, conflict, and twist with playful dice that shuffle on every tap.",
+      "path": "apps/2026-05-13/"
+    },
+    {
       "date": "2026-05-12",
       "slug": "2026-05-12",
       "title": "Outreach Tracker",

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Story Starter Dice</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Color System - Warm, Playful */
+      --amber-50: #FFFBF0;
+      --amber-100: #FFF3D6;
+      --amber-200: #FFE4A3;
+      --amber-500: #F59E0B;
+      --amber-600: #D97706;
+      --green-50: #F0FDF4;
+      --green-500: #10B981;
+      --green-600: #059669;
+      --cream: #FFF9F0;
+      --text-primary: #1F2937;
+      --text-secondary: #6B7280;
+      --surface: #FFFFFF;
+      --shadow: rgba(245, 158, 11, 0.15);
+
+      /* Spacing - 8pt Grid */
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      --font-size-sm: 14px;
+      --font-size-base: 17px;
+      --font-size-lg: 20px;
+      --font-size-xl: 24px;
+      --font-size-2xl: 28px;
+      --font-size-3xl: 34px;
+
+      /* Elevation */
+      --shadow-sm: 0 1px 3px var(--shadow);
+      --shadow-md: 0 4px 12px var(--shadow);
+      --shadow-lg: 0 8px 24px var(--shadow);
+
+      /* Border Radius */
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(135deg, var(--amber-50) 0%, var(--cream) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+      display: flex;
+      flex-direction: column;
+      font-size: var(--font-size-base);
+      line-height: 1.5;
+    }
+
+    header {
+      padding: var(--space-6) var(--space-4);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--amber-600);
+      margin-bottom: var(--space-2);
+    }
+
+    .tagline {
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    main {
+      flex: 1;
+      padding: 0 var(--space-4) var(--space-8);
+      max-width: 640px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .dice-container {
+      display: grid;
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+
+    .die {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+
+    .die.rolling {
+      animation: roll 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    @keyframes roll {
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+      50% {
+        transform: rotate(180deg) scale(1.05);
+      }
+      100% {
+        transform: rotate(360deg) scale(1);
+      }
+    }
+
+    .die-label {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .die-value {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    button {
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--amber-500) 0%, var(--amber-600) 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+      min-height: 48px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--amber-600);
+      box-shadow: var(--shadow-sm);
+      border: 2px solid var(--amber-200);
+      min-height: 48px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--amber-50);
+      border-color: var(--amber-500);
+    }
+
+    .story-prompt {
+      background: var(--green-50);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid var(--green-500);
+      margin-bottom: var(--space-6);
+      display: none;
+    }
+
+    .story-prompt.visible {
+      display: block;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .story-prompt h3 {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      color: var(--green-600);
+      margin-bottom: var(--space-3);
+    }
+
+    .story-prompt p {
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    footer {
+      padding: var(--space-4);
+      text-align: center;
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+
+    footer a {
+      color: var(--amber-600);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    @media (min-width: 640px) {
+      .dice-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .controls {
+        flex-direction: row;
+      }
+      
+      .controls button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎲 Story Starter Dice</h1>
+    <p class="tagline">Roll the dice to spark your next story</p>
+  </header>
+
+  <main>
+    <div class="dice-container" id="diceContainer">
+      <div class="die" data-category="character">
+        <div class="die-label">Character</div>
+        <div class="die-value" id="character">—</div>
+      </div>
+      <div class="die" data-category="setting">
+        <div class="die-label">Setting</div>
+        <div class="die-value" id="setting">—</div>
+      </div>
+      <div class="die" data-category="object">
+        <div class="die-label">Object</div>
+        <div class="die-value" id="object">—</div>
+      </div>
+      <div class="die" data-category="conflict">
+        <div class="die-label">Conflict</div>
+        <div class="die-value" id="conflict">—</div>
+      </div>
+      <div class="die" data-category="twist">
+        <div class="die-label">Twist</div>
+        <div class="die-value" id="twist">—</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-primary" id="rollBtn">🎲 Roll the Dice</button>
+      <button class="btn-secondary" id="generateBtn" style="display: none;">✨ Generate Story Prompt</button>
+    </div>
+
+    <div class="story-prompt" id="storyPrompt">
+      <h3>Your Story Prompt</h3>
+      <p id="promptText"></p>
+    </div>
+  </main>
+
+  <footer>
+    Built by <a href="https://amberbockel.github.io/agent-experiments/">Ada</a> · 2026-05-13
+  </footer>
+
+  <script>
+    const storyData = {
+      character: [
+        'a curious child',
+        'a retired astronaut',
+        'a talking cat',
+        'a time traveler',
+        'a young inventor',
+        'a forest ranger',
+        'a pizza delivery driver',
+        'a lighthouse keeper',
+        'a robot learning to feel',
+        'a ghost who forgot why they stayed',
+        'a treasure hunter',
+        'a substitute teacher',
+        'a dragon disguised as human',
+        'a detective afraid of the dark',
+        'a street musician',
+        'a professional daydreamer',
+        'a bookstore owner',
+        'a kid who can talk to plants',
+        'a mail carrier with a secret',
+        'a chef who never tastes their food'
+      ],
+      setting: [
+        'an abandoned space station',
+        'a foggy mountain village',
+        'a library that appears at midnight',
+        'a desert made of glass',
+        'an underwater city',
+        'a forest where time runs backward',
+        'a carnival that never closes',
+        'a train stuck between dimensions',
+        'a lighthouse during a storm',
+        'a forgotten playground',
+        'a bookstore basement',
+        'a cloud factory',
+        'an island that moves',
+        'a museum after hours',
+        'a treehouse city',
+        'a subway tunnel that leads nowhere',
+        'a beach with singing sand',
+        'a garden where seasons overlap',
+        'a clock tower frozen in time',
+        'a hidden room behind a waterfall'
+      ],
+      object: [
+        'a compass that points to lost things',
+        'a key with no lock',
+        'a map that rewrites itself',
+        'a music box that plays memories',
+        'a mirror that shows the future',
+        'a coin that always lands on edge',
+        'a photograph that changes',
+        'a telescope that sees thoughts',
+        'a typewriter that predicts the news',
+        'a pair of glasses that reveal truth',
+        'a journal with blank pages that fill themselves',
+        'a snow globe with a living world inside',
+        'a broken watch that still keeps perfect time',
+        'a postcard from a place that doesn't exist',
+        'a feather that glows in danger',
+        'a seed that grows in seconds',
+        'a stone that hums ancient songs',
+        'a harmonica that controls the weather',
+        'a rope that never ends',
+        'a paintbrush that brings drawings to life'
+      ],
+      conflict: [
+        'must solve a riddle before sunrise',
+        'lost something precious and must find it',
+        'accidentally swapped places with someone',
+        'discovered a secret they shouldn't know',
+        'must choose between two impossible options',
+        'broke something important and must fix it',
+        'made a promise they can't keep',
+        'found themselves in the wrong time',
+        'witnessed something nobody will believe',
+        'must deliver a message but forgot what it says',
+        'woke up with a new ability they can't control',
+        'needs to rescue someone before it's too late',
+        'must prove their innocence',
+        'lost the way home',
+        'has one wish but three people to save',
+        'must stop a disaster nobody else can see coming',
+        'holds the last piece of a forgotten puzzle',
+        'can only tell the truth for 24 hours',
+        'must teach someone a skill they've forgotten',
+        'discovered the rules have changed'
+      ],
+      twist: [
+        'but nothing is as it seems',
+        'and time is running out',
+        'while being followed by shadows',
+        'but they can only speak in rhymes',
+        'and gravity works differently here',
+        'with help from an unlikely friend',
+        'but every choice creates a new timeline',
+        'while invisible to everyone else',
+        'and the weather reflects their emotions',
+        'but they keep forgetting what happened',
+        'with only one sense working',
+        'and they're smaller than usual',
+        'while everyone around them is frozen',
+        'but they swap bodies at midnight',
+        'and words become real when spoken',
+        'with a stranger who knows their future',
+        'but colors have switched meanings',
+        'while dreaming and awake at once',
+        'and music is the only language',
+        'with a countdown they can't see'
+      ]
+    };
+
+    let currentRoll = {
+      character: '',
+      setting: '',
+      object: '',
+      conflict: '',
+      twist: ''
+    };
+
+    const rollBtn = document.getElementById('rollBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const storyPrompt = document.getElementById('storyPrompt');
+    const promptText = document.getElementById('promptText');
+
+    function getRandomItem(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function rollDice() {
+      const dice = document.querySelectorAll('.die');
+      storyPrompt.classList.remove('visible');
+      generateBtn.style.display = 'none';
+
+      dice.forEach((die, index) => {
+        setTimeout(() => {
+          die.classList.add('rolling');
+          const category = die.dataset.category;
+          const value = getRandomItem(storyData[category]);
+          currentRoll[category] = value;
+
+          setTimeout(() => {
+            document.getElementById(category).textContent = value;
+            die.classList.remove('rolling');
+            
+            if (index === dice.length - 1) {
+              saveRoll();
+              setTimeout(() => {
+                generateBtn.style.display = 'block';
+              }, 200);
+            }
+          }, 600);
+        }, index * 100);
+      });
+    }
+
+    function generateStoryPrompt() {
+      const prompt = `Write a story about ${currentRoll.character} in ${currentRoll.setting}. They find ${currentRoll.object}. Their challenge: ${currentRoll.conflict} — ${currentRoll.twist}.`;
+      
+      promptText.textContent = prompt;
+      storyPrompt.classList.add('visible');
+    }
+
+    function saveRoll() {
+      localStorage.setItem('lastRoll', JSON.stringify(currentRoll));
+    }
+
+    function loadLastRoll() {
+      const saved = localStorage.getItem('lastRoll');
+      if (saved) {
+        currentRoll = JSON.parse(saved);
+        Object.keys(currentRoll).forEach(category => {
+          if (currentRoll[category]) {
+            document.getElementById(category).textContent = currentRoll[category];
+          }
+        });
+        if (currentRoll.character) {
+          generateBtn.style.display = 'block';
+        }
+      }
+    }
+
+    rollBtn.addEventListener('click', rollDice);
+    generateBtn.addEventListener('click', generateStoryPrompt);
+
+    loadLastRoll();
+  </script>
+</body>
+</html>
