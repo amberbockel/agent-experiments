@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-01",
+      "slug": "2026-06-01",
+      "title": "Reading Backlog",
+      "category": "productivity",
+      "oneLiner": "Track articles, papers, and links you want to reference later with notes on why they matter and tags to find them fast.",
+      "path": "apps/2026-06-01/"
+    },
+    {
       "date": "2026-05-13",
       "slug": "2026-05-13",
       "title": "Story Starter Dice",
