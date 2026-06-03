@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-03",
+      "slug": "2026-06-03",
+      "title": "Agent Handoff Simulator",
+      "category": "trend",
+      "oneLiner": "Visualize how multi-agent systems route and delegate work — type a task, watch it decompose into subtasks routed to specialized agents with context handoffs.",
+      "path": "apps/2026-06-03/"
+    },
+    {
       "date": "2026-06-01",
       "slug": "2026-06-01",
       "title": "Reading Backlog",

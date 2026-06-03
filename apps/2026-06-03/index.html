@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Agent Handoff Simulator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0F0F11;
+      --surface: #1A1A1E;
+      --border: #2A2A2F;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A0A0A8;
+      --accent: #3B82F6;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      
+      /* Agent colors */
+      --agent-orchestrator: #8B5CF6;
+      --agent-research: #06B6D4;
+      --agent-writer: #F59E0B;
+      --agent-calendar: #10B981;
+      --agent-code: #EC4899;
+      --agent-data: #6366F1;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .input-section {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 15px;
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .example-tasks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .example-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .example-chip:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .analyze-btn {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 16px;
+    }
+
+    .analyze-btn:hover {
+      opacity: 0.9;
+    }
+
+    .analyze-btn:active {
+      opacity: 0.8;
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #flowCanvas {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 400px;
+      display: none;
+    }
+
+    #flowCanvas.visible {
+      display: block;
+    }
+
+    .flow-item {
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .agent-node {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .agent-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .agent-content {
+      flex: 1;
+    }
+
+    .agent-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .agent-task {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .context-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .handoff-arrow {
+      margin: 8px 0 8px 24px;
+      padding-left: 24px;
+      border-left: 2px dashed var(--border);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .orchestrator {
+      background: var(--agent-orchestrator);
+    }
+    .research {
+      background: var(--agent-research);
+    }
+    .writer {
+      background: var(--agent-writer);
+    }
+    .calendar {
+      background: var(--agent-calendar);
+    }
+    .code {
+      background: var(--agent-code);
+    }
+    .data {
+      background: var(--agent-data);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 24px;
+      }
+      .container {
+        padding: 20px 16px;
+      }
+      .agent-node {
+        padding: 12px;
+      }
+      .agent-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Agent Handoff Simulator</h1>
+      <p class="subtitle">Watch how multi-agent systems decompose and route work</p>
+    </header>
+
+    <div class="input-section">
+      <label for="taskInput">Your Task</label>
+      <textarea 
+        id="taskInput" 
+        placeholder="e.g., Research our top 5 competitors, draft a positioning doc comparing features, and schedule a review meeting with the team next week"
+      ></textarea>
+      
+      <div class="example-tasks">
+        <div class="example-chip" data-task="Research AI agent frameworks, compare their orchestration models, and write a technical comparison post">📊 Research + Write</div>
+        <div class="example-chip" data-task="Analyze our Q2 revenue data, create visualizations, and draft an exec summary">📈 Data Analysis</div>
+        <div class="example-chip" data-task="Build a simple todo app prototype with TypeScript and deploy it to Vercel">💻 Full Stack</div>
+      </div>
+
+      <button class="analyze-btn" id="analyzeBtn">Analyze Task Flow</button>
+    </div>
+
+    <div id="flowCanvas"></div>
+  </div>
+
+  <script>
+    const agentSpecs = {
+      orchestrator: { emoji: '🎯', name: 'Orchestrator', color: 'orchestrator' },
+      research: { emoji: '🔍', name: 'Research Agent', color: 'research' },
+      writer: { emoji: '✍️', name: 'Writer Agent', color: 'writer' },
+      calendar: { emoji: '📅', name: 'Calendar Agent', color: 'calendar' },
+      code: { emoji: '💻', name: 'Code Agent', color: 'code' },
+      data: { emoji: '📊', name: 'Data Agent', color: 'data' }
+    };
+
+    const taskInput = document.getElementById('taskInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const flowCanvas = document.getElementById('flowCanvas');
+
+    // Example task chips
+    document.querySelectorAll('.example-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        taskInput.value = chip.dataset.task;
+        taskInput.focus();
+      });
+    });
+
+    // Analyze button
+    analyzeBtn.addEventListener('click', () => {
+      const task = taskInput.value.trim();
+      if (!task) return;
+      
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = 'Analyzing...';
+      
+      setTimeout(() => {
+        analyzeTask(task);
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = 'Analyze Task Flow';
+      }, 800);
+    });
+
+    function analyzeTask(task) {
+      const subtasks = decomposeTask(task);
+      renderFlow(subtasks);
+    }
+
+    function decomposeTask(task) {
+      const lower = task.toLowerCase();
+      const subtasks = [];
+
+      // Orchestrator always starts
+      subtasks.push({
+        agent: 'orchestrator',
+        task: 'Decompose task and plan execution',
+        context: 'Full user input',
+        handoff: 'Routes subtasks to specialists'
+      });
+
+      // Pattern matching for common task types
+      if (lower.match(/research|analyze|investigate|find|compare|competitors?|study/)) {
+        subtasks.push({
+          agent: 'research',
+          task: extractPhrase(task, /research|analyze|investigate|find|compare|competitors?|study/),
+          context: 'Original query + search strategy',
+          handoff: 'Returns findings + sources'
+        });
+      }
+
+      if (lower.match(/data|revenue|metrics|stats|visualiz|chart|graph|numbers/)) {
+        subtasks.push({
+          agent: 'data',
+          task: extractPhrase(task, /data|revenue|metrics|stats|visualiz|chart|graph|numbers/),
+          context: 'Dataset + analysis goals',
+          handoff: 'Returns processed data + charts'
+        });
+      }
+
+      if (lower.match(/build|code|develop|create.*app|prototype|implement|deploy/)) {
+        subtasks.push({
+          agent: 'code',
+          task: extractPhrase(task, /build|code|develop|create.*app|prototype|implement|deploy/),
+          context: 'Spec + tech stack requirements',
+          handoff: 'Returns working code + tests'
+        });
+      }
+
+      if (lower.match(/write|draft|document|post|blog|article|summary|report/)) {
+        subtasks.push({
+          agent: 'writer',
+          task: extractPhrase(task, /write|draft|document|post|blog|article|summary|report/),
+          context: 'Research findings + outline',
+          handoff: 'Returns polished draft'
+        });
+      }
+
+      if (lower.match(/schedule|meeting|calendar|book|arrange|coordinate/)) {
+        subtasks.push({
+          agent: 'calendar',
+          task: extractPhrase(task, /schedule|meeting|calendar|book|arrange|coordinate/),
+          context: 'Attendees + preferences + availability',
+          handoff: 'Returns confirmed time + invites sent'
+        });
+      }
+
+      // If no patterns matched, add a generic writer
+      if (subtasks.length === 1) {
+        subtasks.push({
+          agent: 'writer',
+          task: 'Process and structure the request',
+          context: 'Original task + any available context',
+          handoff: 'Returns structured output'
+        });
+      }
+
+      return subtasks;
+    }
+
+    function extractPhrase(task, pattern) {
+      const match = task.match(new RegExp(`[^,.]*(${pattern.source})[^,.]*`, 'i'));
+      if (match) {
+        return match[0].trim().replace(/^(and|then|also)\s+/i, '');
+      }
+      return task.split(/[,.]/).find(s => pattern.test(s.toLowerCase()))?.trim() || 'Process task';
+    }
+
+    function renderFlow(subtasks) {
+      flowCanvas.innerHTML = '';
+      flowCanvas.classList.add('visible');
+
+      subtasks.forEach((subtask, index) => {
+        setTimeout(() => {
+          const flowItem = document.createElement('div');
+          flowItem.className = 'flow-item';
+          flowItem.style.animationDelay = `${index * 0.2}s`;
+
+          const spec = agentSpecs[subtask.agent];
+          
+          flowItem.innerHTML = `
+            <div class="agent-node">
+              <div class="agent-avatar ${spec.color}">${spec.emoji}</div>
+              <div class="agent-content">
+                <div class="agent-name">${spec.name}</div>
+                <div class="agent-task">${subtask.task}</div>
+                <span class="context-badge">📦 ${subtask.context}</span>
+              </div>
+            </div>
+            ${index < subtasks.length - 1 ? `<div class="handoff-arrow">↓ ${subtask.handoff}</div>` : ''}
+          `;
+
+          flowCanvas.appendChild(flowItem);
+        }, index * 400);
+      });
+
+      // Add stats at the end
+      setTimeout(() => {
+        const stats = document.createElement('div');
+        stats.className = 'stats flow-item';
+        stats.style.animationDelay = `${subtasks.length * 0.2}s`;
+        stats.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-value">${subtasks.length}</div>
+            <div class="stat-label">Agents</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${subtasks.length - 1}</div>
+            <div class="stat-label">Handoffs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${Math.round(Math.random() * 500 + 200)}</div>
+            <div class="stat-label">Est. Tokens</div>
+          </div>
+        `;
+        flowCanvas.appendChild(stats);
+      }, subtasks.length * 400 + 200);
+    }
+
+    // Auto-focus input on load
+    taskInput.focus();
+  </script>
+</body>
+</html>
