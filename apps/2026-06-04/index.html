@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Product Launch Checklist</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --accent: #14B8A6;
+      --accent-light: #E6F7F5;
+      --done: #34C759;
+      --radius: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #F2F2F7;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+        --accent: #5EEAD4;
+        --accent-light: #1E3A37;
+        --done: #32D74B;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .progress-ring {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring circle {
+      fill: none;
+      stroke-width: 8;
+    }
+
+    .progress-ring .background {
+      stroke: var(--border);
+    }
+
+    .progress-ring .progress {
+      stroke: var(--accent);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-label {
+      position: absolute;
+      top: 62%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .phase {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .phase-title {
+      font-size: 19px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .phase-count {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--accent-light);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .task {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .task:last-child {
+      border-bottom: none;
+    }
+
+    .task input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+    }
+
+    .task label {
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .task.done label {
+      color: var(--text-secondary);
+      text-decoration: line-through;
+    }
+
+    .actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      flex: 1;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      opacity: 0.7;
+    }
+
+    button.secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .celebration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .celebration.show {
+      display: flex;
+    }
+
+    .celebration-content {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .celebration-emoji {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .celebration-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .celebration-text {
+      font-size: 17px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .celebration button {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Product Launch</h1>
+      <p class="subtitle">Ship your next creative product</p>
+    </header>
+
+    <div class="progress-ring">
+      <svg width="120" height="120">
+        <circle class="background" cx="60" cy="60" r="54"></circle>
+        <circle class="progress" cx="60" cy="60" r="54" stroke-dasharray="339.292" stroke-dashoffset="339.292"></circle>
+      </svg>
+      <div class="progress-text">0%</div>
+      <div class="progress-label">complete</div>
+    </div>
+
+    <div id="checklist"></div>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" id="reset">Reset</button>
+    <button id="export">Export</button>
+  </div>
+
+  <div class="celebration" id="celebration">
+    <div class="celebration-content">
+      <div class="celebration-emoji">🎉</div>
+      <div class="celebration-title">Ready to Ship!</div>
+      <div class="celebration-text">You've completed every task. Time to launch your product to the world.</div>
+      <button id="celebrate-close">Let's Go</button>
+    </div>
+  </div>
+
+  <script>
+    const phases = [
+      {
+        title: "Create",
+        emoji: "✨",
+        tasks: [
+          "Create final product (art, design, prototype)",
+          "Take high-quality product photos",
+          "Edit and optimize images for web",
+          "Write compelling product description",
+          "Set pricing (cost + margin + positioning)"
+        ]
+      },
+      {
+        title: "List",
+        emoji: "🏪",
+        tasks: [
+          "Upload product to Etsy/Shopify/platform",
+          "Add product title and tags (SEO)",
+          "Set inventory quantity and variants",
+          "Configure shipping options and rates",
+          "Preview listing on mobile and desktop"
+        ]
+      },
+      {
+        title: "Market",
+        emoji: "📣",
+        tasks: [
+          "Create Instagram carousel or Reel",
+          "Write social media captions",
+          "Post to Instagram, Facebook, TikTok",
+          "Share in relevant Facebook/Discord groups",
+          "Email your mailing list (if applicable)",
+          "Post in Substack (if relevant)"
+        ]
+      },
+      {
+        title: "Launch",
+        emoji: "🚀",
+        tasks: [
+          "Set product live and visible",
+          "Pin product to top of shop",
+          "Monitor first orders and reviews",
+          "Respond to questions quickly",
+          "Celebrate your launch! 🎉"
+        ]
+      }
+    ];
+
+    let state = loadState();
+
+    function loadState() {
+      const saved = localStorage.getItem('product-launch-state');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      // Initialize all tasks as unchecked
+      const initial = {};
+      phases.forEach((phase, pi) => {
+        phase.tasks.forEach((task, ti) => {
+          initial[`${pi}-${ti}`] = false;
+        });
+      });
+      return initial;
+    }
+
+    function saveState() {
+      localStorage.setItem('product-launch-state', JSON.stringify(state));
+    }
+
+    function render() {
+      const checklist = document.getElementById('checklist');
+      checklist.innerHTML = '';
+
+      phases.forEach((phase, phaseIndex) => {
+        const phaseEl = document.createElement('div');
+        phaseEl.className = 'phase';
+
+        const doneCount = phase.tasks.filter((_, taskIndex) => 
+          state[`${phaseIndex}-${taskIndex}`]
+        ).length;
+
+        phaseEl.innerHTML = `
+          <div class="phase-header">
+            <div class="phase-title">
+              <span>${phase.emoji}</span>
+              <span>${phase.title}</span>
+            </div>
+            <div class="phase-count">${doneCount}/${phase.tasks.length}</div>
+          </div>
+        `;
+
+        phase.tasks.forEach((task, taskIndex) => {
+          const taskId = `${phaseIndex}-${taskIndex}`;
+          const checked = state[taskId];
+          
+          const taskEl = document.createElement('div');
+          taskEl.className = `task ${checked ? 'done' : ''}`;
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = taskId;
+          checkbox.checked = checked;
+          checkbox.addEventListener('change', () => toggleTask(taskId));
+          
+          const label = document.createElement('label');
+          label.htmlFor = taskId;
+          label.textContent = task;
+          
+          taskEl.appendChild(checkbox);
+          taskEl.appendChild(label);
+          phaseEl.appendChild(taskEl);
+        });
+
+        checklist.appendChild(phaseEl);
+      });
+
+      updateProgress();
+    }
+
+    function toggleTask(taskId) {
+      state[taskId] = !state[taskId];
+      saveState();
+      render();
+      checkCompletion();
+    }
+
+    function updateProgress() {
+      const total = Object.keys(state).length;
+      const done = Object.values(state).filter(Boolean).length;
+      const percent = Math.round((done / total) * 100);
+      
+      const circle = document.querySelector('.progress-ring .progress');
+      const circumference = 339.292;
+      const offset = circumference - (done / total) * circumference;
+      circle.style.strokeDashoffset = offset;
+      
+      document.querySelector('.progress-text').textContent = `${percent}%`;
+    }
+
+    function checkCompletion() {
+      const allDone = Object.values(state).every(Boolean);
+      if (allDone) {
+        document.getElementById('celebration').classList.add('show');
+      }
+    }
+
+    function reset() {
+      if (confirm('Reset checklist and start a new product launch?')) {
+        Object.keys(state).forEach(key => state[key] = false);
+        saveState();
+        render();
+      }
+    }
+
+    function exportChecklist() {
+      const total = Object.keys(state).length;
+      const done = Object.values(state).filter(Boolean).length;
+      let text = `Product Launch Checklist (${done}/${total} complete)\n\n`;
+      
+      phases.forEach((phase, pi) => {
+        text += `${phase.emoji} ${phase.title}\n`;
+        phase.tasks.forEach((task, ti) => {
+          const checked = state[`${pi}-${ti}`];
+          text += `${checked ? '✅' : '⬜'} ${task}\n`;
+        });
+        text += '\n';
+      });
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Checklist copied to clipboard!');
+      }).catch(() => {
+        // Fallback: show in alert
+        alert(text);
+      });
+    }
+
+    document.getElementById('reset').addEventListener('click', reset);
+    document.getElementById('export').addEventListener('click', exportChecklist);
+    document.getElementById('celebrate-close').addEventListener('click', () => {
+      document.getElementById('celebration').classList.remove('show');
+    });
+
+    // Initial render
+    render();
+
+    // Check if already complete on load
+    if (Object.values(state).every(Boolean)) {
+      setTimeout(() => {
+        document.getElementById('celebration').classList.add('show');
+      }, 500);
+    }
+  </script>
+</body>
+</html>

@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-04",
+      "slug": "2026-06-04",
+      "title": "Product Launch Checklist",
+      "category": "business",
+      "oneLiner": "Track everything you need to launch a new product — photos, pricing, listings, marketing — with a reusable checklist that saves progress and celebrates when you ship.",
+      "path": "apps/2026-06-04/"
+    },
+    {
       "date": "2026-06-03",
       "slug": "2026-06-03",
       "title": "Agent Handoff Simulator",
