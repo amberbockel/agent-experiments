@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>OutRun '86 - Beach Highway</title>
+  <title>OutRun Me - Amber's SL</title>
   <style>
     * {
       margin: 0;
@@ -11,7 +11,7 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
-      -webkit-user-select: none;
+      touch-action: none;
     }
     
     body {
@@ -19,412 +19,324 @@
       height: 100vh;
       overflow: hidden;
       background: #000;
-      font-family: 'Arial Black', 'Arial Bold', sans-serif;
-      touch-action: none;
-    }
-    
-    #gameCanvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-    }
-    
-    .touch-control {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.2);
-      border: 4px solid rgba(255, 255, 255, 0.6);
-      border-radius: 50%;
-      backdrop-filter: blur(10px);
-      touch-action: none;
-      pointer-events: all;
-      transition: all 0.1s;
-      z-index: 1000;
+      font-family: 'Courier New', monospace;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     
-    .touch-control:active {
-      background: rgba(255, 255, 255, 0.4);
-      border-color: rgba(255, 200, 0, 1);
-      transform: scale(1.1);
+    #gameCanvas {
+      display: block;
+      background: #000;
+      image-rendering: pixelated;
+      max-width: 100%;
+      max-height: 100%;
     }
     
-    .dpad-left {
-      bottom: 20px;
-      left: 20px;
-      width: 80px;
-      height: 80px;
+    .touch-zone {
+      position: fixed;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      border-radius: 50%;
+      transition: all 0.15s;
     }
     
-    .dpad-right {
-      bottom: 20px;
-      left: 120px;
-      width: 80px;
-      height: 80px;
+    .touch-zone:active {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 200, 50, 0.9);
     }
     
-    .pedal {
-      bottom: 20px;
-      width: 80px;
-      height: 80px;
+    #leftZone { left: 20px; bottom: 20px; width: 100px; height: 100px; }
+    #rightZone { left: 140px; bottom: 20px; width: 100px; height: 100px; }
+    #accelZone { right: 140px; bottom: 20px; width: 100px; height: 100px; border-color: rgba(50, 255, 100, 0.5); }
+    #brakeZone { right: 20px; bottom: 20px; width: 100px; height: 100px; border-color: rgba(255, 50, 50, 0.5); }
+    
+    @media (hover: hover) and (min-width: 1024px) {
+      .touch-zone { display: none; }
     }
     
-    .pedal-accelerate {
-      right: 120px;
-    }
-    
-    .pedal-brake {
-      right: 20px;
-    }
-    
-    /* Desktop - hide touch controls */
-    @media (min-width: 1024px) and (hover: hover) {
-      .touch-control {
-        display: none;
-      }
-    }
-    
-    /* Landscape mobile */
-    @media (max-width: 768px) and (orientation: landscape) {
-      .dpad-left, .dpad-right {
-        width: 70px;
-        height: 70px;
-        bottom: 15px;
-      }
-      
-      .dpad-right {
-        left: 100px;
-      }
-      
-      .pedal {
-        width: 70px;
-        height: 70px;
-        bottom: 15px;
-      }
-      
-      .pedal-accelerate {
-        right: 100px;
-      }
-      
-      .pedal-brake {
-        right: 15px;
-      }
-    }
-    
-    /* Portrait mobile - larger buttons */
     @media (max-width: 480px) and (orientation: portrait) {
-      .dpad-left, .dpad-right {
-        width: 90px;
-        height: 90px;
-        bottom: 25px;
-      }
-      
-      .dpad-right {
-        left: 130px;
-      }
-      
-      .pedal {
-        width: 90px;
-        height: 90px;
-        bottom: 25px;
-      }
-      
-      .pedal-accelerate {
-        right: 130px;
-      }
-      
-      .pedal-brake {
-        right: 25px;
-      }
-    }
-    
-    /* Very small screens */
-    @media (max-width: 375px) {
-      .dpad-left, .dpad-right {
-        width: 75px;
-        height: 75px;
-        bottom: 15px;
-      }
-      
-      .dpad-left {
-        left: 15px;
-      }
-      
-      .dpad-right {
-        left: 105px;
-      }
-      
-      .pedal {
-        width: 75px;
-        height: 75px;
-        bottom: 15px;
-      }
-      
-      .pedal-accelerate {
-        right: 105px;
-      }
-      
-      .pedal-brake {
-        right: 15px;
-      }
+      .touch-zone { width: 85px; height: 85px; }
+      #rightZone { left: 115px; }
+      #accelZone { right: 115px; }
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
   
-  <!-- Touch Controls -->
-  <div class="touch-control dpad-left" id="btnLeft">
+  <div class="touch-zone" id="leftZone">
     <svg width="100%" height="100%" viewBox="0 0 100 100">
-      <path d="M 60 20 L 30 50 L 60 80" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 60 25 L 30 50 L 60 75" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
     </svg>
   </div>
   
-  <div class="touch-control dpad-right" id="btnRight">
+  <div class="touch-zone" id="rightZone">
     <svg width="100%" height="100%" viewBox="0 0 100 100">
-      <path d="M 40 20 L 70 50 L 40 80" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 40 25 L 70 50 L 40 75" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
     </svg>
   </div>
   
-  <div class="touch-control pedal pedal-accelerate" id="btnAccel">
+  <div class="touch-zone" id="accelZone">
     <svg width="100%" height="100%" viewBox="0 0 100 100">
-      <path d="M 50 25 L 50 75" fill="none" stroke="#00ff00" stroke-width="8" stroke-linecap="round"/>
-      <path d="M 35 40 L 50 25 L 65 40" fill="none" stroke="#00ff00" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(50, 255, 100, 0.8)" stroke-width="4"/>
+      <path d="M 50 30 L 50 70 M 35 45 L 50 30 L 65 45" stroke="rgba(50, 255, 100, 0.9)" stroke-width="6" stroke-linecap="round" fill="none"/>
     </svg>
   </div>
   
-  <div class="touch-control pedal pedal-brake" id="btnBrake">
+  <div class="touch-zone" id="brakeZone">
     <svg width="100%" height="100%" viewBox="0 0 100 100">
-      <path d="M 50 25 L 50 75" fill="none" stroke="#ff0000" stroke-width="8" stroke-linecap="round"/>
-      <path d="M 35 60 L 50 75 L 65 60" fill="none" stroke="#ff0000" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255, 50, 50, 0.8)" stroke-width="4"/>
+      <path d="M 50 30 L 50 70 M 35 55 L 50 70 L 65 55" stroke="rgba(255, 50, 50, 0.9)" stroke-width="6" stroke-linecap="round" fill="none"/>
     </svg>
   </div>
 
   <script>
-    // ========================================
-    // GAME CONSTANTS & CONFIGURATION
-    // ========================================
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    'use strict';
     
-    const GAME = {
-      width: 800,
-      height: 600,
-      fps: 60,
-      segmentLength: 200,
-      roadWidth: 2000,
-      cameraDepth: 0.84,
-      drawDistance: 300,
-      fieldOfView: 100,
-      resolution: null,
-      centrifugal: 0.3
+    const W = 1280, H = 720, FPS = 60;
+    const SEG_LEN = 200, ROAD_W = 2000, TOTAL_SEGS = 2000, DRAW_DIST = 300;
+    const CAM = { x: 0, y: 1000, z: 0, depth: 0.84 };
+    
+    const STAGES = {
+      1: {
+        name: 'CAPE COD',
+        sky: ['#4A90E2', '#5BA3F5', '#87CEEB'],
+        ocean: '#1E5F8C',
+        sprites: ['lighthouse', 'cottage', 'grass', 'dune']
+      },
+      2: {
+        name: 'BOSTON',
+        sky: ['#5BA3F5', '#87CEEB', '#B0D9FF'],
+        ocean: '#2874A6',  // Charles River
+        sprites: ['building', 'brownstone', 'sign', 'traffic']
+      }
     };
     
-    const COLORS = {
-      sky: ['#87CEEB', '#00BFFF', '#1E90FF'],
-      hills: ['#FF69B4', '#FF1493', '#C71585'],
-      grass: { light: '#10AA10', dark: '#009A00' },
-      rumble: { light: '#FFFFFF', dark: '#000000' },
-      road: { light: '#888888', dark: '#666666' },
-      lane: '#FFFFFF',
-      fog: '#87CEEB'
-    };
-    
-    const CAR_COLORS = {
-      red: '#DC143C',
-      darkRed: '#8B0000',
-      chrome: '#C0C0C0',
-      black: '#000000',
-      yellow: '#FFD700',
-      white: '#FFFFFF',
-      glass: 'rgba(100, 150, 255, 0.5)'
-    };
-    
-    // ========================================
-    // GAME STATE
-    // ========================================
-    let gameState = {
-      position: 0,
-      speed: 0,
-      maxSpeed: 12000,
-      accel: 3000,
-      breaking: 6000,
-      decel: 2000,
-      playerX: 0,
-      time: 60,
-      score: 0,
-      gameOver: false,
-      lastCheckpoint: 0
-    };
-    
-    let input = {
-      left: false,
-      right: false,
-      accelerate: false,
-      brake: false
-    };
-    
-    let roadSegments = [];
+    let canvas, ctx, segments = [], input = { left: 0, right: 0, accelerate: 0, brake: 0 };
+    let game = { pos: 0, speed: 0, playerX: 0, time: 60, score: 0, stage: 1, gameOver: 0, lastCP: 0, frame: 0, stageComplete: 0 };
     let lastTime = 0;
     
-    // ========================================
-    // CANVAS SETUP
-    // ========================================
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      GAME.resolution = canvas.height / GAME.height;
+    function init() {
+      canvas = document.getElementById('gameCanvas');
+      ctx = canvas.getContext('2d');
+      resize();
+      window.addEventListener('resize', resize);
+      initInput();
+      buildTrack();
+      requestAnimationFrame(loop);
     }
     
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    // ========================================
-    // INPUT HANDLING
-    // ========================================
-    document.addEventListener('keydown', (e) => {
-      switch(e.key) {
-        case 'ArrowLeft': input.left = true; break;
-        case 'ArrowRight': input.right = true; break;
-        case 'ArrowUp': input.accelerate = true; break;
-        case 'ArrowDown': input.brake = true; break;
+    function resize() {
+      const ratio = W / H, winRatio = innerWidth / innerHeight;
+      if (winRatio > ratio) {
+        canvas.height = innerHeight;
+        canvas.width = innerHeight * ratio;
+      } else {
+        canvas.width = innerWidth;
+        canvas.height = innerWidth / ratio;
       }
-    });
+      canvas.width = W;
+      canvas.height = H;
+    }
     
-    document.addEventListener('keyup', (e) => {
-      switch(e.key) {
-        case 'ArrowLeft': input.left = false; break;
-        case 'ArrowRight': input.right = false; break;
-        case 'ArrowUp': input.accelerate = false; break;
-        case 'ArrowDown': input.brake = false; break;
-      }
-    });
-    
-    // Touch controls
-    function setupTouchControl(id, key) {
-      const btn = document.getElementById(id);
-      
-      // Touch events
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        input[key] = true;
-      }, { passive: false });
-      
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        input[key] = false;
-      }, { passive: false });
-      
-      btn.addEventListener('touchcancel', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        input[key] = false;
-      }, { passive: false });
-      
-      // Mouse events as fallback
-      btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        input[key] = true;
+    function initInput() {
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft' || e.key === 'a') input.left = 1;
+        if (e.key === 'ArrowRight' || e.key === 'd') input.right = 1;
+        if (e.key === 'ArrowUp' || e.key === 'w') input.accelerate = 1;
+        if (e.key === 'ArrowDown' || e.key === 's') input.brake = 1;
+        if (e.key === ' ' && game.gameOver) restart();
+        if (e.key === ' ' && game.stageComplete) nextStage();
       });
       
-      btn.addEventListener('mouseup', (e) => {
-        e.preventDefault();
-        input[key] = false;
+      document.addEventListener('keyup', e => {
+        if (e.key === 'ArrowLeft' || e.key === 'a') input.left = 0;
+        if (e.key === 'ArrowRight' || e.key === 'd') input.right = 0;
+        if (e.key === 'ArrowUp' || e.key === 'w') input.accelerate = 0;
+        if (e.key === 'ArrowDown' || e.key === 's') input.brake = 0;
       });
       
-      btn.addEventListener('mouseleave', (e) => {
-        input[key] = false;
+      ['leftZone', 'rightZone', 'accelZone', 'brakeZone'].forEach((id, i) => {
+        const el = document.getElementById(id), key = ['left', 'right', 'accelerate', 'brake'][i];
+        el.addEventListener('touchstart', e => { e.preventDefault(); input[key] = 1; }, { passive: false });
+        el.addEventListener('touchend', e => { e.preventDefault(); input[key] = 0; }, { passive: false });
+        el.addEventListener('mousedown', () => input[key] = 1);
+        el.addEventListener('mouseup', () => input[key] = 0);
+        el.addEventListener('mouseleave', () => input[key] = 0);
+      });
+      
+      canvas.addEventListener('click', () => {
+        if (game.gameOver) restart();
+        if (game.stageComplete) nextStage();
       });
     }
     
-    setupTouchControl('btnLeft', 'left');
-    setupTouchControl('btnRight', 'right');
-    setupTouchControl('btnAccel', 'accelerate');
-    setupTouchControl('btnBrake', 'brake');
-    
-    // ========================================
-    // ROAD GENERATION
-    // ========================================
-    function createRoad() {
-      roadSegments = [];
-      
-      function addSegment(curve, y) {
-        const n = roadSegments.length;
-        roadSegments.push({
-          index: n,
-          p1: { world: { y: n * GAME.segmentLength, z: n * GAME.segmentLength }, camera: {}, screen: {} },
-          p2: { world: { y: (n + 1) * GAME.segmentLength, z: (n + 1) * GAME.segmentLength }, camera: {}, screen: {} },
-          curve: curve,
+    function buildTrack() {
+      segments = [];
+      for (let i = 0; i < TOTAL_SEGS; i++) {
+        const z = i * SEG_LEN;
+        let curve = 0, y = 0;
+        
+        if (i > 200 && i < 500) {
+          y = Math.sin((i - 200) * 0.02) * 1500;
+        }
+        if (i > 500 && i < 650) curve = -6;
+        if (i > 700 && i < 850) curve = 8;
+        if (i > 900 && i < 1050) curve = -8;
+        if (i > 1100 && i < 1250) curve = 6;
+        
+        segments.push({
+          i,
+          p1: { w: { x: 0, y, z }, s: { x: 0, y: 0, w: 0 } },
+          p2: { w: { x: 0, y, z: z + SEG_LEN }, s: { x: 0, y: 0, w: 0 } },
+          curve,
           sprites: [],
-          color: Math.floor(n / 3) % 2 ? COLORS.grass.dark : COLORS.grass.light
+          checkpoint: i % 300 === 0 && i > 0
         });
       }
       
-      function addRoad(enter, hold, leave, curve, y) {
-        const n = enter + hold + leave;
-        for (let i = 0; i < enter; i++) addSegment(curve * i / enter, y);
-        for (let i = 0; i < hold; i++) addSegment(curve, y);
-        for (let i = 0; i < leave; i++) addSegment(curve * (1 - i / leave), y);
-      }
-      
-      // Build track with curves and straights
-      addRoad(20, 40, 20, 0, 0);      // Straight
-      addRoad(20, 50, 20, -4, 0);     // Left curve
-      addRoad(20, 40, 20, 0, 0);      // Straight
-      addRoad(20, 50, 20, 4, 0);      // Right curve
-      addRoad(20, 60, 20, 0, 0);      // Long straight
-      addRoad(20, 40, 20, -3, 0);     // Left curve
-      addRoad(20, 40, 20, 3, 0);      // Right curve
-      addRoad(20, 100, 20, 0, 0);     // Final straight
-      
-      // Add roadside objects
-      for (let n = 0; n < roadSegments.length; n++) {
-        if (n % 20 === 0 && n > 0) {
-          // Checkpoint
-          roadSegments[n].checkpoint = true;
+      // Add stage-specific sprites
+      const stage = STAGES[game.stage];
+      segments.forEach((seg, n) => {
+        if (game.stage === 1) {
+          if (n % 400 === 50) seg.sprites.push({ t: 'lighthouse', o: -2.5, s: 1.8 });
+          if (n % 200 === 100) seg.sprites.push({ t: 'cottage', o: 2.5, s: 1.5 });
+          if (n % 30 === 10) seg.sprites.push({ t: 'grass', o: -2.2, s: 0.8 });
+          if (n % 30 === 20) seg.sprites.push({ t: 'grass', o: 2.2, s: 0.8 });
+          if (n % 150 === 75) seg.sprites.push({ t: 'dune', o: -3, s: 1.2 });
+        } else if (game.stage === 2) {
+          if (n % 300 === 50) seg.sprites.push({ t: 'building', o: -3, s: 2.5 });
+          if (n % 200 === 80) seg.sprites.push({ t: 'brownstone', o: 2.5, s: 1.8 });
+          if (n % 100 === 40) seg.sprites.push({ t: 'sign', o: -2.2, s: 1 });
+          if (n % 50 === 25) seg.sprites.push({ t: 'traffic', o: 1.5, s: 1.2 });
         }
-        
-        if (n % 15 === 5) {
-          // Palm tree left
-          roadSegments[n].sprites.push({ type: 'palm', offset: -2.5, scale: 1.2 });
-        }
-        
-        if (n % 15 === 10) {
-          // Palm tree right
-          roadSegments[n].sprites.push({ type: 'palm', offset: 2.5, scale: 1.2 });
-        }
-        
-        if (n % 30 === 0 && n > 0) {
-          // Beach house left
-          roadSegments[n].sprites.push({ type: 'house', offset: -3, scale: 1.5 });
-        }
-      }
+      });
     }
     
-    // ========================================
-    // 3D PROJECTION
-    // ========================================
-    function project(p, cameraX, cameraY, cameraZ) {
-      p.camera.x = p.world.x - cameraX;
-      p.camera.y = p.world.y - cameraY;
-      p.camera.z = p.world.z - cameraZ;
-      
-      p.screen.scale = GAME.cameraDepth / p.camera.z;
-      p.screen.x = Math.round((canvas.width / 2) + (p.screen.scale * p.camera.x * canvas.width / 2));
-      p.screen.y = Math.round((canvas.height / 2) - (p.screen.scale * p.camera.y * canvas.height / 2));
-      p.screen.w = Math.round(p.screen.scale * GAME.roadWidth * canvas.width / 2);
+    function project(p, cx, cy, cz) {
+      const wx = p.w.x - cx, wy = p.w.y - cy, wz = p.w.z - cz;
+      if (wz <= 0) { p.s.scale = 0; return; }
+      const scale = CAM.depth / wz;
+      p.s.scale = scale;
+      p.s.x = (W / 2) + wx * scale * (W / 2);
+      p.s.y = (H / 2) - wy * scale * (H / 2);
+      p.s.w = scale * ROAD_W * (W / 2);
     }
     
-    // ========================================
-    // RENDERING
-    // ========================================
-    function drawPolygon(x1, y1, x2, y2, x3, y3, x4, y4, color) {
-      ctx.fillStyle = color;
+    function update(dt) {
+      if (game.gameOver || game.stageComplete) return;
+      
+      game.frame++;
+      
+      if (input.accelerate) game.speed = Math.min(280, game.speed + 0.3 * dt);
+      else if (input.brake) game.speed = Math.max(0, game.speed - 0.8 * dt);
+      else game.speed = Math.max(0, game.speed - 0.15 * dt);
+      
+      game.pos += game.speed * dt * SEG_LEN / 60;
+      
+      while (game.pos >= TOTAL_SEGS * SEG_LEN) game.pos -= TOTAL_SEGS * SEG_LEN;
+      
+      const segIdx = Math.floor(game.pos / SEG_LEN) % TOTAL_SEGS;
+      const seg = segments[segIdx];
+      const speedPct = game.speed / 280;
+      
+      if (input.left) game.playerX -= 0.004 * dt;
+      if (input.right) game.playerX += 0.004 * dt;
+      
+      game.playerX -= 0.004 * speedPct * seg.curve * 0.25 * dt;
+      
+      if (Math.abs(game.playerX) > 0.8) {
+        game.speed = Math.max(0, game.speed - 0.8 * dt);
+      }
+      
+      game.playerX = Math.max(-3, Math.min(3, game.playerX));
+      
+      if (seg.checkpoint && game.pos - game.lastCP > SEG_LEN * 280) {
+        game.time += 15;
+        game.score += 1000;
+        game.lastCP = game.pos;
+      }
+      
+      game.time -= dt / 60;
+      if (game.time <= 0) {
+        game.time = 0;
+        game.gameOver = 1;
+      }
+      
+      // Check stage completion (lap complete)
+      if (game.pos > (TOTAL_SEGS - 100) * SEG_LEN && game.stage === 1) {
+        game.stageComplete = 1;
+        game.time += 30; // Bonus time for next stage
+      }
+      
+      game.score += game.speed * dt * 0.05;
+    }
+    
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+      
+      const stage = STAGES[game.stage];
+      
+      // Sky
+      const grad = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+      stage.sky.forEach((c, i) => grad.addColorStop(i / (stage.sky.length - 1), c));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H * 0.5);
+      
+      // Ocean/River
+      ctx.fillStyle = stage.ocean;
+      ctx.fillRect(0, H * 0.46, W, H * 0.08);
+      
+      // Road
+      const baseIdx = Math.floor(game.pos / SEG_LEN) % TOTAL_SEGS;
+      const cx = game.playerX * ROAD_W, cy = CAM.y, cz = game.pos;
+      let maxY = H;
+      
+      for (let n = 0; n < DRAW_DIST; n++) {
+        const idx = (baseIdx + n) % TOTAL_SEGS;
+        const seg = segments[idx];
+        
+        project(seg.p1, cx, cy, cz);
+        project(seg.p2, cx, cy, cz);
+        
+        if (seg.p1.s.scale === 0 || seg.p1.s.y >= maxY) continue;
+        
+        const grass = Math.floor(seg.i / 3) % 2 ? '#228B22' : '#2ECC40';
+        const road = Math.floor(seg.i / 3) % 2 ? '#505050' : '#6B6B6B';
+        const rumble = Math.floor(seg.i / 3) % 2 ? '#CC0000' : '#FFFFFF';
+        
+        ctx.fillStyle = grass;
+        ctx.fillRect(0, seg.p2.s.y, W, seg.p1.s.y - seg.p2.s.y);
+        
+        ctx.fillStyle = rumble;
+        poly(seg.p1.s.x - seg.p1.s.w - seg.p1.s.w * 0.15, seg.p1.s.y, seg.p1.s.x - seg.p1.s.w, seg.p1.s.y, seg.p2.s.x - seg.p2.s.w, seg.p2.s.y, seg.p2.s.x - seg.p2.s.w - seg.p2.s.w * 0.15, seg.p2.s.y);
+        poly(seg.p1.s.x + seg.p1.s.w, seg.p1.s.y, seg.p1.s.x + seg.p1.s.w + seg.p1.s.w * 0.15, seg.p1.s.y, seg.p2.s.x + seg.p2.s.w + seg.p2.s.w * 0.15, seg.p2.s.y, seg.p2.s.x + seg.p2.s.w, seg.p2.s.y);
+        
+        ctx.fillStyle = road;
+        poly(seg.p1.s.x - seg.p1.s.w, seg.p1.s.y, seg.p1.s.x + seg.p1.s.w, seg.p1.s.y, seg.p2.s.x + seg.p2.s.w, seg.p2.s.y, seg.p2.s.x - seg.p2.s.w, seg.p2.s.y);
+        
+        if (Math.floor(seg.i / 3) % 2 === 0 && seg.i % 8 === 0) {
+          ctx.fillStyle = '#FFFF00';
+          const lw = seg.p1.s.w / 30;
+          poly(seg.p1.s.x - lw, seg.p1.s.y, seg.p1.s.x + lw, seg.p1.s.y, seg.p2.s.x + lw, seg.p2.s.y, seg.p2.s.x - lw, seg.p2.s.y);
+        }
+        
+        seg.sprites.forEach(sp => drawSprite(sp, seg));
+        
+        maxY = seg.p1.s.y;
+      }
+      
+      // Player car
+      drawCar(W / 2, H - 140, 3.5, input.left ? 'left' : input.right ? 'right' : 'straight');
+      
+      // HUD
+      drawHUD();
+    }
+    
+    function poly(x1, y1, x2, y2, x3, y3, x4, y4) {
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
@@ -434,495 +346,277 @@
       ctx.fill();
     }
     
-    function drawBackground() {
-      // Sky gradient
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
-      gradient.addColorStop(0, COLORS.sky[0]);
-      gradient.addColorStop(0.5, COLORS.sky[1]);
-      gradient.addColorStop(1, COLORS.sky[2]);
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
-      
-      // Hills
-      const hillGradient = ctx.createLinearGradient(0, canvas.height * 0.4, 0, canvas.height * 0.7);
-      hillGradient.addColorStop(0, COLORS.hills[0]);
-      hillGradient.addColorStop(0.5, COLORS.hills[1]);
-      hillGradient.addColorStop(1, COLORS.hills[2]);
-      ctx.fillStyle = hillGradient;
-      
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height * 0.6);
-      for (let i = 0; i <= 10; i++) {
-        const x = (i / 10) * canvas.width;
-        const y = canvas.height * 0.5 + Math.sin(i * 0.8 + gameState.position * 0.0001) * 50;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(canvas.width, canvas.height);
-      ctx.lineTo(0, canvas.height);
-      ctx.closePath();
-      ctx.fill();
-    }
-    
-    function drawSegment(segment, fog) {
-      const { p1, p2, color } = segment;
-      
-      const roadColor = Math.floor(segment.index / 3) % 2 ? COLORS.road.dark : COLORS.road.light;
-      const rumbleColor = Math.floor(segment.index / 3) % 2 ? COLORS.rumble.dark : COLORS.rumble.light;
-      const laneColor = Math.floor(segment.index / 3) % 2 ? COLORS.lane : null;
-      
-      // Grass
-      drawPolygon(
-        0, p1.screen.y,
-        canvas.width, p1.screen.y,
-        canvas.width, p2.screen.y,
-        0, p2.screen.y,
-        color
-      );
-      
-      // Rumble strips
-      drawPolygon(
-        p1.screen.x - p1.screen.w - p1.screen.w * 0.2, p1.screen.y,
-        p1.screen.x - p1.screen.w, p1.screen.y,
-        p2.screen.x - p2.screen.w, p2.screen.y,
-        p2.screen.x - p2.screen.w - p2.screen.w * 0.2, p2.screen.y,
-        rumbleColor
-      );
-      
-      drawPolygon(
-        p1.screen.x + p1.screen.w, p1.screen.y,
-        p1.screen.x + p1.screen.w + p1.screen.w * 0.2, p1.screen.y,
-        p2.screen.x + p2.screen.w + p2.screen.w * 0.2, p2.screen.y,
-        p2.screen.x + p2.screen.w, p2.screen.y,
-        rumbleColor
-      );
-      
-      // Road
-      drawPolygon(
-        p1.screen.x - p1.screen.w, p1.screen.y,
-        p1.screen.x + p1.screen.w, p1.screen.y,
-        p2.screen.x + p2.screen.w, p2.screen.y,
-        p2.screen.x - p2.screen.w, p2.screen.y,
-        roadColor
-      );
-      
-      // Lane markers
-      if (laneColor && segment.index % 6 === 0) {
-        const w = p1.screen.w / 40;
-        drawPolygon(
-          p1.screen.x - w, p1.screen.y,
-          p1.screen.x + w, p1.screen.y,
-          p2.screen.x + w, p2.screen.y,
-          p2.screen.x - w, p2.screen.y,
-          laneColor
-        );
-      }
-      
-      // Fog effect
-      if (fog > 0) {
-        ctx.fillStyle = `rgba(135, 206, 235, ${fog})`;
-        ctx.fillRect(0, p2.screen.y, canvas.width, p1.screen.y - p2.screen.y);
-      }
-    }
-    
-    function drawSprite(sprite, segment) {
-      const { p1 } = segment;
-      const scale = p1.screen.scale;
-      const x = p1.screen.x + (scale * sprite.offset * GAME.roadWidth * canvas.width / 2);
-      const y = p1.screen.y;
-      
-      if (sprite.type === 'palm') {
-        drawPalmTree(x, y, scale * sprite.scale);
-      } else if (sprite.type === 'house') {
-        drawHouse(x, y, scale * sprite.scale);
-      }
-    }
-    
-    function drawPalmTree(x, y, scale) {
-      const height = 80 * scale;
-      const width = 20 * scale;
-      
-      // Trunk
-      ctx.fillStyle = '#8B4513';
-      ctx.fillRect(x - width / 2, y, width, -height);
-      
-      // Palm fronds
-      ctx.fillStyle = '#228B22';
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2;
-        const frondLength = 40 * scale;
-        ctx.beginPath();
-        ctx.ellipse(
-          x + Math.cos(angle) * frondLength / 2,
-          y - height + Math.sin(angle) * frondLength / 2,
-          frondLength, frondLength / 3, angle, 0, Math.PI * 2
-        );
-        ctx.fill();
-      }
-    }
-    
-    function drawHouse(x, y, scale) {
-      const width = 60 * scale;
-      const height = 40 * scale;
-      const roofHeight = 20 * scale;
-      
-      // Walls
-      ctx.fillStyle = '#FFE4C4';
-      ctx.fillRect(x - width / 2, y - height, width, height);
-      
-      // Blue roof
-      ctx.fillStyle = '#4169E1';
-      ctx.beginPath();
-      ctx.moveTo(x - width / 2, y - height);
-      ctx.lineTo(x, y - height - roofHeight);
-      ctx.lineTo(x + width / 2, y - height);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Window
-      ctx.fillStyle = '#87CEEB';
-      ctx.fillRect(x - width / 4, y - height * 0.6, width / 3, height / 3);
-    }
-    
-    function drawPlayerCar() {
-      const baseY = canvas.height - 120;
-      const centerX = canvas.width / 2;
-      const scale = 3;
-      
-      // Determine car tilt based on steering
-      let tilt = 0;
-      if (input.left) tilt = -1;
-      if (input.right) tilt = 1;
-      
-      drawCar380SL(centerX, baseY, scale, tilt);
-    }
-    
-    function drawCar380SL(x, y, scale, tilt) {
-      const w = 40 * scale;
-      const h = 20 * scale;
+    function drawSprite(sp, seg) {
+      const scale = seg.p1.s.scale * sp.s;
+      const x = seg.p1.s.x + sp.o * seg.p1.s.w;
+      const y = seg.p1.s.y;
+      if (scale <= 0) return;
       
       ctx.save();
       ctx.translate(x, y);
       
-      // Car body (red convertible)
-      ctx.fillStyle = CAR_COLORS.red;
+      if (sp.t === 'building') {
+        const w = 80 * scale, h = 180 * scale;
+        ctx.fillStyle = '#7F8C8D';
+        ctx.fillRect(-w / 2, -h, w, h);
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 4; j++) {
+            ctx.fillStyle = i % 2 === 0 && j % 2 === 0 ? '#F39C12' : '#2C3E50';
+            ctx.fillRect(-w / 2 + j * w / 4, -h + i * h / 8, w / 5, h / 10);
+          }
+        }
+      } else if (sp.t === 'brownstone') {
+        const w = 60 * scale, h = 80 * scale;
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(-w / 2, -h, w, h);
+        ctx.fillStyle = '#654321';
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(-w / 2 + i * w / 3, -h * 0.7, w / 4, h / 3);
+        }
+        ctx.fillStyle = '#5D4E37';
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, -h);
+        ctx.lineTo(0, -h - h * 0.2);
+        ctx.lineTo(w / 2, -h);
+        ctx.closePath();
+        ctx.fill();
+      } else if (sp.t === 'sign') {
+        const w = 50 * scale, h = 30 * scale;
+        ctx.fillStyle = '#27AE60';
+        ctx.fillRect(-w / 2, -h, w, h);
+        ctx.fillStyle = '#FFF';
+        ctx.font = `bold ${h * 0.4}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('CHARLES ST', 0, -h / 2 + h * 0.15);
+        ctx.fillText('EXIT', 0, -h / 2 + h * 0.45);
+      } else if (sp.t === 'traffic') {
+        const w = 35 * scale, h = 20 * scale;
+        const colors = ['#F4D03F', '#E67E22', '#95A5A6'];
+        ctx.fillStyle = colors[Math.floor(game.frame / 100) % colors.length];
+        ctx.fillRect(-w / 2, -h, w, h);
+        ctx.fillStyle = '#FF0000';
+        ctx.fillRect(-w / 2 + w * 0.1, -h * 0.7, w * 0.15, h * 0.3);
+        ctx.fillRect(w / 2 - w * 0.25, -h * 0.7, w * 0.15, h * 0.3);
+      } else if (sp.t === 'lighthouse') {
+        const w = 30 * scale, h = 140 * scale;
+        ctx.fillStyle = '#F5F5F5';
+        ctx.fillRect(-w / 2, -h, w, h * 0.85);
+        ctx.fillStyle = '#DC143C';
+        ctx.fillRect(-w / 2, -h * 0.6, w, h * 0.15);
+        ctx.fillStyle = '#1C1C1C';
+        ctx.fillRect(-w / 1.5, -h, w * 1.3, h * 0.15);
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(0, -h + h * 0.075, w * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (sp.t === 'cottage') {
+        const w = 70 * scale, h = 50 * scale;
+        ctx.fillStyle = '#8B7355';
+        ctx.fillRect(-w / 2, -h, w, h);
+        ctx.fillStyle = '#5D4E37';
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, -h);
+        ctx.lineTo(0, -h - h * 0.4);
+        ctx.lineTo(w / 2, -h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#4A90E2';
+        ctx.fillRect(-w / 4, -h * 0.6, w / 2.5, h / 3);
+      } else if (sp.t === 'grass') {
+        const h = 40 * scale;
+        ctx.strokeStyle = '#9ACD32';
+        ctx.lineWidth = 2 * scale;
+        ctx.lineCap = 'round';
+        for (let i = 0; i < 5; i++) {
+          const bx = (i - 2) * 5 * scale + Math.sin(game.frame * 0.05 + i) * 3 * scale;
+          ctx.beginPath();
+          ctx.moveTo((i - 2) * 5 * scale, 0);
+          ctx.quadraticCurveTo(bx, -h / 2, bx, -h);
+          ctx.stroke();
+        }
+      } else if (sp.t === 'dune') {
+        const w = 100 * scale, h = 40 * scale;
+        ctx.fillStyle = '#F4D03F';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI, true);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    function drawCar(x, y, s, state) {
+      const w = 45 * s, h = 22 * s;
+      ctx.save();
+      ctx.translate(x, y);
+      if (state === 'left') ctx.transform(1, 0, -0.15, 1, 0, 0);
+      if (state === 'right') ctx.transform(1, 0, 0.15, 1, 0, 0);
+      
+      ctx.fillStyle = '#DC143C';
       ctx.fillRect(-w / 2, -h, w, h);
+      ctx.fillStyle = '#8B0000';
+      ctx.fillRect(-w / 2, -h * 0.5, w, h * 0.5);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(-w / 2, 0, w, h * 0.2);
       
-      // Darker red for depth
-      ctx.fillStyle = CAR_COLORS.darkRed;
-      ctx.fillRect(-w / 2, -h + h * 0.3, w, h * 0.3);
-      
-      // Chrome bumper
-      ctx.fillStyle = CAR_COLORS.chrome;
-      ctx.fillRect(-w / 2, 0, w, h * 0.15);
-      
-      // Tail lights (ribbed style)
       ctx.fillStyle = '#FF0000';
-      const tailWidth = w * 0.15;
-      const tailHeight = h * 0.25;
+      ctx.fillRect(-w / 2 + w * 0.1, -h * 0.65, w * 0.15, h * 0.3);
+      ctx.fillRect(w / 2 - w * 0.25, -h * 0.65, w * 0.15, h * 0.3);
       
-      // Left tail light
-      ctx.fillRect(-w / 2 + w * 0.05, -h + h * 0.6, tailWidth, tailHeight);
-      // Ribbed lines
-      ctx.strokeStyle = CAR_COLORS.darkRed;
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 4; i++) {
-        const lineY = -h + h * 0.6 + (i / 3) * tailHeight;
-        ctx.beginPath();
-        ctx.moveTo(-w / 2 + w * 0.05, lineY);
-        ctx.lineTo(-w / 2 + w * 0.05 + tailWidth, lineY);
-        ctx.stroke();
-      }
-      
-      // Right tail light
-      ctx.fillStyle = '#FF0000';
-      ctx.fillRect(w / 2 - w * 0.05 - tailWidth, -h + h * 0.6, tailWidth, tailHeight);
-      for (let i = 0; i < 4; i++) {
-        const lineY = -h + h * 0.6 + (i / 3) * tailHeight;
-        ctx.beginPath();
-        ctx.moveTo(w / 2 - w * 0.05 - tailWidth, lineY);
-        ctx.lineTo(w / 2 - w * 0.05, lineY);
-        ctx.stroke();
-      }
-      
-      // Dual exhaust pipes
-      ctx.fillStyle = CAR_COLORS.chrome;
-      const exhaustR = h * 0.08;
+      ctx.fillStyle = '#808080';
       ctx.beginPath();
-      ctx.arc(-w / 4, h * 0.05, exhaustR, 0, Math.PI * 2);
+      ctx.arc(-w / 4, h * 0.08, h * 0.12, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(w / 4, h * 0.05, exhaustR, 0, Math.PI * 2);
+      ctx.arc(w / 4, h * 0.08, h * 0.12, 0, Math.PI * 2);
       ctx.fill();
       
-      // Inner black for exhaust
-      ctx.fillStyle = CAR_COLORS.black;
-      ctx.beginPath();
-      ctx.arc(-w / 4, h * 0.05, exhaustR * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(w / 4, h * 0.05, exhaustR * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // License plate "5ADK 68"
-      ctx.fillStyle = CAR_COLORS.yellow;
-      const plateW = w * 0.35;
-      const plateH = h * 0.2;
-      ctx.fillRect(-plateW / 2, -h * 0.15, plateW, plateH);
-      
-      ctx.fillStyle = CAR_COLORS.black;
-      ctx.font = `bold ${h * 0.12}px Arial`;
+      ctx.fillStyle = '#FFD700';
+      const pw = w * 0.5, ph = h * 0.22;
+      ctx.fillRect(-pw / 2, -h * 0.2, pw, ph);
+      ctx.fillStyle = '#000';
+      ctx.font = `bold ${h * 0.14}px Courier`;
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('5ADK 68', 0, -h * 0.05);
+      ctx.fillText('5ADK 68', 0, -h * 0.09);
       
-      // Driver (woman with long dark hair blowing)
-      const driverX = -w * 0.2;
-      const driverY = -h * 1.2;
-      
-      // Hair (animated flow)
+      const hairFlow = Math.sin(game.frame * 0.08 + game.speed * 0.01) * 6 * (game.speed / 280);
       ctx.fillStyle = '#2C1810';
-      const hairFlow = Math.sin(Date.now() * 0.005) * 3;
       ctx.beginPath();
-      ctx.ellipse(driverX - 8 + hairFlow, driverY, 10, 18, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(-w * 0.22 - 10 + hairFlow, -h * 1.4, 12, 22, 0.4, 0, Math.PI * 2);
       ctx.fill();
-      
-      // Head
       ctx.fillStyle = '#FFD7BA';
       ctx.beginPath();
-      ctx.arc(driverX, driverY, 6, 0, Math.PI * 2);
+      ctx.arc(-w * 0.22, -h * 1.4, 7, 0, Math.PI * 2);
       ctx.fill();
       
-      // Passenger (dog)
-      const dogX = w * 0.2;
-      const dogY = -h * 1.1;
-      
-      // Dog body
+      const earFlow = Math.sin(game.frame * 0.08) * 4 * (game.speed / 280);
       ctx.fillStyle = '#8B7355';
-      ctx.fillRect(dogX - 5, dogY - 4, 10, 8);
-      
-      // Dog head
+      ctx.fillRect(w * 0.22 - 6, -h * 1.25 - 2, 12, 10);
       ctx.beginPath();
-      ctx.arc(dogX, dogY - 8, 5, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Ears
-      ctx.beginPath();
-      ctx.ellipse(dogX - 4, dogY - 10, 3, 6, -0.3, 0, Math.PI * 2);
+      ctx.arc(w * 0.22, -h * 1.25 - 10, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(dogX + 4, dogY - 10, 3, 6, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(w * 0.22 - 5 - earFlow * 0.5, -h * 1.25 - 12, 4, 8, -0.4, 0, Math.PI * 2);
       ctx.fill();
-      
-      // Snout
-      ctx.fillStyle = '#D2B48C';
       ctx.beginPath();
-      ctx.ellipse(dogX, dogY - 6, 3, 2, 0, 0, Math.PI * 2);
+      ctx.ellipse(w * 0.22 + 5 + earFlow * 0.5, -h * 1.25 - 12, 4, 8, 0.4, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.restore();
     }
     
     function drawHUD() {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, 0, canvas.width, 60);
+      const stage = STAGES[game.stage];
       
-      // Responsive font size
-      const fontSize = Math.max(16, Math.min(24, canvas.width / 30));
-      ctx.font = `bold ${fontSize}px Arial`;
-      ctx.fillStyle = '#FFFFFF';
+      // Time box (top left)
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.8)';
+      ctx.fillRect(20, 20, 180, 50);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 16px Courier';
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
+      ctx.fillText('TIME', 30, 40);
+      ctx.fillStyle = game.time < 15 ? '#FF0000' : '#00FF00';
+      ctx.font = 'bold 24px Courier';
+      ctx.fillText(game.time.toFixed(1), 30, 62);
       
-      const padding = Math.max(10, canvas.width * 0.02);
+      // Speed box (below time)
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.8)';
+      ctx.fillRect(20, 80, 180, 50);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 16px Courier';
+      ctx.fillText('SPEED', 30, 100);
+      ctx.fillStyle = '#FF0000';
+      ctx.font = 'bold 24px Courier';
+      ctx.fillText(`${Math.round(game.speed * 1.6)} KM/H`, 30, 122);
       
-      // Score
-      ctx.fillText(`SCORE: ${gameState.score.toFixed(0)}`, padding, 15);
-      
-      // Speed
-      const speedMPH = Math.round(gameState.speed / 100);
+      // Title (center top)
+      ctx.fillStyle = '#FF6B35';
+      ctx.font = 'bold 36px Courier';
       ctx.textAlign = 'center';
-      ctx.fillText(`${speedMPH} MPH`, canvas.width / 2, 15);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.strokeText("OUTRUN ME", W / 2, 40);
+      ctx.fillText("OUTRUN ME", W / 2, 40);
+      ctx.fillStyle = '#FFD700';
+      ctx.strokeText("AMBER'S SL", W / 2, 75);
+      ctx.fillText("AMBER'S SL", W / 2, 75);
       
-      // Time
+      // Stage box (top right)
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.8)';
+      ctx.fillRect(W - 200, 20, 180, 50);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 20px Courier';
       ctx.textAlign = 'right';
-      const timeColor = gameState.time < 10 ? '#FF0000' : '#FFFFFF';
-      ctx.fillStyle = timeColor;
-      ctx.fillText(`TIME: ${gameState.time.toFixed(1)}s`, canvas.width - padding, 15);
+      ctx.fillText(`STAGE ${game.stage}`, W - 30, 45);
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 16px Courier';
+      ctx.fillText(stage.name, W - 30, 62);
+      
+      // Score box (below stage)
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.8)';
+      ctx.fillRect(W - 200, 80, 180, 50);
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 16px Courier';
+      ctx.fillText('SCORE', W - 30, 100);
+      ctx.font = 'bold 20px Courier';
+      ctx.fillText(Math.floor(game.score), W - 30, 122);
       
       // Game Over
-      if (gameState.gameOver) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, canvas.height / 2 - 100, canvas.width, 200);
-        
+      if (game.gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, H / 2 - 120, W, 240);
         ctx.fillStyle = '#FF0000';
-        const titleSize = Math.max(32, Math.min(60, canvas.width / 12));
-        ctx.font = `bold ${titleSize}px Arial`;
+        ctx.font = 'bold 72px Courier';
         ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 30);
-        
-        ctx.fillStyle = '#FFFFFF';
-        const textSize = Math.max(16, Math.min(24, canvas.width / 30));
-        ctx.font = `bold ${textSize}px Arial`;
-        ctx.fillText(`Final Score: ${gameState.score.toFixed(0)}`, canvas.width / 2, canvas.height / 2 + 30);
-        
-        // Responsive restart text
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
-        const restartText = isMobile ? 'TAP to restart' : 'Press SPACE or TAP to restart';
-        ctx.fillText(restartText, canvas.width / 2, canvas.height / 2 + 70);
+        ctx.fillText('GAME OVER', W / 2, H / 2 - 20);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 32px Courier';
+        ctx.fillText(`FINAL SCORE: ${Math.floor(game.score)}`, W / 2, H / 2 + 40);
+        ctx.font = 'bold 24px Courier';
+        ctx.fillText('TAP OR PRESS SPACE TO RESTART', W / 2, H / 2 + 90);
+      }
+      
+      // Stage Complete
+      if (game.stageComplete) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, H / 2 - 120, W, 240);
+        ctx.fillStyle = '#00FF00';
+        ctx.font = 'bold 72px Courier';
+        ctx.textAlign = 'center';
+        ctx.fillText('STAGE CLEAR!', W / 2, H / 2 - 20);
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 32px Courier';
+        ctx.fillText(`BONUS: +30 SECONDS`, W / 2, H / 2 + 40);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 24px Courier';
+        ctx.fillText('TAP OR PRESS SPACE FOR NEXT STAGE', W / 2, H / 2 + 90);
       }
     }
     
-    // ========================================
-    // GAME LOGIC
-    // ========================================
-    function update(dt) {
-      if (gameState.gameOver) return;
-      
-      // Update speed
-      if (input.accelerate) {
-        gameState.speed = Math.min(gameState.maxSpeed, gameState.speed + gameState.accel * dt);
-      } else if (input.brake) {
-        gameState.speed = Math.max(0, gameState.speed - gameState.breaking * dt);
-      } else {
-        gameState.speed = Math.max(0, gameState.speed - gameState.decel * dt);
-      }
-      
-      // Update position
-      gameState.position += gameState.speed * dt;
-      
-      // Wrap around track
-      while (gameState.position >= roadSegments.length * GAME.segmentLength) {
-        gameState.position -= roadSegments.length * GAME.segmentLength;
-      }
-      
-      // Steering
-      const baseIndex = Math.floor(gameState.position / GAME.segmentLength);
-      const segment = roadSegments[baseIndex % roadSegments.length];
-      const speedPercent = gameState.speed / gameState.maxSpeed;
-      const dx = dt * 2 * speedPercent;
-      
-      if (input.left) {
-        gameState.playerX -= dx;
-      }
-      if (input.right) {
-        gameState.playerX += dx;
-      }
-      
-      // Centrifugal force from curves
-      gameState.playerX -= (dx * speedPercent * segment.curve * GAME.centrifugal);
-      
-      // Clamp player position
-      gameState.playerX = Math.max(-2.5, Math.min(2.5, gameState.playerX));
-      
-      // Checkpoint detection
-      if (segment.checkpoint && gameState.position - gameState.lastCheckpoint > GAME.segmentLength * 20) {
-        gameState.time += 10;
-        gameState.score += 500;
-        gameState.lastCheckpoint = gameState.position;
-      }
-      
-      // Update time
-      gameState.time -= dt;
-      if (gameState.time <= 0) {
-        gameState.time = 0;
-        gameState.gameOver = true;
-      }
-      
-      // Update score
-      gameState.score += gameState.speed * dt * 0.01;
+    function restart() {
+      game = { pos: 0, speed: 0, playerX: 0, time: 60, score: 0, stage: 1, gameOver: 0, lastCP: 0, frame: 0, stageComplete: 0 };
+      buildTrack();
     }
     
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      drawBackground();
-      
-      const baseSegment = Math.floor(gameState.position / GAME.segmentLength);
-      const basePercent = (gameState.position % GAME.segmentLength) / GAME.segmentLength;
-      
-      const cameraY = 1500;
-      const cameraZ = gameState.position - GAME.cameraDepth;
-      
-      let maxY = canvas.height;
-      
-      for (let n = 0; n < GAME.drawDistance; n++) {
-        const segment = roadSegments[(baseSegment + n) % roadSegments.length];
-        
-        segment.p1.world.x = gameState.playerX * GAME.roadWidth;
-        segment.p2.world.x = gameState.playerX * GAME.roadWidth;
-        
-        project(segment.p1, segment.p1.world.x, cameraY, cameraZ);
-        project(segment.p2, segment.p2.world.x, cameraY, cameraZ);
-        
-        if (segment.p1.camera.z <= GAME.cameraDepth || segment.p2.screen.y >= maxY) {
-          continue;
-        }
-        
-        const fog = Math.max(0, Math.min(0.8, 1 - (segment.p1.camera.z / GAME.cameraDepth) / GAME.drawDistance));
-        
-        drawSegment(segment, fog);
-        
-        // Draw sprites
-        for (let sprite of segment.sprites) {
-          drawSprite(sprite, segment);
-        }
-        
-        maxY = segment.p1.screen.y;
-      }
-      
-      drawPlayerCar();
-      drawHUD();
+    function nextStage() {
+      game.stage = 2;
+      game.pos = 0;
+      game.speed = 0;
+      game.playerX = 0;
+      game.lastCP = 0;
+      game.stageComplete = 0;
+      buildTrack();
     }
     
-    // ========================================
-    // GAME LOOP
-    // ========================================
-    function gameLoop(timestamp) {
-      const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
-      lastTime = timestamp;
-      
+    function loop(t) {
+      const dt = Math.min((t - lastTime) / (1000 / FPS), 5);
+      lastTime = t;
       update(dt);
       render();
-      
-      requestAnimationFrame(gameLoop);
+      requestAnimationFrame(loop);
     }
     
-    // ========================================
-    // RESTART FUNCTION
-    // ========================================
-    function restartGame() {
-      gameState = {
-        position: 0,
-        speed: 0,
-        maxSpeed: 12000,
-        accel: 3000,
-        breaking: 6000,
-        decel: 2000,
-        playerX: 0,
-        time: 60,
-        score: 0,
-        gameOver: false,
-        lastCheckpoint: 0
-      };
-    }
-    
-    document.addEventListener('keydown', (e) => {
-      if (e.key === ' ' && gameState.gameOver) {
-        restartGame();
-      }
-    });
-    
-    canvas.addEventListener('click', () => {
-      if (gameState.gameOver) {
-        restartGame();
-      }
-    });
-    
-    // ========================================
-    // INITIALIZE
-    // ========================================
-    createRoad();
-    requestAnimationFrame(gameLoop);
+    init();
   </script>
 </body>
 </html>
