@@ -5,6 +5,15 @@
   "apps": [
     {
       "date": "2026-06-04",
+      "slug": "outrun-me",
+      "title": "OUTRUN ME — Amber's SL",
+      "category": "games",
+      "oneLiner": "A full pseudo-3D arcade racer on a 2D canvas — drive the red 380SL convertible (pup riding shotgun) down the Cape Cod coast and through Boston, beating the clock at every checkpoint. Vanilla JS, zero assets, mobile-ready.",
+      "path": "apps/outrun-me/",
+      "flagship": true
+    },
+    {
+      "date": "2026-06-04",
       "slug": "2026-06-04",
       "title": "Product Launch Checklist",
       "category": "business",
