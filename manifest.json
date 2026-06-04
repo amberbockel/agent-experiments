@@ -166,6 +166,15 @@
       "category": "productivity",
       "oneLiner": "Visual progress meter toward your $25K/year Amber Miro Creative goal — set monthly targets, log earnings, watch the bar grow.",
       "path": "apps/2026-04-30/"
+    },
+    {
+      "date": "2026-06-04",
+      "slug": "2026-06-04-outrun",
+      "title": "OutRun '86",
+      "category": "games",
+      "oneLiner": "Pseudo-3D arcade driving game inspired by the 1986 classic — cruise the beach highway in your red Mercedes 380SL, hit checkpoints for bonus time, and race against the clock with mobile-optimized touch controls.",
+      "path": "apps/2026-06-04-outrun/",
+      "flagship": true
     }
   ]
 }
