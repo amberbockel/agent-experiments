@@ -31,7 +31,7 @@
   @media (hover:hover) and (pointer:fine) and (min-width:1000px){ .pad{display:none;} }
   @media (max-width:430px){ .pad{width:78px;height:78px;} #padR{left:100px;} #padB{right:100px;} }
 
-  #snd { position:fixed; top:env(safe-area-inset-top,10px); left:10px; z-index:30;
+  #snd { position:fixed; top:50%; transform:translateY(-50%); left:8px; z-index:30;
     width:38px; height:38px; border-radius:9px; background:rgba(0,0,0,.4);
     border:1px solid rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center;
     font-size:17px; color:#fff; cursor:pointer; }
@@ -88,9 +88,9 @@
 
 /* -------------------------------- constants ----------------------------- */
 const FPS=60, STEP=1/FPS;
-const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=2000, LANES=2;
+const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=1900, LANES=2;
 const FOV=100, CAM_HEIGHT=1000, CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
-const DRAW_DIST=220, FOG_DENSITY=4;
+const DRAW_DIST=240, FOG_DENSITY=2.2;
 const PLAYER_Z=CAM_HEIGHT*CAM_DEPTH;
 const MAX_SPEED=SEG_LEN/STEP, ACCEL=MAX_SPEED/5, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
 const OFFROAD_DECEL=-MAX_SPEED/2, OFFROAD_LIM=MAX_SPEED/4, CENTRIFUGAL=0.3;
@@ -100,20 +100,20 @@ const SPRITE_PX=0.0018;    // converts projected scale → pixels for billboard 
 /* ------------------------------- stages --------------------------------- */
 const STAGES=[
   { name:'CAPE COD', bg:'coast',
-    sky:['#5fb7ff','#8fd0ff','#c7ecff'],
-    ocean:'#1c83b0', oceanLite:'#39a9d4', sand:'#ead9a6',
-    hill:'#3a9d52', hill2:'#2f7e43', haze:'#cdeaf6',
-    light:{ road:'#9a9aa0', grass:'#46b450', rumble:'#d22', lane:'#ffffff' },
-    dark :{ road:'#8f8f96', grass:'#3aa346', rumble:'#ffffff' },
-    scenery:['palm','palm','umbrella','rock','boat','store','sign'],
+    sky:['#1f9dff','#57c2ff','#a9e7ff'],
+    ocean:'#12b6c9', oceanLite:'#7ff0e4', sand:'#f4dd9c',
+    hill:'#1fb840', hill2:'#15992f', haze:'#d4f1ff',
+    light:{ road:'#9a9ca6', grass:'#42c64c', rumble:'#e02424', lane:'#ffffff' },
+    dark :{ road:'#8f919b', grass:'#34b23e', rumble:'#f6f6f6' },
+    scenery:['palm','palm','palm','palm','sign','umbrella','rock','boat','store'],
     cars:['carRed','carBlue','beetle','suv'] },
   { name:'BOSTON', bg:'city',
-    sky:['#5aa9ee','#8ec8f4','#cbe6fb'],
-    ocean:'#2f6f9c', oceanLite:'#4a8cbd', sand:'#9aa3ad',
-    hill:'#5b6b7c', hill2:'#46535f', haze:'#bcd2e6',
-    light:{ road:'#8f8f96', grass:'#6f7d8a', rumble:'#d22', lane:'#ffffff' },
-    dark :{ road:'#86868d', grass:'#65727e', rumble:'#ffffff' },
-    scenery:['brownstone','tower','exit','market','sign','taxi'],
+    sky:['#2c8fe2','#6ab6ef','#c2e2f8'],
+    ocean:'#2f7fb6', oceanLite:'#63aad9', sand:'#9aa3ad',
+    hill:'#7587aa', hill2:'#54637a', haze:'#d2e6f6',
+    light:{ road:'#8f9099', grass:'#5fae57', rumble:'#e02424', lane:'#ffffff' },
+    dark :{ road:'#86878f', grass:'#52a24b', rumble:'#f6f6f6' },
+    scenery:['tower','brownstone','palm','sign','exit','market','tower'],
     cars:['taxi','beetle','suv','carBlue'] }
 ];
 
@@ -183,8 +183,8 @@ function addDownToEnd(n=200){ addRoad(n,n,n,-C.EASY,-lastY()/SEG_LEN); }
 
 function placeScenery(){
   const st=STAGES[stageIndex];
-  for(let n=12;n<segments.length;n+=rInt(4,9)){
-    const side=(n%2===0)?1:-1, off=side*(1.6+Math.random()*2.4);
+  for(let n=12;n<segments.length;n+=rInt(3,7)){
+    const side=(n%2===0)?1:-1, off=side*(1.45+Math.random()*1.9);
     segments[n].sprites.push({type:rPick(st.scenery),offset:off});
   }
   // recurring landmark store on the right
@@ -321,28 +321,21 @@ function shade(hex,fog){ return fade(hex,Math.max(0.18,fog)); }
 
 function drawSegment(seg){
   const p1=seg.p1.screen,p2=seg.p2.screen,c=seg.color,fog=seg.fog;
+  // grass
   ctx.fillStyle=fade(c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
-  const r1=p1.w/6,r2=p2.w/6;
+  // bold red/white rumble strips (the iconic OutRun road edge)
+  const r1=p1.w/4.2,r2=p2.w/4.2;
   ctx.fillStyle=fade(c.rumble,fog);
   poly([p2.x-p2.w-r2,p2.y, p2.x-p2.w,p2.y, p1.x-p1.w,p1.y, p1.x-p1.w-r1,p1.y]);
   poly([p2.x+p2.w+r2,p2.y, p2.x+p2.w,p2.y, p1.x+p1.w,p1.y, p1.x+p1.w+r1,p1.y]);
+  // asphalt
   ctx.fillStyle=fade(c.road,fog);
   poly([p2.x-p2.w,p2.y, p2.x+p2.w,p2.y, p1.x+p1.w,p1.y, p1.x-p1.w,p1.y]);
-  // markings only on light band
-  if(c.lane){
-    const band=Math.floor(seg.index/RUMBLE_LEN)%2;
-    // double-yellow centre (always)
-    const cy1=p1.w/26,cy2=p2.w/26, gap1=p1.w/10,gap2=p2.w/10;
-    ctx.fillStyle=fade('#f2c83a',fog);
-    poly([p2.x-gap2-cy2,p2.y, p2.x-gap2+cy2,p2.y, p1.x-gap1+cy1,p1.y, p1.x-gap1-cy1,p1.y]);
-    poly([p2.x+gap2-cy2,p2.y, p2.x+gap2+cy2,p2.y, p1.x+gap1+cy1,p1.y, p1.x+gap1-cy1,p1.y]);
-    // dashed white lane lines
-    if(band===0){
-      const lw1=p1.w/40,lw2=p2.w/40, hx1=p1.w*0.5,hx2=p2.w*0.5;
-      ctx.fillStyle=fade(c.lane,fog);
-      poly([p2.x-hx2-lw2,p2.y, p2.x-hx2+lw2,p2.y, p1.x-hx1+lw1,p1.y, p1.x-hx1-lw1,p1.y]);
-      poly([p2.x+hx2-lw2,p2.y, p2.x+hx2+lw2,p2.y, p1.x+hx1+lw1,p1.y, p1.x+hx1-lw1,p1.y]);
-    }
+  // single dashed white centre line — light band only → dashes that rush toward you
+  if(c.lane && Math.floor(seg.index/RUMBLE_LEN)%2===0){
+    const cw1=p1.w/17,cw2=p2.w/17;
+    ctx.fillStyle=fade('#ffffff',fog);
+    poly([p2.x-cw2,p2.y, p2.x+cw2,p2.y, p1.x+cw1,p1.y, p1.x-cw1,p1.y]);
   }
 }
 
@@ -351,8 +344,16 @@ function drawBackground(st,pY){
   const g=ctx.createLinearGradient(0,0,0,H*0.6);
   st.sky.forEach((c,i)=>g.addColorStop(i/(st.sky.length-1),c)); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const horizon=Math.round(H*0.46+pY*0.000016*H);
+  // big hazy sun (coast stage)
+  if(st.bg==='coast'){
+    const sx=W*0.70, sy=horizon-H*0.26, R=W*0.17;
+    const sg=ctx.createRadialGradient(sx,sy,R*0.1,sx,sy,R);
+    sg.addColorStop(0,'#fffdf0'); sg.addColorStop(0.45,'#ffe98e'); sg.addColorStop(1,'rgba(255,233,142,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,R,0,7); ctx.fill();
+    ctx.fillStyle='#fff7cf'; ctx.beginPath(); ctx.arc(sx,sy,R*0.4,0,7); ctx.fill();
+  }
   // clouds
-  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.fillStyle='rgba(255,255,255,0.92)';
   for(const cl of clouds){
     const cx=((cl.x - skyOffset*0.3)%1+1)%1*W, cy=horizon-H*0.16-cl.y*H*0.4, s=cl.s*W*0.06;
     cloud(cx,cy,s); cloud(cx-W,cy,s); cloud(cx+W,cy,s);
@@ -369,10 +370,15 @@ function drawCoast(st,horizon){
   // distant green headland (two parallax layers)
   drawHills(st.hill2,horizon-H*0.02,H*0.10,treeOffset*W*0.6,0.95,6);
   drawHills(st.hill, horizon,        H*0.075,treeOffset*W,    1.0,5);
-  // tiny lighthouse on a point
-  const lx=(0.78 - hillOffset*0.6)%1; const px=((lx%1+1)%1)*W;
-  ctx.fillStyle='#f4f4f4'; ctx.fillRect(px-3,horizon-H*0.065,6,H*0.05);
-  ctx.fillStyle='#d33'; ctx.fillRect(px-3,horizon-H*0.05,6,H*0.012);
+  // lighthouse sitting on the headland
+  const lx=((0.80 - hillOffset*0.5)%1+1)%1, px=lx*W, lh=H*0.08, lw=W*0.02;
+  ctx.fillStyle='#f6f6f6';                                                  // tapered white tower
+  poly([px-lw*0.5,horizon, px+lw*0.5,horizon, px+lw*0.32,horizon-lh, px-lw*0.32,horizon-lh]);
+  ctx.fillStyle='#d8342f';                                                  // red bands
+  ctx.fillRect(px-lw*0.46,horizon-lh*0.34,lw*0.92,lh*0.15);
+  ctx.fillRect(px-lw*0.40,horizon-lh*0.70,lw*0.80,lh*0.15);
+  ctx.fillStyle='#2a2f36'; ctx.fillRect(px-lw*0.38,horizon-lh-lh*0.14,lw*0.76,lh*0.14); // light room
+  ctx.fillStyle='#ffe27a'; ctx.beginPath(); ctx.arc(px,horizon-lh-lh*0.07,lw*0.2,0,7); ctx.fill();
 }
 function drawCity(st,horizon){
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.03,W,H*0.07);       // Charles River
@@ -414,12 +420,25 @@ function drawSceneSprite(seg,sprite){
 }
 function drawSprite(t,s,fog){
   switch(t){
-    case 'palm':{ const h=160*s;
-      ctx.strokeStyle=shade('#7a5230',fog); ctx.lineWidth=Math.max(1,9*s); ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(8*s,-h*0.55,3*s,-h); ctx.stroke();
-      ctx.fillStyle=shade('#1f9e3a',fog);
-      for(let a=0;a<7;a++){ ctx.save(); ctx.translate(3*s,-h); ctx.rotate((a/7)*Math.PI-Math.PI*0.5-0.3);
-        ctx.beginPath(); ctx.ellipse(30*s,0,32*s,8*s,0,0,7); ctx.fill(); ctx.restore(); } break; }
+    case 'palm':{ const h=215*s, tx=10*s;
+      // curved trunk (two-tone for depth)
+      ctx.lineCap='round';
+      ctx.strokeStyle=shade('#9a6a34',fog); ctx.lineWidth=Math.max(1.5,12*s);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(16*s,-h*0.5,tx,-h); ctx.stroke();
+      ctx.strokeStyle=shade('#7a5226',fog); ctx.lineWidth=Math.max(1,5*s);
+      ctx.beginPath(); ctx.moveTo(2*s,0); ctx.quadraticCurveTo(16*s,-h*0.5,tx,-h); ctx.stroke();
+      // crown: long drooping fronds, dark layer then bright layer
+      const drawFronds=(col,len,wid)=>{ ctx.fillStyle=shade(col,fog);
+        for(let a=0;a<9;a++){ ctx.save(); ctx.translate(tx,-h);
+          ctx.rotate(-Math.PI*0.5 + (a-4)*0.42 + (a%2?0.06:-0.06));
+          ctx.beginPath(); ctx.moveTo(0,0);
+          ctx.quadraticCurveTo(len*0.55,-wid, len, wid*0.5);
+          ctx.quadraticCurveTo(len*0.55, wid*0.2, 0, 0); ctx.fill(); ctx.restore(); } };
+      drawFronds('#0e7a2a',70*s,14*s);
+      drawFronds('#1fae3f',58*s,9*s);
+      // coconuts
+      ctx.fillStyle=shade('#5a3d1e',fog);
+      ctx.beginPath(); ctx.arc(tx-5*s,-h+5*s,4*s,0,7); ctx.arc(tx+6*s,-h+6*s,4*s,0,7); ctx.fill(); break; }
     case 'umbrella':{ const h=70*s;
       ctx.strokeStyle=shade('#777',fog); ctx.lineWidth=Math.max(1,4*s);
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-h); ctx.stroke();
@@ -495,63 +514,63 @@ function drawVehicleBody(type,px,fog){
 }
 
 /* ------------------------ player car (380SL + crew) --------------------- */
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); }
 function drawPlayer(seg,pct){
-  const scale=CAM_DEPTH/PLAYER_Z;
-  const bob=(speed>0)?(Math.sin(Date.now()*0.03)*1.2*(speed/MAX_SPEED)*(H/700)):0;
   const steer=keys.left?-1:keys.right?1:0;
   const updown=seg.p1.world.y-seg.p2.world.y;
-  const px=scale*ROAD_WIDTH*W/2*SPRITE_PX*2.1;
-  const cx=W/2, cy=H-H*0.13+bob;
+  const sp=speed/MAX_SPEED, t=Date.now(), wind=0.4+sp;
+  const bob=(speed>0)?Math.sin(t*0.03)*1.4*sp*(H/700):0;
+  const bw=W*0.47, bh=bw*0.40;
+  const cx=W/2, cy=H-H*0.085+bob;
   ctx.save(); ctx.translate(cx,cy);
-  ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.beginPath(); ctx.ellipse(0,6*px,78*px,15*px,0,0,7); ctx.fill();
-  const lean=steer*0.10+(updown>0?-0.02:0.02); ctx.transform(1,0,lean,1,0,0);
+  const lean=steer*0.09+(updown>0?-0.015:0.015); ctx.transform(1,0,lean,1,0,0);
 
-  const w=120*px,h=56*px;
-  // body lower + boot
-  ctx.fillStyle='#c8142a'; ctx.fillRect(-w/2,-h,w,h*0.62);
-  ctx.fillStyle='#8e0d1c'; ctx.fillRect(-w/2,-h*0.42,w,h*0.42);
-  // chrome bumper
-  ctx.fillStyle='#dfe2e8'; ctx.fillRect(-w/2,-h*0.08,w,h*0.14);
-  ctx.fillStyle='#aeb3bd'; ctx.fillRect(-w/2,-h*0.02,w,h*0.05);
-  // tail lights
-  ctx.fillStyle='#ff2a2a'; ctx.fillRect(-w/2+7*px,-h*0.55,w*0.17,h*0.22); ctx.fillRect(w/2-7*px-w*0.17,-h*0.55,w*0.17,h*0.22);
-  ctx.fillStyle='#ffd24a'; ctx.fillRect(-w/2+7*px,-h*0.34,w*0.17,h*0.07); ctx.fillRect(w/2-7*px-w*0.17,-h*0.34,w*0.17,h*0.07);
+  // ground shadow
+  ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.beginPath(); ctx.ellipse(0,bh*0.5,bw*0.6,bh*0.2,0,0,7); ctx.fill();
+  // rear wheels peeking out
+  ctx.fillStyle='#161620'; rr(-bw*0.52,bh*0.08,bw*0.14,bh*0.42,bw*0.03); rr(bw*0.38,bh*0.08,bw*0.14,bh*0.42,bw*0.03);
+
+  // wide lower body + boot deck
+  ctx.fillStyle='#d11a2a'; rr(-bw*0.5,-bh*0.18,bw,bh*0.66,bh*0.20);
+  ctx.fillStyle='#e23a44'; rr(-bw*0.42,-bh*0.64,bw*0.84,bh*0.52,bh*0.18);
+  ctx.fillStyle='#f47179'; rr(-bw*0.42,-bh*0.62,bw*0.84,bh*0.12,bh*0.06);   // deck highlight
+  // chrome rear bumper
+  ctx.fillStyle='#e2e6ed'; rr(-bw*0.5,bh*0.34,bw,bh*0.12,bh*0.05);
+  ctx.fillStyle='#b6bcc6'; rr(-bw*0.5,bh*0.43,bw,bh*0.05,bh*0.02);
+  // tail lights + reflectors
+  ctx.fillStyle='#ff2a2a'; rr(-bw*0.46,bh*0.02,bw*0.18,bh*0.2,bw*0.015); rr(bw*0.28,bh*0.02,bw*0.18,bh*0.2,bw*0.015);
+  ctx.fillStyle='#ffd24a'; rr(-bw*0.46,bh*0.24,bw*0.18,bh*0.07,2); rr(bw*0.28,bh*0.24,bw*0.18,bh*0.07,2);
   // licence plate
-  ctx.fillStyle='#f2c83a'; ctx.fillRect(-w*0.24,-h*0.31,w*0.48,h*0.21);
-  ctx.fillStyle='#1a1a1a'; ctx.font=`bold ${Math.max(5,7.4*px)}px Courier`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('5ADK 68',0,-h*0.205);
+  ctx.fillStyle='#f2c83a'; rr(-bw*0.16,bh*0.04,bw*0.32,bh*0.22,2);
+  ctx.fillStyle='#1a1a1a'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`bold ${Math.max(6,bw*0.052)}px Courier`; ctx.fillText('5ADK 68',0,bh*0.15);
   // 380SL badge
-  ctx.fillStyle='#e9eef5'; ctx.font=`bold ${Math.max(4,7*px)}px Courier`; ctx.fillText('380SL',w*0.36,-h*0.50);
+  ctx.fillStyle='#eef2f8'; ctx.font=`bold ${Math.max(5,bw*0.044)}px Courier`; ctx.fillText('380SL',bw*0.34,-bh*0.30);
   ctx.textBaseline='alphabetic';
-  // open cabin
-  ctx.fillStyle='#15100c'; ctx.fillRect(-w*0.34,-h*1.02,w*0.68,h*0.5);
-  ctx.fillStyle='#2a2017'; ctx.fillRect(-w*0.34,-h*1.02,w*0.68,h*0.12); // seat backs top
-  // wheels
-  ctx.fillStyle='#14141a'; ctx.beginPath(); ctx.ellipse(-w*0.42,h*0.05,14*px,11*px,0,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(w*0.42,h*0.05,14*px,11*px,0,0,7); ctx.fill();
-  ctx.fillStyle='#5a5a64'; ctx.beginPath(); ctx.ellipse(-w*0.42,h*0.05,6*px,5*px,0,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(w*0.42,h*0.05,6*px,5*px,0,0,7); ctx.fill();
 
-  const wind=0.4+speed/MAX_SPEED, t=Date.now();
-  // ---- driver (Amber), left seat ----
-  const hairFlow=Math.sin(t*0.012)*7*px*wind;
-  ctx.fillStyle='#3a2418';
-  ctx.beginPath(); ctx.ellipse(-w*0.16-hairFlow,-h*1.12,15*px,24*px,0.35,0,7); ctx.fill();           // flowing hair
-  ctx.beginPath(); ctx.ellipse(-w*0.16,-h*1.18,12*px,12*px,0,0,7); ctx.fill();                          // head back
-  ctx.fillStyle='#f4c6a0'; ctx.beginPath(); ctx.arc(-w*0.16,-h*1.18,8.5*px,0,7); ctx.fill();            // skin nape
-  ctx.fillStyle='#222'; ctx.fillRect(-w*0.16-9*px,-h*1.22,18*px,4*px);                                  // sunglasses arm hint
-  ctx.fillStyle='#c8142a'; ctx.fillRect(-w*0.24,-h*0.62,w*0.16,h*0.22);                                 // shoulder
+  // open cockpit + seat backs + chrome roll hoop
+  ctx.fillStyle='#130f0b'; rr(-bw*0.35,-bh*1.0,bw*0.70,bh*0.62,bh*0.12);
+  ctx.fillStyle='#241a12'; rr(-bw*0.31,-bh*1.04,bw*0.25,bh*0.22,bw*0.03); rr(bw*0.06,-bh*1.04,bw*0.25,bh*0.22,bw*0.03);
+  ctx.strokeStyle='#cfd2d9'; ctx.lineWidth=Math.max(1.5,bw*0.018); ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(-bw*0.33,-bh*0.86); ctx.lineTo(-bw*0.33,-bh*1.12);
+  ctx.lineTo(bw*0.33,-bh*1.12); ctx.lineTo(bw*0.33,-bh*0.86); ctx.stroke();
 
-  // ---- golden pup, right seat (ears flapping) ----
-  const earFlap=Math.sin(t*0.016+1)*9*px*wind;
-  ctx.fillStyle='#e0a94d';
-  ctx.beginPath(); ctx.arc(w*0.17,-h*1.14,10*px,0,7); ctx.fill();                                       // head
-  ctx.beginPath(); ctx.ellipse(w*0.17,-h*0.86,12*px,16*px,0,0,7); ctx.fill();                           // body
-  ctx.fillStyle='#c8893a';
-  ctx.beginPath(); ctx.ellipse(w*0.10-earFlap,-h*1.10+earFlap*0.3,5*px,12*px,-0.5,0,7); ctx.fill();     // left ear
-  ctx.beginPath(); ctx.ellipse(w*0.24+earFlap,-h*1.10+earFlap*0.3,5*px,12*px,0.5,0,7); ctx.fill();      // right ear
-  ctx.fillStyle='#3a2a1a'; ctx.beginPath(); ctx.arc(w*0.205,-h*1.20,2.4*px,0,7); ctx.fill();            // snout/nose
+  // ---- Amber (driver, left) — flowing hair, sunglasses ----
+  const hair=Math.sin(t*0.012)*bw*0.045*wind;
+  ctx.fillStyle='#4a2e1c';
+  ctx.beginPath(); ctx.ellipse(-bw*0.18-hair,-bh*1.16,bw*0.075,bh*0.36,0.32,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(-bw*0.18,-bh*1.30,bw*0.082,0,7); ctx.fill();
+  ctx.fillStyle='#f3c39c'; ctx.beginPath(); ctx.arc(-bw*0.18,-bh*1.29,bw*0.058,0,7); ctx.fill();
+  ctx.fillStyle='#15151a'; rr(-bw*0.245,-bh*1.35,bw*0.13,bh*0.06,2);
 
+  // ---- golden pup (right) — flapping ears ----
+  const ear=Math.sin(t*0.016+1)*bw*0.05*wind;
+  ctx.fillStyle='#e7b257'; ctx.beginPath(); ctx.arc(bw*0.18,-bh*1.26,bw*0.082,0,7); ctx.fill();
+  ctx.fillStyle='#cd9140';
+  ctx.beginPath(); ctx.ellipse(bw*0.11-ear,-bh*1.22,bw*0.038,bh*0.2,-0.5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bw*0.25+ear,-bh*1.22,bw*0.038,bh*0.2,0.5,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(bw*0.205,-bh*1.30,bw*0.03,0,7); ctx.fill();   // muzzle
+  ctx.fillStyle='#2a1c10'; ctx.beginPath(); ctx.arc(bw*0.205,-bh*1.33,bw*0.018,0,7); ctx.fill();// nose
   ctx.restore();
 }
 
@@ -561,39 +580,33 @@ function hudBox(x,y,w,h){ ctx.fillStyle='rgba(60,60,70,0.72)'; ctx.fillRect(x,y,
 function outlineText(txt,x,y,fill,size){ ctx.font=`900 ${size}px Courier`; ctx.lineWidth=Math.max(2,size*0.14);
   ctx.strokeStyle='#000'; ctx.lineJoin='round'; ctx.strokeText(txt,x,y); ctx.fillStyle=fill; ctx.fillText(txt,x,y); }
 function drawHUD(st){
-  const pad=Math.round(W*0.022), fs=Math.max(11,Math.round(W*0.038));
-  const bw=fs*4.9, bh=fs*1.5, y2=pad*1.7+bh;
+  const pad=Math.round(W*0.035), fs=Math.max(12,Math.round(W*0.05));
   ctx.textBaseline='alphabetic';
-  // ---- TIME (top-left) ----
-  hudBox(pad,pad,bw,bh);
-  ctx.textAlign='left'; ctx.fillStyle='#ffd24a'; ctx.font=`bold ${fs*0.62}px Courier`; ctx.fillText('TIME',pad+fs*0.32,pad+fs*0.72);
-  const secs=Math.max(0,Math.floor(timeLeft)), hund=Math.max(0,Math.floor((timeLeft-secs)*100));
-  ctx.textAlign='right'; ctx.fillStyle=timeLeft<10?'#ff5555':'#5dff7a'; ctx.font=`bold ${fs*0.98}px Courier`;
-  ctx.fillText(`${secs}:${hund.toString().padStart(2,'0')}`,pad+bw-fs*0.34,pad+fs*1.28);
-  // ---- SPEED (left, below) ----
-  hudBox(pad,y2,bw,bh);
-  ctx.textAlign='left'; ctx.fillStyle='#ffd24a'; ctx.font=`bold ${fs*0.62}px Courier`; ctx.fillText('SPEED',pad+fs*0.32,y2+fs*0.72);
-  const kmh=Math.round((speed/MAX_SPEED)*312);
-  ctx.textAlign='right'; ctx.fillStyle='#ff6a6a'; ctx.font=`bold ${fs*0.82}px Courier`; ctx.fillText(`${kmh} KM/H`,pad+bw-fs*0.34,y2+fs*1.28);
-  // ---- STAGE (top-right) ----
-  hudBox(W-pad-bw,pad,bw,bh);
-  ctx.textAlign='left'; ctx.fillStyle='#ffd24a'; ctx.font=`bold ${fs*0.62}px Courier`; ctx.fillText('STAGE',W-pad-bw+fs*0.32,pad+fs*0.72);
-  ctx.textAlign='right'; ctx.fillStyle='#fff'; ctx.font=`bold ${fs*0.98}px Courier`; ctx.fillText(`${stageIndex+1}`,W-pad-fs*0.34,pad+fs*1.28);
-  // ---- SCORE (right, below) ----
-  hudBox(W-pad-bw,y2,bw,bh);
-  ctx.textAlign='left'; ctx.fillStyle='#9be9ff'; ctx.font=`bold ${fs*0.62}px Courier`; ctx.fillText('SCORE',W-pad-bw+fs*0.32,y2+fs*0.72);
-  ctx.textAlign='right'; ctx.fillStyle='#fff'; ctx.font=`bold ${fs*0.82}px Courier`; ctx.fillText(Math.floor(score).toString().padStart(6,'0'),W-pad-fs*0.34,y2+fs*1.28);
-  // ---- title (centre) ----
+  // ---- SCORE (top-left) ----
+  ctx.textAlign='left';
+  outlineText('SCORE',pad,pad+fs*0.8,'#ff9a1e',fs*0.6);
+  outlineText(Math.floor(score).toString().padStart(7,'0'),pad,pad+fs*1.72,'#ffffff',fs*0.84);
+  outlineText('HI '+Math.floor(Math.max(hiScore,score)).toString().padStart(7,'0'),pad,pad+fs*2.42,'#bfe9ff',fs*0.5);
+  // ---- TIME (top-centre, hero number) ----
   ctx.textAlign='center';
-  outlineText('OUTRUN ME',W/2,pad+fs*0.98,'#ff7a2a',fs*1.0);
-  outlineText("AMBER'S SL",W/2,pad+fs*1.95,'#ffd24a',fs*0.82);
+  outlineText('TIME',W/2,pad+fs*0.8,'#ff9a1e',fs*0.6);
+  const secs=Math.max(0,Math.ceil(timeLeft));
+  outlineText(secs.toString(),W/2,pad+fs*2.25,timeLeft<10?'#ff4040':'#ffe24a',fs*1.55);
+  // ---- STAGE + SPEED (top-right) ----
+  ctx.textAlign='right';
+  outlineText('STAGE',W-pad,pad+fs*0.8,'#ff9a1e',fs*0.6);
+  outlineText((stageIndex+1)+'/'+STAGES.length,W-pad,pad+fs*1.72,'#ffffff',fs*0.84);
+  const kmh=Math.round((speed/MAX_SPEED)*293);
+  outlineText(kmh+' km/h',W-pad,pad+fs*2.46,kmh>240?'#ff7a4a':'#7dff7a',fs*0.62);
+  // ---- thin speed bar along the very bottom edge (clear of touch pads) ----
+  const by=H-Math.max(3,Math.round(H*0.008));
+  ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,by,W,H-by);
+  ctx.fillStyle=kmh>240?'#ff7a4a':'#5dff7a'; ctx.fillRect(0,by,W*(speed/MAX_SPEED),H-by);
   // ---- stage-intro banner ----
-  if(stageBannerT>0){ const a=Math.min(1,stageBannerT*1.4);
-    ctx.globalAlpha=a; outlineText('STAGE '+(stageIndex+1),W/2,H*0.36,'#9be9ff',fs*1.3);
-    outlineText(st.name,W/2,H*0.36+fs*1.7,'#fff',fs*1.7); ctx.globalAlpha=1; }
-  // ---- speed bar (bottom) ----
-  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(pad,H-pad-fs*0.5,W-pad*2,fs*0.4);
-  ctx.fillStyle='#5dff7a'; ctx.fillRect(pad,H-pad-fs*0.5,(W-pad*2)*(speed/MAX_SPEED),fs*0.4);
+  if(stageBannerT>0){ const a=Math.min(1,stageBannerT*1.4); ctx.globalAlpha=a;
+    ctx.textAlign='center';
+    outlineText('STAGE '+(stageIndex+1),W/2,H*0.40,'#bfe9ff',fs*1.2);
+    outlineText(st.name,W/2,H*0.40+fs*1.6,'#ffffff',fs*1.5); ctx.globalAlpha=1; }
 }
 
 /* ------------------------------- audio ---------------------------------- */
@@ -682,6 +695,10 @@ function frame(now){ if(!last)last=now; let dt=(now-last)/1000; last=now; if(dt>
 /* -------------------------------- init ---------------------------------- */
 function init(){
   canvas=document.getElementById('game'); ctx=canvas.getContext('2d',{alpha:false});
+  if(!ctx.roundRect){ CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,Math.abs(w)/2,Math.abs(h)/2); this.moveTo(x+r,y);
+    this.arcTo(x+w,y,x+w,y+h,r); this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r); this.arcTo(x,y,x+w,y,r); this.closePath(); return this; }; }
   try{ hiScore=parseInt(localStorage.getItem('outrunme_hi')||'0',10)||0; }catch(e){}
   resize(); addEventListener('resize',resize);
   addEventListener('orientationchange',()=>setTimeout(resize,200));
