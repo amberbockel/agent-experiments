@@ -111,8 +111,8 @@ const STAGES=[
     sky:['#2c8fe2','#6ab6ef','#c2e2f8'],
     ocean:'#2f7fb6', oceanLite:'#63aad9', sand:'#9aa3ad',
     hill:'#7587aa', hill2:'#54637a', haze:'#d2e6f6',
-    light:{ road:'#8f9099', grass:'#5fae57', rumble:'#e02424', lane:'#ffffff' },
-    dark :{ road:'#86878f', grass:'#52a24b', rumble:'#f6f6f6' },
+    light:{ road:'#8f9099', grass:'#5fae57', rumble:'#c9ccd3', lane:'#ffffff' },
+    dark :{ road:'#86878f', grass:'#52a24b', rumble:'#eef0f3' },
     scenery:['tower','brownstone','palm','sign','exit','market','tower'],
     cars:['taxi','beetle','suv','carBlue'] }
 ];
@@ -198,7 +198,7 @@ function placeCheckpoints(){
   for(let i=1;i<=4;i++){ const idx=gap*i; if(segments[idx]) segments[idx].checkpoint=true; }
 }
 function placeTraffic(){
-  const st=STAGES[stageIndex]; cars=[]; const count=14+stageIndex*4;
+  const st=STAGES[stageIndex]; cars=[]; const count=20+stageIndex*8;
   for(let i=0;i<count;i++){
     const seg=rInt(30,segments.length-30), off=lerp(-0.7,0.7,Math.random()), sp=rPick(st.cars);
     const spd=(sp==='suv'||sp==='taxi')?0.55:0.6+Math.random()*0.22;
@@ -331,11 +331,26 @@ function drawSegment(seg){
   // asphalt
   ctx.fillStyle=fade(c.road,fog);
   poly([p2.x-p2.w,p2.y, p2.x+p2.w,p2.y, p1.x+p1.w,p1.y, p1.x-p1.w,p1.y]);
-  // single dashed white centre line — light band only → dashes that rush toward you
-  if(c.lane && Math.floor(seg.index/RUMBLE_LEN)%2===0){
-    const cw1=p1.w/17,cw2=p2.w/17;
-    ctx.fillStyle=fade('#ffffff',fog);
-    poly([p2.x-cw2,p2.y, p2.x+cw2,p2.y, p1.x+cw1,p1.y, p1.x-cw1,p1.y]);
+  if(c.lane){
+    const band=Math.floor(seg.index/RUMBLE_LEN)%2;
+    if(STAGES[stageIndex].bg==='city'){
+      // double-yellow centre (always) + dashed white lane dividers (city avenue)
+      const yw1=p1.w/34,yw2=p2.w/34, g1=p1.w/14,g2=p2.w/14;
+      ctx.fillStyle=fade('#f2c019',fog);
+      poly([p2.x-g2-yw2,p2.y, p2.x-g2+yw2,p2.y, p1.x-g1+yw1,p1.y, p1.x-g1-yw1,p1.y]);
+      poly([p2.x+g2-yw2,p2.y, p2.x+g2+yw2,p2.y, p1.x+g1+yw1,p1.y, p1.x+g1-yw1,p1.y]);
+      if(band===0){
+        const lw1=p1.w/46,lw2=p2.w/46, hx1=p1.w*0.46,hx2=p2.w*0.46;
+        ctx.fillStyle=fade('#f4f4f4',fog);
+        poly([p2.x-hx2-lw2,p2.y, p2.x-hx2+lw2,p2.y, p1.x-hx1+lw1,p1.y, p1.x-hx1-lw1,p1.y]);
+        poly([p2.x+hx2-lw2,p2.y, p2.x+hx2+lw2,p2.y, p1.x+hx1+lw1,p1.y, p1.x+hx1-lw1,p1.y]);
+      }
+    } else if(band===0){
+      // single dashed white centre — coast (classic arcade)
+      const cw1=p1.w/17,cw2=p2.w/17;
+      ctx.fillStyle=fade('#ffffff',fog);
+      poly([p2.x-cw2,p2.y, p2.x+cw2,p2.y, p1.x+cw1,p1.y, p1.x-cw1,p1.y]);
+    }
   }
 }
 
@@ -520,93 +535,122 @@ function drawPlayer(seg,pct){
   const updown=seg.p1.world.y-seg.p2.world.y;
   const sp=speed/MAX_SPEED, t=Date.now(), wind=0.4+sp;
   const bob=(speed>0)?Math.sin(t*0.03)*1.4*sp*(H/700):0;
-  const bw=W*0.47, bh=bw*0.40;
-  const cx=W/2, cy=H-H*0.085+bob;
+  const bw=W*0.56, bh=bw*0.72;
+  const cx=W/2, cy=H-H*0.035+bob;
   ctx.save(); ctx.translate(cx,cy);
-  const lean=steer*0.09+(updown>0?-0.015:0.015); ctx.transform(1,0,lean,1,0,0);
+  const lean=steer*0.08+(updown>0?-0.012:0.012); ctx.transform(1,0,lean,1,0,0);
+  const RED='#cf1726', RHI='#ef5662', RLO='#7e0d17';
+  const grad=(y0,y1,a,b)=>{ const g=ctx.createLinearGradient(0,y0,0,y1); g.addColorStop(0,a); g.addColorStop(1,b); return g; };
 
   // ground shadow
-  ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.beginPath(); ctx.ellipse(0,bh*0.5,bw*0.6,bh*0.2,0,0,7); ctx.fill();
-  // rear wheels peeking out
-  ctx.fillStyle='#161620'; rr(-bw*0.52,bh*0.08,bw*0.14,bh*0.42,bw*0.03); rr(bw*0.38,bh*0.08,bw*0.14,bh*0.42,bw*0.03);
+  ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.beginPath(); ctx.ellipse(0,-bh*0.01,bw*0.58,bh*0.07,0,0,7); ctx.fill();
+  // wheels (rear large, front small up the hood)
+  ctx.fillStyle='#0f0f14';
+  rr(-bw*0.40,-bh*0.52,bw*0.085,bh*0.13,bw*0.02); rr(bw*0.315,-bh*0.52,bw*0.085,bh*0.13,bw*0.02);
+  ctx.fillStyle='#16161d';
+  rr(-bw*0.55,-bh*0.18,bw*0.13,bh*0.21,bw*0.03); rr(bw*0.42,-bh*0.18,bw*0.13,bh*0.21,bw*0.03);
 
-  // wide lower body + boot deck
-  ctx.fillStyle='#d11a2a'; rr(-bw*0.5,-bh*0.18,bw,bh*0.66,bh*0.20);
-  ctx.fillStyle='#e23a44'; rr(-bw*0.42,-bh*0.64,bw*0.84,bh*0.52,bh*0.18);
-  ctx.fillStyle='#f47179'; rr(-bw*0.42,-bh*0.62,bw*0.84,bh*0.12,bh*0.06);   // deck highlight
-  // chrome rear bumper
-  ctx.fillStyle='#e2e6ed'; rr(-bw*0.5,bh*0.34,bw,bh*0.12,bh*0.05);
-  ctx.fillStyle='#b6bcc6'; rr(-bw*0.5,bh*0.43,bw,bh*0.05,bh*0.02);
-  // tail lights + reflectors
-  ctx.fillStyle='#ff2a2a'; rr(-bw*0.46,bh*0.02,bw*0.18,bh*0.2,bw*0.015); rr(bw*0.28,bh*0.02,bw*0.18,bh*0.2,bw*0.015);
-  ctx.fillStyle='#ffd24a'; rr(-bw*0.46,bh*0.24,bw*0.18,bh*0.07,2); rr(bw*0.28,bh*0.24,bw*0.18,bh*0.07,2);
-  // licence plate
-  ctx.fillStyle='#f2c83a'; rr(-bw*0.16,bh*0.04,bw*0.32,bh*0.22,2);
-  ctx.fillStyle='#1a1a1a'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font=`bold ${Math.max(6,bw*0.052)}px Courier`; ctx.fillText('5ADK 68',0,bh*0.15);
-  // 380SL badge
-  ctx.fillStyle='#eef2f8'; ctx.font=`bold ${Math.max(5,bw*0.044)}px Courier`; ctx.fillText('380SL',bw*0.34,-bh*0.30);
-  ctx.textBaseline='alphabetic';
+  // ---- HOOD (extends forward, foreshortened) ----
+  ctx.fillStyle=grad(-bh*0.78,-bh*0.44,RHI,RED);
+  poly([-bw*0.20,-bh*0.78, bw*0.20,-bh*0.78, bw*0.40,-bh*0.44, -bw*0.40,-bh*0.44]);
+  ctx.globalAlpha=0.45; ctx.fillStyle=RHI;                       // centre crease highlight
+  poly([-bw*0.015,-bh*0.78, bw*0.015,-bh*0.78, bw*0.03,-bh*0.44, -bw*0.03,-bh*0.44]); ctx.globalAlpha=1;
+  // front grille bar + headlights + three-point star
+  ctx.fillStyle='#23262b'; rr(-bw*0.19,-bh*0.81,bw*0.38,bh*0.05,bh*0.015);
+  ctx.fillStyle='#eaf4ff'; rr(-bw*0.18,-bh*0.805,bw*0.10,bh*0.032,bh*0.01); rr(bw*0.08,-bh*0.805,bw*0.10,bh*0.032,bh*0.01);
+  ctx.fillStyle='#d7dae1'; ctx.beginPath(); ctx.arc(0,-bh*0.74,bw*0.045,0,7); ctx.fill();
+  ctx.strokeStyle='#6c6f77'; ctx.lineWidth=Math.max(1,bw*0.007); ctx.lineCap='round';
+  ctx.beginPath(); for(let k=0;k<3;k++){const a=-Math.PI/2+k*2.0944; ctx.moveTo(0,-bh*0.74); ctx.lineTo(Math.cos(a)*bw*0.04,-bh*0.74+Math.sin(a)*bw*0.04);} ctx.stroke();
 
-  // open cockpit + seat backs + chrome roll hoop
-  ctx.fillStyle='#130f0b'; rr(-bw*0.35,-bh*1.0,bw*0.70,bh*0.62,bh*0.12);
-  ctx.fillStyle='#241a12'; rr(-bw*0.31,-bh*1.04,bw*0.25,bh*0.22,bw*0.03); rr(bw*0.06,-bh*1.04,bw*0.25,bh*0.22,bw*0.03);
-  ctx.strokeStyle='#cfd2d9'; ctx.lineWidth=Math.max(1.5,bw*0.018); ctx.lineJoin='round';
-  ctx.beginPath(); ctx.moveTo(-bw*0.33,-bh*0.86); ctx.lineTo(-bw*0.33,-bh*1.12);
-  ctx.lineTo(bw*0.33,-bh*1.12); ctx.lineTo(bw*0.33,-bh*0.86); ctx.stroke();
+  // ---- BODY SIDES (fenders, hood→boot) ----
+  ctx.fillStyle=grad(-bh*0.46,-bh*0.02,RED,RLO);
+  poly([-bw*0.40,-bh*0.46, bw*0.40,-bh*0.46, bw*0.5,-bh*0.03, -bw*0.5,-bh*0.03]);
 
-  // ---- Amber (driver, left) — flowing hair, sunglasses ----
-  const hair=Math.sin(t*0.012)*bw*0.045*wind;
-  ctx.fillStyle='#4a2e1c';
-  ctx.beginPath(); ctx.ellipse(-bw*0.18-hair,-bh*1.16,bw*0.075,bh*0.36,0.32,0,7); ctx.fill();
-  ctx.beginPath(); ctx.arc(-bw*0.18,-bh*1.30,bw*0.082,0,7); ctx.fill();
-  ctx.fillStyle='#f3c39c'; ctx.beginPath(); ctx.arc(-bw*0.18,-bh*1.29,bw*0.058,0,7); ctx.fill();
-  ctx.fillStyle='#15151a'; rr(-bw*0.245,-bh*1.35,bw*0.13,bh*0.06,2);
+  // ---- CABIN ----
+  ctx.fillStyle='#cfd2d9';                                       // windshield frame (chrome)
+  poly([-bw*0.30,-bh*0.47, bw*0.30,-bh*0.47, bw*0.27,-bh*0.41, -bw*0.27,-bh*0.41]);
+  ctx.fillStyle='#0d0a07'; rr(-bw*0.30,-bh*0.42,bw*0.60,bh*0.22,bh*0.03);   // interior
+  ctx.fillStyle='#241a12'; rr(-bw*0.28,-bh*0.31,bw*0.23,bh*0.15,bw*0.03); rr(bw*0.05,-bh*0.31,bw*0.23,bh*0.15,bw*0.03); // seats
 
-  // ---- golden pup (right) — flapping ears ----
-  const ear=Math.sin(t*0.016+1)*bw*0.05*wind;
-  ctx.fillStyle='#e7b257'; ctx.beginPath(); ctx.arc(bw*0.18,-bh*1.26,bw*0.082,0,7); ctx.fill();
+  // ---- occupants ----
+  const hair=Math.sin(t*0.012)*bw*0.038*wind;
+  ctx.fillStyle='#3c2417';                                       // Amber — flowing hair + head
+  ctx.beginPath(); ctx.ellipse(-bw*0.155-hair,-bh*0.35,bw*0.058,bh*0.17,0.3,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(-bw*0.155,-bh*0.45,bw*0.068,0,7); ctx.fill();
+  ctx.fillStyle='#f0bd95'; ctx.beginPath(); ctx.arc(-bw*0.155,-bh*0.44,bw*0.048,0,7); ctx.fill();
+  ctx.fillStyle='#15151a'; rr(-bw*0.205,-bh*0.475,bw*0.10,bh*0.028,2);       // shades
+  const ear=Math.sin(t*0.016+1)*bw*0.042*wind;
+  ctx.fillStyle='#e7b257'; ctx.beginPath(); ctx.arc(bw*0.16,-bh*0.43,bw*0.066,0,7); ctx.fill();   // pup head
   ctx.fillStyle='#cd9140';
-  ctx.beginPath(); ctx.ellipse(bw*0.11-ear,-bh*1.22,bw*0.038,bh*0.2,-0.5,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(bw*0.25+ear,-bh*1.22,bw*0.038,bh*0.2,0.5,0,7); ctx.fill();
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(bw*0.205,-bh*1.30,bw*0.03,0,7); ctx.fill();   // muzzle
-  ctx.fillStyle='#2a1c10'; ctx.beginPath(); ctx.arc(bw*0.205,-bh*1.33,bw*0.018,0,7); ctx.fill();// nose
+  ctx.beginPath(); ctx.ellipse(bw*0.105-ear,-bh*0.40,bw*0.03,bh*0.085,-0.5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bw*0.215+ear,-bh*0.40,bw*0.03,bh*0.085,0.5,0,7); ctx.fill();
+  ctx.fillStyle='#fff8ee'; ctx.beginPath(); ctx.arc(bw*0.175,-bh*0.475,bw*0.026,0,7); ctx.fill(); // muzzle
+  ctx.fillStyle='#2a1c10'; ctx.beginPath(); ctx.arc(bw*0.175,-bh*0.495,bw*0.015,0,7); ctx.fill();
+
+  // ---- BOOT / rear deck ----
+  ctx.fillStyle=grad(-bh*0.22,-bh*0.05,RHI,RED);
+  poly([-bw*0.44,-bh*0.22, bw*0.44,-bh*0.22, bw*0.5,-bh*0.05, -bw*0.5,-bh*0.05]);
+  ctx.fillStyle=RLO; ctx.globalAlpha=0.5; rr(-bw*0.5,-bh*0.085,bw,bh*0.02,2); ctx.globalAlpha=1; // shutline
+  // tail-light bar
+  ctx.fillStyle='#1a1a1f'; rr(-bw*0.5,-bh*0.17,bw,bh*0.065,bh*0.02);
+  ctx.fillStyle='#ff3030'; rr(-bw*0.47,-bh*0.162,bw*0.24,bh*0.05,bh*0.015); rr(bw*0.23,-bh*0.162,bw*0.24,bh*0.05,bh*0.015);
+  ctx.fillStyle='#ff9a3a'; rr(-bw*0.215,-bh*0.162,bw*0.06,bh*0.05,2); rr(bw*0.155,-bh*0.162,bw*0.06,bh*0.05,2);
+  // chrome bumper + exhausts
+  ctx.fillStyle='#e4e8ef'; rr(-bw*0.5,-bh*0.06,bw,bh*0.05,bh*0.02);
+  ctx.fillStyle='#b6bcc6'; rr(-bw*0.5,-bh*0.022,bw,bh*0.018,bh*0.008);
+  ctx.fillStyle='#15151a'; rr(-bw*0.13,-bh*0.05,bw*0.07,bh*0.028,2); rr(bw*0.06,-bh*0.05,bw*0.07,bh*0.028,2);
+  // MA licence plate
+  ctx.fillStyle='#f4cf3e'; rr(-bw*0.135,-bh*0.145,bw*0.27,bh*0.072,bh*0.012);
+  ctx.fillStyle='#15336b'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`bold ${Math.max(6,bw*0.046)}px Courier`; ctx.fillText('5ADK 68',0,-bh*0.108);
+  // 380SL badge
+  ctx.fillStyle='#eef2f8'; ctx.font=`bold ${Math.max(5,bw*0.036)}px Courier`; ctx.fillText('380SL',bw*0.36,-bh*0.20);
+  ctx.textBaseline='alphabetic';
   ctx.restore();
 }
 
 /* --------------------------------- HUD ---------------------------------- */
-function hudBox(x,y,w,h){ ctx.fillStyle='rgba(60,60,70,0.72)'; ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h); }
+function hudBox(x,y,w,h){
+  ctx.fillStyle='rgba(12,16,32,0.82)'; ctx.beginPath(); ctx.roundRect(x,y,w,h,Math.min(w,h)*0.26); ctx.fill();
+  ctx.strokeStyle='rgba(150,184,236,0.6)'; ctx.lineWidth=Math.max(1.5,h*0.07);
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,Math.min(w,h)*0.26); ctx.stroke();
+}
 function outlineText(txt,x,y,fill,size){ ctx.font=`900 ${size}px Courier`; ctx.lineWidth=Math.max(2,size*0.14);
   ctx.strokeStyle='#000'; ctx.lineJoin='round'; ctx.strokeText(txt,x,y); ctx.fillStyle=fill; ctx.fillText(txt,x,y); }
+function boxStat(label,value,vcol,x,y,bw,bh,fs){
+  ctx.textAlign='left'; outlineText(label,x+fs*0.12,y-fs*0.16,'#ffb01e',fs*0.6);
+  hudBox(x,y,bw,bh);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  outlineText(value,x+bw/2,y+bh*0.56,vcol,fs*0.86); ctx.textBaseline='alphabetic';
+}
 function drawHUD(st){
-  const pad=Math.round(W*0.035), fs=Math.max(12,Math.round(W*0.05));
+  const pad=Math.round(W*0.028), fs=Math.max(12,Math.round(W*0.046));
+  const bw=fs*4.6, bh=fs*1.35, row2=pad+fs*0.95+bh+fs*0.95;
   ctx.textBaseline='alphabetic';
-  // ---- SCORE (top-left) ----
-  ctx.textAlign='left';
-  outlineText('SCORE',pad,pad+fs*0.8,'#ff9a1e',fs*0.6);
-  outlineText(Math.floor(score).toString().padStart(7,'0'),pad,pad+fs*1.72,'#ffffff',fs*0.84);
-  outlineText('HI '+Math.floor(Math.max(hiScore,score)).toString().padStart(7,'0'),pad,pad+fs*2.42,'#bfe9ff',fs*0.5);
-  // ---- TIME (top-centre, hero number) ----
-  ctx.textAlign='center';
-  outlineText('TIME',W/2,pad+fs*0.8,'#ff9a1e',fs*0.6);
-  const secs=Math.max(0,Math.ceil(timeLeft));
-  outlineText(secs.toString(),W/2,pad+fs*2.25,timeLeft<10?'#ff4040':'#ffe24a',fs*1.55);
-  // ---- STAGE + SPEED (top-right) ----
-  ctx.textAlign='right';
-  outlineText('STAGE',W-pad,pad+fs*0.8,'#ff9a1e',fs*0.6);
-  outlineText((stageIndex+1)+'/'+STAGES.length,W-pad,pad+fs*1.72,'#ffffff',fs*0.84);
+  const secs=Math.max(0,Math.floor(timeLeft)), hund=Math.max(0,Math.floor((timeLeft-secs)*100));
   const kmh=Math.round((speed/MAX_SPEED)*293);
-  outlineText(kmh+' km/h',W-pad,pad+fs*2.46,kmh>240?'#ff7a4a':'#7dff7a',fs*0.62);
-  // ---- thin speed bar along the very bottom edge (clear of touch pads) ----
-  const by=H-Math.max(3,Math.round(H*0.008));
-  ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,by,W,H-by);
-  ctx.fillStyle=kmh>240?'#ff7a4a':'#5dff7a'; ctx.fillRect(0,by,W*(speed/MAX_SPEED),H-by);
+  // ---- left column: TIME + SPEED ----
+  boxStat('TIME',`${secs}:${hund.toString().padStart(2,'0')}`,timeLeft<10?'#ff5a5a':'#7fe9ff',pad,pad+fs*0.95,bw,bh,fs);
+  boxStat('SPEED',`${kmh} KM/H`,kmh>240?'#ff8a5a':'#86f08a',pad,row2,bw,bh*0.92,fs*0.92);
+  // ---- right column: STAGE + SCORE ----
+  const rx=W-pad-bw;
+  ctx.textAlign='right'; outlineText('STAGE',W-pad-fs*0.12,pad+fs*0.79,'#ffb01e',fs*0.6);
+  hudBox(rx,pad+fs*0.95,bw,bh);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  outlineText(`${stageIndex+1}`,rx+bw/2,pad+fs*0.95+bh*0.56,'#ffffff',fs*0.86); ctx.textBaseline='alphabetic';
+  ctx.textAlign='right'; outlineText('SCORE',W-pad-fs*0.12,row2-fs*0.16,'#ffb01e',fs*0.6);
+  hudBox(rx,row2,bw,bh*0.92);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  outlineText(Math.floor(score).toString().padStart(6,'0'),rx+bw/2,row2+bh*0.92*0.56,'#ffffff',fs*0.78); ctx.textBaseline='alphabetic';
+  // ---- centre title ----
+  ctx.textAlign='center';
+  outlineText('OUTRUN ME',W/2,pad+fs*1.0,'#ffae1e',fs*0.96);
+  outlineText("AMBER'S SL",W/2,pad+fs*1.92,'#5fd9ff',fs*0.7);
   // ---- stage-intro banner ----
   if(stageBannerT>0){ const a=Math.min(1,stageBannerT*1.4); ctx.globalAlpha=a;
     ctx.textAlign='center';
-    outlineText('STAGE '+(stageIndex+1),W/2,H*0.40,'#bfe9ff',fs*1.2);
-    outlineText(st.name,W/2,H*0.40+fs*1.6,'#ffffff',fs*1.5); ctx.globalAlpha=1; }
+    outlineText('STAGE '+(stageIndex+1),W/2,H*0.42,'#bfe9ff',fs*1.2);
+    outlineText(st.name,W/2,H*0.42+fs*1.6,'#ffffff',fs*1.5); ctx.globalAlpha=1; }
 }
 
 /* ------------------------------- audio ---------------------------------- */
