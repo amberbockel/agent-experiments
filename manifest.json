@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-05",
+      "slug": "2026-06-05",
+      "title": "Brain Dump → Action",
+      "category": "productivity",
+      "oneLiner": "Convert messy thoughts into sorted next-actions fast — type everything on your mind, then auto-sort into do-now, do-later, delegate, or drop.",
+      "path": "apps/2026-06-05/"
+    },
+    {
       "date": "2026-06-04",
       "slug": "outrun-me",
       "title": "OUTRUN ME — Amber's SL",

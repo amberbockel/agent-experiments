@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Brain Dump → Action</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --do-now: #34C759;
+      --do-later: #FF9500;
+      --delegate: #5856D6;
+      --drop: #8E8E93;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+        --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+      font-size: 17px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .dump-zone {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: inherit;
+      font-size: 17px;
+      color: var(--text);
+      background: var(--bg);
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    textarea::placeholder {
+      color: var(--text-secondary);
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+
+    button:active {
+      opacity: 0.8;
+    }
+
+    .buckets {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .buckets {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .buckets {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .bucket {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-height: 200px;
+    }
+
+    .bucket-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bucket-icon {
+      font-size: 20px;
+    }
+
+    .bucket-title {
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .bucket-count {
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .bucket[data-type="do-now"] .bucket-icon { color: var(--do-now); }
+    .bucket[data-type="do-later"] .bucket-icon { color: var(--do-later); }
+    .bucket[data-type="delegate"] .bucket-icon { color: var(--delegate); }
+    .bucket[data-type="drop"] .bucket-icon { color: var(--drop); }
+
+    .item {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: move;
+      font-size: 15px;
+      line-height: 1.4;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .item.dragging {
+      opacity: 0.4;
+    }
+
+    .item.drag-over {
+      border-color: var(--accent);
+    }
+
+    .item-checkbox {
+      margin-top: 2px;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .item-text {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .item.done .item-text {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .empty-state {
+      color: var(--text-secondary);
+      font-size: 15px;
+      text-align: center;
+      padding: 32px 16px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .actions button {
+      flex: 1;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 40px;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Brain Dump → Action</h1>
+    <p class="subtitle">Convert messy thoughts into sorted next-actions</p>
+  </header>
+
+  <div class="dump-zone">
+    <textarea 
+      id="dumpInput" 
+      placeholder="Type everything on your mind, one item per line...&#10;&#10;• Email Sarah about the workshop&#10;• Buy groceries&#10;• Maybe start a podcast?&#10;• Cancel that subscription I never use"
+    ></textarea>
+    <button id="sortBtn">Sort into Actions</button>
+  </div>
+
+  <div class="buckets">
+    <div class="bucket" data-type="do-now">
+      <div class="bucket-header">
+        <span class="bucket-icon">✅</span>
+        <span class="bucket-title">Do Now</span>
+        <span class="bucket-count" data-count="do-now">0</span>
+      </div>
+      <div class="bucket-items" id="do-now"></div>
+    </div>
+
+    <div class="bucket" data-type="do-later">
+      <div class="bucket-header">
+        <span class="bucket-icon">📅</span>
+        <span class="bucket-title">Do Later</span>
+        <span class="bucket-count" data-count="do-later">0</span>
+      </div>
+      <div class="bucket-items" id="do-later"></div>
+    </div>
+
+    <div class="bucket" data-type="delegate">
+      <div class="bucket-header">
+        <span class="bucket-icon">🤝</span>
+        <span class="bucket-title">Delegate</span>
+        <span class="bucket-count" data-count="delegate">0</span>
+      </div>
+      <div class="bucket-items" id="delegate"></div>
+    </div>
+
+    <div class="bucket" data-type="drop">
+      <div class="bucket-header">
+        <span class="bucket-icon">🗑️</span>
+        <span class="bucket-title">Drop</span>
+        <span class="bucket-count" data-count="drop">0</span>
+      </div>
+      <div class="bucket-items" id="drop"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="clearDoneBtn">Clear Done</button>
+    <button id="clearAllBtn">Clear All</button>
+  </div>
+
+  <footer>
+    Built by Ada · 2026-06-05
+  </footer>
+
+  <script>
+    const dumpInput = document.getElementById('dumpInput');
+    const sortBtn = document.getElementById('sortBtn');
+    const clearDoneBtn = document.getElementById('clearDoneBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const buckets = {
+      'do-now': document.getElementById('do-now'),
+      'do-later': document.getElementById('do-later'),
+      'delegate': document.getElementById('delegate'),
+      'drop': document.getElementById('drop')
+    };
+
+    let items = [];
+    let draggedItem = null;
+
+    // Load from localStorage
+    function loadState() {
+      const saved = localStorage.getItem('brainDumpItems');
+      if (saved) {
+        items = JSON.parse(saved);
+        renderAllBuckets();
+      }
+    }
+
+    // Save to localStorage
+    function saveState() {
+      localStorage.setItem('brainDumpItems', JSON.stringify(items));
+    }
+
+    // Categorize a single line of text
+    function categorize(text) {
+      const lower = text.toLowerCase();
+      
+      // Do Now: urgent keywords or short actionable items
+      if (/\b(urgent|asap|today|now|immediately|tonight)\b/.test(lower) || 
+          (text.length < 50 && /\b(email|call|text|send|buy|pay|submit)\b/.test(lower))) {
+        return 'do-now';
+      }
+      
+      // Delegate: mentions asking/telling someone
+      if (/\b(ask|tell|delegate|assign|forward|remind|cc)\b/.test(lower)) {
+        return 'delegate';
+      }
+      
+      // Drop: negative or dismissive language
+      if (/\b(delete|cancel|nevermind|forget|drop|ignore|waste)\b/.test(lower) ||
+          /\b(worry|anxious|stressed)\b/.test(lower)) {
+        return 'drop';
+      }
+      
+      // Do Later: future-oriented or maybe language
+      if (/\b(later|someday|maybe|eventually|consider|think about|next week|next month)\b/.test(lower)) {
+        return 'do-later';
+      }
+      
+      // Default: do-later for anything unclear
+      return 'do-later';
+    }
+
+    // Sort button handler
+    sortBtn.addEventListener('click', () => {
+      const lines = dumpInput.value
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('•'))
+        .map(l => l.replace(/^[•\-\*]\s*/, ''));
+      
+      if (lines.length === 0) return;
+      
+      lines.forEach(text => {
+        const category = categorize(text);
+        items.push({
+          id: Date.now() + Math.random(),
+          text,
+          category,
+          done: false
+        });
+      });
+      
+      dumpInput.value = '';
+      saveState();
+      renderAllBuckets();
+    });
+
+    // Render all buckets
+    function renderAllBuckets() {
+      Object.keys(buckets).forEach(type => {
+        renderBucket(type);
+      });
+      updateCounts();
+    }
+
+    // Render a single bucket
+    function renderBucket(type) {
+      const container = buckets[type];
+      const bucketItems = items.filter(item => item.category === type);
+      
+      if (bucketItems.length === 0) {
+        container.innerHTML = '<div class="empty-state">No items yet</div>';
+        return;
+      }
+      
+      container.innerHTML = bucketItems.map(item => `
+        <div class="item ${item.done ? 'done' : ''}" draggable="true" data-id="${item.id}">
+          <input type="checkbox" class="item-checkbox" ${item.done ? 'checked' : ''}>
+          <div class="item-text">${escapeHtml(item.text)}</div>
+        </div>
+      `).join('');
+      
+      // Attach event listeners
+      container.querySelectorAll('.item').forEach(el => {
+        const itemId = parseFloat(el.dataset.id);
+        
+        // Drag events
+        el.addEventListener('dragstart', handleDragStart);
+        el.addEventListener('dragend', handleDragEnd);
+        el.addEventListener('dragover', handleDragOver);
+        el.addEventListener('drop', handleDrop);
+        
+        // Checkbox
+        el.querySelector('.item-checkbox').addEventListener('change', (e) => {
+          const item = items.find(i => i.id === itemId);
+          if (item) {
+            item.done = e.target.checked;
+            saveState();
+            renderAllBuckets();
+          }
+        });
+      });
+    }
+
+    // Drag handlers
+    function handleDragStart(e) {
+      draggedItem = parseFloat(this.dataset.id);
+      this.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      const targetItem = e.target.closest('.item');
+      if (targetItem && targetItem.dataset.id !== String(draggedItem)) {
+        targetItem.classList.add('drag-over');
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetBucket = e.target.closest('.bucket');
+      if (!targetBucket || !draggedItem) return;
+      
+      const newCategory = targetBucket.dataset.type;
+      const item = items.find(i => i.id === draggedItem);
+      
+      if (item && item.category !== newCategory) {
+        item.category = newCategory;
+        saveState();
+        renderAllBuckets();
+      }
+    }
+
+    // Allow dropping on bucket itself
+    document.querySelectorAll('.bucket').forEach(bucket => {
+      bucket.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+      
+      bucket.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const newCategory = bucket.dataset.type;
+        const item = items.find(i => i.id === draggedItem);
+        
+        if (item && item.category !== newCategory) {
+          item.category = newCategory;
+          saveState();
+          renderAllBuckets();
+        }
+      });
+    });
+
+    // Update counts
+    function updateCounts() {
+      Object.keys(buckets).forEach(type => {
+        const count = items.filter(item => item.category === type).length;
+        document.querySelector(`[data-count="${type}"]`).textContent = count;
+      });
+    }
+
+    // Clear done items
+    clearDoneBtn.addEventListener('click', () => {
+      if (!confirm('Clear all completed items?')) return;
+      items = items.filter(item => !item.done);
+      saveState();
+      renderAllBuckets();
+    });
+
+    // Clear all items
+    clearAllBtn.addEventListener('click', () => {
+      if (!confirm('Clear everything?')) return;
+      items = [];
+      saveState();
+      renderAllBuckets();
+    });
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Initialize
+    loadState();
+  </script>
+</body>
+</html>
