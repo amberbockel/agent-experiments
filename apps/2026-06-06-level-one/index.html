@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Level One</title>
+<style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: #0A0E27;
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  touch-action: none;
+  overflow: hidden;
+}
+#game {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+  aspect-ratio: 1;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.stat {
+  background: rgba(10,14,39,0.8);
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #00FFB3;
+  text-shadow: 0 0 8px rgba(0,255,179,0.5);
+  font-variant-numeric: tabular-nums;
+}
+.controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 12px;
+}
+.btn {
+  flex: 1;
+  padding: 16px;
+  background: rgba(0,255,179,0.1);
+  border: 2px solid #00FFB3;
+  border-radius: 12px;
+  color: #00FFB3;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.btn:active {
+  background: rgba(0,255,179,0.2);
+  transform: scale(0.95);
+}
+.win {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10,14,39,0.95);
+  backdrop-filter: blur(20px);
+  padding: 32px;
+  border-radius: 20px;
+  text-align: center;
+  animation: popIn 0.3s ease;
+  border: 2px solid #00FFB3;
+  box-shadow: 0 0 32px rgba(0,255,179,0.3);
+}
+@keyframes popIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.win h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+  color: #00FFB3;
+  text-shadow: 0 0 16px rgba(0,255,179,0.5);
+}
+.win p {
+  font-size: 16px;
+  margin-bottom: 24px;
+  color: #8899AA;
+}
+.hidden {
+  display: none !important;
+}
+</style>
+</head>
+<body>
+
+<div id="game">
+  <canvas id="canvas"></canvas>
+  
+  <div class="hud">
+    <div class="stat">Level <span id="level">1</span></div>
+    <div class="stat"><span id="score">0</span>%</div>
+  </div>
+  
+  <div class="controls">
+    <button class="btn" id="clearBtn">Clear</button>
+    <button class="btn" id="nextBtn" style="display:none;">Next Level</button>
+  </div>
+  
+  <div class="win hidden" id="winScreen">
+    <h2>Level Complete!</h2>
+    <p id="winMessage"></p>
+    <button class="btn" id="continueBtn">Continue</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Game state
+let gridSize = 8;
+let cellSize = 0;
+let particles = [];
+let blockers = [];
+let sources = [];
+let targets = [];
+let level = 1;
+let score = 0;
+let isWon = false;
+
+// Physics constants
+const PARTICLE_SPEED = 2;
+const PARTICLE_SIZE = 4;
+const GRAVITY = 0.3;
+const BOUNCE = 0.7;
+
+// Initialize canvas
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth, window.innerHeight, 480);
+  canvas.width = size;
+  canvas.height = size;
+  cellSize = canvas.width / gridSize;
+}
+
+// Particle class
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = Math.random() * 2;
+    this.life = 1;
+    this.captured = false;
+  }
+  
+  update() {
+    if (this.captured) return;
+    
+    // Apply gravity
+    this.vy += GRAVITY;
+    
+    // Move
+    this.x += this.vx;
+    this.y += this.vy;
+    
+    // Bounce off walls
+    if (this.x < PARTICLE_SIZE || this.x > canvas.width - PARTICLE_SIZE) {
+      this.vx *= -BOUNCE;
+      this.x = Math.max(PARTICLE_SIZE, Math.min(canvas.width - PARTICLE_SIZE, this.x));
+    }
+    if (this.y < PARTICLE_SIZE || this.y > canvas.height - PARTICLE_SIZE) {
+      this.vy *= -BOUNCE;
+      this.y = Math.max(PARTICLE_SIZE, Math.min(canvas.height - PARTICLE_SIZE, this.y));
+    }
+    
+    // Check blockers
+    blockers.forEach(b => {
+      const bx = b.col * cellSize + cellSize / 2;
+      const by = b.row * cellSize + cellSize / 2;
+      const dist = Math.hypot(this.x - bx, this.y - by);
+      
+      if (dist < cellSize / 2 + PARTICLE_SIZE) {
+        // Bounce off blocker
+        const angle = Math.atan2(this.y - by, this.x - bx);
+        this.vx = Math.cos(angle) * 3;
+        this.vy = Math.sin(angle) * 3;
+      }
+    });
+    
+    // Check targets
+    targets.forEach(t => {
+      const tx = t.col * cellSize + cellSize / 2;
+      const ty = t.row * cellSize + cellSize / 2;
+      const dist = Math.hypot(this.x - tx, this.y - ty);
+      
+      if (dist < cellSize / 2) {
+        this.captured = true;
+        t.filled++;
+      }
+    });
+    
+    // Fade out
+    this.life -= 0.003;
+  }
+  
+  draw() {
+    if (this.life <= 0) return;
+    
+    ctx.fillStyle = this.captured 
+      ? `rgba(0,255,179,${this.life})`
+      : `rgba(100,200,255,${this.life})`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.captured ? '#00FFB3' : '#64C8FF';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, PARTICLE_SIZE, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+// Level configurations
+const levels = [
+  {
+    sources: [{row: 0, col: 4}],
+    targets: [{row: 7, col: 4, capacity: 10}],
+    blockers: 3
+  },
+  {
+    sources: [{row: 0, col: 2}, {row: 0, col: 6}],
+    targets: [{row: 7, col: 4, capacity: 15}],
+    blockers: 4
+  },
+  {
+    sources: [{row: 0, col: 4}],
+    targets: [{row: 7, col: 1, capacity: 8}, {row: 7, col: 6, capacity: 8}],
+    blockers: 5
+  },
+  {
+    sources: [{row: 1, col: 1}, {row: 1, col: 6}],
+    targets: [{row: 6, col: 3, capacity: 10}, {row: 6, col: 4, capacity: 10}],
+    blockers: 6
+  },
+  {
+    sources: [{row: 0, col: 0}, {row: 0, col: 7}],
+    targets: [{row: 7, col: 3, capacity: 8}, {row: 7, col: 4, capacity: 8}],
+    blockers: 7
+  }
+];
+
+// Load level
+function loadLevel(n) {
+  isWon = false;
+  particles = [];
+  blockers = [];
+  
+  const config = levels[(n - 1) % levels.length];
+  sources = config.sources.map(s => ({...s}));
+  targets = config.targets.map(t => ({...t, filled: 0}));
+  
+  document.getElementById('level').textContent = n;
+  document.getElementById('winScreen').classList.add('hidden');
+  document.getElementById('nextBtn').style.display = 'none';
+}
+
+// Spawn particles
+let spawnTimer = 0;
+function spawnParticles() {
+  spawnTimer++;
+  if (spawnTimer % 10 === 0) {
+    sources.forEach(s => {
+      const x = s.col * cellSize + cellSize / 2;
+      const y = s.row * cellSize + cellSize / 2;
+      particles.push(new Particle(x, y));
+    });
+  }
+}
+
+// Draw grid
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridSize; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * cellSize, 0);
+    ctx.lineTo(i * cellSize, canvas.height);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(0, i * cellSize);
+    ctx.lineTo(canvas.width, i * cellSize);
+    ctx.stroke();
+  }
+}
+
+// Draw sources
+function drawSources() {
+  sources.forEach(s => {
+    const x = s.col * cellSize + cellSize / 2;
+    const y = s.row * cellSize + cellSize / 2;
+    
+    ctx.fillStyle = 'rgba(100,200,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(x, y, cellSize / 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#64C8FF';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+}
+
+// Draw targets
+function drawTargets() {
+  targets.forEach(t => {
+    const x = t.col * cellSize + cellSize / 2;
+    const y = t.row * cellSize + cellSize / 2;
+    const progress = t.filled / t.capacity;
+    
+    ctx.fillStyle = progress >= 1 
+      ? 'rgba(0,255,179,0.3)' 
+      : 'rgba(255,100,100,0.2)';
+    ctx.beginPath();
+    ctx.arc(x, y, cellSize / 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = progress >= 1 ? '#00FFB3' : '#FF6464';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Progress arc
+    if (progress > 0 && progress < 1) {
+      ctx.strokeStyle = '#00FFB3';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(x, y, cellSize / 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+      ctx.stroke();
+    }
+    
+    // Capacity text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${Math.min(t.filled, t.capacity)}/${t.capacity}`, x, y);
+  });
+}
+
+// Draw blockers
+function drawBlockers() {
+  blockers.forEach(b => {
+    const x = b.col * cellSize + cellSize / 2;
+    const y = b.row * cellSize + cellSize / 2;
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(x, y, cellSize / 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+
+// Update score
+function updateScore() {
+  const totalCapacity = targets.reduce((sum, t) => sum + t.capacity, 0);
+  const totalFilled = targets.reduce((sum, t) => sum + Math.min(t.filled, t.capacity), 0);
+  score = Math.round((totalFilled / totalCapacity) * 100);
+  document.getElementById('score').textContent = score;
+  
+  // Check win
+  if (score >= 100 && !isWon) {
+    isWon = true;
+    showWin();
+  }
+}
+
+// Show win screen
+function showWin() {
+  const config = levels[(level - 1) % levels.length];
+  document.getElementById('winMessage').textContent = 
+    `You redirected all particles using ${blockers.length}/${config.blockers} blockers!`;
+  document.getElementById('winScreen').classList.remove('hidden');
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+// Handle tap
+canvas.addEventListener('click', (e) => {
+  if (isWon) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  
+  const col = Math.floor(x / cellSize);
+  const row = Math.floor(y / cellSize);
+  
+  // Check if cell is occupied
+  const isSource = sources.some(s => s.row === row && s.col === col);
+  const isTarget = targets.some(t => t.row === row && t.col === col);
+  const isBlocker = blockers.some(b => b.row === row && b.col === col);
+  
+  if (isSource || isTarget) return;
+  
+  if (isBlocker) {
+    // Remove blocker
+    blockers = blockers.filter(b => !(b.row === row && b.col === col));
+  } else {
+    // Add blocker (if under limit)
+    const config = levels[(level - 1) % levels.length];
+    if (blockers.length < config.blockers) {
+      blockers.push({row, col});
+    }
+  }
+});
+
+// Clear blockers
+document.getElementById('clearBtn').addEventListener('click', () => {
+  blockers = [];
+  particles = [];
+  targets.forEach(t => t.filled = 0);
+});
+
+// Next level
+function nextLevel() {
+  level++;
+  loadLevel(level);
+}
+
+document.getElementById('nextBtn').addEventListener('click', nextLevel);
+document.getElementById('continueBtn').addEventListener('click', nextLevel);
+
+// Game loop
+function gameLoop() {
+  // Clear
+  ctx.fillStyle = '#0A0E27';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw
+  drawGrid();
+  drawSources();
+  drawTargets();
+  drawBlockers();
+  
+  // Update particles
+  spawnParticles();
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+  
+  // Update score
+  updateScore();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+// Initialize
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+loadLevel(1);
+gameLoop();
+</script>
+
+</body>
+</html>
