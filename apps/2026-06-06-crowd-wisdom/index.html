@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Crowd Wisdom</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -15,27 +22,30 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  touch-action: manipulation;
+  padding-top: max(env(safe-area-inset-top), 20px);
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  touch-action: pan-y;
+  overflow-x: hidden;
 }
 .container {
   width: 100%;
   max-width: 480px;
-  padding: 20px;
+  padding: 0 20px 20px;
 }
 header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   color: white;
+  padding-top: 20px;
 }
 h1 {
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 700;
   margin-bottom: 8px;
   text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .subtitle {
-  font-size: 17px;
+  font-size: 16px;
   opacity: 0.9;
   font-weight: 400;
 }
@@ -46,77 +56,101 @@ h1 {
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   margin-bottom: 16px;
 }
-.question {
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin-bottom: 24px;
+.instructions {
+  background: rgba(255,255,255,0.95);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  line-height: 1.5;
   color: #1C1C1E;
 }
+.instructions h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #667eea;
+}
+.instructions ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+.instructions li {
+  margin-bottom: 8px;
+}
+.instructions .tip {
+  background: #F2F2F7;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+.question {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 24px;
+  color: #1C1C1E;
+  text-align: center;
+}
 .guess-input {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 24px;
 }
+.input-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
+}
 input[type="number"] {
-  flex: 1;
-  font-size: 28px;
+  width: 100%;
+  font-size: 32px;
   font-weight: 700;
-  padding: 16px;
-  border: 2px solid #E5E5EA;
-  border-radius: 12px;
+  padding: 20px;
+  border: 3px solid #E5E5EA;
+  border-radius: 16px;
   text-align: center;
-  -webkit-appearance: none;
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
   font-variant-numeric: tabular-nums;
+  background: #F9F9FB;
+  transition: all 0.2s;
 }
 input[type="number"]:focus {
   outline: none;
   border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .confidence {
   margin-bottom: 24px;
 }
-.confidence-label {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 12px;
+.confidence-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.confidence-label {
+  font-size: 14px;
+  font-weight: 600;
   color: #666;
 }
 .confidence-value {
+  font-size: 20px;
+  font-weight: 700;
   color: #667eea;
-  font-size: 17px;
 }
-.slider-container {
+.slider-wrapper {
   position: relative;
-  height: 48px;
-  background: #F2F2F7;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  margin-bottom: 8px;
-}
-.slider-track {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  height: 6px;
-  background: #E5E5EA;
-  border-radius: 3px;
-  pointer-events: none;
-}
-.slider-fill {
-  position: absolute;
-  left: 12px;
-  height: 6px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 3px;
-  pointer-events: none;
-  transition: width 0.1s ease;
+  padding: 20px 0;
 }
 input[type="range"] {
   width: 100%;
@@ -128,76 +162,98 @@ input[type="range"] {
   position: relative;
   z-index: 2;
 }
+input[type="range"]::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, #E5E5EA 0%, #667eea 100%);
+  border-radius: 4px;
+}
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   cursor: pointer;
-  border: 3px solid #667eea;
+  border: 4px solid #667eea;
+  margin-top: -16px;
+}
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, #E5E5EA 0%, #667eea 100%);
+  border-radius: 4px;
 }
 input[type="range"]::-moz-range-thumb {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   cursor: pointer;
-  border: 3px solid #667eea;
+  border: 4px solid #667eea;
 }
 .slider-labels {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   color: #999;
-  padding: 0 4px;
+  padding: 8px 4px 0;
 }
 button {
   width: 100%;
-  padding: 18px;
-  font-size: 17px;
-  font-weight: 600;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 700;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .btn-primary {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  box-shadow: 0 4px 16px rgba(102,126,234,0.3);
+  box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+  font-size: 19px;
 }
 .btn-primary:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  box-shadow: 0 3px 12px rgba(102,126,234,0.3);
 }
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 .btn-secondary {
   background: #F2F2F7;
   color: #667eea;
   font-weight: 600;
   margin-top: 12px;
+  font-size: 17px;
 }
 .btn-secondary:active {
   background: #E5E5EA;
 }
 .result {
   text-align: center;
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.4s ease;
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .result-emoji {
-  font-size: 64px;
+  font-size: 72px;
   margin-bottom: 16px;
+  animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 .result-title {
   font-size: 28px;
@@ -206,132 +262,135 @@ button {
   color: #1C1C1E;
 }
 .result-subtitle {
-  font-size: 17px;
+  font-size: 16px;
   color: #666;
   margin-bottom: 24px;
 }
 .answer-reveal {
-  background: #F2F2F7;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+  background: #F9F9FB;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
 }
 .answer-label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   color: #999;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 .answer-value {
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 700;
   color: #667eea;
   font-variant-numeric: tabular-nums;
+  margin-bottom: 16px;
 }
-.your-guess {
+.stats-row {
   display: flex;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: 14px 0;
   border-top: 1px solid #E5E5EA;
 }
-.guess-label {
+.stat-label {
   font-size: 15px;
   color: #666;
+  font-weight: 500;
 }
-.guess-value {
+.stat-value {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1C1C1E;
   font-variant-numeric: tabular-nums;
 }
 .points-earned {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 20px;
+  border-radius: 16px;
   text-align: center;
   margin-bottom: 24px;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
+  box-shadow: 0 6px 20px rgba(102,126,234,0.3);
 }
 .score {
   position: fixed;
-  top: calc(env(safe-area-inset-top) + 20px);
+  top: calc(env(safe-area-inset-top) + 16px);
   right: 20px;
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 12px 20px;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 700;
   color: #667eea;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  z-index: 100;
   font-variant-numeric: tabular-nums;
 }
 .distribution {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #E5E5EA;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #E5E5EA;
 }
 .distribution-title {
   font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-weight: 700;
+  margin-bottom: 16px;
   color: #666;
 }
 .distribution-bar {
-  height: 80px;
+  height: 100px;
   background: #F2F2F7;
-  border-radius: 8px;
+  border-radius: 12px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 8px;
+}
+.marker {
+  position: absolute;
+  width: 3px;
+  height: 100%;
+  top: 0;
+  transition: left 0.4s ease;
 }
 .crowd-marker {
-  position: absolute;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, #667eea, #764ba2);
-  top: 0;
-  transition: left 0.3s ease;
-}
-.crowd-label {
-  position: absolute;
-  bottom: 4px;
-  transform: translateX(-50%);
-  font-size: 11px;
-  font-weight: 600;
-  color: #667eea;
-  background: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  background: #667eea;
 }
 .you-marker {
-  position: absolute;
-  width: 4px;
-  height: 100%;
   background: #FF3B30;
-  top: 0;
-  transition: left 0.3s ease;
 }
-.you-label {
+.marker-label {
   position: absolute;
-  top: 4px;
+  bottom: -24px;
   transform: translateX(-50%);
   font-size: 11px;
-  font-weight: 600;
-  color: #FF3B30;
-  background: white;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-.hidden { display: none; }
+.crowd-label {
+  background: #667eea;
+  color: white;
+}
+.you-label {
+  background: #FF3B30;
+  color: white;
+}
+.hidden { 
+  display: none !important;
+}
+@media (max-width: 360px) {
+  h1 { font-size: 28px; }
+  .question { font-size: 18px; }
+  input[type="number"] { font-size: 28px; padding: 16px; }
+  .answer-value { font-size: 36px; }
+}
 </style>
 </head>
 <body>
@@ -344,30 +403,51 @@ button {
     <div class="subtitle">Guess the number. Trust your gut.</div>
   </header>
 
+  <div class="instructions" id="instructions">
+    <h3>How to Play</h3>
+    <ol>
+      <li><strong>Read the question</strong> — guess a number</li>
+      <li><strong>Enter your answer</strong> — any number works</li>
+      <li><strong>Set confidence</strong> — how sure are you? (1× wild guess → 5× very sure)</li>
+      <li><strong>Lock it in</strong> — see how close you were!</li>
+    </ol>
+    <div class="tip">
+      💡 <strong>Tip:</strong> Higher confidence = bigger points if you're close, but only 1 point if you're way off!
+    </div>
+  </div>
+
   <div class="card" id="questionCard">
     <div class="question" id="question"></div>
     
     <div class="guess-input">
-      <input type="number" id="guessInput" placeholder="0" inputmode="numeric">
+      <label class="input-label" for="guessInput">Your Guess</label>
+      <input 
+        type="number" 
+        id="guessInput" 
+        placeholder="0"
+        inputmode="decimal"
+        pattern="[0-9]*"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
     </div>
 
     <div class="confidence">
-      <div class="confidence-label">
-        <span>How confident?</span>
-        <span class="confidence-value" id="confidenceValue">3</span>
+      <div class="confidence-header">
+        <span class="confidence-label">Confidence Level</span>
+        <span class="confidence-value"><span id="confidenceValue">3</span>×</span>
       </div>
-      <div class="slider-container">
-        <div class="slider-track"></div>
-        <div class="slider-fill" id="sliderFill"></div>
+      <div class="slider-wrapper">
         <input type="range" id="confidenceSlider" min="1" max="5" value="3" step="1">
       </div>
       <div class="slider-labels">
         <span>Wild Guess</span>
-        <span>Pretty Sure</span>
+        <span>Very Sure</span>
       </div>
     </div>
 
-    <button class="btn-primary" id="submitBtn" onclick="submitGuess()">Lock It In</button>
+    <button class="btn-primary" id="submitBtn">Lock It In</button>
   </div>
 
   <div class="card hidden" id="resultCard">
@@ -377,86 +457,105 @@ button {
       <div class="result-subtitle" id="resultSubtitle"></div>
     </div>
 
+    <div class="points-earned" id="pointsEarned"></div>
+
     <div class="answer-reveal">
       <div class="answer-label">Correct Answer</div>
       <div class="answer-value" id="correctAnswer"></div>
-      <div class="your-guess">
-        <span class="guess-label">Your guess</span>
-        <span class="guess-value" id="yourGuess"></span>
+      <div class="stats-row">
+        <span class="stat-label">Your guess</span>
+        <span class="stat-value" id="yourGuess"></span>
       </div>
-      <div class="your-guess">
-        <span class="guess-label">Confidence</span>
-        <span class="guess-value" id="yourConfidence"></span>
+      <div class="stats-row">
+        <span class="stat-label">Confidence</span>
+        <span class="stat-value" id="yourConfidence"></span>
+      </div>
+      <div class="stats-row">
+        <span class="stat-label">Accuracy</span>
+        <span class="stat-value" id="accuracy"></span>
       </div>
     </div>
-
-    <div class="points-earned" id="pointsEarned"></div>
 
     <div class="distribution">
-      <div class="distribution-title">📊 Where You Landed</div>
+      <div class="distribution-title">📊 How You Did vs. The Crowd</div>
       <div class="distribution-bar">
-        <div class="crowd-marker" id="crowdMarker">
-          <div class="crowd-label">Crowd</div>
+        <div class="marker crowd-marker" id="crowdMarker">
+          <div class="marker-label crowd-label">Crowd</div>
         </div>
-        <div class="you-marker" id="youMarker">
-          <div class="you-label">You</div>
+        <div class="marker you-marker" id="youMarker">
+          <div class="marker-label you-label">You</div>
         </div>
       </div>
     </div>
 
-    <button class="btn-primary" onclick="nextQuestion()">Next Question</button>
-    <button class="btn-secondary" onclick="viewStats()">View Stats</button>
+    <button class="btn-primary" id="nextBtn">Next Question</button>
+    <button class="btn-secondary" id="statsBtn">View Stats</button>
   </div>
 </div>
 
 <script>
 const questions = [
   { q: "How many M&M's fit in a 1-liter jar?", a: 3500, min: 1000, max: 8000, crowd: 3200 },
-  { q: "Average cost of a wedding in the US?", a: 30000, min: 10000, max: 80000, crowd: 28000 },
+  { q: "Average cost of a wedding in the US (dollars)?", a: 30000, min: 10000, max: 80000, crowd: 28000 },
   { q: "How many songs are on Spotify?", a: 100000000, min: 10000000, max: 500000000, crowd: 75000000 },
-  { q: "Miles from NYC to LA?", a: 2789, min: 1500, max: 4000, crowd: 2900 },
+  { q: "Distance from NYC to LA (miles)?", a: 2789, min: 1500, max: 4000, crowd: 2900 },
   { q: "Number of bones in the human body?", a: 206, min: 100, max: 400, crowd: 220 },
-  { q: "Average price of a gallon of milk in 2024?", a: 4, min: 2, max: 8, crowd: 4 },
-  { q: "How many minutes does the average person spend on their phone daily?", a: 262, min: 60, max: 600, crowd: 240 },
-  { q: "Weight of a blue whale in pounds?", a: 300000, min: 50000, max: 800000, crowd: 250000 },
+  { q: "Average price of a gallon of milk (dollars)?", a: 4, min: 2, max: 8, crowd: 4 },
+  { q: "Average daily phone screen time (minutes)?", a: 262, min: 60, max: 600, crowd: 240 },
+  { q: "Weight of a blue whale (pounds)?", a: 300000, min: 50000, max: 800000, crowd: 250000 },
   { q: "Number of countries in the world?", a: 195, min: 100, max: 300, crowd: 200 },
-  { q: "How many episodes of The Simpsons have aired?", a: 750, min: 300, max: 1000, crowd: 700 },
+  { q: "How many episodes of The Simpsons?", a: 750, min: 300, max: 1000, crowd: 700 },
   { q: "Average lifespan of a housefly (days)?", a: 28, min: 7, max: 60, crowd: 30 },
   { q: "Year the first iPhone was released?", a: 2007, min: 2000, max: 2015, crowd: 2008 },
   { q: "How many teeth does an adult human have?", a: 32, min: 20, max: 40, crowd: 32 },
-  { q: "Height of the Eiffel Tower in feet?", a: 1083, min: 500, max: 1500, crowd: 1000 },
+  { q: "Height of the Eiffel Tower (feet)?", a: 1083, min: 500, max: 1500, crowd: 1000 },
   { q: "How many keys on a standard piano?", a: 88, min: 60, max: 120, crowd: 88 },
   { q: "Speed of light (miles per second)?", a: 186000, min: 100000, max: 300000, crowd: 180000 },
   { q: "Number of time zones in Russia?", a: 11, min: 5, max: 15, crowd: 9 },
   { q: "Population of Tokyo metro area?", a: 37000000, min: 10000000, max: 50000000, crowd: 35000000 },
   { q: "How many squares on a chessboard?", a: 64, min: 32, max: 100, crowd: 64 },
-  { q: "Average temperature of human body (°F)?", a: 98.6, min: 95, max: 102, crowd: 98 }
+  { q: "Average human body temperature (°F)?", a: 98.6, min: 95, max: 102, crowd: 98 }
 ];
 
 let currentQuestion = null;
 let currentIndex = 0;
 let usedQuestions = [];
 let totalScore = 0;
+let questionsAnswered = 0;
 
+// Load score from localStorage
 function loadScore() {
   const saved = localStorage.getItem('crowdWisdomScore');
-  if (saved) totalScore = parseInt(saved);
+  const answered = localStorage.getItem('crowdWisdomAnswered');
+  if (saved) totalScore = parseInt(saved) || 0;
+  if (answered) questionsAnswered = parseInt(answered) || 0;
   updateScoreDisplay();
 }
 
+// Save score to localStorage
 function saveScore() {
   localStorage.setItem('crowdWisdomScore', totalScore);
+  localStorage.setItem('crowdWisdomAnswered', questionsAnswered);
 }
 
+// Update score display
 function updateScoreDisplay() {
   document.getElementById('score').textContent = `${totalScore} pts`;
 }
 
+// Next question
 function nextQuestion() {
+  // Hide instructions after first question
+  if (questionsAnswered > 0) {
+    document.getElementById('instructions').classList.add('hidden');
+  }
+  
+  // Reset used questions if we've gone through all
   if (usedQuestions.length === questions.length) {
     usedQuestions = [];
   }
   
+  // Pick a random unused question
   let available = questions.filter((q, i) => !usedQuestions.includes(i));
   let pick = available[Math.floor(Math.random() * available.length)];
   currentIndex = questions.indexOf(pick);
@@ -470,28 +569,34 @@ function nextQuestion() {
   
   document.getElementById('questionCard').classList.remove('hidden');
   document.getElementById('resultCard').classList.add('hidden');
+  
+  // Focus on input for better mobile UX
+  setTimeout(() => {
+    document.getElementById('guessInput').focus();
+  }, 100);
 }
 
+// Update confidence display
 function updateConfidenceDisplay() {
   const val = document.getElementById('confidenceSlider').value;
   document.getElementById('confidenceValue').textContent = val;
-  const percent = ((val - 1) / 4) * 100;
-  document.getElementById('sliderFill').style.width = `${percent}%`;
 }
 
-document.getElementById('confidenceSlider').addEventListener('input', updateConfidenceDisplay);
-
+// Submit guess
 function submitGuess() {
-  const guess = parseFloat(document.getElementById('guessInput').value);
+  const guessStr = document.getElementById('guessInput').value.trim();
+  const guess = parseFloat(guessStr);
   const confidence = parseInt(document.getElementById('confidenceSlider').value);
   
-  if (!guess || isNaN(guess)) {
+  if (!guessStr || isNaN(guess) || guess < 0) {
+    alert('Please enter a valid number!');
     document.getElementById('guessInput').focus();
     return;
   }
   
   const answer = currentQuestion.a;
-  const percentOff = Math.abs((guess - answer) / answer);
+  const diff = Math.abs(guess - answer);
+  const percentOff = diff / answer;
   
   let points = 0;
   let emoji = '🎯';
@@ -517,7 +622,7 @@ function submitGuess() {
     points = 2 * confidence;
     emoji = '🤔';
     title = 'Swing and a Miss';
-    subtitle = 'Off by a bit, but you tried.';
+    subtitle = 'Off by quite a bit, but you tried.';
   } else {
     points = 1;
     emoji = '😅';
@@ -526,35 +631,73 @@ function submitGuess() {
   }
   
   totalScore += points;
+  questionsAnswered++;
   saveScore();
   updateScoreDisplay();
   
+  // Display results
   document.getElementById('resultEmoji').textContent = emoji;
   document.getElementById('resultTitle').textContent = title;
   document.getElementById('resultSubtitle').textContent = subtitle;
   document.getElementById('correctAnswer').textContent = answer.toLocaleString();
   document.getElementById('yourGuess').textContent = guess.toLocaleString();
   document.getElementById('yourConfidence').textContent = `${confidence}× multiplier`;
+  
+  const accuracyPercent = Math.max(0, 100 - (percentOff * 100));
+  document.getElementById('accuracy').textContent = `${accuracyPercent.toFixed(1)}%`;
+  
   document.getElementById('pointsEarned').textContent = `+${points} points`;
   
-  // Distribution viz
+  // Distribution visualization
   const min = currentQuestion.min;
   const max = currentQuestion.max;
-  const crowdPos = ((currentQuestion.crowd - min) / (max - min)) * 100;
-  const youPos = ((Math.max(min, Math.min(max, guess)) - min) / (max - min)) * 100;
+  const range = max - min;
+  
+  const crowdPos = ((currentQuestion.crowd - min) / range) * 100;
+  const youPos = ((Math.max(min, Math.min(max, guess)) - min) / range) * 100;
   
   document.getElementById('crowdMarker').style.left = `${crowdPos}%`;
   document.getElementById('youMarker').style.left = `${youPos}%`;
   
+  // Switch views
   document.getElementById('questionCard').classList.add('hidden');
   document.getElementById('resultCard').classList.remove('hidden');
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// View stats
 function viewStats() {
-  const played = usedQuestions.length;
-  alert(`🎯 Your Stats\n\nQuestions answered: ${played}\nTotal score: ${totalScore} pts\nAverage per question: ${played > 0 ? Math.round(totalScore / played) : 0} pts`);
+  const avg = questionsAnswered > 0 ? Math.round(totalScore / questionsAnswered) : 0;
+  alert(`🎯 Your Stats\n\nQuestions answered: ${questionsAnswered}\nTotal score: ${totalScore} pts\nAverage per question: ${avg} pts`);
 }
 
+// Event listeners
+document.getElementById('confidenceSlider').addEventListener('input', updateConfidenceDisplay);
+document.getElementById('submitBtn').addEventListener('click', submitGuess);
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+document.getElementById('statsBtn').addEventListener('click', viewStats);
+
+// Allow Enter key to submit
+document.getElementById('guessInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    submitGuess();
+  }
+});
+
+// Prevent zoom on double-tap for iOS
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
+
+// Initialize
 loadScore();
 nextQuestion();
 </script>
