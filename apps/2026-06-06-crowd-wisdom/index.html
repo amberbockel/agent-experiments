@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Crowd Wisdom</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #1C1C1E;
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+.container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+header {
+  text-align: center;
+  margin-bottom: 32px;
+  color: white;
+}
+h1 {
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.subtitle {
+  font-size: 17px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  margin-bottom: 16px;
+}
+.question {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 24px;
+  color: #1C1C1E;
+}
+.guess-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+input[type="number"] {
+  flex: 1;
+  font-size: 28px;
+  font-weight: 700;
+  padding: 16px;
+  border: 2px solid #E5E5EA;
+  border-radius: 12px;
+  text-align: center;
+  -webkit-appearance: none;
+  appearance: none;
+  font-variant-numeric: tabular-nums;
+}
+input[type="number"]:focus {
+  outline: none;
+  border-color: #667eea;
+}
+.confidence {
+  margin-bottom: 24px;
+}
+.confidence-label {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+}
+.confidence-value {
+  color: #667eea;
+  font-size: 17px;
+}
+.slider-container {
+  position: relative;
+  height: 48px;
+  background: #F2F2F7;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+.slider-track {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 6px;
+  background: #E5E5EA;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.slider-fill {
+  position: absolute;
+  left: 12px;
+  height: 6px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: width 0.1s ease;
+}
+input[type="range"] {
+  width: 100%;
+  height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  border: 3px solid #667eea;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  border: 3px solid #667eea;
+}
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #999;
+  padding: 0 4px;
+}
+button {
+  width: 100%;
+  padding: 18px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 16px rgba(102,126,234,0.3);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: #F2F2F7;
+  color: #667eea;
+  font-weight: 600;
+  margin-top: 12px;
+}
+.btn-secondary:active {
+  background: #E5E5EA;
+}
+.result {
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.result-emoji {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.result-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1C1C1E;
+}
+.result-subtitle {
+  font-size: 17px;
+  color: #666;
+  margin-bottom: 24px;
+}
+.answer-reveal {
+  background: #F2F2F7;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.answer-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  margin-bottom: 4px;
+}
+.answer-value {
+  font-size: 34px;
+  font-weight: 700;
+  color: #667eea;
+  font-variant-numeric: tabular-nums;
+}
+.your-guess {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-top: 1px solid #E5E5EA;
+}
+.guess-label {
+  font-size: 15px;
+  color: #666;
+}
+.guess-value {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1C1C1E;
+  font-variant-numeric: tabular-nums;
+}
+.points-earned {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.score {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 20px);
+  right: 20px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #667eea;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 10;
+  font-variant-numeric: tabular-nums;
+}
+.distribution {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #E5E5EA;
+}
+.distribution-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #666;
+}
+.distribution-bar {
+  height: 80px;
+  background: #F2F2F7;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.crowd-marker {
+  position: absolute;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  top: 0;
+  transition: left 0.3s ease;
+}
+.crowd-label {
+  position: absolute;
+  bottom: 4px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #667eea;
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.you-marker {
+  position: absolute;
+  width: 4px;
+  height: 100%;
+  background: #FF3B30;
+  top: 0;
+  transition: left 0.3s ease;
+}
+.you-label {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #FF3B30;
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="score" id="score">0 pts</div>
+
+<div class="container">
+  <header>
+    <h1>🎯 Crowd Wisdom</h1>
+    <div class="subtitle">Guess the number. Trust your gut.</div>
+  </header>
+
+  <div class="card" id="questionCard">
+    <div class="question" id="question"></div>
+    
+    <div class="guess-input">
+      <input type="number" id="guessInput" placeholder="0" inputmode="numeric">
+    </div>
+
+    <div class="confidence">
+      <div class="confidence-label">
+        <span>How confident?</span>
+        <span class="confidence-value" id="confidenceValue">3</span>
+      </div>
+      <div class="slider-container">
+        <div class="slider-track"></div>
+        <div class="slider-fill" id="sliderFill"></div>
+        <input type="range" id="confidenceSlider" min="1" max="5" value="3" step="1">
+      </div>
+      <div class="slider-labels">
+        <span>Wild Guess</span>
+        <span>Pretty Sure</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitGuess()">Lock It In</button>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <div class="result">
+      <div class="result-emoji" id="resultEmoji">🎯</div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-subtitle" id="resultSubtitle"></div>
+    </div>
+
+    <div class="answer-reveal">
+      <div class="answer-label">Correct Answer</div>
+      <div class="answer-value" id="correctAnswer"></div>
+      <div class="your-guess">
+        <span class="guess-label">Your guess</span>
+        <span class="guess-value" id="yourGuess"></span>
+      </div>
+      <div class="your-guess">
+        <span class="guess-label">Confidence</span>
+        <span class="guess-value" id="yourConfidence"></span>
+      </div>
+    </div>
+
+    <div class="points-earned" id="pointsEarned"></div>
+
+    <div class="distribution">
+      <div class="distribution-title">📊 Where You Landed</div>
+      <div class="distribution-bar">
+        <div class="crowd-marker" id="crowdMarker">
+          <div class="crowd-label">Crowd</div>
+        </div>
+        <div class="you-marker" id="youMarker">
+          <div class="you-label">You</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="nextQuestion()">Next Question</button>
+    <button class="btn-secondary" onclick="viewStats()">View Stats</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  { q: "How many M&M's fit in a 1-liter jar?", a: 3500, min: 1000, max: 8000, crowd: 3200 },
+  { q: "Average cost of a wedding in the US?", a: 30000, min: 10000, max: 80000, crowd: 28000 },
+  { q: "How many songs are on Spotify?", a: 100000000, min: 10000000, max: 500000000, crowd: 75000000 },
+  { q: "Miles from NYC to LA?", a: 2789, min: 1500, max: 4000, crowd: 2900 },
+  { q: "Number of bones in the human body?", a: 206, min: 100, max: 400, crowd: 220 },
+  { q: "Average price of a gallon of milk in 2024?", a: 4, min: 2, max: 8, crowd: 4 },
+  { q: "How many minutes does the average person spend on their phone daily?", a: 262, min: 60, max: 600, crowd: 240 },
+  { q: "Weight of a blue whale in pounds?", a: 300000, min: 50000, max: 800000, crowd: 250000 },
+  { q: "Number of countries in the world?", a: 195, min: 100, max: 300, crowd: 200 },
+  { q: "How many episodes of The Simpsons have aired?", a: 750, min: 300, max: 1000, crowd: 700 },
+  { q: "Average lifespan of a housefly (days)?", a: 28, min: 7, max: 60, crowd: 30 },
+  { q: "Year the first iPhone was released?", a: 2007, min: 2000, max: 2015, crowd: 2008 },
+  { q: "How many teeth does an adult human have?", a: 32, min: 20, max: 40, crowd: 32 },
+  { q: "Height of the Eiffel Tower in feet?", a: 1083, min: 500, max: 1500, crowd: 1000 },
+  { q: "How many keys on a standard piano?", a: 88, min: 60, max: 120, crowd: 88 },
+  { q: "Speed of light (miles per second)?", a: 186000, min: 100000, max: 300000, crowd: 180000 },
+  { q: "Number of time zones in Russia?", a: 11, min: 5, max: 15, crowd: 9 },
+  { q: "Population of Tokyo metro area?", a: 37000000, min: 10000000, max: 50000000, crowd: 35000000 },
+  { q: "How many squares on a chessboard?", a: 64, min: 32, max: 100, crowd: 64 },
+  { q: "Average temperature of human body (°F)?", a: 98.6, min: 95, max: 102, crowd: 98 }
+];
+
+let currentQuestion = null;
+let currentIndex = 0;
+let usedQuestions = [];
+let totalScore = 0;
+
+function loadScore() {
+  const saved = localStorage.getItem('crowdWisdomScore');
+  if (saved) totalScore = parseInt(saved);
+  updateScoreDisplay();
+}
+
+function saveScore() {
+  localStorage.setItem('crowdWisdomScore', totalScore);
+}
+
+function updateScoreDisplay() {
+  document.getElementById('score').textContent = `${totalScore} pts`;
+}
+
+function nextQuestion() {
+  if (usedQuestions.length === questions.length) {
+    usedQuestions = [];
+  }
+  
+  let available = questions.filter((q, i) => !usedQuestions.includes(i));
+  let pick = available[Math.floor(Math.random() * available.length)];
+  currentIndex = questions.indexOf(pick);
+  usedQuestions.push(currentIndex);
+  
+  currentQuestion = pick;
+  document.getElementById('question').textContent = pick.q;
+  document.getElementById('guessInput').value = '';
+  document.getElementById('confidenceSlider').value = 3;
+  updateConfidenceDisplay();
+  
+  document.getElementById('questionCard').classList.remove('hidden');
+  document.getElementById('resultCard').classList.add('hidden');
+}
+
+function updateConfidenceDisplay() {
+  const val = document.getElementById('confidenceSlider').value;
+  document.getElementById('confidenceValue').textContent = val;
+  const percent = ((val - 1) / 4) * 100;
+  document.getElementById('sliderFill').style.width = `${percent}%`;
+}
+
+document.getElementById('confidenceSlider').addEventListener('input', updateConfidenceDisplay);
+
+function submitGuess() {
+  const guess = parseFloat(document.getElementById('guessInput').value);
+  const confidence = parseInt(document.getElementById('confidenceSlider').value);
+  
+  if (!guess || isNaN(guess)) {
+    document.getElementById('guessInput').focus();
+    return;
+  }
+  
+  const answer = currentQuestion.a;
+  const percentOff = Math.abs((guess - answer) / answer);
+  
+  let points = 0;
+  let emoji = '🎯';
+  let title = '';
+  let subtitle = '';
+  
+  if (percentOff < 0.05) {
+    points = 10 * confidence;
+    emoji = '🔥';
+    title = 'Dead On!';
+    subtitle = 'Within 5% — incredible guess!';
+  } else if (percentOff < 0.15) {
+    points = 7 * confidence;
+    emoji = '🎯';
+    title = 'Very Close!';
+    subtitle = 'Within 15% — solid instincts.';
+  } else if (percentOff < 0.30) {
+    points = 4 * confidence;
+    emoji = '👍';
+    title = 'Not Bad!';
+    subtitle = 'Within 30% — you're in the ballpark.';
+  } else if (percentOff < 0.50) {
+    points = 2 * confidence;
+    emoji = '🤔';
+    title = 'Swing and a Miss';
+    subtitle = 'Off by a bit, but you tried.';
+  } else {
+    points = 1;
+    emoji = '😅';
+    title = 'Way Off!';
+    subtitle = 'Wild guess — better luck next time.';
+  }
+  
+  totalScore += points;
+  saveScore();
+  updateScoreDisplay();
+  
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSubtitle').textContent = subtitle;
+  document.getElementById('correctAnswer').textContent = answer.toLocaleString();
+  document.getElementById('yourGuess').textContent = guess.toLocaleString();
+  document.getElementById('yourConfidence').textContent = `${confidence}× multiplier`;
+  document.getElementById('pointsEarned').textContent = `+${points} points`;
+  
+  // Distribution viz
+  const min = currentQuestion.min;
+  const max = currentQuestion.max;
+  const crowdPos = ((currentQuestion.crowd - min) / (max - min)) * 100;
+  const youPos = ((Math.max(min, Math.min(max, guess)) - min) / (max - min)) * 100;
+  
+  document.getElementById('crowdMarker').style.left = `${crowdPos}%`;
+  document.getElementById('youMarker').style.left = `${youPos}%`;
+  
+  document.getElementById('questionCard').classList.add('hidden');
+  document.getElementById('resultCard').classList.remove('hidden');
+}
+
+function viewStats() {
+  const played = usedQuestions.length;
+  alert(`🎯 Your Stats\n\nQuestions answered: ${played}\nTotal score: ${totalScore} pts\nAverage per question: ${played > 0 ? Math.round(totalScore / played) : 0} pts`);
+}
+
+loadScore();
+nextQuestion();
+</script>
+
+</body>
+</html>

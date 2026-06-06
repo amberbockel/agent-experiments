@@ -5,6 +5,14 @@
   "apps": [
     {
       "date": "2026-06-06",
+      "slug": "2026-06-06-crowd-wisdom",
+      "title": "Crowd Wisdom",
+      "category": "delightful",
+      "oneLiner": "Guess numerical answers and see how close you are to the crowd — bet your confidence for bonus points in this family-friendly estimation game.",
+      "path": "apps/2026-06-06-crowd-wisdom/"
+    },
+    {
+      "date": "2026-06-06",
       "slug": "2026-06-06",
       "title": "Palette Studio",
       "category": "delightful",
