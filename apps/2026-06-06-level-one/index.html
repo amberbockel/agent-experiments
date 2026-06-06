@@ -129,6 +129,7 @@ canvas {
   
   <div class="hud">
     <div class="stat">Level <span id="level">1</span></div>
+    <div class="stat"><span id="blockerCount">0</span>/<span id="blockerMax">0</span> Blockers</div>
     <div class="stat"><span id="score">0</span>%</div>
   </div>
   
@@ -158,6 +159,7 @@ let targets = [];
 let level = 1;
 let score = 0;
 let isWon = false;
+let hoverCell = null;
 
 // Physics constants
 const PARTICLE_SPEED = 2;
@@ -289,8 +291,15 @@ function loadLevel(n) {
   targets = config.targets.map(t => ({...t, filled: 0}));
   
   document.getElementById('level').textContent = n;
+  document.getElementById('blockerMax').textContent = config.blockers;
   document.getElementById('winScreen').classList.add('hidden');
   document.getElementById('nextBtn').style.display = 'none';
+  updateBlockerCount();
+}
+
+// Update blocker count
+function updateBlockerCount() {
+  document.getElementById('blockerCount').textContent = blockers.length;
 }
 
 // Spawn particles
@@ -378,11 +387,12 @@ function drawTargets() {
 
 // Draw blockers
 function drawBlockers() {
+  // Draw placed blockers
   blockers.forEach(b => {
     const x = b.col * cellSize + cellSize / 2;
     const y = b.row * cellSize + cellSize / 2;
     
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.shadowBlur = 8;
     ctx.shadowColor = 'rgba(255,255,255,0.5)';
     ctx.beginPath();
@@ -390,6 +400,29 @@ function drawBlockers() {
     ctx.fill();
     ctx.shadowBlur = 0;
   });
+  
+  // Draw hover preview
+  if (hoverCell && !isWon) {
+    const {row, col} = hoverCell;
+    const isSource = sources.some(s => s.row === row && s.col === col);
+    const isTarget = targets.some(t => t.row === row && t.col === col);
+    const isBlocker = blockers.some(b => b.row === row && b.col === col);
+    const config = levels[(level - 1) % levels.length];
+    const canPlace = !isSource && !isTarget && !isBlocker && blockers.length < config.blockers;
+    
+    if (canPlace || isBlocker) {
+      const x = col * cellSize + cellSize / 2;
+      const y = row * cellSize + cellSize / 2;
+      
+      ctx.fillStyle = isBlocker ? 'rgba(255,100,100,0.3)' : 'rgba(255,255,255,0.3)';
+      ctx.strokeStyle = isBlocker ? '#FF6464' : 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, cellSize / 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
 }
 
 // Update score
@@ -415,10 +448,51 @@ function showWin() {
   document.getElementById('nextBtn').style.display = 'block';
 }
 
-// Handle tap
-canvas.addEventListener('click', (e) => {
+// Handle tap/click
+function handleInteraction(e) {
   if (isWon) return;
   
+  e.preventDefault();
+  
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  
+  const col = Math.floor(x / cellSize);
+  const row = Math.floor(y / cellSize);
+  
+  // Bounds check
+  if (col < 0 || col >= gridSize || row < 0 || row >= gridSize) return;
+  
+  // Check if cell is occupied
+  const isSource = sources.some(s => s.row === row && s.col === col);
+  const isTarget = targets.some(t => t.row === row && t.col === col);
+  const existingBlocker = blockers.findIndex(b => b.row === row && b.col === col);
+  
+  if (isSource || isTarget) return;
+  
+  if (existingBlocker !== -1) {
+    // Remove blocker
+    blockers.splice(existingBlocker, 1);
+    updateBlockerCount();
+  } else {
+    // Add blocker (if under limit)
+    const config = levels[(level - 1) % levels.length];
+    if (blockers.length < config.blockers) {
+      blockers.push({row, col});
+      updateBlockerCount();
+    }
+  }
+}
+
+canvas.addEventListener('click', handleInteraction);
+canvas.addEventListener('touchstart', handleInteraction, { passive: false });
+
+// Handle hover
+canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   const x = (e.clientX - rect.left) * (canvas.width / rect.width);
   const y = (e.clientY - rect.top) * (canvas.height / rect.height);
@@ -426,23 +500,15 @@ canvas.addEventListener('click', (e) => {
   const col = Math.floor(x / cellSize);
   const row = Math.floor(y / cellSize);
   
-  // Check if cell is occupied
-  const isSource = sources.some(s => s.row === row && s.col === col);
-  const isTarget = targets.some(t => t.row === row && t.col === col);
-  const isBlocker = blockers.some(b => b.row === row && b.col === col);
-  
-  if (isSource || isTarget) return;
-  
-  if (isBlocker) {
-    // Remove blocker
-    blockers = blockers.filter(b => !(b.row === row && b.col === col));
+  if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
+    hoverCell = {row, col};
   } else {
-    // Add blocker (if under limit)
-    const config = levels[(level - 1) % levels.length];
-    if (blockers.length < config.blockers) {
-      blockers.push({row, col});
-    }
+    hoverCell = null;
   }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoverCell = null;
 });
 
 // Clear blockers
@@ -450,6 +516,7 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   blockers = [];
   particles = [];
   targets.forEach(t => t.filled = 0);
+  updateBlockerCount();
 });
 
 // Next level
