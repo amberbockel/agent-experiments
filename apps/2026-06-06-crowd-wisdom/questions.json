@@ -1,0 +1,359 @@
+[
+  {
+    "category": "Geography",
+    "q": "Distance from NYC to LA (miles)?",
+    "a": 2789,
+    "unit": "miles",
+    "format": "number"
+  },
+  {
+    "category": "Geography",
+    "q": "Height of Mount Everest (feet)?",
+    "a": 29032,
+    "unit": "feet",
+    "format": "number"
+  },
+  {
+    "category": "Geography",
+    "q": "Countries in the world?",
+    "a": 195,
+    "unit": "countries",
+    "format": "number"
+  },
+  {
+    "category": "Geography",
+    "q": "Population of Tokyo metro area?",
+    "a": 37400000,
+    "unit": "",
+    "format": "millions"
+  },
+  {
+    "category": "Geography",
+    "q": "US states?",
+    "a": 50,
+    "unit": "states",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Bones in the human body?",
+    "a": 206,
+    "unit": "bones",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Human body temperature (°F)?",
+    "a": 98.6,
+    "unit": "°F",
+    "format": "decimal"
+  },
+  {
+    "category": "Science",
+    "q": "Speed of light (miles per second)?",
+    "a": 186282,
+    "unit": "mi/s",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Weight of a blue whale (tons)?",
+    "a": 150,
+    "unit": "tons",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Teeth in an adult human?",
+    "a": 32,
+    "unit": "teeth",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Days for Earth to orbit the Sun?",
+    "a": 365,
+    "unit": "days",
+    "format": "number"
+  },
+  {
+    "category": "Science",
+    "q": "Planets in our solar system?",
+    "a": 8,
+    "unit": "planets",
+    "format": "number"
+  },
+  {
+    "category": "History",
+    "q": "Year the Titanic sank?",
+    "a": 1912,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "History",
+    "q": "Year World War II ended?",
+    "a": 1945,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "History",
+    "q": "Year of first moon landing?",
+    "a": 1969,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "History",
+    "q": "Year the Berlin Wall fell?",
+    "a": 1989,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "History",
+    "q": "Year Columbus reached the Americas?",
+    "a": 1492,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "Technology",
+    "q": "Year the first iPhone was released?",
+    "a": 2007,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "Technology",
+    "q": "Keys on a standard piano?",
+    "a": 88,
+    "unit": "keys",
+    "format": "number"
+  },
+  {
+    "category": "Technology",
+    "q": "Megabytes in a gigabyte?",
+    "a": 1024,
+    "unit": "MB",
+    "format": "number"
+  },
+  {
+    "category": "Sports",
+    "q": "Miles in a marathon?",
+    "a": 26.2,
+    "unit": "miles",
+    "format": "decimal"
+  },
+  {
+    "category": "Sports",
+    "q": "Players on a soccer team?",
+    "a": 11,
+    "unit": "players",
+    "format": "number"
+  },
+  {
+    "category": "Sports",
+    "q": "Olympic rings?",
+    "a": 5,
+    "unit": "rings",
+    "format": "number"
+  },
+  {
+    "category": "Sports",
+    "q": "Innings in a baseball game?",
+    "a": 9,
+    "unit": "innings",
+    "format": "number"
+  },
+  {
+    "category": "Entertainment",
+    "q": "Keys on a standard piano?",
+    "a": 88,
+    "unit": "keys",
+    "format": "number"
+  },
+  {
+    "category": "Entertainment",
+    "q": "Strings on a standard guitar?",
+    "a": 6,
+    "unit": "strings",
+    "format": "number"
+  },
+  {
+    "category": "Entertainment",
+    "q": "Original Star Wars movie release year?",
+    "a": 1977,
+    "unit": "",
+    "format": "year"
+  },
+  {
+    "category": "Entertainment",
+    "q": "Squares on a chessboard?",
+    "a": 64,
+    "unit": "squares",
+    "format": "number"
+  },
+  {
+    "category": "Food & Drink",
+    "q": "Teaspoons in a tablespoon?",
+    "a": 3,
+    "unit": "tsp",
+    "format": "number"
+  },
+  {
+    "category": "Food & Drink",
+    "q": "Ounces in a pound?",
+    "a": 16,
+    "unit": "oz",
+    "format": "number"
+  },
+  {
+    "category": "Food & Drink",
+    "q": "Calories in a gram of fat?",
+    "a": 9,
+    "unit": "cal",
+    "format": "number"
+  },
+  {
+    "category": "Animals",
+    "q": "Legs on a spider?",
+    "a": 8,
+    "unit": "legs",
+    "format": "number"
+  },
+  {
+    "category": "Animals",
+    "q": "Humps on a Bactrian camel?",
+    "a": 2,
+    "unit": "humps",
+    "format": "number"
+  },
+  {
+    "category": "Animals",
+    "q": "Average lifespan of a dog (years)?",
+    "a": 12,
+    "unit": "years",
+    "format": "number"
+  },
+  {
+    "category": "Animals",
+    "q": "Days of pregnancy for a human?",
+    "a": 280,
+    "unit": "days",
+    "format": "number"
+  },
+  {
+    "category": "Language",
+    "q": "Letters in the English alphabet?",
+    "a": 26,
+    "unit": "letters",
+    "format": "number"
+  },
+  {
+    "category": "Language",
+    "q": "Vowels in the English alphabet?",
+    "a": 5,
+    "unit": "vowels",
+    "format": "number"
+  },
+  {
+    "category": "US Facts",
+    "q": "Stripes on the US flag?",
+    "a": 13,
+    "unit": "stripes",
+    "format": "number"
+  },
+  {
+    "category": "US Facts",
+    "q": "Stars on the US flag?",
+    "a": 50,
+    "unit": "stars",
+    "format": "number"
+  },
+  {
+    "category": "US Facts",
+    "q": "US presidents as of 2026?",
+    "a": 47,
+    "unit": "presidents",
+    "format": "number"
+  },
+  {
+    "category": "Time & Calendar",
+    "q": "Weeks in a year?",
+    "a": 52,
+    "unit": "weeks",
+    "format": "number"
+  },
+  {
+    "category": "Time & Calendar",
+    "q": "Days in February (non-leap year)?",
+    "a": 28,
+    "unit": "days",
+    "format": "number"
+  },
+  {
+    "category": "Time & Calendar",
+    "q": "Hours in a week?",
+    "a": 168,
+    "unit": "hours",
+    "format": "number"
+  },
+  {
+    "category": "Time & Calendar",
+    "q": "Minutes in a day?",
+    "a": 1440,
+    "unit": "minutes",
+    "format": "number"
+  },
+  {
+    "category": "Architecture",
+    "q": "Height of Eiffel Tower (feet)?",
+    "a": 1083,
+    "unit": "feet",
+    "format": "number"
+  },
+  {
+    "category": "Architecture",
+    "q": "Floors in the Empire State Building?",
+    "a": 102,
+    "unit": "floors",
+    "format": "number"
+  },
+  {
+    "category": "Space",
+    "q": "Moons orbiting Earth?",
+    "a": 1,
+    "unit": "moon",
+    "format": "number"
+  },
+  {
+    "category": "Space",
+    "q": "Minutes for light to reach Earth from the Sun?",
+    "a": 8,
+    "unit": "minutes",
+    "format": "number"
+  },
+  {
+    "category": "Math",
+    "q": "Degrees in a circle?",
+    "a": 360,
+    "unit": "degrees",
+    "format": "number"
+  },
+  {
+    "category": "Math",
+    "q": "Sides on a hexagon?",
+    "a": 6,
+    "unit": "sides",
+    "format": "number"
+  },
+  {
+    "category": "Math",
+    "q": "Value of pi (first 3 digits)?",
+    "a": 3.14,
+    "unit": "",
+    "format": "decimal"
+  }
+]
