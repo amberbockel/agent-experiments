@@ -22,21 +22,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: max(env(safe-area-inset-top), 20px);
-  padding-bottom: max(env(safe-area-inset-bottom), 20px);
-  touch-action: pan-y;
-  overflow-x: hidden;
+  justify-content: center;
+  touch-action: manipulation;
+  overflow: hidden;
 }
 .container {
   width: 100%;
   max-width: 480px;
-  padding: 0 20px 20px;
+  padding: 20px;
 }
-header {
+.header {
   text-align: center;
   margin-bottom: 24px;
   color: white;
-  padding-top: 20px;
 }
 h1 {
   font-size: 32px;
@@ -49,158 +47,160 @@ h1 {
   opacity: 0.9;
   font-weight: 400;
 }
+.stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #667eea;
+  font-variant-numeric: tabular-nums;
+}
+.streak {
+  color: #FF6B35;
+}
 .card {
   background: white;
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 24px;
+  padding: 32px 24px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   margin-bottom: 16px;
 }
-.instructions {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #1C1C1E;
-}
-.instructions h3 {
-  font-size: 17px;
+.question {
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 12px;
+  line-height: 1.4;
+  margin-bottom: 32px;
+  color: #1C1C1E;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.instructions {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #666;
+  text-align: center;
+  margin-bottom: 32px;
+}
+.instructions strong {
   color: #667eea;
 }
-.instructions ol {
-  margin-left: 20px;
-  margin-bottom: 12px;
-}
-.instructions li {
-  margin-bottom: 8px;
-}
-.instructions .tip {
-  background: #F2F2F7;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 12px;
-  font-size: 14px;
-}
-.question {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-  margin-bottom: 24px;
-  color: #1C1C1E;
-  text-align: center;
-}
-.guess-input {
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
   margin-bottom: 24px;
 }
-.input-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 8px;
-  display: block;
-}
-input[type="number"] {
-  width: 100%;
-  font-size: 32px;
-  font-weight: 700;
-  padding: 20px;
+.choice {
+  background: linear-gradient(135deg, #F9F9FB 0%, #FFFFFF 100%);
   border: 3px solid #E5E5EA;
-  border-radius: 16px;
-  text-align: center;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: textfield;
-  font-variant-numeric: tabular-nums;
-  background: #F9F9FB;
+  border-radius: 20px;
+  padding: 32px 16px;
+  cursor: pointer;
   transition: all 0.2s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
-input[type="number"]:focus {
-  outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+.choice:active {
+  transform: scale(0.95);
 }
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+.choice-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1C1C1E;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
 }
-.confidence {
-  margin-bottom: 24px;
+.choice-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.confidence-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.choice.correct {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-color: #059669;
+  animation: correctPulse 0.5s ease;
+}
+.choice.correct .choice-value,
+.choice.correct .choice-label {
+  color: white;
+}
+.choice.wrong {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  border-color: #DC2626;
+  animation: wrongShake 0.5s ease;
+}
+.choice.wrong .choice-value,
+.choice.wrong .choice-label {
+  color: white;
+}
+@keyframes correctPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+.answer-reveal {
+  background: #F9F9FB;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.answer-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999;
+  margin-bottom: 8px;
+}
+.answer-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: #667eea;
+  font-variant-numeric: tabular-nums;
   margin-bottom: 16px;
 }
-.confidence-label {
-  font-size: 14px;
-  font-weight: 600;
+.result-message {
+  font-size: 17px;
   color: #666;
+  margin-bottom: 24px;
 }
-.confidence-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #667eea;
-}
-.slider-wrapper {
-  position: relative;
-  padding: 20px 0;
-}
-input[type="range"] {
-  width: 100%;
-  height: 48px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-}
-input[type="range"]::-webkit-slider-track {
-  width: 100%;
-  height: 8px;
-  background: linear-gradient(90deg, #E5E5EA 0%, #667eea 100%);
-  border-radius: 4px;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  cursor: pointer;
-  border: 4px solid #667eea;
-  margin-top: -16px;
-}
-input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 8px;
-  background: linear-gradient(90deg, #E5E5EA 0%, #667eea 100%);
-  border-radius: 4px;
-}
-input[type="range"]::-moz-range-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  cursor: pointer;
-  border: 4px solid #667eea;
-}
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #999;
-  padding: 8px 4px 0;
+.result-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 button {
   width: 100%;
@@ -211,495 +211,357 @@ button {
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s;
-  touch-action: manipulation;
-}
-.btn-primary {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   box-shadow: 0 6px 20px rgba(102,126,234,0.4);
-  font-size: 19px;
 }
-.btn-primary:active {
+button:active {
   transform: scale(0.97);
-  box-shadow: 0 3px 12px rgba(102,126,234,0.3);
 }
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.hidden {
+  display: none !important;
 }
-.btn-secondary {
-  background: #F2F2F7;
-  color: #667eea;
-  font-weight: 600;
-  margin-top: 12px;
-  font-size: 17px;
-}
-.btn-secondary:active {
-  background: #E5E5EA;
-}
-.result {
+.game-over {
   text-align: center;
-  animation: slideUp 0.4s ease;
+  animation: slideUp 0.5s ease;
 }
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.result-emoji {
+.game-over-emoji {
   font-size: 72px;
   margin-bottom: 16px;
-  animation: bounce 0.6s ease;
 }
-@keyframes bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-.result-title {
-  font-size: 28px;
+.game-over-title {
+  font-size: 32px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: #1C1C1E;
 }
-.result-subtitle {
-  font-size: 16px;
-  color: #666;
-  margin-bottom: 24px;
-}
-.answer-reveal {
+.game-over-stats {
   background: #F9F9FB;
   border-radius: 16px;
   padding: 24px;
-  margin-bottom: 20px;
+  margin: 24px 0;
 }
-.answer-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #999;
-  margin-bottom: 8px;
-}
-.answer-value {
-  font-size: 40px;
-  font-weight: 700;
-  color: #667eea;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 16px;
-}
-.stats-row {
+.game-over-stat {
   display: flex;
   justify-content: space-between;
-  padding: 14px 0;
-  border-top: 1px solid #E5E5EA;
+  padding: 12px 0;
+  border-bottom: 1px solid #E5E5EA;
 }
-.stat-label {
+.game-over-stat:last-child {
+  border-bottom: none;
+}
+.game-over-stat-label {
   font-size: 15px;
   color: #666;
-  font-weight: 500;
 }
-.stat-value {
+.game-over-stat-value {
   font-size: 17px;
   font-weight: 700;
   color: #1C1C1E;
   font-variant-numeric: tabular-nums;
-}
-.points-earned {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 24px;
-  font-weight: 700;
-  box-shadow: 0 6px 20px rgba(102,126,234,0.3);
-}
-.score {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 16px);
-  right: 20px;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 12px 20px;
-  border-radius: 999px;
-  font-size: 17px;
-  font-weight: 700;
-  color: #667eea;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  z-index: 100;
-  font-variant-numeric: tabular-nums;
-}
-.distribution {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 2px solid #E5E5EA;
-}
-.distribution-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: #666;
-}
-.distribution-bar {
-  height: 100px;
-  background: #F2F2F7;
-  border-radius: 12px;
-  position: relative;
-  overflow: visible;
-  margin-bottom: 8px;
-}
-.marker {
-  position: absolute;
-  width: 3px;
-  height: 100%;
-  top: 0;
-  transition: left 0.4s ease;
-}
-.crowd-marker {
-  background: #667eea;
-}
-.you-marker {
-  background: #FF3B30;
-}
-.marker-label {
-  position: absolute;
-  bottom: -24px;
-  transform: translateX(-50%);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.crowd-label {
-  background: #667eea;
-  color: white;
-}
-.you-label {
-  background: #FF3B30;
-  color: white;
-}
-.hidden { 
-  display: none !important;
-}
-@media (max-width: 360px) {
-  h1 { font-size: 28px; }
-  .question { font-size: 18px; }
-  input[type="number"] { font-size: 28px; padding: 16px; }
-  .answer-value { font-size: 36px; }
 }
 </style>
 </head>
 <body>
 
-<div class="score" id="score">0 pts</div>
-
 <div class="container">
-  <header>
+  <div class="header">
     <h1>🎯 Crowd Wisdom</h1>
-    <div class="subtitle">Guess the number. Trust your gut.</div>
-  </header>
+    <div class="subtitle">Which is closer?</div>
+  </div>
 
-  <div class="instructions" id="instructions">
-    <h3>How to Play</h3>
-    <ol>
-      <li><strong>Read the question</strong> — guess a number</li>
-      <li><strong>Enter your answer</strong> — any number works</li>
-      <li><strong>Set confidence</strong> — how sure are you? (1× wild guess → 5× very sure)</li>
-      <li><strong>Lock it in</strong> — see how close you were!</li>
-    </ol>
-    <div class="tip">
-      💡 <strong>Tip:</strong> Higher confidence = bigger points if you're close, but only 1 point if you're way off!
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Score</div>
+      <div class="stat-value" id="score">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Streak</div>
+      <div class="stat-value streak" id="streak">0</div>
     </div>
   </div>
 
-  <div class="card" id="questionCard">
+  <!-- Start Screen -->
+  <div class="card" id="startScreen">
+    <div class="question">Ready to test your instincts?</div>
+    <div class="instructions">
+      You'll see a question and two possible answers.<br>
+      <strong>Tap the number that's closer to the truth.</strong><br><br>
+      Get 3 wrong and it's game over!<br>
+      Streaks give you bonus points. 🔥
+    </div>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="card hidden" id="gameScreen">
     <div class="question" id="question"></div>
-    
-    <div class="guess-input">
-      <label class="input-label" for="guessInput">Your Guess</label>
-      <input 
-        type="number" 
-        id="guessInput" 
-        placeholder="0"
-        inputmode="decimal"
-        pattern="[0-9]*"
-        autocomplete="off"
-        autocorrect="off"
-        spellcheck="false"
-      >
-    </div>
-
-    <div class="confidence">
-      <div class="confidence-header">
-        <span class="confidence-label">Confidence Level</span>
-        <span class="confidence-value"><span id="confidenceValue">3</span>×</span>
+    <div class="choices" id="choices">
+      <div class="choice" data-index="0">
+        <div class="choice-value" id="choice0"></div>
+        <div class="choice-label">Option A</div>
       </div>
-      <div class="slider-wrapper">
-        <input type="range" id="confidenceSlider" min="1" max="5" value="3" step="1">
-      </div>
-      <div class="slider-labels">
-        <span>Wild Guess</span>
-        <span>Very Sure</span>
+      <div class="choice" data-index="1">
+        <div class="choice-value" id="choice1"></div>
+        <div class="choice-label">Option B</div>
       </div>
     </div>
-
-    <button class="btn-primary" id="submitBtn">Lock It In</button>
-  </div>
-
-  <div class="card hidden" id="resultCard">
-    <div class="result">
+    <div class="answer-reveal hidden" id="answerReveal">
       <div class="result-emoji" id="resultEmoji">🎯</div>
-      <div class="result-title" id="resultTitle"></div>
-      <div class="result-subtitle" id="resultSubtitle"></div>
-    </div>
-
-    <div class="points-earned" id="pointsEarned"></div>
-
-    <div class="answer-reveal">
       <div class="answer-label">Correct Answer</div>
       <div class="answer-value" id="correctAnswer"></div>
-      <div class="stats-row">
-        <span class="stat-label">Your guess</span>
-        <span class="stat-value" id="yourGuess"></span>
-      </div>
-      <div class="stats-row">
-        <span class="stat-label">Confidence</span>
-        <span class="stat-value" id="yourConfidence"></span>
-      </div>
-      <div class="stats-row">
-        <span class="stat-label">Accuracy</span>
-        <span class="stat-value" id="accuracy"></span>
-      </div>
+      <div class="result-message" id="resultMessage"></div>
+      <button id="nextBtn">Next Question</button>
     </div>
+  </div>
 
-    <div class="distribution">
-      <div class="distribution-title">📊 How You Did vs. The Crowd</div>
-      <div class="distribution-bar">
-        <div class="marker crowd-marker" id="crowdMarker">
-          <div class="marker-label crowd-label">Crowd</div>
+  <!-- Game Over Screen -->
+  <div class="card hidden" id="gameOverScreen">
+    <div class="game-over">
+      <div class="game-over-emoji">🏆</div>
+      <div class="game-over-title">Game Over!</div>
+      <div class="game-over-stats">
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Final Score</span>
+          <span class="game-over-stat-value" id="finalScore">0</span>
         </div>
-        <div class="marker you-marker" id="youMarker">
-          <div class="marker-label you-label">You</div>
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Questions Answered</span>
+          <span class="game-over-stat-value" id="questionsAnswered">0</span>
+        </div>
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Longest Streak</span>
+          <span class="game-over-stat-value" id="longestStreak">0</span>
+        </div>
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Accuracy</span>
+          <span class="game-over-stat-value" id="accuracy">0%</span>
         </div>
       </div>
+      <button id="playAgainBtn">Play Again</button>
     </div>
-
-    <button class="btn-primary" id="nextBtn">Next Question</button>
-    <button class="btn-secondary" id="statsBtn">View Stats</button>
   </div>
 </div>
 
 <script>
 const questions = [
-  { q: "How many M&M's fit in a 1-liter jar?", a: 3500, min: 1000, max: 8000, crowd: 3200 },
-  { q: "Average cost of a wedding in the US (dollars)?", a: 30000, min: 10000, max: 80000, crowd: 28000 },
-  { q: "How many songs are on Spotify?", a: 100000000, min: 10000000, max: 500000000, crowd: 75000000 },
-  { q: "Distance from NYC to LA (miles)?", a: 2789, min: 1500, max: 4000, crowd: 2900 },
-  { q: "Number of bones in the human body?", a: 206, min: 100, max: 400, crowd: 220 },
-  { q: "Average price of a gallon of milk (dollars)?", a: 4, min: 2, max: 8, crowd: 4 },
-  { q: "Average daily phone screen time (minutes)?", a: 262, min: 60, max: 600, crowd: 240 },
-  { q: "Weight of a blue whale (pounds)?", a: 300000, min: 50000, max: 800000, crowd: 250000 },
-  { q: "Number of countries in the world?", a: 195, min: 100, max: 300, crowd: 200 },
-  { q: "How many episodes of The Simpsons?", a: 750, min: 300, max: 1000, crowd: 700 },
-  { q: "Average lifespan of a housefly (days)?", a: 28, min: 7, max: 60, crowd: 30 },
-  { q: "Year the first iPhone was released?", a: 2007, min: 2000, max: 2015, crowd: 2008 },
-  { q: "How many teeth does an adult human have?", a: 32, min: 20, max: 40, crowd: 32 },
-  { q: "Height of the Eiffel Tower (feet)?", a: 1083, min: 500, max: 1500, crowd: 1000 },
-  { q: "How many keys on a standard piano?", a: 88, min: 60, max: 120, crowd: 88 },
-  { q: "Speed of light (miles per second)?", a: 186000, min: 100000, max: 300000, crowd: 180000 },
-  { q: "Number of time zones in Russia?", a: 11, min: 5, max: 15, crowd: 9 },
-  { q: "Population of Tokyo metro area?", a: 37000000, min: 10000000, max: 50000000, crowd: 35000000 },
-  { q: "How many squares on a chessboard?", a: 64, min: 32, max: 100, crowd: 64 },
-  { q: "Average human body temperature (°F)?", a: 98.6, min: 95, max: 102, crowd: 98 }
+  { q: "How many M&M's fit in a 1-liter jar?", a: 3500 },
+  { q: "Average wedding cost in the US?", a: 30000 },
+  { q: "How many songs on Spotify?", a: 100000000 },
+  { q: "Miles from NYC to LA?", a: 2789 },
+  { q: "Bones in the human body?", a: 206 },
+  { q: "Average daily phone screen time (minutes)?", a: 262 },
+  { q: "Weight of a blue whale (pounds)?", a: 300000 },
+  { q: "Countries in the world?", a: 195 },
+  { q: "Episodes of The Simpsons?", a: 750 },
+  { q: "Lifespan of a housefly (days)?", a: 28 },
+  { q: "Year the first iPhone released?", a: 2007 },
+  { q: "Teeth in an adult human?", a: 32 },
+  { q: "Height of Eiffel Tower (feet)?", a: 1083 },
+  { q: "Keys on a standard piano?", a: 88 },
+  { q: "Speed of light (miles/second)?", a: 186000 },
+  { q: "Time zones in Russia?", a: 11 },
+  { q: "Population of Tokyo?", a: 37000000 },
+  { q: "Squares on a chessboard?", a: 64 },
+  { q: "Human body temperature (°F)?", a: 98.6 },
+  { q: "Hours in a year?", a: 8760 },
+  { q: "Miles in a marathon?", a: 26.2 },
+  { q: "Feet in the Empire State Building?", a: 1454 },
+  { q: "Years in a millennium?", a: 1000 },
+  { q: "Stripes on the US flag?", a: 13 },
+  { q: "Days until Christmas (from Jan 1)?", a: 359 }
 ];
 
-let currentQuestion = null;
-let currentIndex = 0;
-let usedQuestions = [];
-let totalScore = 0;
+let score = 0;
+let streak = 0;
+let longestStreak = 0;
+let lives = 3;
 let questionsAnswered = 0;
+let correctAnswers = 0;
+let usedQuestions = [];
+let currentQuestion = null;
+let currentAnswer = null;
 
-// Load score from localStorage
-function loadScore() {
-  const saved = localStorage.getItem('crowdWisdomScore');
-  const answered = localStorage.getItem('crowdWisdomAnswered');
-  if (saved) totalScore = parseInt(saved) || 0;
-  if (answered) questionsAnswered = parseInt(answered) || 0;
-  updateScoreDisplay();
+// Shuffle array
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
 }
 
-// Save score to localStorage
-function saveScore() {
-  localStorage.setItem('crowdWisdomScore', totalScore);
-  localStorage.setItem('crowdWisdomAnswered', questionsAnswered);
+// Format number
+function formatNumber(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toLocaleString();
 }
 
-// Update score display
-function updateScoreDisplay() {
-  document.getElementById('score').textContent = `${totalScore} pts`;
+// Generate wrong answer that's plausible
+function generateWrongAnswer(correct) {
+  const variance = 0.3 + Math.random() * 0.7; // 30% - 100% off
+  const direction = Math.random() > 0.5 ? 1 : -1;
+  let wrong = Math.round(correct * (1 + variance * direction));
+  
+  // Make sure it's different
+  if (wrong === correct) wrong = correct * 2;
+  
+  // Keep it positive
+  if (wrong < 1) wrong = Math.max(1, Math.round(correct * 0.5));
+  
+  return wrong;
+}
+
+// Start game
+function startGame() {
+  score = 0;
+  streak = 0;
+  longestStreak = 0;
+  lives = 3;
+  questionsAnswered = 0;
+  correctAnswers = 0;
+  usedQuestions = [];
+  
+  updateStats();
+  
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+  
+  nextQuestion();
+}
+
+// Update stats
+function updateStats() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = streak;
 }
 
 // Next question
 function nextQuestion() {
-  // Hide instructions after first question
-  if (questionsAnswered > 0) {
-    document.getElementById('instructions').classList.add('hidden');
-  }
+  // Reset choices
+  document.querySelectorAll('.choice').forEach(c => {
+    c.classList.remove('correct', 'wrong');
+    c.style.pointerEvents = 'auto';
+  });
   
-  // Reset used questions if we've gone through all
-  if (usedQuestions.length === questions.length) {
-    usedQuestions = [];
-  }
+  document.getElementById('answerReveal').classList.add('hidden');
   
-  // Pick a random unused question
+  // Pick question
+  if (usedQuestions.length === questions.length) usedQuestions = [];
+  
   let available = questions.filter((q, i) => !usedQuestions.includes(i));
   let pick = available[Math.floor(Math.random() * available.length)];
-  currentIndex = questions.indexOf(pick);
-  usedQuestions.push(currentIndex);
+  usedQuestions.push(questions.indexOf(pick));
   
   currentQuestion = pick;
+  currentAnswer = pick.a;
+  
   document.getElementById('question').textContent = pick.q;
-  document.getElementById('guessInput').value = '';
-  document.getElementById('confidenceSlider').value = 3;
-  updateConfidenceDisplay();
   
-  document.getElementById('questionCard').classList.remove('hidden');
-  document.getElementById('resultCard').classList.add('hidden');
+  // Generate choices
+  const wrongAnswer = generateWrongAnswer(currentAnswer);
+  const choices = shuffle([currentAnswer, wrongAnswer]);
   
-  // Focus on input for better mobile UX
-  setTimeout(() => {
-    document.getElementById('guessInput').focus();
-  }, 100);
+  document.getElementById('choice0').textContent = formatNumber(choices[0]);
+  document.getElementById('choice1').textContent = formatNumber(choices[1]);
+  
+  // Store actual values
+  document.querySelector('[data-index="0"]').dataset.value = choices[0];
+  document.querySelector('[data-index="1"]').dataset.value = choices[1];
 }
 
-// Update confidence display
-function updateConfidenceDisplay() {
-  const val = document.getElementById('confidenceSlider').value;
-  document.getElementById('confidenceValue').textContent = val;
-}
-
-// Submit guess
-function submitGuess() {
-  const guessStr = document.getElementById('guessInput').value.trim();
-  const guess = parseFloat(guessStr);
-  const confidence = parseInt(document.getElementById('confidenceSlider').value);
-  
-  if (!guessStr || isNaN(guess) || guess < 0) {
-    alert('Please enter a valid number!');
-    document.getElementById('guessInput').focus();
-    return;
-  }
-  
-  const answer = currentQuestion.a;
-  const diff = Math.abs(guess - answer);
-  const percentOff = diff / answer;
-  
-  let points = 0;
-  let emoji = '🎯';
-  let title = '';
-  let subtitle = '';
-  
-  if (percentOff < 0.05) {
-    points = 10 * confidence;
-    emoji = '🔥';
-    title = 'Dead On!';
-    subtitle = 'Within 5% — incredible guess!';
-  } else if (percentOff < 0.15) {
-    points = 7 * confidence;
-    emoji = '🎯';
-    title = 'Very Close!';
-    subtitle = 'Within 15% — solid instincts.';
-  } else if (percentOff < 0.30) {
-    points = 4 * confidence;
-    emoji = '👍';
-    title = 'Not Bad!';
-    subtitle = 'Within 30% — you're in the ballpark.';
-  } else if (percentOff < 0.50) {
-    points = 2 * confidence;
-    emoji = '🤔';
-    title = 'Swing and a Miss';
-    subtitle = 'Off by quite a bit, but you tried.';
-  } else {
-    points = 1;
-    emoji = '😅';
-    title = 'Way Off!';
-    subtitle = 'Wild guess — better luck next time.';
-  }
-  
-  totalScore += points;
+// Handle choice
+function handleChoice(chosenValue) {
   questionsAnswered++;
-  saveScore();
-  updateScoreDisplay();
   
-  // Display results
-  document.getElementById('resultEmoji').textContent = emoji;
-  document.getElementById('resultTitle').textContent = title;
-  document.getElementById('resultSubtitle').textContent = subtitle;
-  document.getElementById('correctAnswer').textContent = answer.toLocaleString();
-  document.getElementById('yourGuess').textContent = guess.toLocaleString();
-  document.getElementById('yourConfidence').textContent = `${confidence}× multiplier`;
+  const isCorrect = Math.abs(chosenValue - currentAnswer) < Math.abs(
+    (chosenValue === parseFloat(document.querySelector('[data-index="0"]').dataset.value) 
+      ? parseFloat(document.querySelector('[data-index="1"]').dataset.value)
+      : parseFloat(document.querySelector('[data-index="0"]').dataset.value))
+    - currentAnswer
+  );
   
-  const accuracyPercent = Math.max(0, 100 - (percentOff * 100));
-  document.getElementById('accuracy').textContent = `${accuracyPercent.toFixed(1)}%`;
+  // Visual feedback
+  document.querySelectorAll('.choice').forEach(choice => {
+    const val = parseFloat(choice.dataset.value);
+    const diff = Math.abs(val - currentAnswer);
+    const otherVal = val === parseFloat(document.querySelector('[data-index="0"]').dataset.value)
+      ? parseFloat(document.querySelector('[data-index="1"]').dataset.value)
+      : parseFloat(document.querySelector('[data-index="0"]').dataset.value);
+    const otherDiff = Math.abs(otherVal - currentAnswer);
+    
+    if (diff < otherDiff) {
+      choice.classList.add('correct');
+    } else {
+      choice.classList.add('wrong');
+    }
+    
+    choice.style.pointerEvents = 'none';
+  });
   
-  document.getElementById('pointsEarned').textContent = `+${points} points`;
+  // Update score and streak
+  if (isCorrect) {
+    correctAnswers++;
+    streak++;
+    longestStreak = Math.max(longestStreak, streak);
+    
+    const streakBonus = Math.floor(streak / 3);
+    const points = 10 + (streakBonus * 5);
+    score += points;
+    
+    document.getElementById('resultEmoji').textContent = streak >= 5 ? '🔥' : '🎯';
+    document.getElementById('resultMessage').textContent = 
+      streak >= 5 ? `${streak} streak! On fire! 🔥 (+${points} pts)` :
+      streakBonus > 0 ? `Correct! Streak bonus! (+${points} pts)` :
+      `Correct! (+${points} pts)`;
+  } else {
+    lives--;
+    streak = 0;
+    
+    document.getElementById('resultEmoji').textContent = '😅';
+    document.getElementById('resultMessage').textContent = 
+      lives > 0 ? `Not quite! ${lives} ${lives === 1 ? 'life' : 'lives'} left.` :
+      'Game over!';
+  }
   
-  // Distribution visualization
-  const min = currentQuestion.min;
-  const max = currentQuestion.max;
-  const range = max - min;
+  updateStats();
   
-  const crowdPos = ((currentQuestion.crowd - min) / range) * 100;
-  const youPos = ((Math.max(min, Math.min(max, guess)) - min) / range) * 100;
+  // Show answer
+  document.getElementById('correctAnswer').textContent = formatNumber(currentAnswer);
+  document.getElementById('answerReveal').classList.remove('hidden');
   
-  document.getElementById('crowdMarker').style.left = `${crowdPos}%`;
-  document.getElementById('youMarker').style.left = `${youPos}%`;
-  
-  // Switch views
-  document.getElementById('questionCard').classList.add('hidden');
-  document.getElementById('resultCard').classList.remove('hidden');
-  
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Game over?
+  if (lives === 0) {
+    setTimeout(gameOver, 2000);
+  }
 }
 
-// View stats
-function viewStats() {
-  const avg = questionsAnswered > 0 ? Math.round(totalScore / questionsAnswered) : 0;
-  alert(`🎯 Your Stats\n\nQuestions answered: ${questionsAnswered}\nTotal score: ${totalScore} pts\nAverage per question: ${avg} pts`);
+// Game over
+function gameOver() {
+  document.getElementById('gameScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.remove('hidden');
+  
+  const accuracyPercent = questionsAnswered > 0 
+    ? Math.round((correctAnswers / questionsAnswered) * 100) 
+    : 0;
+  
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('questionsAnswered').textContent = questionsAnswered;
+  document.getElementById('longestStreak').textContent = longestStreak;
+  document.getElementById('accuracy').textContent = `${accuracyPercent}%`;
 }
 
 // Event listeners
-document.getElementById('confidenceSlider').addEventListener('input', updateConfidenceDisplay);
-document.getElementById('submitBtn').addEventListener('click', submitGuess);
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('playAgainBtn').addEventListener('click', startGame);
 document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-document.getElementById('statsBtn').addEventListener('click', viewStats);
 
-// Allow Enter key to submit
-document.getElementById('guessInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    submitGuess();
-  }
+document.querySelectorAll('.choice').forEach(choice => {
+  choice.addEventListener('click', function() {
+    if (this.style.pointerEvents !== 'none') {
+      const value = parseFloat(this.dataset.value);
+      handleChoice(value);
+    }
+  });
 });
-
-// Prevent zoom on double-tap for iOS
-let lastTouchEnd = 0;
-document.addEventListener('touchend', function(e) {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
-  lastTouchEnd = now;
-}, false);
-
-// Initialize
-loadScore();
-nextQuestion();
 </script>
 
 </body>
