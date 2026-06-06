@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Palette Studio</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      /* Painter's studio palette */
+      --bg-canvas: #F5F1E8;
+      --bg-surface: #FFFFFF;
+      --bg-palette: #E8E4D8;
+      --text-primary: #2C2416;
+      --text-secondary: #5C5442;
+      --text-tertiary: #8C856F;
+      --border-subtle: rgba(44, 36, 22, 0.12);
+      --shadow-sm: 0 2px 8px rgba(44, 36, 22, 0.08);
+      --shadow-md: 0 4px 16px rgba(44, 36, 22, 0.12);
+      --accent-warm: #C67B5C;
+      --accent-cool: #5B7B8C;
+      
+      /* Spacing grid */
+      --sp-xs: 4px;
+      --sp-sm: 8px;
+      --sp-md: 16px;
+      --sp-lg: 24px;
+      --sp-xl: 32px;
+      --sp-2xl: 48px;
+      
+      /* Type scale (1.2 ratio) */
+      --text-xs: 13px;
+      --text-sm: 15px;
+      --text-base: 17px;
+      --text-lg: 20px;
+      --text-xl: 24px;
+      --text-2xl: 29px;
+      
+      /* Dark mode */
+      color-scheme: light dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-canvas: #1C1814;
+        --bg-surface: #2C2416;
+        --bg-palette: #242018;
+        --text-primary: #E8E4D8;
+        --text-secondary: #B8B4A8;
+        --text-tertiary: #8C856F;
+        --border-subtle: rgba(232, 228, 216, 0.12);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+        --accent-warm: #D89078;
+        --accent-cool: #7B9BAC;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-canvas);
+      color: var(--text-primary);
+      font-size: var(--text-base);
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      touch-action: pan-y;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: var(--sp-lg) var(--sp-md);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--sp-xs);
+    }
+
+    .subtitle {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    main {
+      flex: 1;
+      padding: var(--sp-lg) var(--sp-md);
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Canvas section */
+    .canvas-section {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: var(--sp-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--sp-lg);
+    }
+
+    .canvas-label {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      margin-bottom: var(--sp-md);
+      font-weight: 600;
+    }
+
+    .color-result {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      border: 2px solid var(--border-subtle);
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, var(--mixed-color) 0%, var(--mixed-color) 100%);
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), var(--shadow-sm);
+    }
+
+    .color-info {
+      margin-top: var(--sp-md);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-sm);
+    }
+
+    .color-value {
+      background: var(--bg-palette);
+      padding: var(--sp-sm) var(--sp-md);
+      border-radius: 8px;
+      font-size: var(--text-sm);
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      text-align: center;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .color-value span {
+      display: block;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-bottom: var(--sp-xs);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Paint mixing section */
+    .paint-section {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: var(--sp-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--sp-lg);
+    }
+
+    .paint-wells {
+      display: grid;
+      gap: var(--sp-md);
+    }
+
+    .paint-well {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-md);
+    }
+
+    .paint-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      width: 80px;
+      flex-shrink: 0;
+      color: var(--text-primary);
+    }
+
+    .paint-slider-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    .paint-slider {
+      width: 100%;
+      height: 48px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .paint-slider::-webkit-slider-track {
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .paint-slider::-moz-range-track {
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .paint-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 3px solid var(--thumb-color);
+      cursor: grab;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s ease-out;
+    }
+
+    .paint-slider:active::-webkit-slider-thumb {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+
+    .paint-slider::-moz-range-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 3px solid var(--thumb-color);
+      cursor: grab;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s ease-out;
+    }
+
+    .paint-slider:active::-moz-range-thumb {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+
+    #red-slider::-webkit-slider-track { background: linear-gradient(to right, #FFF 0%, #E63946 100%); }
+    #red-slider::-moz-range-track { background: linear-gradient(to right, #FFF 0%, #E63946 100%); }
+    
+    #yellow-slider::-webkit-slider-track { background: linear-gradient(to right, #FFF 0%, #F4D03F 100%); }
+    #yellow-slider::-moz-range-track { background: linear-gradient(to right, #FFF 0%, #F4D03F 100%); }
+    
+    #blue-slider::-webkit-slider-track { background: linear-gradient(to right, #FFF 0%, #1D3557 100%); }
+    #blue-slider::-moz-range-track { background: linear-gradient(to right, #FFF 0%, #1D3557 100%); }
+    
+    #white-slider::-webkit-slider-track { background: linear-gradient(to right, transparent 0%, #FFF 100%); }
+    #white-slider::-moz-range-track { background: linear-gradient(to right, transparent 0%, #FFF 100%); }
+    
+    #black-slider::-webkit-slider-track { background: linear-gradient(to right, transparent 0%, #1C1C1E 100%); }
+    #black-slider::-moz-range-track { background: linear-gradient(to right, transparent 0%, #1C1C1E 100%); }
+
+    .paint-amount {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      width: 48px;
+      text-align: right;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: var(--sp-sm);
+      margin-bottom: var(--sp-lg);
+    }
+
+    button {
+      flex: 1;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      font-size: var(--text-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-sm);
+    }
+
+    .btn-primary {
+      background: var(--accent-warm);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:active {
+      background: var(--bg-palette);
+      transform: scale(0.98);
+    }
+
+    /* Saved palettes */
+    .saved-section {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: var(--sp-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .palette-grid {
+      display: grid;
+      gap: var(--sp-md);
+      margin-top: var(--sp-md);
+    }
+
+    .palette-item {
+      background: var(--bg-palette);
+      border-radius: 12px;
+      padding: var(--sp-md);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-md);
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+    }
+
+    .palette-item:active {
+      transform: scale(0.98);
+      background: var(--bg-canvas);
+    }
+
+    .palette-swatch {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), var(--shadow-sm);
+    }
+
+    .palette-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .palette-formula {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-family: 'SF Mono', Monaco, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .palette-hex {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      font-family: 'SF Mono', Monaco, monospace;
+      margin-top: var(--sp-xs);
+    }
+
+    .delete-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-tertiary);
+      font-size: 20px;
+      border: 1px solid var(--border-subtle);
+      padding: 0;
+      transition: all 0.2s ease-out;
+    }
+
+    .delete-btn:active {
+      background: rgba(230, 57, 70, 0.1);
+      color: #E63946;
+      transform: scale(0.95);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: var(--text-sm);
+      padding: var(--sp-xl) var(--sp-md);
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom) + 24px);
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text-primary);
+      color: var(--bg-surface);
+      padding: var(--sp-md) var(--sp-lg);
+      border-radius: 999px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Palette Studio</h1>
+    <div class="subtitle">Mix paint colors, save favorites</div>
+  </header>
+
+  <main>
+    <div class="canvas-section">
+      <div class="canvas-label">Mixed Color</div>
+      <div class="color-result" id="colorResult"></div>
+      <div class="color-info">
+        <div class="color-value">
+          <span>Hex</span>
+          <div id="hexValue">#FFFFFF</div>
+        </div>
+        <div class="color-value">
+          <span>RGB</span>
+          <div id="rgbValue">255, 255, 255</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="paint-section">
+      <div class="canvas-label">Paint Wells</div>
+      <div class="paint-wells">
+        <div class="paint-well">
+          <div class="paint-name">Red</div>
+          <div class="paint-slider-wrapper">
+            <input type="range" id="red-slider" class="paint-slider" min="0" max="100" value="0" style="--thumb-color: #E63946">
+          </div>
+          <div class="paint-amount"><span id="red-value">0</span>%</div>
+        </div>
+        
+        <div class="paint-well">
+          <div class="paint-name">Yellow</div>
+          <div class="paint-slider-wrapper">
+            <input type="range" id="yellow-slider" class="paint-slider" min="0" max="100" value="0" style="--thumb-color: #F4D03F">
+          </div>
+          <div class="paint-amount"><span id="yellow-value">0</span>%</div>
+        </div>
+        
+        <div class="paint-well">
+          <div class="paint-name">Blue</div>
+          <div class="paint-slider-wrapper">
+            <input type="range" id="blue-slider" class="paint-slider" min="0" max="100" value="0" style="--thumb-color: #1D3557">
+          </div>
+          <div class="paint-amount"><span id="blue-value">0</span>%</div>
+        </div>
+        
+        <div class="paint-well">
+          <div class="paint-name">White</div>
+          <div class="paint-slider-wrapper">
+            <input type="range" id="white-slider" class="paint-slider" min="0" max="100" value="100" style="--thumb-color: #FFF">
+          </div>
+          <div class="paint-amount"><span id="white-value">100</span>%</div>
+        </div>
+        
+        <div class="paint-well">
+          <div class="paint-name">Black</div>
+          <div class="paint-slider-wrapper">
+            <input type="range" id="black-slider" class="paint-slider" min="0" max="100" value="0" style="--thumb-color: #1C1C1E">
+          </div>
+          <div class="paint-amount"><span id="black-value">0</span>%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="saveBtn">💾 Save Color</button>
+      <button class="btn-secondary" id="resetBtn">↺ Reset</button>
+    </div>
+
+    <div class="saved-section">
+      <div class="canvas-label">Saved Palette</div>
+      <div class="palette-grid" id="paletteGrid">
+        <div class="empty-state">Mix a color and save it to build your palette</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Paint mixing
+    const paints = {
+      red: { r: 230, g: 57, b: 70 },
+      yellow: { r: 244, g: 208, b: 63 },
+      blue: { r: 29, g: 53, b: 87 },
+      white: { r: 255, g: 255, b: 255 },
+      black: { r: 28, g: 28, b: 30 }
+    };
+
+    const sliders = {
+      red: document.getElementById('red-slider'),
+      yellow: document.getElementById('yellow-slider'),
+      blue: document.getElementById('blue-slider'),
+      white: document.getElementById('white-slider'),
+      black: document.getElementById('black-slider')
+    };
+
+    const values = {
+      red: document.getElementById('red-value'),
+      yellow: document.getElementById('yellow-value'),
+      blue: document.getElementById('blue-value'),
+      white: document.getElementById('white-value'),
+      black: document.getElementById('black-value')
+    };
+
+    const colorResult = document.getElementById('colorResult');
+    const hexValue = document.getElementById('hexValue');
+    const rgbValue = document.getElementById('rgbValue');
+    const saveBtn = document.getElementById('saveBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const paletteGrid = document.getElementById('paletteGrid');
+    const toast = document.getElementById('toast');
+
+    let savedPalette = JSON.parse(localStorage.getItem('paletteStudio') || '[]');
+
+    function mixColors() {
+      const amounts = {
+        red: parseInt(sliders.red.value) / 100,
+        yellow: parseInt(sliders.yellow.value) / 100,
+        blue: parseInt(sliders.blue.value) / 100,
+        white: parseInt(sliders.white.value) / 100,
+        black: parseInt(sliders.black.value) / 100
+      };
+
+      // Update displayed values
+      Object.keys(amounts).forEach(key => {
+        values[key].textContent = Math.round(amounts[key] * 100);
+      });
+
+      // Mix colors with subtractive model approximation
+      let r = 0, g = 0, b = 0;
+      let totalWeight = 0;
+
+      Object.keys(paints).forEach(key => {
+        const weight = amounts[key];
+        if (weight > 0) {
+          r += paints[key].r * weight;
+          g += paints[key].g * weight;
+          b += paints[key].b * weight;
+          totalWeight += weight;
+        }
+      });
+
+      if (totalWeight > 0) {
+        r = Math.round(r / totalWeight);
+        g = Math.round(g / totalWeight);
+        b = Math.round(b / totalWeight);
+      } else {
+        r = g = b = 255; // Default to white
+      }
+
+      const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+      
+      colorResult.style.setProperty('--mixed-color', hex);
+      hexValue.textContent = hex;
+      rgbValue.textContent = `${r}, ${g}, ${b}`;
+    }
+
+    // Attach slider listeners
+    Object.values(sliders).forEach(slider => {
+      slider.addEventListener('input', mixColors);
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', () => {
+      sliders.red.value = 0;
+      sliders.yellow.value = 0;
+      sliders.blue.value = 0;
+      sliders.white.value = 100;
+      sliders.black.value = 0;
+      mixColors();
+      showToast('Reset to white');
+    });
+
+    // Save color
+    saveBtn.addEventListener('click', () => {
+      const formula = Object.keys(sliders).map(key => {
+        const val = parseInt(sliders[key].value);
+        return val > 0 ? `${key.charAt(0).toUpperCase()}${val}` : null;
+      }).filter(Boolean).join(' + ') || 'White';
+
+      const color = {
+        hex: hexValue.textContent,
+        rgb: rgbValue.textContent,
+        formula,
+        timestamp: Date.now()
+      };
+
+      savedPalette.unshift(color);
+      if (savedPalette.length > 20) savedPalette = savedPalette.slice(0, 20);
+      
+      localStorage.setItem('paletteStudio', JSON.stringify(savedPalette));
+      renderPalette();
+      showToast('Color saved!');
+    });
+
+    // Render saved palette
+    function renderPalette() {
+      if (savedPalette.length === 0) {
+        paletteGrid.innerHTML = '<div class="empty-state">Mix a color and save it to build your palette</div>';
+        return;
+      }
+
+      paletteGrid.innerHTML = savedPalette.map((color, index) => `
+        <div class="palette-item" data-index="${index}">
+          <div class="palette-swatch" style="background: ${color.hex}"></div>
+          <div class="palette-details">
+            <div class="palette-formula">${color.formula}</div>
+            <div class="palette-hex">${color.hex}</div>
+          </div>
+          <button class="delete-btn" data-index="${index}">×</button>
+        </div>
+      `).join('');
+
+      // Load color on click
+      paletteGrid.querySelectorAll('.palette-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.classList.contains('delete-btn')) return;
+          const color = savedPalette[item.dataset.index];
+          loadColorFromFormula(color.formula);
+          showToast('Color loaded');
+        });
+      });
+
+      // Delete color
+      paletteGrid.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          savedPalette.splice(btn.dataset.index, 1);
+          localStorage.setItem('paletteStudio', JSON.stringify(savedPalette));
+          renderPalette();
+          showToast('Color deleted');
+        });
+      });
+    }
+
+    // Load color from formula
+    function loadColorFromFormula(formula) {
+      // Reset all
+      Object.values(sliders).forEach(s => s.value = 0);
+      
+      // Parse formula like "R50 + Y30 + W20"
+      const parts = formula.split(' + ').map(p => p.trim());
+      parts.forEach(part => {
+        const match = part.match(/^([RYBWK])(\d+)$/i);
+        if (match) {
+          const colorMap = { R: 'red', Y: 'yellow', B: 'blue', W: 'white', K: 'black' };
+          const colorKey = colorMap[match[1].toUpperCase()];
+          const value = parseInt(match[2]);
+          if (sliders[colorKey]) {
+            sliders[colorKey].value = value;
+          }
+        }
+      });
+      
+      mixColors();
+    }
+
+    // Toast notification
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Initialize
+    mixColors();
+    renderPalette();
+  </script>
+</body>
+</html>
