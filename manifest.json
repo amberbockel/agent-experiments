@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-07",
+      "slug": "2026-06-07",
+      "title": "AI Safety Inspector",
+      "category": "trend",
+      "oneLiner": "Paste any AI-generated text and get instant analysis of hallucination markers, confidence signals, hedging patterns, and potential fabrications — learn to read AI output critically.",
+      "path": "apps/2026-06-07/"
+    },
+    {
       "date": "2026-06-06",
       "slug": "2026-06-06-level-one",
       "title": "Level One",

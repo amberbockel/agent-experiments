@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Safety Inspector</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg: #F8F9FA;
+      --surface: #FFFFFF;
+      --text: #1A1A1A;
+      --text-secondary: #6B7280;
+      --border: #E5E7EB;
+      --green: #10B981;
+      --yellow: #F59E0B;
+      --red: #EF4444;
+      --safe-area-top: env(safe-area-inset-top);
+      --safe-area-bottom: env(safe-area-inset-bottom);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F0F0F;
+        --surface: #1A1A1A;
+        --text: #F5F5F5;
+        --text-secondary: #9CA3AF;
+        --border: #2D2D2D;
+      }
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: calc(var(--safe-area-top) + 16px) 16px calc(var(--safe-area-bottom) + 16px);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    
+    header {
+      margin-bottom: 24px;
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      font-size: 16px;
+      line-height: 1.5;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      resize: vertical;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--text-secondary);
+    }
+    
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    .score-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .score-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .score-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+    
+    .analysis-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      padding: 16px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .section-header.collapsed {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .indicator.green { background: var(--green); }
+    .indicator.yellow { background: var(--yellow); }
+    .indicator.red { background: var(--red); }
+    
+    .count {
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .section-content {
+      padding: 16px;
+      display: none;
+    }
+    
+    .section-content.expanded {
+      display: block;
+    }
+    
+    .finding {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    
+    .finding:last-child {
+      margin-bottom: 0;
+    }
+    
+    .finding-text {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .finding-reason {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    
+    button:active {
+      background: var(--bg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Safety Inspector</h1>
+      <p class="subtitle">Analyze AI-generated text for hallucination markers, hedging patterns, and fabrication signals</p>
+    </header>
+    
+    <div class="input-section">
+      <textarea id="input" placeholder="Paste AI-generated text here to analyze..."></textarea>
+    </div>
+    
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const input = document.getElementById('input');
+    const results = document.getElementById('results');
+    let debounceTimer;
+    
+    // Load saved text
+    const saved = localStorage.getItem('ai-safety-text');
+    if (saved) {
+      input.value = saved;
+      analyze(saved);
+    }
+    
+    input.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        localStorage.setItem('ai-safety-text', e.target.value);
+        analyze(e.target.value);
+      }, 300);
+    });
+    
+    function analyze(text) {
+      if (!text.trim()) {
+        results.innerHTML = '<div class="empty-state">Paste AI-generated text above to begin analysis</div>';
+        return;
+      }
+      
+      const findings = {
+        hallucinations: [],
+        hedging: [],
+        confidence: [],
+        fabrications: []
+      };
+      
+      // Hallucination markers (specific numbers, dates, names)
+      const specificNumbers = text.match(/\b(exactly|precisely)\s+\d+(\.\d+)?(\s+\w+)?/gi);
+      if (specificNumbers) {
+        specificNumbers.forEach(match => {
+          findings.hallucinations.push({
+            text: match,
+            reason: 'Overly precise claim — verify this specific number'
+          });
+        });
+      }
+      
+      const suspiciousTimes = text.match(/\b\d{1,2}:\d{2}\s*(AM|PM|am|pm)\b/gi);
+      if (suspiciousTimes) {
+        suspiciousTimes.forEach(match => {
+          findings.fabrications.push({
+            text: match,
+            reason: 'Suspiciously precise timing without clear source'
+          });
+        });
+      }
+      
+      const suspiciousStats = text.match(/\b\d+(\.\d+)?%\s+of\s+\w+/gi);
+      if (suspiciousStats) {
+        suspiciousStats.forEach(match => {
+          findings.hallucinations.push({
+            text: match,
+            reason: 'Specific percentage — verify with source'
+          });
+        });
+      }
+      
+      // Hedging language (good when present)
+      const hedgeWords = ['possibly', 'might', 'could', 'perhaps', 'likely', 'probably', 'may', 'appears to', 'seems to', 'suggests that'];
+      hedgeWords.forEach(word => {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        const matches = text.match(regex);
+        if (matches) {
+          findings.hedging.push({
+            text: `"${word}" used ${matches.length} time(s)`,
+            reason: 'Good — shows appropriate uncertainty'
+          });
+        }
+      });
+      
+      // Confidence signals (assertive without hedge)
+      const assertivePatterns = [
+        /\b(definitely|certainly|absolutely|undoubtedly|clearly|obviously)\b/gi,
+        /\b(it is|this is|that was)\s+(a fact|true|false|incorrect|wrong)\b/gi
+      ];
+      
+      assertivePatterns.forEach(pattern => {
+        const matches = text.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            findings.confidence.push({
+              text: match,
+              reason: 'High confidence claim — verify if factual'
+            });
+          });
+        }
+      });
+      
+      // Fabrication patterns
+      const citationLike = text.match(/\(.*?(?:19|20)\d{2}.*?\)/g);
+      if (citationLike) {
+        citationLike.forEach(match => {
+          if (!match.includes('http')) {
+            findings.fabrications.push({
+              text: match,
+              reason: 'Citation-like format — verify actual source exists'
+            });
+          }
+        });
+      }
+      
+      const namedSources = text.match(/according to\s+[A-Z][a-z]+\s+[A-Z][a-z]+/g);
+      if (namedSources) {
+        namedSources.forEach(match => {
+          findings.fabrications.push({
+            text: match,
+            reason: 'Named source — verify this person/org exists and made this claim'
+          });
+        });
+      }
+      
+      // Calculate risk score
+      const riskScore = calculateRisk(findings);
+      
+      renderResults(findings, riskScore);
+    }
+    
+    function calculateRisk(findings) {
+      const hallucinationWeight = findings.hallucinations.length * 3;
+      const fabricationWeight = findings.fabrications.length * 4;
+      const confidenceWeight = findings.confidence.length * 2;
+      const hedgingBonus = findings.hedging.length * -1; // Hedging reduces risk
+      
+      const raw = hallucinationWeight + fabricationWeight + confidenceWeight + hedgingBonus;
+      
+      if (raw <= 0) return { level: 'Low', color: 'green', desc: 'Appropriate uncertainty markers present' };
+      if (raw <= 5) return { level: 'Medium', color: 'yellow', desc: 'Some claims need verification' };
+      if (raw <= 10) return { level: 'High', color: 'red', desc: 'Multiple red flags — verify carefully' };
+      return { level: 'Critical', color: 'red', desc: 'Many fabrication signals — high risk' };
+    }
+    
+    function renderResults(findings, risk) {
+      results.innerHTML = `
+        <div class="score-card">
+          <div class="score-label">Safety Assessment</div>
+          <div class="score-value" style="color: var(--${risk.color})">${risk.level} Risk</div>
+          <div class="score-desc">${risk.desc}</div>
+        </div>
+        
+        ${renderSection('Hallucination Markers', findings.hallucinations, 'yellow', 
+          'Specific claims that sound confident but may be fabricated')}
+        
+        ${renderSection('Hedging Language', findings.hedging, 'green',
+          'Uncertainty markers (good when discussing uncertain topics)')}
+        
+        ${renderSection('Confidence Signals', findings.confidence, 'yellow',
+          'Assertive claims that may not match actual certainty')}
+        
+        ${renderSection('Fabrication Patterns', findings.fabrications, 'red',
+          'Suspicious precision or source-like structures')}
+        
+        <div class="actions">
+          <button onclick="clearAnalysis()">Clear</button>
+          <button onclick="copyAnalysis()">Copy Analysis</button>
+        </div>
+      `;
+    }
+    
+    function renderSection(title, items, color, description) {
+      if (items.length === 0) {
+        return `
+          <div class="analysis-section">
+            <div class="section-header collapsed" onclick="toggleSection(this)">
+              <div class="section-title">
+                <span class="indicator ${color}"></span>
+                ${title}
+              </div>
+              <span class="count">0</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="analysis-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <div class="section-title">
+              <span class="indicator ${color}"></span>
+              ${title}
+            </div>
+            <span class="count">${items.length}</span>
+          </div>
+          <div class="section-content expanded">
+            ${items.map(item => `
+              <div class="finding">
+                <div class="finding-text">${item.text}</div>
+                <div class="finding-reason">${item.reason}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    function toggleSection(header) {
+      const content = header.nextElementSibling;
+      if (content) {
+        content.classList.toggle('expanded');
+        header.classList.toggle('collapsed');
+      }
+    }
+    
+    function clearAnalysis() {
+      input.value = '';
+      localStorage.removeItem('ai-safety-text');
+      results.innerHTML = '<div class="empty-state">Paste AI-generated text above to begin analysis</div>';
+    }
+    
+    function copyAnalysis() {
+      const text = input.value;
+      const sections = document.querySelectorAll('.analysis-section');
+      
+      let output = 'AI SAFETY INSPECTION REPORT\n\n';
+      output += `INPUT TEXT:\n${text}\n\n`;
+      output += '═'.repeat(50) + '\n\n';
+      
+      sections.forEach(section => {
+        const title = section.querySelector('.section-title').textContent.trim();
+        const count = section.querySelector('.count').textContent;
+        const findings = section.querySelectorAll('.finding');
+        
+        output += `${title.toUpperCase()} (${count})\n`;
+        if (findings.length > 0) {
+          findings.forEach(finding => {
+            const text = finding.querySelector('.finding-text').textContent;
+            const reason = finding.querySelector('.finding-reason').textContent;
+            output += `  • ${text}\n    → ${reason}\n`;
+          });
+        } else {
+          output += '  (none detected)\n';
+        }
+        output += '\n';
+      });
+      
+      navigator.clipboard.writeText(output);
+      
+      const btn = event.target;
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = original, 1500);
+    }
+  </script>
+</body>
+</html>
