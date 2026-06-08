@@ -5,6 +5,14 @@
   "apps": [
     {
       "date": "2026-06-08",
+      "slug": "2026-06-08-context-snapshot",
+      "title": "Context Snapshot",
+      "category": "productivity",
+      "oneLiner": "Save your mental state before interruptions — one-tap context snapshots with quick notes, so you never lose your place when Slack pings.",
+      "path": "apps/2026-06-08-context-snapshot/"
+    },
+    {
+      "date": "2026-06-08",
       "slug": "2026-06-08-speed-sketch",
       "title": "Speed Sketch Battle",
       "category": "delightful",
