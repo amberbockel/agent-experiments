@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sponsor Pitch Calculator</title>
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --surface: #1C1C1E;
+      --border: #2C2C2E;
+      --text: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --accent: #30D158;
+      --accent-dim: #1F8A3A;
+      --conservative: #5E5CE6;
+      --market: #30D158;
+      --premium: #FFD60A;
+    }
+    
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #F2F2F7;
+        --surface: #FFFFFF;
+        --border: #E5E5EA;
+        --text: #000000;
+        --text-secondary: #6E6E73;
+        --accent: #34C759;
+        --accent-dim: #248A3D;
+        --conservative: #5E5CE6;
+        --market: #34C759;
+        --premium: #FF9F0A;
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding-top: max(env(safe-area-inset-top), 20px);
+      padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+    
+    header {
+      text-align: center;
+      padding: 40px 0;
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+    
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 17px;
+      font-family: inherit;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+    
+    select {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%238E8E93" d="M6 8L0 2l1.4-1.4L6 5.2 10.6.6 12 2z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    
+    .results {
+      display: none;
+    }
+    
+    .results.show {
+      display: block;
+    }
+    
+    .tier {
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .tier::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    
+    .tier-conservative {
+      background: rgba(94, 92, 230, 0.1);
+      border: 1px solid rgba(94, 92, 230, 0.3);
+    }
+    
+    .tier-conservative::before {
+      background: var(--conservative);
+    }
+    
+    .tier-market {
+      background: rgba(48, 209, 88, 0.1);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+    }
+    
+    .tier-market::before {
+      background: var(--market);
+    }
+    
+    .tier-premium {
+      background: rgba(255, 214, 10, 0.1);
+      border: 1px solid rgba(255, 214, 10, 0.3);
+    }
+    
+    .tier-premium::before {
+      background: var(--premium);
+    }
+    
+    @media (prefers-color-scheme: light) {
+      .tier-conservative {
+        background: rgba(94, 92, 230, 0.05);
+      }
+      
+      .tier-market {
+        background: rgba(52, 199, 89, 0.05);
+      }
+      
+      .tier-premium {
+        background: rgba(255, 159, 10, 0.05);
+      }
+    }
+    
+    .tier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    
+    .tier-name {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+    
+    .tier-price {
+      font-size: 32px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+    
+    .tier-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .metric {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+    }
+    
+    .metric-value {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 4px;
+    }
+    
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    
+    .note {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    .note strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Sponsor Pitch Calculator</h1>
+      <p class="subtitle">Know your worth before the pitch</p>
+    </header>
+    
+    <div class="card">
+      <div class="input-group">
+        <label for="subscribers">Total Subscribers</label>
+        <input type="number" id="subscribers" placeholder="1000" min="0" step="100">
+      </div>
+      
+      <div class="input-group">
+        <label for="openRate">Open Rate (%)</label>
+        <input type="number" id="openRate" placeholder="40" min="0" max="100" step="1">
+      </div>
+      
+      <div class="input-group">
+        <label for="niche">Niche Positioning</label>
+        <select id="niche">
+          <option value="1.0">General audience</option>
+          <option value="1.2">Professional/Career</option>
+          <option value="1.4">Tech/Software</option>
+          <option value="1.6" selected>AI/ML/Leadership</option>
+          <option value="1.8">Finance/Investing</option>
+        </select>
+      </div>
+      
+      <div class="input-group">
+        <label for="format">Content Format</label>
+        <select id="format">
+          <option value="1.0" selected>Full sponsored post</option>
+          <option value="0.3">Brief mention/callout</option>
+          <option value="0.5">Half-post feature</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="results" id="results">
+      <div class="card">
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-value" id="reachValue">—</div>
+            <div class="metric-label">Est. Reach</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="cpmValue">—</div>
+            <div class="metric-label">Eff. CPM</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tier tier-conservative">
+        <div class="tier-header">
+          <span class="tier-name">Conservative</span>
+          <span class="tier-price" id="conservativePrice">—</span>
+        </div>
+        <p class="tier-desc">Safe floor — good for first-time sponsors or when testing the waters</p>
+      </div>
+      
+      <div class="tier tier-market">
+        <div class="tier-header">
+          <span class="tier-name">Market Rate</span>
+          <span class="tier-price" id="marketPrice">—</span>
+        </div>
+        <p class="tier-desc">Industry standard for your audience size and engagement — your anchor price</p>
+      </div>
+      
+      <div class="tier tier-premium">
+        <div class="tier-header">
+          <span class="tier-name">Premium</span>
+          <span class="tier-price" id="premiumPrice">—</span>
+        </div>
+        <p class="tier-desc">High-value brands, exclusive placement, or when you have leverage</p>
+      </div>
+      
+      <div class="note">
+        <strong>How to use:</strong> Start with market rate. Discount to conservative if the sponsor is small/testing. Push to premium if they're asking for exclusivity, rush timing, or you have competing offers.
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const inputs = {
+      subscribers: document.getElementById('subscribers'),
+      openRate: document.getElementById('openRate'),
+      niche: document.getElementById('niche'),
+      format: document.getElementById('format')
+    };
+    
+    const results = document.getElementById('results');
+    const reachValue = document.getElementById('reachValue');
+    const cpmValue = document.getElementById('cpmValue');
+    const conservativePrice = document.getElementById('conservativePrice');
+    const marketPrice = document.getElementById('marketPrice');
+    const premiumPrice = document.getElementById('premiumPrice');
+    
+    // Load saved values
+    const saved = localStorage.getItem('sponsorCalc');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        inputs.subscribers.value = data.subscribers || '';
+        inputs.openRate.value = data.openRate || '';
+        inputs.niche.value = data.niche || '1.6';
+        inputs.format.value = data.format || '1.0';
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
+    function calculate() {
+      const subs = parseFloat(inputs.subscribers.value) || 0;
+      const openPct = parseFloat(inputs.openRate.value) || 0;
+      const nicheMult = parseFloat(inputs.niche.value) || 1.0;
+      const formatMult = parseFloat(inputs.format.value) || 1.0;
+      
+      if (subs <= 0 || openPct <= 0) {
+        results.classList.remove('show');
+        return;
+      }
+      
+      // Calculate effective reach
+      const reach = Math.round(subs * (openPct / 100));
+      
+      // Base CPM (cost per thousand impressions)
+      // Industry range: $15–75 for newsletters
+      // Adjusted by engagement quality
+      let baseCPM = 25; // starting point
+      
+      // Engagement boost: higher open rate = higher CPM
+      if (openPct >= 50) baseCPM += 15;
+      else if (openPct >= 40) baseCPM += 10;
+      else if (openPct >= 30) baseCPM += 5;
+      
+      // Apply niche and format multipliers
+      const effectiveCPM = baseCPM * nicheMult;
+      
+      // Calculate base price (CPM × reach / 1000 × format)
+      const basePrice = (effectiveCPM * reach / 1000) * formatMult;
+      
+      // Three tiers
+      const conservative = Math.round(basePrice * 0.7 / 50) * 50; // Round to nearest $50
+      const market = Math.round(basePrice / 100) * 100; // Round to nearest $100
+      const premium = Math.round(basePrice * 1.5 / 100) * 100; // Round to nearest $100
+      
+      // Update UI
+      reachValue.textContent = reach.toLocaleString();
+      cpmValue.textContent = `$${Math.round(effectiveCPM)}`;
+      conservativePrice.textContent = `$${conservative.toLocaleString()}`;
+      marketPrice.textContent = `$${market.toLocaleString()}`;
+      premiumPrice.textContent = `$${premium.toLocaleString()}`;
+      
+      results.classList.add('show');
+      
+      // Save to localStorage
+      localStorage.setItem('sponsorCalc', JSON.stringify({
+        subscribers: subs,
+        openRate: openPct,
+        niche: nicheMult,
+        format: formatMult
+      }));
+    }
+    
+    // Attach listeners
+    Object.values(inputs).forEach(input => {
+      input.addEventListener('input', calculate);
+      input.addEventListener('change', calculate);
+    });
+    
+    // Initial calc if values loaded
+    calculate();
+  </script>
+</body>
+</html>
