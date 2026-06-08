@@ -5,6 +5,14 @@
   "apps": [
     {
       "date": "2026-06-08",
+      "slug": "2026-06-08-speed-sketch",
+      "title": "Speed Sketch Battle",
+      "category": "delightful",
+      "oneLiner": "Instant-play drawing game — 30-second sketches, pass the phone, vote for the best. Zero onboarding, pure party game energy.",
+      "path": "apps/2026-06-08-speed-sketch/"
+    },
+    {
+      "date": "2026-06-08",
       "slug": "2026-06-08",
       "title": "Sponsor Pitch Calculator",
       "category": "business",

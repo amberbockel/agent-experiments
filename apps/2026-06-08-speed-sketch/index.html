@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Speed Sketch Battle</title>
+<style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  touch-action: none;
+  overflow: hidden;
+}
+.container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.prompt-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.prompt-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1C1C1E;
+  margin-bottom: 16px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timer {
+  font-size: 64px;
+  font-weight: 700;
+  color: #FF6B6B;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 8px rgba(255,107,107,0.3);
+}
+.timer.warning {
+  color: #FF3B30;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  cursor: crosshair;
+  touch-action: none;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+}
+.btn {
+  flex: 1;
+  padding: 18px;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn-primary {
+  background: white;
+  color: #FF6B6B;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.btn-primary:active {
+  transform: scale(0.95);
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 2px solid white;
+}
+.btn-secondary:active {
+  background: rgba(255,255,255,0.3);
+}
+.tools {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.tool {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.tool:active {
+  transform: scale(0.9);
+}
+.tool.active {
+  border-width: 4px;
+  transform: scale(1.1);
+}
+.score-card {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-around;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.score-item {
+  text-align: center;
+}
+.score-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.score-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hidden {
+  display: none !important;
+}
+.instructions {
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.9);
+}
+.instructions strong {
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Start Screen -->
+  <div id="startScreen">
+    <div class="prompt-card">
+      <div class="prompt-text">🎨 Speed Sketch Battle</div>
+      <div class="instructions">
+        <strong>30 seconds to draw.</strong><br>
+        Pass the phone. Vote for the best.<br>
+        Keep score or play for fun.
+      </div>
+    </div>
+    <button class="btn btn-primary" id="startBtn">Start Drawing</button>
+    <div class="score-card">
+      <div class="score-item">
+        <div class="score-label">Rounds</div>
+        <div class="score-value" id="totalRounds">0</div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">High Score</div>
+        <div class="score-value" id="highScore">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawing Screen -->
+  <div id="drawScreen" class="hidden">
+    <div class="prompt-card">
+      <div class="prompt-text" id="prompt">Draw a cat</div>
+      <div class="timer" id="timer">30</div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+    
+    <div class="tools">
+      <div class="tool active" style="background: #1C1C1E;" data-color="#1C1C1E"></div>
+      <div class="tool" style="background: #FF3B30;" data-color="#FF3B30"></div>
+      <div class="tool" style="background: #FF9500;" data-color="#FF9500"></div>
+      <div class="tool" style="background: #FFCC00;" data-color="#FFCC00"></div>
+      <div class="tool" style="background: #34C759;" data-color="#34C759"></div>
+      <div class="tool" style="background: #007AFF;" data-color="#007AFF"></div>
+      <div class="tool" style="background: #5856D6;" data-color="#5856D6"></div>
+      <div class="tool" style="background: #FF2D55;" data-color="#FF2D55"></div>
+    </div>
+    
+    <div class="controls">
+      <button class="btn btn-secondary" id="clearBtn">Clear</button>
+      <button class="btn btn-primary hidden" id="doneBtn">Time's Up!</button>
+    </div>
+  </div>
+
+  <!-- Score Screen -->
+  <div id="scoreScreen" class="hidden">
+    <div class="prompt-card">
+      <div class="prompt-text">Who won?</div>
+      <div class="instructions">
+        Vote or keep the score to yourself!
+      </div>
+    </div>
+    
+    <canvas id="resultCanvas"></canvas>
+    
+    <div class="controls">
+      <button class="btn btn-secondary" id="skipBtn">Skip Voting</button>
+      <button class="btn btn-primary" id="nextRoundBtn">Next Round</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const resultCanvas = document.getElementById('resultCanvas');
+const resultCtx = resultCanvas.getContext('2d');
+
+let isDrawing = false;
+let currentColor = '#1C1C1E';
+let lineWidth = 3;
+let timeLeft = 30;
+let timerInterval = null;
+let totalRounds = 0;
+let highScore = 0;
+
+const prompts = [
+  'Draw a cat', 'Draw a house', 'Draw a tree', 'Draw a car',
+  'Draw a sun', 'Draw a flower', 'Draw a fish', 'Draw a bird',
+  'Draw a rocket', 'Draw a pizza', 'Draw a smiley face', 'Draw a heart',
+  'Draw a dog', 'Draw a cloud', 'Draw a star', 'Draw a boat',
+  'Draw an apple', 'Draw a rainbow', 'Draw a mountain', 'Draw a bicycle',
+  'Draw a coffee cup', 'Draw eyeglasses', 'Draw a guitar', 'Draw a balloon',
+  'Draw a donut', 'Draw a cactus', 'Draw a mushroom', 'Draw a crown',
+  'Draw an ice cream', 'Draw a ghost', 'Draw a dinosaur', 'Draw a whale',
+  'Draw a cupcake', 'Draw a lighthouse', 'Draw a snowman', 'Draw a tent',
+  'Draw a camera', 'Draw headphones', 'Draw a key', 'Draw a lock'
+];
+
+// Load scores
+function loadScores() {
+  const saved = localStorage.getItem('speedSketchScores');
+  if (saved) {
+    const data = JSON.parse(saved);
+    totalRounds = data.rounds || 0;
+    highScore = data.high || 0;
+  }
+  updateScoreDisplay();
+}
+
+function saveScores() {
+  localStorage.setItem('speedSketchScores', JSON.stringify({
+    rounds: totalRounds,
+    high: highScore
+  }));
+}
+
+function updateScoreDisplay() {
+  document.getElementById('totalRounds').textContent = totalRounds;
+  document.getElementById('highScore').textContent = highScore;
+}
+
+// Initialize canvas
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth - 40, 480);
+  canvas.width = size;
+  canvas.height = size;
+  resultCanvas.width = size;
+  resultCanvas.height = size;
+  
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Drawing
+function startDrawing(e) {
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  
+  ctx.beginPath();
+  ctx.moveTo(x * (canvas.width / rect.width), y * (canvas.height / rect.height));
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  
+  ctx.strokeStyle = currentColor;
+  ctx.lineWidth = lineWidth;
+  ctx.lineTo(x * (canvas.width / rect.width), y * (canvas.height / rect.height));
+  ctx.stroke();
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDrawing);
+
+// Color selection
+document.querySelectorAll('.tool').forEach(tool => {
+  tool.addEventListener('click', function() {
+    document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    currentColor = this.dataset.color;
+  });
+});
+
+// Clear canvas
+document.getElementById('clearBtn').addEventListener('click', () => {
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+});
+
+// Timer
+function startTimer() {
+  timeLeft = 30;
+  updateTimer();
+  
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    
+    if (timeLeft === 0) {
+      clearInterval(timerInterval);
+      endDrawing();
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  const display = document.getElementById('timer');
+  display.textContent = timeLeft;
+  
+  if (timeLeft <= 10) {
+    display.classList.add('warning');
+  } else {
+    display.classList.remove('warning');
+  }
+  
+  if (timeLeft === 0) {
+    document.getElementById('doneBtn').classList.remove('hidden');
+  }
+}
+
+// Start game
+document.getElementById('startBtn').addEventListener('click', () => {
+  const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+  document.getElementById('prompt').textContent = prompt;
+  
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('drawScreen').classList.remove('hidden');
+  document.getElementById('doneBtn').classList.add('hidden');
+  
+  startTimer();
+});
+
+// End drawing
+function endDrawing() {
+  // Copy canvas to result
+  resultCtx.drawImage(canvas, 0, 0);
+  
+  totalRounds++;
+  saveScores();
+  updateScoreDisplay();
+  
+  document.getElementById('drawScreen').classList.add('hidden');
+  document.getElementById('scoreScreen').classList.remove('hidden');
+}
+
+document.getElementById('doneBtn').addEventListener('click', endDrawing);
+
+// Next round
+document.getElementById('nextRoundBtn').addEventListener('click', () => {
+  document.getElementById('scoreScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+});
+
+document.getElementById('skipBtn').addEventListener('click', () => {
+  document.getElementById('scoreScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+});
+
+// Initialize
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+loadScores();
+</script>
+
+</body>
+</html>
