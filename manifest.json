@@ -5,6 +5,14 @@
   "apps": [
     {
       "date": "2026-06-08",
+      "slug": "2026-06-08-bull-run",
+      "title": "Bull Run",
+      "category": "delightful",
+      "oneLiner": "Number placement puzzle — play 10 cards across 4 rows, avoid taking penalty bulls. Fast, strategic, endlessly replayable.",
+      "path": "apps/2026-06-08-bull-run/"
+    },
+    {
+      "date": "2026-06-08",
       "slug": "2026-06-08-context-snapshot",
       "title": "Context Snapshot",
       "category": "productivity",

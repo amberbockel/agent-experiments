@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Bull Run</title>
+<style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: linear-gradient(135deg, #D4A574 0%, #8B4513 100%);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding-top: max(env(safe-area-inset-top), 20px);
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+.container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.subtitle {
+  font-size: 15px;
+  opacity: 0.9;
+}
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  flex: 1;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.board {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  min-height: 80px;
+  background: #F9F9FB;
+  border-radius: 12px;
+  padding: 12px;
+  border: 2px dashed #E5E5EA;
+  align-items: center;
+  position: relative;
+}
+.row.can-drop {
+  border-color: #8B4513;
+  background: #FFF8F0;
+}
+.row-label {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  background: #F9F9FB;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.card {
+  width: 60px;
+  height: 80px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 2px solid #E5E5EA;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.card:active {
+  transform: scale(0.95);
+}
+.card.selected {
+  border-color: #8B4513;
+  background: #FFF8F0;
+  transform: translateY(-8px);
+  box-shadow: 0 4px 16px rgba(139,69,19,0.3);
+}
+.card-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1C1C1E;
+  font-variant-numeric: tabular-nums;
+}
+.card-bulls {
+  font-size: 16px;
+  margin-top: 4px;
+}
+.hand {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.hand-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.hand-cards {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn {
+  width: 100%;
+  padding: 18px;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: white;
+  color: #8B4513;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 2px solid white;
+  margin-top: 12px;
+}
+.btn-secondary:active {
+  background: rgba(255,255,255,0.3);
+}
+.game-over {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  color: #1C1C1E;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.game-over-emoji {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.game-over-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.game-over-score {
+  font-size: 48px;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 8px;
+}
+.game-over-label {
+  font-size: 15px;
+  color: #666;
+  margin-bottom: 24px;
+}
+.hidden {
+  display: none !important;
+}
+.instructions {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.instructions strong {
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🐂 Bull Run</h1>
+    <div class="subtitle">Place your cards. Avoid the bulls.</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Penalty</div>
+      <div class="stat-value" id="penalty">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cards Left</div>
+      <div class="stat-value" id="cardsLeft">10</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best</div>
+      <div class="stat-value" id="bestScore">--</div>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameScreen">
+    <div class="instructions">
+      <strong>How to play:</strong> Tap a card, then tap a row. Your card must be higher than the row's last card. Row full (5 cards)? You take the penalty! 🐂
+    </div>
+
+    <div class="board">
+      <div class="row" data-row="0">
+        <div class="row-label">Row 1</div>
+      </div>
+      <div class="row" data-row="1">
+        <div class="row-label">Row 2</div>
+      </div>
+      <div class="row" data-row="2">
+        <div class="row-label">Row 3</div>
+      </div>
+      <div class="row" data-row="3">
+        <div class="row-label">Row 4</div>
+      </div>
+    </div>
+
+    <div class="hand">
+      <div class="hand-label">Your Hand</div>
+      <div class="hand-cards" id="hand"></div>
+    </div>
+
+    <button class="btn btn-secondary" id="newGameBtn">New Game</button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" class="hidden">
+    <div class="game-over">
+      <div class="game-over-emoji" id="gameOverEmoji">🎉</div>
+      <div class="game-over-title" id="gameOverTitle">Game Complete!</div>
+      <div class="game-over-score" id="finalPenalty">0</div>
+      <div class="game-over-label">🐂 Penalty Bulls</div>
+      <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Game state
+let hand = [];
+let rows = [[], [], [], []];
+let selectedCard = null;
+let penalty = 0;
+let bestScore = null;
+
+// Bull values for cards
+function getBulls(num) {
+  if (num === 55) return 7;
+  if (num % 11 === 0) return 5;
+  if (num % 10 === 0) return 3;
+  if (num % 5 === 0) return 2;
+  return 1;
+}
+
+// Generate random cards
+function generateCards() {
+  const deck = [];
+  for (let i = 1; i <= 104; i++) {
+    deck.push(i);
+  }
+  
+  // Shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  
+  return deck;
+}
+
+// Initialize game
+function initGame() {
+  const deck = generateCards();
+  
+  // 4 row seed cards
+  rows = [
+    [deck[0]],
+    [deck[1]],
+    [deck[2]],
+    [deck[3]]
+  ];
+  
+  // 10 hand cards
+  hand = deck.slice(4, 14).sort((a, b) => a - b);
+  
+  penalty = 0;
+  selectedCard = null;
+  
+  updateStats();
+  renderBoard();
+  renderHand();
+  
+  document.getElementById('gameScreen').classList.remove('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+}
+
+// Load best score
+function loadBestScore() {
+  const saved = localStorage.getItem('bullRunBest');
+  if (saved) {
+    bestScore = parseInt(saved);
+    document.getElementById('bestScore').textContent = bestScore;
+  }
+}
+
+function saveBestScore() {
+  if (bestScore === null || penalty < bestScore) {
+    bestScore = penalty;
+    localStorage.setItem('bullRunBest', bestScore);
+    document.getElementById('bestScore').textContent = bestScore;
+  }
+}
+
+// Update stats
+function updateStats() {
+  document.getElementById('penalty').textContent = penalty;
+  document.getElementById('cardsLeft').textContent = hand.length;
+}
+
+// Render board
+function renderBoard() {
+  rows.forEach((row, i) => {
+    const rowEl = document.querySelector(`[data-row="${i}"]`);
+    rowEl.innerHTML = `<div class="row-label">Row ${i + 1}</div>`;
+    
+    row.forEach(num => {
+      const card = createCard(num);
+      card.classList.remove('selected');
+      card.style.cursor = 'default';
+      rowEl.appendChild(card);
+    });
+  });
+  
+  // Update drop zones
+  updateDropZones();
+}
+
+// Create card element
+function createCard(num) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="card-number">${num}</div>
+    <div class="card-bulls">${'🐂'.repeat(getBulls(num))}</div>
+  `;
+  return card;
+}
+
+// Render hand
+function renderHand() {
+  const handEl = document.getElementById('hand');
+  handEl.innerHTML = '';
+  
+  hand.forEach(num => {
+    const card = createCard(num);
+    card.addEventListener('click', () => selectCard(num));
+    if (selectedCard === num) {
+      card.classList.add('selected');
+    }
+    handEl.appendChild(card);
+  });
+}
+
+// Select card from hand
+function selectCard(num) {
+  selectedCard = num;
+  renderHand();
+  updateDropZones();
+}
+
+// Update drop zones
+function updateDropZones() {
+  document.querySelectorAll('.row').forEach(rowEl => {
+    rowEl.classList.remove('can-drop');
+  });
+  
+  if (selectedCard !== null) {
+    rows.forEach((row, i) => {
+      if (canPlayCard(selectedCard, i)) {
+        const rowEl = document.querySelector(`[data-row="${i}"]`);
+        rowEl.classList.add('can-drop');
+      }
+    });
+  }
+}
+
+// Check if card can be played
+function canPlayCard(num, rowIndex) {
+  const row = rows[rowIndex];
+  const lastCard = row[row.length - 1];
+  return num > lastCard;
+}
+
+// Play card
+function playCard(rowIndex) {
+  if (!selectedCard) {
+    alert('Select a card from your hand first!');
+    return;
+  }
+  
+  if (!canPlayCard(selectedCard, rowIndex)) {
+    alert('Card must be higher than the row\'s last card!');
+    return;
+  }
+  
+  const row = rows[rowIndex];
+  
+  // Check if row is full (5 cards)
+  if (row.length === 5) {
+    // Take penalty
+    const rowPenalty = row.reduce((sum, num) => sum + getBulls(num), 0);
+    penalty += rowPenalty;
+    
+    // Clear row, place card as new seed
+    rows[rowIndex] = [selectedCard];
+    
+    alert(`💥 Row full! You took ${rowPenalty} penalty bulls.`);
+  } else {
+    // Add card to row
+    row.push(selectedCard);
+  }
+  
+  // Remove from hand
+  hand = hand.filter(n => n !== selectedCard);
+  selectedCard = null;
+  
+  updateStats();
+  renderBoard();
+  renderHand();
+  
+  // Check game over
+  if (hand.length === 0) {
+    endGame();
+  }
+}
+
+// Add click handlers to rows
+document.querySelectorAll('.row').forEach((rowEl, i) => {
+  rowEl.addEventListener('click', () => playCard(i));
+});
+
+// End game
+function endGame() {
+  saveBestScore();
+  
+  const emoji = penalty === 0 ? '🏆' : penalty < 20 ? '🎉' : penalty < 40 ? '😊' : '😅';
+  const title = penalty === 0 ? 'Perfect!' : penalty < 20 ? 'Great Job!' : penalty < 40 ? 'Not Bad!' : 'Nice Try!';
+  
+  document.getElementById('gameOverEmoji').textContent = emoji;
+  document.getElementById('gameOverTitle').textContent = title;
+  document.getElementById('finalPenalty').textContent = penalty;
+  
+  document.getElementById('gameScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.remove('hidden');
+}
+
+// New game
+document.getElementById('newGameBtn').addEventListener('click', initGame);
+document.getElementById('playAgainBtn').addEventListener('click', initGame);
+
+// Initialize
+loadBestScore();
+initGame();
+</script>
+
+</body>
+</html>
