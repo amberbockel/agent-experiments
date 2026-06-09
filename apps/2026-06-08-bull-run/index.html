@@ -339,20 +339,37 @@ function generateCards() {
   return deck;
 }
 
-// Initialize game
+// Initialize game with playable deal
 function initGame() {
-  const deck = generateCards();
+  let validDeal = false;
+  let deck, handCards, rowSeeds;
   
-  // 4 row seed cards
+  // Keep generating until we get a playable deal
+  while (!validDeal) {
+    deck = generateCards();
+    
+    // 4 row seed cards
+    rowSeeds = [deck[0], deck[1], deck[2], deck[3]];
+    
+    // 10 hand cards
+    handCards = deck.slice(4, 14).sort((a, b) => a - b);
+    
+    // Check if lowest hand card can be played
+    const lowestCard = handCards[0];
+    const minRowCard = Math.min(...rowSeeds);
+    
+    // Valid if lowest hand card is higher than at least one row seed
+    validDeal = lowestCard > minRowCard;
+  }
+  
   rows = [
-    [deck[0]],
-    [deck[1]],
-    [deck[2]],
-    [deck[3]]
+    [rowSeeds[0]],
+    [rowSeeds[1]],
+    [rowSeeds[2]],
+    [rowSeeds[3]]
   ];
   
-  // 10 hand cards
-  hand = deck.slice(4, 14).sort((a, b) => a - b);
+  hand = handCards;
   
   penalty = 0;
   selectedCard = null;
@@ -462,6 +479,13 @@ function canPlayCard(num, rowIndex) {
   return num > lastCard;
 }
 
+// Check if any card can be played
+function hasPlayableCard() {
+  return hand.some(card => 
+    rows.some((row, i) => canPlayCard(card, i))
+  );
+}
+
 // Play card
 function playCard(rowIndex) {
   if (!selectedCard) {
@@ -498,6 +522,31 @@ function playCard(rowIndex) {
   updateStats();
   renderBoard();
   renderHand();
+  
+  // Check if stuck (no valid plays)
+  if (hand.length > 0 && !hasPlayableCard()) {
+    // Auto-select lowest row to take penalty
+    const lowestRowIndex = rows.reduce((minIdx, row, idx) => {
+      const rowPenalty = row.reduce((sum, num) => sum + getBulls(num), 0);
+      const minPenalty = rows[minIdx].reduce((sum, num) => sum + getBulls(num), 0);
+      return rowPenalty < minPenalty ? idx : minIdx;
+    }, 0);
+    
+    const lowestRow = rows[lowestRowIndex];
+    const rowPenalty = lowestRow.reduce((sum, num) => sum + getBulls(num), 0);
+    penalty += rowPenalty;
+    
+    // Clear row, place card as new seed
+    rows[lowestRowIndex] = [selectedCard];
+    hand = hand.filter(n => n !== selectedCard);
+    selectedCard = null;
+    
+    alert(`💥 No valid plays! Forced to take row ${lowestRowIndex + 1} (${rowPenalty} bulls)`);
+    
+    updateStats();
+    renderBoard();
+    renderHand();
+  }
   
   // Check game over
   if (hand.length === 0) {
