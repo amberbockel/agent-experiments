@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-09",
+      "slug": "2026-06-09",
+      "title": "Category Sprint",
+      "category": "delightful",
+      "oneLiner": "Name as many things as you can in 60 seconds — fast word game with rotating categories, perfect for solo play or passing the phone at dinner.",
+      "path": "apps/2026-06-09/"
+    },
+    {
       "date": "2026-06-08",
       "slug": "2026-06-08-bull-run",
       "title": "Bull Run",

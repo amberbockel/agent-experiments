@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Category Sprint</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #6E6E73;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #98989D;
+        --border: #38383A;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      padding: 20px 20px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .timer-bar {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .timer {
+      font-size: 64px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .timer.warning {
+      color: var(--warning);
+    }
+
+    .timer.danger {
+      color: var(--danger);
+    }
+
+    .category-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .category-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .category-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 16px;
+    }
+
+    .high-score {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .high-score strong {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .input-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 17px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input[type="text"]:disabled {
+      opacity: 0.5;
+    }
+
+    .score-display {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .answers-list {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 120px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .answer-item {
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .answer-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .answer-number {
+      font-weight: 600;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      min-width: 24px;
+    }
+
+    .answer-text {
+      flex: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 15px;
+      padding: 40px 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      min-height: 52px;
+    }
+
+    button:active {
+      opacity: 0.8;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .results-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    .results-card h2 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .final-score {
+      font-size: 72px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 16px 0;
+      line-height: 1;
+    }
+
+    .new-record {
+      background: var(--success);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 400px) {
+      .timer {
+        font-size: 52px;
+      }
+      
+      .final-score {
+        font-size: 56px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Category Sprint</h1>
+    <div class="subtitle">Name as many as you can in 60 seconds</div>
+  </header>
+
+  <main>
+    <!-- Start Screen -->
+    <div id="startScreen">
+      <div class="category-card">
+        <div class="category-label">Ready?</div>
+        <div class="category-name" id="previewCategory">Loading...</div>
+        <div class="high-score" id="previewHighScore"></div>
+      </div>
+      <button id="startBtn">Start Sprint</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+      <div class="timer-bar">
+        <div class="timer" id="timer">60</div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-label">Category</div>
+        <div class="category-name" id="currentCategory"></div>
+      </div>
+
+      <div class="score-display">
+        <span id="currentScore">0</span> answers
+      </div>
+
+      <div class="input-container">
+        <input 
+          type="text" 
+          id="answerInput" 
+          placeholder="Type your answer..." 
+          autocomplete="off"
+          autocapitalize="off"
+        >
+      </div>
+
+      <div class="answers-list" id="answersList">
+        <div class="empty-state">Your answers will appear here...</div>
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="hidden">
+      <div class="results-card">
+        <h2>Time's Up!</h2>
+        <div id="newRecordBadge" class="hidden">
+          <div class="new-record">🎉 New Record!</div>
+        </div>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="category-label" id="resultsCategory"></div>
+        
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Your Score</div>
+            <div class="stat-value" id="statsScore">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Best Ever</div>
+            <div class="stat-value" id="statsBest">0</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="playAgainBtn">Play Again</button>
+    </div>
+  </main>
+
+  <script>
+    const CATEGORIES = [
+      "Things that are blue",
+      "Pizza toppings",
+      "Cities in Europe",
+      "Animals with four legs",
+      "Fruits",
+      "Things you find in a kitchen",
+      "Countries in Asia",
+      "Musical instruments",
+      "Sports",
+      "Types of weather",
+      "Things that fly",
+      "Ocean animals",
+      "Vegetables",
+      "Movies",
+      "Book genres",
+      "Things that are round",
+      "Jobs/Professions",
+      "Types of trees",
+      "Things you wear",
+      "Desserts",
+      "Car brands",
+      "US states",
+      "Things that are hot",
+      "Breakfast foods",
+      "Ice cream flavors",
+      "Things in a classroom",
+      "Board games",
+      "Flowers",
+      "Things you find at the beach",
+      "Drinks",
+      "Gemstones",
+      "Types of bread",
+      "Things with wheels",
+      "Fictional characters",
+      "Types of cheese",
+      "Things that grow in a garden",
+      "Video games",
+      "Things that are soft",
+      "Candy/Sweets",
+      "Things you find in space",
+      "Types of pasta",
+      "Animals that live in water",
+      "Things that make noise",
+      "Spices",
+      "Things you find in a park"
+    ];
+
+    let currentCategory = '';
+    let timeLeft = 60;
+    let timerInterval = null;
+    let answers = [];
+    let isPlaying = false;
+
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultsScreen = document.getElementById('resultsScreen');
+    const startBtn = document.getElementById('startBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const answerInput = document.getElementById('answerInput');
+    const answersList = document.getElementById('answersList');
+    const timerDisplay = document.getElementById('timer');
+    const currentCategoryDisplay = document.getElementById('currentCategory');
+    const currentScoreDisplay = document.getElementById('currentScore');
+    const previewCategory = document.getElementById('previewCategory');
+    const previewHighScore = document.getElementById('previewHighScore');
+    const finalScore = document.getElementById('finalScore');
+    const resultsCategory = document.getElementById('resultsCategory');
+    const newRecordBadge = document.getElementById('newRecordBadge');
+    const statsScore = document.getElementById('statsScore');
+    const statsBest = document.getElementById('statsBest');
+
+    function getRandomCategory() {
+      return CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+    }
+
+    function getHighScore(category) {
+      const scores = JSON.parse(localStorage.getItem('categorySprint_scores') || '{}');
+      return scores[category] || 0;
+    }
+
+    function saveHighScore(category, score) {
+      const scores = JSON.parse(localStorage.getItem('categorySprint_scores') || '{}');
+      if (score > (scores[category] || 0)) {
+        scores[category] = score;
+        localStorage.setItem('categorySprint_scores', JSON.stringify(scores));
+        return true;
+      }
+      return false;
+    }
+
+    function showStartScreen() {
+      currentCategory = getRandomCategory();
+      const highScore = getHighScore(currentCategory);
+      
+      previewCategory.textContent = currentCategory;
+      previewHighScore.textContent = highScore > 0 
+        ? `Personal best: ${highScore} answers`
+        : 'No record yet — be the first!';
+
+      startScreen.classList.remove('hidden');
+      gameScreen.classList.add('hidden');
+      resultsScreen.classList.add('hidden');
+    }
+
+    function startGame() {
+      answers = [];
+      timeLeft = 60;
+      isPlaying = true;
+
+      currentCategoryDisplay.textContent = currentCategory;
+      currentScoreDisplay.textContent = '0';
+      answersList.innerHTML = '<div class="empty-state">Your answers will appear here...</div>';
+      answerInput.value = '';
+      timerDisplay.textContent = '60';
+      timerDisplay.className = 'timer';
+
+      startScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      resultsScreen.classList.add('hidden');
+
+      answerInput.focus();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+
+        if (timeLeft <= 10) {
+          timerDisplay.classList.add('danger');
+        } else if (timeLeft <= 20) {
+          timerDisplay.classList.add('warning');
+        }
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      isPlaying = false;
+      answerInput.disabled = true;
+
+      const score = answers.length;
+      const isNewRecord = saveHighScore(currentCategory, score);
+      const highScore = getHighScore(currentCategory);
+
+      finalScore.textContent = score;
+      resultsCategory.textContent = currentCategory;
+      statsScore.textContent = score;
+      statsBest.textContent = highScore;
+
+      if (isNewRecord && score > 0) {
+        newRecordBadge.classList.remove('hidden');
+      } else {
+        newRecordBadge.classList.add('hidden');
+      }
+
+      gameScreen.classList.add('hidden');
+      resultsScreen.classList.remove('hidden');
+    }
+
+    function addAnswer(text) {
+      const normalized = text.trim().toLowerCase();
+      
+      if (normalized.length < 2) {
+        return;
+      }
+
+      if (answers.some(a => a.toLowerCase() === normalized)) {
+        answerInput.value = '';
+        return;
+      }
+
+      answers.push(text.trim());
+      updateAnswersList();
+      answerInput.value = '';
+      currentScoreDisplay.textContent = answers.length;
+    }
+
+    function updateAnswersList() {
+      if (answers.length === 0) {
+        answersList.innerHTML = '<div class="empty-state">Your answers will appear here...</div>';
+        return;
+      }
+
+      answersList.innerHTML = answers
+        .map((answer, index) => `
+          <div class="answer-item">
+            <div class="answer-number">${index + 1}.</div>
+            <div class="answer-text">${answer}</div>
+          </div>
+        `)
+        .reverse()
+        .join('');
+    }
+
+    answerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && isPlaying) {
+        addAnswer(answerInput.value);
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    playAgainBtn.addEventListener('click', showStartScreen);
+
+    // Initialize
+    showStartScreen();
+  </script>
+</body>
+</html>
