@@ -5,11 +5,11 @@
   "apps": [
     {
       "date": "2026-06-10",
-      "slug": "2026-06-10",
-      "title": "Model Personality Slider",
+      "slug": "2026-06-10-prompt-builder",
+      "title": "Prompt Builder",
       "category": "trend",
-      "oneLiner": "Adjust temperature, top-p, and frequency penalty with live visual feedback — see how LLM parameters transform outputs from robotic to creative to chaotic, and learn what those sliders actually do.",
-      "path": "apps/2026-06-10/"
+      "oneLiner": "Answer 5 questions → get a tool-optimized AI prompt. Stop guessing what to write — build better prompts in 60 seconds.",
+      "path": "apps/2026-06-10-prompt-builder/"
     },
     {
       "date": "2026-06-09",
