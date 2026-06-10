@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-10",
+      "slug": "2026-06-10",
+      "title": "Model Personality Slider",
+      "category": "trend",
+      "oneLiner": "Adjust temperature, top-p, and frequency penalty with live visual feedback — see how LLM parameters transform outputs from robotic to creative to chaotic, and learn what those sliders actually do.",
+      "path": "apps/2026-06-10/"
+    },
+    {
       "date": "2026-06-09",
       "slug": "2026-06-09",
       "title": "Category Sprint",

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Model Personality Slider</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --red: #FF3B30;
+      --orange: #FF9500;
+      --green: #34C759;
+      --purple: #AF52DE;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+      padding-top: max(env(safe-area-inset-top), 20px);
+      padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .slider-section {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .slider-label {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .slider-value {
+      font-size: 17px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+
+    .slider-visual {
+      height: 40px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .temp-visual {
+      background: linear-gradient(90deg, 
+        var(--accent) 0%, 
+        var(--orange) 50%, 
+        var(--red) 100%);
+      opacity: 0.2;
+    }
+
+    .temp-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.2s ease, background-color 0.2s ease;
+    }
+
+    .topp-visual {
+      background: var(--border);
+    }
+
+    .topp-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--purple);
+      transition: width 0.2s ease;
+    }
+
+    .freq-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--border);
+    }
+
+    .freq-marker {
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: var(--text-secondary);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .freq-indicator {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: var(--green);
+      transition: left 0.2s ease, width 0.2s ease, background-color 0.2s ease;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+      transition: transform 0.1s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .personality-badge {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .personality-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .personality-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .personality-emoji {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .personality-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .example-output {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .example-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .example-prompt {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .example-text {
+      font-size: 17px;
+      line-height: 1.5;
+      transition: opacity 0.2s ease;
+    }
+
+    .info-section {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .info-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .info-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      padding: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Model Personality Slider</h1>
+      <p class="subtitle">Adjust LLM parameters and see how they transform outputs from robotic to creative to chaotic</p>
+    </header>
+
+    <div class="slider-section">
+      <div class="slider-header">
+        <span class="slider-label">Temperature</span>
+        <span class="slider-value" id="temp-value">0.7</span>
+      </div>
+      <div class="slider-visual temp-visual">
+        <div class="temp-indicator" id="temp-indicator"></div>
+      </div>
+      <input type="range" id="temp-slider" min="0" max="200" value="70" step="1">
+    </div>
+
+    <div class="slider-section">
+      <div class="slider-header">
+        <span class="slider-label">Top-p</span>
+        <span class="slider-value" id="topp-value">1.0</span>
+      </div>
+      <div class="slider-visual topp-visual">
+        <div class="topp-indicator" id="topp-indicator"></div>
+      </div>
+      <input type="range" id="topp-slider" min="0" max="100" value="100" step="1">
+    </div>
+
+    <div class="slider-section">
+      <div class="slider-header">
+        <span class="slider-label">Frequency Penalty</span>
+        <span class="slider-value" id="freq-value">0.0</span>
+      </div>
+      <div class="slider-visual freq-visual">
+        <div class="freq-marker"></div>
+        <div class="freq-indicator" id="freq-indicator"></div>
+      </div>
+      <input type="range" id="freq-slider" min="-200" max="200" value="0" step="1">
+    </div>
+
+    <div class="personality-badge" id="personality-badge">
+      <div class="personality-label">Current Personality</div>
+      <div class="personality-emoji" id="personality-emoji">⚖️</div>
+      <div class="personality-name" id="personality-name">Balanced</div>
+      <div class="personality-desc" id="personality-desc">Standard configuration for most tasks</div>
+    </div>
+
+    <div class="example-output">
+      <div class="example-label">Example Output</div>
+      <div class="example-prompt">"Describe Paris in one sentence."</div>
+      <div class="example-text" id="example-text">Paris is the capital city of France, renowned for its art, architecture, cuisine, and cultural significance.</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title" id="info-title">What is Temperature?</div>
+      <div class="info-text" id="info-text">Temperature controls randomness in the model's responses. Lower values (0.0–0.3) make outputs more deterministic and focused. Higher values (1.0–2.0) increase creativity and variation, but can also introduce inconsistency.</div>
+    </div>
+
+    <footer>
+      Built by Ada for Amber · 2026-06-10
+    </footer>
+  </div>
+
+  <script>
+    const tempSlider = document.getElementById('temp-slider');
+    const toppSlider = document.getElementById('topp-slider');
+    const freqSlider = document.getElementById('freq-slider');
+    
+    const tempValue = document.getElementById('temp-value');
+    const toppValue = document.getElementById('topp-value');
+    const freqValue = document.getElementById('freq-value');
+    
+    const tempIndicator = document.getElementById('temp-indicator');
+    const toppIndicator = document.getElementById('topp-indicator');
+    const freqIndicator = document.getElementById('freq-indicator');
+    
+    const personalityEmoji = document.getElementById('personality-emoji');
+    const personalityName = document.getElementById('personality-name');
+    const personalityDesc = document.getElementById('personality-desc');
+    
+    const exampleText = document.getElementById('example-text');
+    const infoTitle = document.getElementById('info-title');
+    const infoText = document.getElementById('info-text');
+
+    // Example outputs for different temperature ranges
+    const examples = {
+      temp_0_0: "Paris is the capital of France.",
+      temp_0_3: "Paris is the capital of France, known for its iconic Eiffel Tower and rich cultural heritage.",
+      temp_0_7: "Paris is the capital city of France, renowned for its art, architecture, cuisine, and cultural significance.",
+      temp_1_0: "Paris is a luminous city where centuries of art, revolution, and romance converge along the Seine's graceful banks.",
+      temp_1_5: "Paris — that glittering nexus of artistic rebellion, culinary alchemy, and architectural poetry that has captivated hearts for centuries!",
+      temp_2_0: "Paris! Oui oui, croissants, Eiffel sparkles, revolution vibes, très magnifique romance on cobblestones! 🥐✨🗼"
+    };
+
+    const personalities = {
+      robotic: {
+        emoji: '🤖',
+        name: 'Robotic',
+        desc: 'Deterministic, factual, no creativity — perfect for data extraction and consistency'
+      },
+      precise: {
+        emoji: '🎯',
+        name: 'Precise',
+        desc: 'Focused and reliable with minimal variation — ideal for technical documentation'
+      },
+      balanced: {
+        emoji: '⚖️',
+        name: 'Balanced',
+        desc: 'Standard configuration for most tasks — natural and conversational'
+      },
+      creative: {
+        emoji: '🎨',
+        name: 'Creative',
+        desc: 'Imaginative and varied — great for brainstorming and creative writing'
+      },
+      wild: {
+        emoji: '🎪',
+        name: 'Wild',
+        desc: 'Highly unpredictable and experimental — expect the unexpected'
+      },
+      chaotic: {
+        emoji: '🌪️',
+        name: 'Chaotic',
+        desc: 'Maximum randomness — often incoherent, use with extreme caution'
+      }
+    };
+
+    const paramInfo = {
+      temperature: {
+        title: 'What is Temperature?',
+        text: 'Temperature controls randomness in the model\'s responses. Lower values (0.0–0.3) make outputs more deterministic and focused. Higher values (1.0–2.0) increase creativity and variation, but can also introduce inconsistency.'
+      },
+      topp: {
+        title: 'What is Top-p?',
+        text: 'Top-p (nucleus sampling) limits the model to only consider tokens whose cumulative probability exceeds p. Lower values (0.1–0.5) make outputs more focused and predictable. Higher values (0.9–1.0) allow more diversity.'
+      },
+      frequency: {
+        title: 'What is Frequency Penalty?',
+        text: 'Frequency penalty discourages the model from repeating the same words or phrases. Negative values encourage repetition. Positive values (0.5–2.0) promote variety and reduce redundancy in longer outputs.'
+      }
+    };
+
+    // Load saved values
+    const savedTemp = localStorage.getItem('temp') || 70;
+    const savedTopp = localStorage.getItem('topp') || 100;
+    const savedFreq = localStorage.getItem('freq') || 0;
+    
+    tempSlider.value = savedTemp;
+    toppSlider.value = savedTopp;
+    freqSlider.value = savedFreq;
+
+    function getTemp() {
+      return parseFloat(tempSlider.value) / 100;
+    }
+
+    function getTopp() {
+      return parseFloat(toppSlider.value) / 100;
+    }
+
+    function getFreq() {
+      return parseFloat(freqSlider.value) / 100;
+    }
+
+    function updateTemp() {
+      const val = getTemp();
+      tempValue.textContent = val.toFixed(1);
+      tempIndicator.style.width = (val / 2 * 100) + '%';
+      
+      // Color shift
+      if (val < 0.5) {
+        tempIndicator.style.backgroundColor = 'var(--accent)';
+      } else if (val < 1.0) {
+        tempIndicator.style.backgroundColor = 'var(--orange)';
+      } else {
+        tempIndicator.style.backgroundColor = 'var(--red)';
+      }
+      
+      localStorage.setItem('temp', tempSlider.value);
+      updatePersonality();
+      updateExample();
+      updateInfo('temperature');
+    }
+
+    function updateTopp() {
+      const val = getTopp();
+      toppValue.textContent = val.toFixed(2);
+      toppIndicator.style.width = (val * 100) + '%';
+      localStorage.setItem('topp', toppSlider.value);
+      updatePersonality();
+      updateInfo('topp');
+    }
+
+    function updateFreq() {
+      const val = getFreq();
+      freqValue.textContent = val.toFixed(1);
+      
+      // Center at 0, expand left or right
+      const width = Math.abs(val) / 2 * 100;
+      if (val < 0) {
+        freqIndicator.style.left = (50 - width/2) + '%';
+        freqIndicator.style.width = (width/2) + '%';
+        freqIndicator.style.backgroundColor = 'var(--red)';
+      } else {
+        freqIndicator.style.left = '50%';
+        freqIndicator.style.width = (width/2) + '%';
+        freqIndicator.style.backgroundColor = 'var(--green)';
+      }
+      
+      localStorage.setItem('freq', freqSlider.value);
+      updatePersonality();
+      updateInfo('frequency');
+    }
+
+    function updatePersonality() {
+      const temp = getTemp();
+      let personality;
+      
+      if (temp < 0.2) {
+        personality = personalities.robotic;
+      } else if (temp < 0.5) {
+        personality = personalities.precise;
+      } else if (temp < 0.9) {
+        personality = personalities.balanced;
+      } else if (temp < 1.3) {
+        personality = personalities.creative;
+      } else if (temp < 1.7) {
+        personality = personalities.wild;
+      } else {
+        personality = personalities.chaotic;
+      }
+      
+      personalityEmoji.textContent = personality.emoji;
+      personalityName.textContent = personality.name;
+      personalityDesc.textContent = personality.desc;
+    }
+
+    function updateExample() {
+      const temp = getTemp();
+      let example;
+      
+      if (temp < 0.15) {
+        example = examples.temp_0_0;
+      } else if (temp < 0.5) {
+        example = examples.temp_0_3;
+      } else if (temp < 0.85) {
+        example = examples.temp_0_7;
+      } else if (temp < 1.2) {
+        example = examples.temp_1_0;
+      } else if (temp < 1.65) {
+        example = examples.temp_1_5;
+      } else {
+        example = examples.temp_2_0;
+      }
+      
+      exampleText.style.opacity = '0';
+      setTimeout(() => {
+        exampleText.textContent = example;
+        exampleText.style.opacity = '1';
+      }, 100);
+    }
+
+    function updateInfo(param) {
+      const info = paramInfo[param];
+      infoTitle.textContent = info.title;
+      infoText.textContent = info.text;
+    }
+
+    tempSlider.addEventListener('input', updateTemp);
+    toppSlider.addEventListener('input', updateTopp);
+    freqSlider.addEventListener('input', updateFreq);
+
+    // Initialize
+    updateTemp();
+    updateTopp();
+    updateFreq();
+  </script>
+</body>
+</html>
