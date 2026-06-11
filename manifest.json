@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-11",
+      "slug": "2026-06-11",
+      "title": "Gratitude Jar",
+      "category": "delightful",
+      "oneLiner": "Add gratitude notes to a virtual jar, shake your phone to pull one out and remember what matters — a warm pocket ritual for hard days.",
+      "path": "apps/2026-06-11/"
+    },
+    {
       "date": "2026-06-10",
       "slug": "2026-06-10-prompt-builder",
       "title": "Prompt Builder",
