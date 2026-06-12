@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-12",
+      "slug": "2026-06-12",
+      "title": "AI Hedge Detector",
+      "category": "trend",
+      "oneLiner": "Paste any AI response and instantly highlight hedging language — spot where the model is uncertain, see confidence signals, and learn when to verify claims vs. trust the output.",
+      "path": "apps/2026-06-12/"
+    },
+    {
       "date": "2026-06-11",
       "slug": "2026-06-11",
       "title": "Gratitude Jar",
