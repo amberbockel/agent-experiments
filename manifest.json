@@ -5,11 +5,11 @@
   "apps": [
     {
       "date": "2026-06-12",
-      "slug": "2026-06-12",
-      "title": "AI Hedge Detector",
-      "category": "trend",
-      "oneLiner": "Paste any AI response and instantly highlight hedging language — spot where the model is uncertain, see confidence signals, and learn when to verify claims vs. trust the output.",
-      "path": "apps/2026-06-12/"
+      "slug": "2026-06-12-bomb-squad",
+      "title": "Bomb Squad",
+      "category": "delightful",
+      "oneLiner": "Push-your-luck card game — draw for points or cash out before the bomb explodes. Defuse bombs, bank points, beat your high score.",
+      "path": "apps/2026-06-12-bomb-squad/"
     },
     {
       "date": "2026-06-11",

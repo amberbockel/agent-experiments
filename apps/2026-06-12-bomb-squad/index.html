@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Bomb Squad</title>
+<style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+}
+.container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.subtitle {
+  font-size: 15px;
+  opacity: 0.8;
+}
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stat-value.points {
+  color: #30D158;
+}
+.stat-value.bombs {
+  color: #FF3B30;
+}
+.card-deck {
+  background: rgba(255,255,255,0.05);
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 20px;
+  text-align: center;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.deck-count {
+  font-size: 17px;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+.card {
+  width: 200px;
+  height: 280px;
+  background: linear-gradient(135deg, #2C2C2E 0%, #48484A 100%);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 3px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  position: relative;
+  overflow: hidden;
+}
+.card:active {
+  transform: scale(0.95);
+}
+.card.flipping {
+  animation: flip 0.6s;
+}
+@keyframes flip {
+  0% { transform: rotateY(0deg) scale(1); }
+  50% { transform: rotateY(90deg) scale(1.1); }
+  100% { transform: rotateY(0deg) scale(1); }
+}
+.card-back {
+  font-size: 80px;
+}
+.card-front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.card-emoji {
+  font-size: 100px;
+  animation: popIn 0.5s ease;
+}
+@keyframes popIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.card-value {
+  font-size: 48px;
+  font-weight: 700;
+  animation: fadeIn 0.3s ease 0.3s both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card.safe .card-value {
+  color: #30D158;
+}
+.card.bomb .card-value {
+  color: #FF3B30;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+}
+.btn {
+  flex: 1;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn:active {
+  transform: scale(0.95);
+}
+.btn-draw {
+  background: linear-gradient(135deg, #0A84FF 0%, #0066CC 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(10,132,255,0.4);
+}
+.btn-cash {
+  background: linear-gradient(135deg, #30D158 0%, #248A3D 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(48,209,88,0.4);
+}
+.btn-defuse {
+  background: linear-gradient(135deg, #FFD60A 0%, #FF9500 100%);
+  color: #1C1C1E;
+  box-shadow: 0 6px 20px rgba(255,214,10,0.4);
+}
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.game-over {
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  animation: slideUp 0.4s ease;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.game-over-emoji {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+.game-over-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.game-over-score {
+  font-size: 64px;
+  font-weight: 700;
+  color: #30D158;
+  margin-bottom: 24px;
+}
+.hidden {
+  display: none !important;
+}
+.defuse-count {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,214,10,0.2);
+  border: 2px solid #FFD60A;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFD60A;
+}
+.message {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  min-height: 24px;
+  opacity: 0.8;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>💣 Bomb Squad</h1>
+    <div class="subtitle">Draw cards. Avoid the bomb.</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Points</div>
+      <div class="stat-value points" id="points">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">High Score</div>
+      <div class="stat-value" id="highScore">0</div>
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="game">
+    <div class="message" id="message">Draw a card or cash out!</div>
+
+    <div class="card-deck">
+      <div class="defuse-count" id="defuseCount">⚡ 3 defuses</div>
+      <div class="deck-count" id="deckCount">20 cards left</div>
+      <div class="card" id="card">
+        <div class="card-back">🎴</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-draw" id="drawBtn">Draw Card</button>
+      <button class="btn btn-cash" id="cashBtn">Cash Out</button>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="gameOver" class="hidden">
+    <div class="game-over">
+      <div class="game-over-emoji" id="gameOverEmoji">💥</div>
+      <div class="game-over-title" id="gameOverTitle">Boom!</div>
+      <div class="game-over-score" id="finalScore">0</div>
+      <button class="btn btn-draw" id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let deck = [];
+let currentPoints = 0;
+let bankedPoints = 0;
+let defuses = 3;
+let highScore = 0;
+let isAnimating = false;
+
+// Card types
+const SAFE_CARDS = [
+  { emoji: '💎', value: 5, name: 'Diamond' },
+  { emoji: '⭐', value: 3, name: 'Star' },
+  { emoji: '🎯', value: 4, name: 'Target' },
+  { emoji: '🏆', value: 6, name: 'Trophy' },
+  { emoji: '👑', value: 7, name: 'Crown' }
+];
+
+const DEFUSE_CARD = { emoji: '⚡', value: 0, name: 'Defuse' };
+const BOMB_CARD = { emoji: '💣', value: 0, name: 'Bomb' };
+
+// Initialize deck
+function createDeck() {
+  deck = [];
+  
+  // 15 safe cards (3 of each type)
+  for (let i = 0; i < 3; i++) {
+    SAFE_CARDS.forEach(card => deck.push({...card}));
+  }
+  
+  // 3 defuse cards
+  for (let i = 0; i < 3; i++) {
+    deck.push({...DEFUSE_CARD});
+  }
+  
+  // 2 bombs
+  for (let i = 0; i < 2; i++) {
+    deck.push({...BOMB_CARD});
+  }
+  
+  // Shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+
+// Load high score
+function loadHighScore() {
+  const saved = localStorage.getItem('bombSquadHighScore');
+  if (saved) {
+    highScore = parseInt(saved);
+    document.getElementById('highScore').textContent = highScore;
+  }
+}
+
+function saveHighScore() {
+  if (bankedPoints > highScore) {
+    highScore = bankedPoints;
+    localStorage.setItem('bombSquadHighScore', highScore);
+    document.getElementById('highScore').textContent = highScore;
+  }
+}
+
+// New game
+function newGame() {
+  createDeck();
+  currentPoints = 0;
+  bankedPoints = 0;
+  defuses = 3;
+  isAnimating = false;
+  
+  updateUI();
+  document.getElementById('card').innerHTML = '<div class="card-back">🎴</div>';
+  document.getElementById('message').textContent = 'Draw a card or cash out!';
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('gameOver').classList.add('hidden');
+}
+
+// Update UI
+function updateUI() {
+  document.getElementById('points').textContent = currentPoints;
+  document.getElementById('deckCount').textContent = `${deck.length} cards left`;
+  document.getElementById('defuseCount').textContent = `⚡ ${defuses} defuses`;
+  document.getElementById('cashBtn').disabled = currentPoints === 0;
+  if (currentPoints === 0) {
+    document.getElementById('cashBtn').classList.add('btn-disabled');
+  } else {
+    document.getElementById('cashBtn').classList.remove('btn-disabled');
+  }
+}
+
+// Draw card
+document.getElementById('drawBtn').addEventListener('click', () => {
+  if (isAnimating || deck.length === 0) return;
+  
+  isAnimating = true;
+  const card = deck.pop();
+  const cardEl = document.getElementById('card');
+  
+  // Flip animation
+  cardEl.classList.add('flipping');
+  
+  setTimeout(() => {
+    // Show card
+    if (card.name === 'Bomb') {
+      if (defuses > 0) {
+        // Use defuse
+        defuses--;
+        cardEl.innerHTML = `
+          <div class="card-front">
+            <div class="card-emoji">${card.emoji}</div>
+            <div class="card-value" style="color: #FFD60A;">DEFUSED!</div>
+          </div>
+        `;
+        document.getElementById('message').textContent = `Bomb defused! ${defuses} defuses left`;
+        
+        // Put bomb back in deck
+        deck.splice(Math.floor(Math.random() * deck.length), 0, {...BOMB_CARD});
+      } else {
+        // Game over
+        cardEl.innerHTML = `
+          <div class="card-front card bomb">
+            <div class="card-emoji">${card.emoji}</div>
+            <div class="card-value">BOOM!</div>
+          </div>
+        `;
+        setTimeout(() => endGame(false), 1000);
+      }
+    } else if (card.name === 'Defuse') {
+      defuses++;
+      cardEl.innerHTML = `
+        <div class="card-front">
+          <div class="card-emoji">${card.emoji}</div>
+          <div class="card-value" style="color: #FFD60A;">+1 Defuse</div>
+        </div>
+      `;
+      document.getElementById('message').textContent = `Found a defuse! Now you have ${defuses}`;
+    } else {
+      // Safe card
+      currentPoints += card.value;
+      cardEl.innerHTML = `
+        <div class="card-front card safe">
+          <div class="card-emoji">${card.emoji}</div>
+          <div class="card-value">+${card.value}</div>
+        </div>
+      `;
+      document.getElementById('message').textContent = `${card.name} worth ${card.value} points!`;
+    }
+    
+    updateUI();
+    cardEl.classList.remove('flipping');
+    isAnimating = false;
+    
+    // Check if deck empty
+    if (deck.length === 0 && card.name !== 'Bomb') {
+      setTimeout(() => endGame(true), 1000);
+    }
+  }, 300);
+});
+
+// Cash out
+document.getElementById('cashBtn').addEventListener('click', () => {
+  if (currentPoints === 0 || isAnimating) return;
+  
+  bankedPoints += currentPoints;
+  document.getElementById('message').textContent = `Banked ${currentPoints} points! Total: ${bankedPoints}`;
+  
+  // Reset for new round
+  currentPoints = 0;
+  createDeck();
+  defuses = 3;
+  updateUI();
+  document.getElementById('card').innerHTML = '<div class="card-back">🎴</div>';
+});
+
+// End game
+function endGame(survived) {
+  saveHighScore();
+  
+  if (survived) {
+    document.getElementById('gameOverEmoji').textContent = '🏆';
+    document.getElementById('gameOverTitle').textContent = 'Survived!';
+  } else {
+    document.getElementById('gameOverEmoji').textContent = '💥';
+    document.getElementById('gameOverTitle').textContent = 'Boom!';
+  }
+  
+  document.getElementById('finalScore').textContent = bankedPoints;
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('gameOver').classList.remove('hidden');
+}
+
+// Play again
+document.getElementById('playAgainBtn').addEventListener('click', newGame);
+
+// Initialize
+loadHighScore();
+newGame();
+</script>
+
+</body>
+</html>
