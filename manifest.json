@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-13",
+      "slug": "2026-06-13",
+      "title": "Fortune Cookie Writer",
+      "category": "delightful",
+      "oneLiner": "Write custom fortunes, crack them open with a satisfying tap — save your favorites and share wisdom (or silliness) with friends.",
+      "path": "apps/2026-06-13/"
+    },
+    {
       "date": "2026-06-12",
       "slug": "2026-06-12-bomb-squad",
       "title": "Bomb Squad",

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Fortune Cookie Writer</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+  background: linear-gradient(180deg, #FFF8E7 0%, #FFE4B5 100%);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #A0522D;
+  font-weight: 400;
+}
+
+.view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+}
+
+.view.active {
+  display: flex;
+}
+
+/* Write View */
+.write-view {
+  align-items: center;
+  justify-content: center;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 16px;
+  font-size: 17px;
+  font-family: Georgia, serif;
+  color: #5D4037;
+  background: #FFFBF0;
+  border: 2px solid #D4A574;
+  border-radius: 12px;
+  resize: vertical;
+  margin-bottom: 20px;
+}
+
+textarea::placeholder {
+  color: #B8956A;
+}
+
+.char-count {
+  font-size: 13px;
+  color: #A0522D;
+  text-align: right;
+  margin-top: -16px;
+  margin-bottom: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: #C41E3A;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #8B4513;
+  margin-top: 12px;
+}
+
+/* Cookie View */
+.cookie-view {
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.cookie-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cookie {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: all 0.5s ease-out;
+}
+
+.cookie-half {
+  position: absolute;
+  width: 140px;
+  height: 240px;
+  background: linear-gradient(135deg, #DEB887 0%, #CD853F 50%, #B8956A 100%);
+  border-radius: 120px;
+  box-shadow: 0 8px 24px rgba(139, 69, 19, 0.3);
+}
+
+.cookie-half::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.left {
+  left: 0;
+  transform-origin: right center;
+}
+
+.right {
+  right: 0;
+  transform-origin: left center;
+  transform: scaleX(-1);
+}
+
+.cookie.cracked .left {
+  transform: translateX(-80px) rotate(-25deg);
+}
+
+.cookie.cracked .right {
+  transform: translateX(80px) rotate(-25deg) scaleX(-1);
+}
+
+.fortune-paper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 240px;
+  background: #FFFEF2;
+  padding: 24px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.4s ease-out 0.3s;
+  z-index: 10;
+}
+
+.cookie.cracked .fortune-paper {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.fortune-text {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #3E2723;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.lucky-numbers {
+  font-size: 12px;
+  color: #C41E3A;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.tap-hint {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 15px;
+  color: #A0522D;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.cookie.cracked ~ .tap-hint {
+  display: none;
+}
+
+.actions {
+  margin-top: 32px;
+  display: none;
+  gap: 12px;
+}
+
+.cookie.cracked ~ .actions {
+  display: flex;
+}
+
+.actions button {
+  flex: 1;
+}
+
+/* Saved View */
+.saved-view {
+  overflow-y: auto;
+}
+
+.fortune-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.fortune-item {
+  background: #FFFBF0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid #D4A574;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.fortune-content {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  color: #5D4037;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.favorite-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  min-width: 32px;
+  filter: grayscale(100%);
+  opacity: 0.3;
+  transition: all 0.2s;
+}
+
+.favorite-btn.active {
+  filter: grayscale(0%);
+  opacity: 1;
+}
+
+.empty-state {
+  text-align: center;
+  color: #A0522D;
+  font-size: 15px;
+  padding: 48px 24px;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.nav button {
+  flex: 1;
+  padding: 12px;
+  font-size: 15px;
+  background: rgba(139, 69, 19, 0.1);
+  color: #8B4513;
+}
+
+.nav button.active {
+  background: #8B4513;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🥠 Fortune Cookie Writer</h1>
+    <p class="subtitle">Write your wisdom, crack it open</p>
+  </header>
+
+  <!-- Nav -->
+  <div class="nav">
+    <button id="nav-write" class="active">Write</button>
+    <button id="nav-saved">Saved (<span id="saved-count">0</span>)</button>
+  </div>
+
+  <!-- Write View -->
+  <div class="view active write-view" id="write-view">
+    <textarea id="fortune-input" placeholder="Write your fortune..." maxlength="200"></textarea>
+    <div class="char-count"><span id="char-count">0</span>/200</div>
+    <button id="bake-btn" disabled>Bake Cookie</button>
+  </div>
+
+  <!-- Cookie View -->
+  <div class="view cookie-view" id="cookie-view">
+    <div class="cookie-container" id="cookie-container">
+      <div class="cookie" id="cookie">
+        <div class="cookie-half left"></div>
+        <div class="cookie-half right"></div>
+        <div class="fortune-paper">
+          <div class="fortune-text" id="fortune-display"></div>
+          <div class="lucky-numbers" id="lucky-numbers"></div>
+        </div>
+      </div>
+    </div>
+    <div class="tap-hint">Tap the cookie to crack it open</div>
+    <div class="actions">
+      <button id="save-btn" class="secondary">Save Fortune</button>
+      <button id="new-btn">Write Another</button>
+    </div>
+  </div>
+
+  <!-- Saved View -->
+  <div class="view saved-view" id="saved-view">
+    <div class="fortune-list" id="fortune-list">
+      <div class="empty-state">No fortunes saved yet.<br>Write and save your first one!</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentFortune = '';
+let fortunes = JSON.parse(localStorage.getItem('fortunes') || '[]');
+
+const views = {
+  write: document.getElementById('write-view'),
+  cookie: document.getElementById('cookie-view'),
+  saved: document.getElementById('saved-view')
+};
+
+const navBtns = {
+  write: document.getElementById('nav-write'),
+  saved: document.getElementById('nav-saved')
+};
+
+const fortuneInput = document.getElementById('fortune-input');
+const charCount = document.getElementById('char-count');
+const bakeBtn = document.getElementById('bake-btn');
+const cookie = document.getElementById('cookie');
+const cookieContainer = document.getElementById('cookie-container');
+const fortuneDisplay = document.getElementById('fortune-display');
+const luckyNumbers = document.getElementById('lucky-numbers');
+const saveBtn = document.getElementById('save-btn');
+const newBtn = document.getElementById('new-btn');
+const savedCount = document.getElementById('saved-count');
+const fortuneList = document.getElementById('fortune-list');
+
+// Navigation
+function showView(viewName) {
+  Object.values(views).forEach(v => v.classList.remove('active'));
+  views[viewName].classList.add('active');
+  
+  Object.values(navBtns).forEach(b => b.classList.remove('active'));
+  navBtns[viewName]?.classList.add('active');
+}
+
+navBtns.write.addEventListener('click', () => showView('write'));
+navBtns.saved.addEventListener('click', () => {
+  showView('saved');
+  renderSavedFortunes();
+});
+
+// Input handling
+fortuneInput.addEventListener('input', () => {
+  const count = fortuneInput.value.length;
+  charCount.textContent = count;
+  bakeBtn.disabled = count === 0;
+});
+
+// Bake fortune
+bakeBtn.addEventListener('click', () => {
+  currentFortune = fortuneInput.value.trim();
+  if (!currentFortune) return;
+  
+  fortuneDisplay.textContent = currentFortune;
+  luckyNumbers.textContent = `LUCKY NUMBERS: ${generateLuckyNumbers()}`;
+  
+  cookie.classList.remove('cracked');
+  showView('cookie');
+});
+
+// Crack cookie
+cookieContainer.addEventListener('click', () => {
+  if (!cookie.classList.contains('cracked')) {
+    cookie.classList.add('cracked');
+  }
+});
+
+// Save fortune
+saveBtn.addEventListener('click', () => {
+  if (!currentFortune) return;
+  
+  fortunes.unshift({
+    text: currentFortune,
+    timestamp: Date.now(),
+    favorite: false
+  });
+  
+  localStorage.setItem('fortunes', JSON.stringify(fortunes));
+  updateSavedCount();
+  
+  saveBtn.textContent = '✓ Saved!';
+  setTimeout(() => {
+    saveBtn.textContent = 'Save Fortune';
+  }, 1500);
+});
+
+// New fortune
+newBtn.addEventListener('click', () => {
+  fortuneInput.value = '';
+  charCount.textContent = '0';
+  bakeBtn.disabled = true;
+  showView('write');
+});
+
+// Generate lucky numbers
+function generateLuckyNumbers() {
+  const nums = new Set();
+  while (nums.size < 5) {
+    nums.add(Math.floor(Math.random() * 99) + 1);
+  }
+  return Array.from(nums).sort((a, b) => a - b).join(', ');
+}
+
+// Saved fortunes
+function updateSavedCount() {
+  savedCount.textContent = fortunes.length;
+}
+
+function renderSavedFortunes() {
+  if (fortunes.length === 0) {
+    fortuneList.innerHTML = '<div class="empty-state">No fortunes saved yet.<br>Write and save your first one!</div>';
+    return;
+  }
+  
+  fortuneList.innerHTML = fortunes.map((f, i) => `
+    <div class="fortune-item">
+      <div class="fortune-content">${f.text}</div>
+      <button class="favorite-btn ${f.favorite ? 'active' : ''}" data-index="${i}">
+        ⭐
+      </button>
+    </div>
+  `).join('');
+  
+  // Favorite handlers
+  document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.target.dataset.index);
+      fortunes[index].favorite = !fortunes[index].favorite;
+      localStorage.setItem('fortunes', JSON.stringify(fortunes));
+      renderSavedFortunes();
+    });
+  });
+}
+
+// Init
+updateSavedCount();
+</script>
+
+</body>
+</html>
