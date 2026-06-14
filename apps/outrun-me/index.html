@@ -394,6 +394,14 @@ function drawCoast(st,horizon){
   // ocean band
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.05,W,H*0.10);
   ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.05,W,H*0.018);
+  // sun glint on the water (under the sun at ~0.70W) + sparkle dashes
+  const gx=W*0.70;
+  ctx.save(); ctx.globalAlpha=0.55; ctx.fillStyle='#fdf3c8';
+  poly([gx-W*0.015,horizon-H*0.05, gx+W*0.015,horizon-H*0.05, gx+W*0.055,horizon+H*0.05, gx-W*0.055,horizon+H*0.05]);
+  ctx.globalAlpha=0.5; ctx.fillStyle=st.oceanLite;
+  for(let i=0;i<4;i++){ const yy=horizon-H*0.04+i*H*0.022, ww=W*(0.5-i*0.07);
+    ctx.fillRect((W*0.5-ww/2)+ (i%2?8:-8), yy, ww, Math.max(1,H*0.004)); }
+  ctx.restore();
   // distant green headland (two parallax layers)
   drawHills(st.hill2,horizon-H*0.02,H*0.10,treeOffset*W*0.6,0.95,6);
   drawHills(st.hill, horizon,        H*0.075,treeOffset*W,    1.0,5);
@@ -429,10 +437,12 @@ function drawSkyline(base,maxh,color,shift,n,alpha,windows){
     ctx.fillStyle=color; ctx.fillRect(bx,base-bh,bw,bh);
     if(i%4===0) ctx.fillRect(bx+bw*0.34,base-bh-maxh*0.14,bw*0.32,maxh*0.14);   // roof box / antenna base
     else if(i%3===0){ ctx.beginPath(); ctx.moveTo(bx,base-bh); ctx.lineTo(bx+bw/2,base-bh-maxh*0.16); ctx.lineTo(bx+bw,base-bh); ctx.closePath(); ctx.fill(); } // peaked roof
-    if(windows){ ctx.fillStyle='rgba(255,231,150,0.55)';
+    if(windows){
       for(let wy=base-bh+6;wy<base-5;wy+=Math.max(6,maxh*0.05))
-        for(let wx=bx+4;wx<bx+bw-4;wx+=Math.max(7,bw*0.18))
-          if(((wx*7+wy*13)|0)%5<3) ctx.fillRect(wx,wy,Math.max(2,bw*0.07),Math.max(2,maxh*0.022)); }
+        for(let wx=bx+4;wx<bx+bw-4;wx+=Math.max(7,bw*0.18)){
+          const k=((wx*7+wy*13)|0)%5; if(k>=3) continue;          // ~60% lit, varied
+          ctx.fillStyle = k===0?'rgba(191,230,255,0.5)':'rgba(255,217,138,0.62)';
+          ctx.fillRect(wx,wy,Math.max(2,bw*0.07),Math.max(2,maxh*0.022)); } }
   }
   ctx.restore();
 }
@@ -462,7 +472,9 @@ function drawHills(color,horizon,amp,shift,alpha,n){
   for(let i=-1;i<=n+1;i++){ const cx=i*span-(shift%span);
     ctx.lineTo(cx,horizon-amp*(0.6+0.4*Math.sin(i*1.7)));
     ctx.lineTo(cx+span/2,horizon-amp*(0.3+0.2*Math.cos(i*2.3))); }
-  ctx.lineTo(W,horizon+4); ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.lineTo(W,horizon+4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.16)'; ctx.lineWidth=Math.max(1,amp*0.05); ctx.stroke(); // sun-side rim
+  ctx.restore();
 }
 
 /* --------------------------- scenery sprites ---------------------------- */
@@ -473,9 +485,10 @@ function drawSceneSprite(seg,sprite){
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,seg.clip); ctx.clip(); ctx.translate(x,y);
   ctx.fillStyle=`rgba(0,0,0,${0.22*seg.fog})`;                  // ground-contact shadow
   ctx.beginPath(); ctx.ellipse(0,0,Math.max(2,30*s),Math.max(1,9*s),0,0,7); ctx.fill();
-  drawSprite(sprite.type,s,seg.fog); ctx.restore();
+  drawSprite(sprite.type,s,seg.fog,seg.index); ctx.restore();
 }
-function drawSprite(t,s,fog){
+function drawSprite(t,s,fog,seed){
+  seed=seed||0;
   switch(t){
     case 'palm':{ const h=215*s, tx=10*s;
       // curved trunk (two-tone for depth)
@@ -484,15 +497,17 @@ function drawSprite(t,s,fog){
       ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(16*s,-h*0.5,tx,-h); ctx.stroke();
       ctx.strokeStyle=shade('#7a5226',fog); ctx.lineWidth=Math.max(1,5*s);
       ctx.beginPath(); ctx.moveTo(2*s,0); ctx.quadraticCurveTo(16*s,-h*0.5,tx,-h); ctx.stroke();
-      // crown: long drooping fronds, dark layer then bright layer
+      // crown: long drooping fronds — dark keyline, then two greens. Count/lean vary per tree.
+      const nF=8+(seed%3), lean=((seed%5)-2)*0.05;
       const drawFronds=(col,len,wid)=>{ ctx.fillStyle=shade(col,fog);
-        for(let a=0;a<9;a++){ ctx.save(); ctx.translate(tx,-h);
-          ctx.rotate(-Math.PI*0.5 + (a-4)*0.42 + (a%2?0.06:-0.06));
+        for(let a=0;a<nF;a++){ ctx.save(); ctx.translate(tx,-h);
+          ctx.rotate(-Math.PI*0.5 + (a-(nF-1)/2)*0.42 + lean + (a%2?0.06:-0.06));
           ctx.beginPath(); ctx.moveTo(0,0);
           ctx.quadraticCurveTo(len*0.55,-wid, len, wid*0.5);
           ctx.quadraticCurveTo(len*0.55, wid*0.2, 0, 0); ctx.fill(); ctx.restore(); } };
+      drawFronds('#063a15',80*s,17*s);   // dark keyline layer
       drawFronds('#0e7a2a',70*s,14*s);
-      drawFronds('#1fae3f',58*s,9*s);
+      drawFronds('#22b243',56*s,9*s);
       // coconuts
       ctx.fillStyle=shade('#5a3d1e',fog);
       ctx.beginPath(); ctx.arc(tx-5*s,-h+5*s,4*s,0,7); ctx.arc(tx+6*s,-h+6*s,4*s,0,7); ctx.fill(); break; }
@@ -518,11 +533,15 @@ function drawSprite(t,s,fog){
       ctx.restore();
       ctx.fillStyle=shade('#161616',fog); ctx.fillRect(-2.6*s,-post-d-d*0.28,5.2*s,d*0.42);  // !
       ctx.beginPath(); ctx.arc(0,-post-d+d*0.34,3*s,0,7); ctx.fill(); break; }
-    case 'brownstone':{ const w=110*s,h=170*s; ctx.fillStyle=shade('#9c5a32',fog); ctx.fillRect(-w/2,-h,w,h);
+    case 'brownstone':{ const w=110*s,h=170*s, k=Math.max(1,2*s);
+      ctx.fillStyle=shade('#241008',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
+      ctx.fillStyle=shade('#9c5a32',fog); ctx.fillRect(-w/2,-h,w,h);
       for(let r=0;r<4;r++)for(let cc=0;cc<3;cc++){
         ctx.fillStyle=shade((r+cc)%2?'#c98':'#5a3520',fog); ctx.fillRect(-w/2+8*s+cc*(w/3),-h+10*s+r*(h/4.4),w/5,h/6); }
       ctx.fillStyle=shade('#5a3520',fog); poly([-w/2,-h, w/2,-h, 0,-h-h*0.16]); break; }
-    case 'tower':{ const w=90*s,h=240*s; ctx.fillStyle=shade('#8b97a6',fog); ctx.fillRect(-w/2,-h,w,h);
+    case 'tower':{ const w=90*s,h=240*s, k=Math.max(1,2*s);
+      ctx.fillStyle=shade('#2a323c',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
+      ctx.fillStyle=shade('#8b97a6',fog); ctx.fillRect(-w/2,-h,w,h);
       for(let r=0;r<14;r++)for(let cc=0;cc<4;cc++){ ctx.fillStyle=shade((r+cc)%3===0?'#cfe6ff':'#5a6b7c',fog);
         ctx.fillRect(-w/2+6*s+cc*(w/4),-h+8*s+r*(h/15),w/7,h/22); } break; }
     case 'exit':{ const w=110*s,h=46*s; ctx.fillStyle=shade('#555',fog); ctx.fillRect(-4*s,-110*s,8*s,110*s);
@@ -537,7 +556,8 @@ function drawSprite(t,s,fog){
   }
 }
 function storefront(s,fog,name){
-  const w=176*s,h=132*s;
+  const w=176*s,h=132*s, k=Math.max(1,2*s);
+  ctx.fillStyle=shade('#241808',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);              // keyline
   ctx.fillStyle=shade('#c9a673',fog); ctx.fillRect(-w/2,-h,w,h);                         // brick wall
   ctx.fillStyle=shade('#7a4a26',fog); poly([-w/2,-h, w/2,-h, w/2,-h-16*s, -w/2,-h-16*s]); // cornice
   ctx.fillStyle=shade('#15336b',fog); ctx.fillRect(-w/2,-h+8*s,w,24*s);                   // sign band
@@ -560,25 +580,36 @@ function drawVehicle(type,x,y,scale,clip){
   drawVehicleBody(type,px,1); ctx.restore();
 }
 function drawVehicleBody(type,px,fog){
+  const o=Math.max(1.2,px*1.6);                                  // dark keyline thickness
   if(type==='suv'){ const w=110*px,h=78*px;
-    ctx.fillStyle='#2b2f36'; ctx.fillRect(-w/2,-h,w,h*0.62); ctx.fillStyle='#1a1d22'; ctx.fillRect(-w/2,-h*0.4,w,h*0.4);
+    ctx.fillStyle='#0a0b0d'; ctx.fillRect(-w/2-o,-h-o,w+o*2,h*0.62+o);          // outline
+    ctx.fillStyle='#3a4049'; ctx.fillRect(-w/2,-h,w,h*0.22);                     // roof (lit)
+    ctx.fillStyle='#2b2f36'; ctx.fillRect(-w/2,-h*0.78,w,h*0.38);               // body
+    ctx.fillStyle='#16181c'; ctx.fillRect(-w/2,-h*0.4,w,h*0.4);                 // lower (shadow)
     ctx.fillStyle='#9be9ff'; ctx.fillRect(-w*0.36,-h*0.95,w*0.72,h*0.3);
     ctx.fillStyle='#ff3030'; ctx.fillRect(-w/2+5*px,-h*0.4,w*0.14,h*0.18); ctx.fillRect(w/2-5*px-w*0.14,-h*0.4,w*0.14,h*0.18);
     ctx.fillStyle='#111'; ctx.fillRect(-w/2+6*px,-h*0.04,w*0.2,h*0.1); ctx.fillRect(w/2-6*px-w*0.2,-h*0.04,w*0.2,h*0.1); return; }
   if(type==='taxi'){ const w=92*px,h=52*px;
-    ctx.fillStyle='#f4c20d'; ctx.fillRect(-w/2,-h,w,h*0.7); ctx.fillStyle='#caa00a'; ctx.fillRect(-w/2,-h*0.35,w,h*0.35);
+    ctx.fillStyle='#0a0b0d'; ctx.fillRect(-w/2-o,-h-o,w+o*2,h*0.7+o);           // outline
+    ctx.fillStyle='#ffd633'; ctx.fillRect(-w/2,-h,w,h*0.34);                     // upper (lit)
+    ctx.fillStyle='#f4c20d'; ctx.fillRect(-w/2,-h*0.66,w,h*0.31);               // body
+    ctx.fillStyle='#c79606'; ctx.fillRect(-w/2,-h*0.35,w,h*0.35);               // lower (shadow)
     ctx.fillStyle='#101010'; ctx.fillRect(-w*0.3,-h*0.78,w*0.6,h*0.26);
-    // checker stripe
     for(let i=0;i<8;i++){ ctx.fillStyle=i%2?'#111':'#fff'; ctx.fillRect(-w/2+i*(w/8),-h*0.42,w/8,h*0.08); }
     ctx.fillStyle='#ff3030'; ctx.fillRect(-w/2+4*px,-h*0.05,w*0.16,h*0.12); ctx.fillRect(w/2-4*px-w*0.16,-h*0.05,w*0.16,h*0.12); return; }
   if(type==='beetle'){ const w=80*px,h=50*px;
-    ctx.fillStyle='#e8d23a'; ctx.beginPath(); ctx.moveTo(-w/2,0); ctx.quadraticCurveTo(-w/2,-h, 0,-h); ctx.quadraticCurveTo(w/2,-h, w/2,0); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#c8b32a'; ctx.fillRect(-w/2,-h*0.28,w,h*0.28);
+    ctx.fillStyle='#0a0b0d'; ctx.beginPath(); ctx.moveTo(-w/2-o,o); ctx.quadraticCurveTo(-w/2-o,-h-o, 0,-h-o); ctx.quadraticCurveTo(w/2+o,-h-o, w/2+o,o); ctx.closePath(); ctx.fill(); // outline
+    ctx.fillStyle='#f2dd4a'; ctx.beginPath(); ctx.moveTo(-w/2,0); ctx.quadraticCurveTo(-w/2,-h, 0,-h); ctx.quadraticCurveTo(w/2,-h, w/2,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#c8b32a'; ctx.fillRect(-w/2,-h*0.28,w,h*0.28);               // lower shadow
     ctx.fillStyle='#101010'; ctx.fillRect(-w*0.28,-h*0.7,w*0.56,h*0.26);
     ctx.fillStyle='#ff3030'; ctx.fillRect(-w/2+5*px,-h*0.05,w*0.15,h*0.12); ctx.fillRect(w/2-5*px-w*0.15,-h*0.05,w*0.15,h*0.12); return; }
-  // generic colour car
-  const w=92*px,h=52*px, body=type==='carBlue'?'#2a6df0':'#e23b3b', dk=type==='carBlue'?'#1b4aa8':'#9c1f1f';
-  ctx.fillStyle=body; ctx.fillRect(-w/2,-h,w,h*0.7); ctx.fillStyle=dk; ctx.fillRect(-w/2,-h*0.35,w,h*0.35);
+  // generic colour car — 3-value body + outline
+  const w=92*px,h=52*px,
+    hi =type==='carBlue'?'#5a97ff':'#ff6a5e', body=type==='carBlue'?'#2a6df0':'#e23b3b', dk=type==='carBlue'?'#173f96':'#9c1f1f';
+  ctx.fillStyle='#0a0b0d'; ctx.fillRect(-w/2-o,-h-o,w+o*2,h*0.7+o);            // outline
+  ctx.fillStyle=hi;   ctx.fillRect(-w/2,-h,w,h*0.22);                           // upper (lit)
+  ctx.fillStyle=body; ctx.fillRect(-w/2,-h*0.78,w,h*0.43);                      // body
+  ctx.fillStyle=dk;   ctx.fillRect(-w/2,-h*0.35,w,h*0.35);                      // lower (shadow)
   ctx.fillStyle='#9be9ff'; ctx.fillRect(-w*0.3,-h*0.78,w*0.6,h*0.28);
   ctx.fillStyle='#101010'; ctx.fillRect(-w/2+4*px,-h*0.04,w*0.2,h*0.12); ctx.fillRect(w/2-4*px-w*0.2,-h*0.04,w*0.2,h*0.12);
   ctx.fillStyle='#ff3030'; ctx.fillRect(-w/2+4*px,-h*0.32,w*0.15,h*0.16); ctx.fillRect(w/2-4*px-w*0.15,-h*0.32,w*0.15,h*0.16);
