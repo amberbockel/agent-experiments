@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-14",
+      "slug": "2026-06-14",
+      "title": "Token Streaming Visualizer",
+      "category": "trend",
+      "oneLiner": "Watch how LLMs actually stream responses — see tokens vs characters, batching delays, and why some words appear instantly while others trickle in.",
+      "path": "apps/2026-06-14/"
+    },
+    {
       "date": "2026-06-13",
       "slug": "2026-06-13",
       "title": "Fortune Cookie Writer",

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Token Streaming Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-elevated: #2C2C2E;
+      --text: #FFFFFF;
+      --text-secondary: #EBEBF5;
+      --text-tertiary: #EBEBF599;
+      --accent: #0A84FF;
+      --accent-dim: #0A84FF33;
+      --border: #38383A;
+      --token-word: #34C759;
+      --token-subword: #FF9F0A;
+      --token-punct: #BF5AF2;
+      --token-space: #5E5CE6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    .controls {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      flex: 1;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:active {
+      opacity: 0.7;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: var(--surface-elevated);
+      color: var(--text-secondary);
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .view-toggle button {
+      flex: 1;
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .view-toggle button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .output {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 200px;
+      margin-bottom: 16px;
+    }
+
+    .output.hidden {
+      display: none;
+    }
+
+    .token-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 14px;
+    }
+
+    .token {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      opacity: 0;
+      animation: fadeIn 0.2s forwards;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .token.word { border-left: 3px solid var(--token-word); }
+    .token.subword { border-left: 3px solid var(--token-subword); }
+    .token.punct { border-left: 3px solid var(--token-punct); }
+    .token.space { border-left: 3px solid var(--token-space); }
+
+    .char-output {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .stats {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .legend {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+
+    .legend-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+    }
+
+    .legend-color.word { background: var(--token-word); }
+    .legend-color.subword { background: var(--token-subword); }
+    .legend-color.punct { background: var(--token-punct); }
+    .legend-color.space { background: var(--token-space); }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .preset-chip {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-chip:active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Token Streaming Visualizer</h1>
+    <p class="subtitle">See how LLMs actually stream responses — token-by-token, not letter-by-letter</p>
+  </header>
+
+  <div class="controls">
+    <div class="input-group">
+      <label>Prompt</label>
+      <input type="text" id="promptInput" placeholder="Type a prompt..." value="Explain how neural networks work">
+    </div>
+    <div class="presets">
+      <div class="preset-chip" data-prompt="Explain how neural networks work">Neural networks</div>
+      <div class="preset-chip" data-prompt="Write a haiku about code">Haiku about code</div>
+      <div class="preset-chip" data-prompt="What is consciousness?">Consciousness</div>
+      <div class="preset-chip" data-prompt="Translate 'hello world' to French">Translation</div>
+    </div>
+    <div class="button-group">
+      <button id="startBtn">Start Streaming</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+    </div>
+  </div>
+
+  <div class="view-toggle">
+    <button class="active" data-view="tokens">Token View</button>
+    <button data-view="chars">Character View</button>
+    <button data-view="both">Side-by-Side</button>
+  </div>
+
+  <div id="tokenOutput" class="output">
+    <div class="token-container" id="tokenContainer"></div>
+  </div>
+
+  <div id="charOutput" class="output hidden">
+    <div class="char-output" id="charContainer"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Tokens</div>
+      <div class="stat-value" id="tokenCount">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Time (ms)</div>
+      <div class="stat-value" id="totalTime">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg/Token</div>
+      <div class="stat-value" id="avgTime">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Chars</div>
+      <div class="stat-value" id="charCount">0</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">Token Types</div>
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-color word"></div>
+        <span>Word</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color subword"></div>
+        <span>Subword</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color punct"></div>
+        <span>Punctuation</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color space"></div>
+        <span>Space</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RESPONSES = {
+      "Explain how neural networks work": "Neural networks are computational models inspired by the human brain. They consist of layers of interconnected nodes (neurons) that process information. Each connection has a weight that gets adjusted during training. The network learns patterns by comparing its output to the desired result and adjusting weights accordingly through backpropagation. Deep networks with many layers can learn complex, hierarchical representations of data.",
+      "Write a haiku about code": "Silent electrons\nDance through logic gates at dawn—\nBugs sleep in the light.",
+      "What is consciousness?": "Consciousness remains one of science's deepest mysteries. It's the subjective experience of being aware—of having thoughts, sensations, and perceptions. While we can map brain activity, we don't fully understand how physical processes generate the felt quality of experience. Some theories suggest it emerges from information integration, while others propose it's a fundamental feature of reality.",
+      "Translate 'hello world' to French": "The phrase 'hello world' translates to 'bonjour le monde' in French. 'Bonjour' means hello or good day, and 'monde' means world. This phrase is famous in programming as the traditional first program beginners write."
+    };
+
+    let streaming = false;
+    let tokenCount = 0;
+    let charCount = 0;
+    let startTime = 0;
+    let currentView = 'tokens';
+
+    const promptInput = document.getElementById('promptInput');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const tokenContainer = document.getElementById('tokenContainer');
+    const charContainer = document.getElementById('charContainer');
+    const tokenOutput = document.getElementById('tokenOutput');
+    const charOutput = document.getElementById('charOutput');
+    const viewToggles = document.querySelectorAll('.view-toggle button');
+    const presetChips = document.querySelectorAll('.preset-chip');
+
+    // Token type classifier
+    function classifyToken(token) {
+      if (/^\s+$/.test(token)) return 'space';
+      if (/^[.,!?;:—"'()]+$/.test(token)) return 'punct';
+      if (/^[a-z]+$/i.test(token) && token.length > 3) return 'word';
+      return 'subword';
+    }
+
+    // Simplified tokenizer (simulates GPT-style BPE)
+    function tokenize(text) {
+      const tokens = [];
+      const words = text.match(/[\w']+|[^\w\s]|\s+/g) || [];
+      
+      words.forEach(word => {
+        if (/^\s+$/.test(word)) {
+          tokens.push(word);
+        } else if (word.length <= 4) {
+          tokens.push(word);
+        } else {
+          // Simulate subword tokenization for longer words
+          let remaining = word;
+          while (remaining.length > 0) {
+            const chunkSize = Math.min(remaining.length, Math.floor(Math.random() * 4) + 3);
+            tokens.push(remaining.slice(0, chunkSize));
+            remaining = remaining.slice(chunkSize);
+          }
+        }
+      });
+      
+      return tokens;
+    }
+
+    async function streamResponse(text) {
+      streaming = true;
+      startBtn.disabled = true;
+      tokenCount = 0;
+      charCount = 0;
+      startTime = Date.now();
+      
+      const tokens = tokenize(text);
+      
+      // First token delay (model "thinking")
+      await sleep(Math.random() * 600 + 200);
+      
+      for (let i = 0; i < tokens.length; i++) {
+        if (!streaming) break;
+        
+        const token = tokens[i];
+        const tokenType = classifyToken(token);
+        
+        // Add to token view
+        const tokenEl = document.createElement('div');
+        tokenEl.className = `token ${tokenType}`;
+        tokenEl.textContent = token.replace(/\s/g, '·');
+        tokenContainer.appendChild(tokenEl);
+        
+        // Add to character view
+        charContainer.textContent += token;
+        
+        tokenCount++;
+        charCount += token.length;
+        updateStats();
+        
+        // Variable delay between tokens
+        let delay = Math.random() * 60 + 20;
+        
+        // Occasional batch delays (network/compute spikes)
+        if (Math.random() < 0.15) {
+          delay += Math.random() * 200 + 100;
+        }
+        
+        await sleep(delay);
+      }
+      
+      streaming = false;
+      startBtn.disabled = false;
+    }
+
+    function updateStats() {
+      document.getElementById('tokenCount').textContent = tokenCount;
+      document.getElementById('charCount').textContent = charCount;
+      const elapsed = Date.now() - startTime;
+      document.getElementById('totalTime').textContent = elapsed;
+      const avg = tokenCount > 0 ? Math.round(elapsed / tokenCount) : 0;
+      document.getElementById('avgTime').textContent = avg;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function reset() {
+      streaming = false;
+      tokenContainer.innerHTML = '';
+      charContainer.textContent = '';
+      tokenCount = 0;
+      charCount = 0;
+      updateStats();
+      startBtn.disabled = false;
+    }
+
+    function setView(view) {
+      currentView = view;
+      viewToggles.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      
+      if (view === 'tokens') {
+        tokenOutput.classList.remove('hidden');
+        charOutput.classList.add('hidden');
+      } else if (view === 'chars') {
+        tokenOutput.classList.add('hidden');
+        charOutput.classList.remove('hidden');
+      } else {
+        tokenOutput.classList.remove('hidden');
+        charOutput.classList.remove('hidden');
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+      
+      reset();
+      
+      // Get response (use preset or generate generic)
+      const response = RESPONSES[prompt] || 
+        "I don't have a preset response for that prompt, but here's how streaming works: tokens arrive one at a time, with variable delays based on model computation and network latency. Some tokens are complete words, others are fragments.";
+      
+      streamResponse(response);
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    viewToggles.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setView(btn.dataset.view);
+      });
+    });
+
+    presetChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        promptInput.value = chip.dataset.prompt;
+      });
+    });
+
+    // Initialize
+    updateStats();
+  </script>
+</body>
+</html>
