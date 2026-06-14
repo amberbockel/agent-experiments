@@ -105,7 +105,7 @@ const STAGES=[
     hill:'#1fb046', hill2:'#15912f', haze:'#dcf1ff',
     light:{ road:'#9fa2ad', grass:'#5fd45a', rumble:'#e3001b', lane:'#f2ebdc' },
     dark :{ road:'#82848f', grass:'#3da342', rumble:'#f3ede0' },
-    scenery:['palm','palm','palm','palm','sign','umbrella','rock','boat','store'],
+    scenery:['palm','palm','palm','palm','sign','umbrella','rock','boat','store','parkedcar'],
     cars:['carRed','carBlue','beetle','suv'] },
   { name:'BOSTON', bg:'city',
     sky:['#3a7fc4','#7fb0dc','#d6e4f0'],
@@ -113,7 +113,7 @@ const STAGES=[
     hill:'#6e80a0', hill2:'#4e5d72', haze:'#d6e4f0',
     light:{ road:'#8e9099', grass:'#6fb85f', rumble:'#c9ccd3', lane:'#f2c019' },
     dark :{ road:'#74767f', grass:'#4e9447', rumble:'#9da0a8' },
-    scenery:['tower','brownstone','exit','market','warn','sign','tower','brownstone'],
+    scenery:['tower','brownstone','exit','market','warn','sign','parkedcar','tower','brownstone'],
     cars:['taxi','beetle','suv','carBlue'] }
 ];
 
@@ -278,7 +278,8 @@ function update(dt){
   updateAudio(sp);
 }
 function spriteW(t){ switch(t){ case 'palm':case 'tower':case 'brownstone':return SPRITE_SCALE*0.8;
-  case 'boat':case 'store':case 'market':case 'suv':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
+  case 'boat':case 'store':case 'market':case 'suv':return SPRITE_SCALE*1.1;
+  case 'parkedcar':return SPRITE_SCALE*0.9; default:return SPRITE_SCALE*0.7; } }
 
 /* -------------------------------- render -------------------------------- */
 function render(){
@@ -552,6 +553,10 @@ function drawSprite(t,s,fog,seed){
       ctx.fillStyle=shade('#1f8a4a',fog); ctx.fillRect(-w/2,-122*s,w,h);
       ctx.globalAlpha=fog; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font=`bold ${Math.max(6,13*s)}px Courier`;
       ctx.fillText('OUTRUN',0,-122*s+h*0.65); ctx.globalAlpha=1; break; }
+    case 'parkedcar':{ if(parkedImg.complete && parkedImg.naturalWidth){       // extracted roadside car
+        const w=170*s, h=w*parkedImg.naturalHeight/parkedImg.naturalWidth;
+        ctx.save(); ctx.globalAlpha=fog; ctx.imageSmoothingEnabled=true; ctx.drawImage(parkedImg,-w/2,-h,w,h); ctx.restore();
+      } break; }
     case 'taxi': drawVehicleBody('taxi',s*1.0,fog); break;   // parked taxi as scenery
   }
 }
@@ -581,7 +586,11 @@ function drawVehicle(type,x,y,scale,clip){
 }
 function drawVehicleBody(type,px,fog){
   const o=Math.max(1.2,px*1.6);                                  // dark keyline thickness
-  if(type==='suv'){ const w=110*px,h=78*px;
+  if(type==='suv'){
+    if(jeepImg.complete && jeepImg.naturalWidth){                              // extracted Jeep (rear)
+      const w=126*px, h=w*jeepImg.naturalHeight/jeepImg.naturalWidth;
+      ctx.imageSmoothingEnabled=true; ctx.drawImage(jeepImg,-w/2,-h,w,h); return; }
+    const w=110*px,h=78*px;
     ctx.fillStyle='#0a0b0d'; ctx.fillRect(-w/2-o,-h-o,w+o*2,h*0.62+o);          // outline
     ctx.fillStyle='#3a4049'; ctx.fillRect(-w/2,-h,w,h*0.22);                     // roof (lit)
     ctx.fillStyle='#2b2f36'; ctx.fillRect(-w/2,-h*0.78,w,h*0.38);               // body
@@ -618,6 +627,9 @@ function drawVehicleBody(type,px,fog){
 /* ------------------------ player car (380SL + crew) --------------------- */
 function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); }
 const carImg=new Image(); carImg.src='car.png';
+const hairImg=new Image(); hairImg.src='hair.png';
+const jeepImg=new Image(); jeepImg.src='jeep.png';
+const parkedImg=new Image(); parkedImg.src='parkedcar.png';
 function drawPlayer(seg,pct){
   const steer=keys.left?-1:keys.right?1:0;
   const updown=seg.p1.world.y-seg.p2.world.y;
@@ -631,9 +643,17 @@ function drawPlayer(seg,pct){
   ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.beginPath(); ctx.ellipse(0,-bh*0.015,bw*0.50,bh*0.06,0,0,7); ctx.fill();
   // 380SL hero sprite (Amber + the pup) — extracted reference art
   if(carImg.complete && carImg.naturalWidth){
-    const iw=bw, ih=iw*carImg.naturalHeight/carImg.naturalWidth;
+    const iw=bw, ih=iw*carImg.naturalHeight/carImg.naturalWidth, sc=iw/carImg.naturalWidth;
     ctx.imageSmoothingEnabled=true;
     ctx.drawImage(carImg,-iw/2,-ih,iw,ih);
+    // subtle wind in Amber's hair — rotate the hair layer about the scalp
+    if(hairImg.complete && hairImg.naturalWidth){
+      const wave=Math.sin(t*0.005)*0.05*wind + Math.sin(t*0.013)*0.014;
+      const pX=-iw/2+204*sc, pY=-ih+165*sc;
+      ctx.save(); ctx.translate(pX,pY); ctx.rotate(wave); ctx.translate(-pX,-pY);
+      ctx.drawImage(hairImg,-iw/2+70*sc,-ih+20*sc,214*sc,152*sc);
+      ctx.restore();
+    }
     if(keys.down){                                   // brake-light glow
       ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.55; ctx.fillStyle='#ff1410';
       ctx.fillRect(-iw*0.43,-ih*0.40,iw*0.22,ih*0.06); ctx.fillRect(iw*0.21,-ih*0.40,iw*0.22,ih*0.06);
