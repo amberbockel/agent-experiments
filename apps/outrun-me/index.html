@@ -617,112 +617,29 @@ function drawVehicleBody(type,px,fog){
 
 /* ------------------------ player car (380SL + crew) --------------------- */
 function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); }
+const carImg=new Image(); carImg.src='car.png';
 function drawPlayer(seg,pct){
   const steer=keys.left?-1:keys.right?1:0;
   const updown=seg.p1.world.y-seg.p2.world.y;
   const sp=speed/MAX_SPEED, t=Date.now(), wind=0.4+sp;
   const bob=(speed>0)?Math.sin(t*0.03)*1.4*sp*(H/700):0;
-  const bw=W*0.62, bh=bw*0.72;
-  const cx=W/2, cy=H-H*0.03+bob;
+  const bw=W*0.66, bh=bw*0.72;
+  const cx=W/2, cy=H-H*0.008+bob;
   ctx.save(); ctx.translate(cx,cy);
   const lean=steer*0.08+(updown>0?-0.012:0.012); ctx.transform(1,0,lean,1,0,0);
-  const RED='#cf1726', RHI='#ef5662', RLO='#7e0d17';
-  const grad=(y0,y1,a,b)=>{ const g=ctx.createLinearGradient(0,y0,0,y1); g.addColorStop(0,a); g.addColorStop(1,b); return g; };
-
-  // ground shadow
-  ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.beginPath(); ctx.ellipse(0,-bh*0.01,bw*0.58,bh*0.07,0,0,7); ctx.fill();
-  // wheels (rear large, front small up the hood)
-  ctx.fillStyle='#0f0f14';
-  rr(-bw*0.40,-bh*0.52,bw*0.085,bh*0.13,bw*0.02); rr(bw*0.315,-bh*0.52,bw*0.085,bh*0.13,bw*0.02);
-  ctx.fillStyle='#16161d';
-  rr(-bw*0.55,-bh*0.18,bw*0.13,bh*0.21,bw*0.03); rr(bw*0.42,-bh*0.18,bw*0.13,bh*0.21,bw*0.03);
-
-  // ---- HOOD (extends forward, foreshortened) ----
-  ctx.fillStyle=grad(-bh*0.78,-bh*0.44,RHI,RED);
-  poly([-bw*0.20,-bh*0.78, bw*0.20,-bh*0.78, bw*0.40,-bh*0.44, -bw*0.40,-bh*0.44]);
-  ctx.globalAlpha=0.45; ctx.fillStyle=RHI;                       // centre crease highlight
-  poly([-bw*0.015,-bh*0.78, bw*0.015,-bh*0.78, bw*0.03,-bh*0.44, -bw*0.03,-bh*0.44]); ctx.globalAlpha=1;
-  // front grille bar + headlights + three-point star
-  ctx.fillStyle='#23262b'; rr(-bw*0.19,-bh*0.81,bw*0.38,bh*0.05,bh*0.015);
-  ctx.fillStyle='#eaf4ff'; rr(-bw*0.18,-bh*0.805,bw*0.10,bh*0.032,bh*0.01); rr(bw*0.08,-bh*0.805,bw*0.10,bh*0.032,bh*0.01);
-  ctx.fillStyle='#d7dae1'; ctx.beginPath(); ctx.arc(0,-bh*0.74,bw*0.045,0,7); ctx.fill();
-  ctx.strokeStyle='#6c6f77'; ctx.lineWidth=Math.max(1,bw*0.007); ctx.lineCap='round';
-  ctx.beginPath(); for(let k=0;k<3;k++){const a=-Math.PI/2+k*2.0944; ctx.moveTo(0,-bh*0.74); ctx.lineTo(Math.cos(a)*bw*0.04,-bh*0.74+Math.sin(a)*bw*0.04);} ctx.stroke();
-
-  // ---- BODY SIDES (fenders, hood→boot) ----
-  ctx.fillStyle=grad(-bh*0.46,-bh*0.02,RED,RLO);
-  poly([-bw*0.40,-bh*0.46, bw*0.40,-bh*0.46, bw*0.5,-bh*0.03, -bw*0.5,-bh*0.03]);
-
-  // ---- COCKPIT (open convertible, tan leather) ----
-  ctx.fillStyle='#c9ccd3'; poly([-bw*0.32,-bh*0.50, bw*0.32,-bh*0.50, bw*0.29,-bh*0.452, -bw*0.29,-bh*0.452]); // windscreen frame
-  ctx.fillStyle='#0c0907'; rr(-bw*0.31,-bh*0.46,bw*0.62,bh*0.30,bh*0.04);          // cockpit well
-  for(const sx of [-bw*0.16, bw*0.16]){                                            // two tan bucket seats
-    ctx.fillStyle='#1a140d'; rr(sx-bw*0.145,-bh*0.45,bw*0.29,bh*0.30,bw*0.06);
-    ctx.fillStyle='#c8a86c'; rr(sx-bw*0.13,-bh*0.44,bw*0.26,bh*0.28,bw*0.05);
-    ctx.fillStyle='#b3905a'; rr(sx-bw*0.13,-bh*0.44,bw*0.05,bh*0.28,bw*0.03); rr(sx+bw*0.08,-bh*0.44,bw*0.05,bh*0.28,bw*0.03);
+  // ground contact shadow
+  ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.beginPath(); ctx.ellipse(0,-bh*0.015,bw*0.50,bh*0.06,0,0,7); ctx.fill();
+  // 380SL hero sprite (Amber + the pup) — extracted reference art
+  if(carImg.complete && carImg.naturalWidth){
+    const iw=bw, ih=iw*carImg.naturalHeight/carImg.naturalWidth;
+    ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(carImg,-iw/2,-ih,iw,ih);
+    if(keys.down){                                   // brake-light glow
+      ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.55; ctx.fillStyle='#ff1410';
+      ctx.fillRect(-iw*0.43,-ih*0.40,iw*0.22,ih*0.06); ctx.fillRect(iw*0.21,-ih*0.40,iw*0.22,ih*0.06);
+      ctx.restore();
+    }
   }
-  ctx.fillStyle='#15110c'; rr(-bw*0.025,-bh*0.40,bw*0.05,bh*0.24,bw*0.02);         // centre console
-  ctx.strokeStyle='#0a0a0c'; ctx.lineWidth=Math.max(2,bw*0.02);                    // small steering wheel
-  ctx.beginPath(); ctx.ellipse(-bw*0.16,-bh*0.285,bw*0.058,bh*0.038,0,0,7); ctx.stroke();
-
-  // ---- Amber (driver, left) — long dark flowing hair, bare shoulders ----
-  const sway=Math.sin(t*0.012)*bw*0.022*wind;
-  ctx.fillStyle='#1a140d'; rr(-bw*0.236,-bh*0.345,bw*0.156,bh*0.135,bw*0.05);      // shoulder keyline
-  ctx.fillStyle='#e7b187'; rr(-bw*0.228,-bh*0.34,bw*0.142,bh*0.12,bw*0.04);        // bare shoulders/skin
-  ctx.fillStyle='#d83a6a'; rr(-bw*0.228,-bh*0.30,bw*0.142,bh*0.085,bw*0.03);       // top
-  const hairPath=(o)=>{ ctx.beginPath();
-    ctx.moveTo(-bw*0.236-o,-bh*0.295);
-    ctx.quadraticCurveTo(-bw*0.285-sway-o,-bh*0.47, -bw*0.205,-bh*0.575-o*0.6);
-    ctx.quadraticCurveTo(-bw*0.155,-bh*0.63-o, -bw*0.105,-bh*0.575-o*0.6);
-    ctx.quadraticCurveTo(-bw*0.025+sway+o,-bh*0.47, -bw*0.074+o,-bh*0.295);
-    ctx.closePath(); };
-  ctx.fillStyle='#120b06'; hairPath(bw*0.013); ctx.fill();                          // hair keyline
-  ctx.fillStyle='#2e1d12'; hairPath(0); ctx.fill();                                 // dark hair
-  ctx.strokeStyle='#5a3722'; ctx.lineWidth=Math.max(1,bw*0.0055); ctx.lineCap='round'; // part + strands
-  ctx.beginPath();
-  ctx.moveTo(-bw*0.155,-bh*0.615); ctx.lineTo(-bw*0.155,-bh*0.50);
-  ctx.moveTo(-bw*0.205,-bh*0.55); ctx.quadraticCurveTo(-bw*0.228,-bh*0.42,-bw*0.205,-bh*0.31);
-  ctx.moveTo(-bw*0.105,-bh*0.55); ctx.quadraticCurveTo(-bw*0.082,-bh*0.42,-bw*0.105,-bh*0.31);
-  ctx.stroke();
-
-  // ---- the pup (right) — golden retriever sitting up ----
-  const ear=Math.sin(t*0.016+1)*bw*0.03*wind;
-  const dogBody=(o)=>{ ctx.beginPath();
-    ctx.moveTo(bw*0.072-o,-bh*0.295);
-    ctx.quadraticCurveTo(bw*0.05-o,-bh*0.49, bw*0.16,-bh*0.525-o);
-    ctx.quadraticCurveTo(bw*0.27+o,-bh*0.49, bw*0.248+o,-bh*0.295);
-    ctx.closePath(); };
-  ctx.fillStyle='#5a3a18'; dogBody(bw*0.012); ctx.fill();                           // body keyline
-  ctx.fillStyle='#d99a3f'; dogBody(0); ctx.fill();                                  // golden body
-  ctx.fillStyle='#eec079'; ctx.beginPath(); ctx.ellipse(bw*0.16,-bh*0.37,bw*0.055,bh*0.08,0,0,7); ctx.fill(); // chest
-  ctx.fillStyle='#c0392b'; rr(bw*0.10,-bh*0.45,bw*0.12,bh*0.026,2);                 // collar
-  ctx.fillStyle='#5a3a18'; ctx.beginPath(); ctx.arc(bw*0.16,-bh*0.56,bw*0.088,0,7); ctx.fill();   // head keyline
-  ctx.fillStyle='#e7b257'; ctx.beginPath(); ctx.arc(bw*0.16,-bh*0.56,bw*0.078,0,7); ctx.fill();   // head
-  ctx.fillStyle='#b97f2f';                                                          // floppy ears
-  ctx.beginPath(); ctx.ellipse(bw*0.083-ear,-bh*0.555,bw*0.035,bh*0.092,-0.3,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(bw*0.237+ear,-bh*0.555,bw*0.035,bh*0.092,0.3,0,7); ctx.fill();
-  ctx.fillStyle='#f0c97a'; ctx.beginPath(); ctx.ellipse(bw*0.195,-bh*0.59,bw*0.04,bh*0.032,0.25,0,7); ctx.fill(); // snout
-  ctx.fillStyle='#241712'; ctx.beginPath(); ctx.arc(bw*0.226,-bh*0.605,bw*0.016,0,7); ctx.fill(); // nose
-
-  // ---- BOOT / rear deck ----
-  ctx.fillStyle=grad(-bh*0.22,-bh*0.05,RHI,RED);
-  poly([-bw*0.44,-bh*0.22, bw*0.44,-bh*0.22, bw*0.5,-bh*0.05, -bw*0.5,-bh*0.05]);
-  ctx.fillStyle=RLO; ctx.globalAlpha=0.5; rr(-bw*0.5,-bh*0.085,bw,bh*0.02,2); ctx.globalAlpha=1; // shutline
-  // tail-light bar
-  ctx.fillStyle='#1a1a1f'; rr(-bw*0.5,-bh*0.17,bw,bh*0.065,bh*0.02);
-  ctx.fillStyle='#ff3030'; rr(-bw*0.47,-bh*0.162,bw*0.24,bh*0.05,bh*0.015); rr(bw*0.23,-bh*0.162,bw*0.24,bh*0.05,bh*0.015);
-  ctx.fillStyle='#ff9a3a'; rr(-bw*0.215,-bh*0.162,bw*0.06,bh*0.05,2); rr(bw*0.155,-bh*0.162,bw*0.06,bh*0.05,2);
-  // chrome bumper + exhausts
-  ctx.fillStyle='#e4e8ef'; rr(-bw*0.5,-bh*0.06,bw,bh*0.05,bh*0.02);
-  ctx.fillStyle='#b6bcc6'; rr(-bw*0.5,-bh*0.022,bw,bh*0.018,bh*0.008);
-  ctx.fillStyle='#15151a'; rr(-bw*0.13,-bh*0.05,bw*0.07,bh*0.028,2); rr(bw*0.06,-bh*0.05,bw*0.07,bh*0.028,2);
-  // MA licence plate
-  ctx.fillStyle='#f4cf3e'; rr(-bw*0.135,-bh*0.145,bw*0.27,bh*0.072,bh*0.012);
-  ctx.fillStyle='#15336b'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font=`bold ${Math.max(6,bw*0.046)}px Courier`; ctx.fillText('5ADK 68',0,-bh*0.108);
-  // 380SL badge
-  ctx.fillStyle='#eef2f8'; ctx.font=`bold ${Math.max(5,bw*0.036)}px Courier`; ctx.fillText('380SL',bw*0.36,-bh*0.20);
-  ctx.textBaseline='alphabetic';
   ctx.restore();
 }
 
