@@ -90,6 +90,7 @@
 const FPS=60, STEP=1/FPS;
 const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=1900, LANES=2;
 const FOV=100, CAM_HEIGHT=1000, CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
+const HORIZON_Y=0.37;      // road vanishing point / horizon as a fraction of screen height
 const DRAW_DIST=240, FOG_DENSITY=2.2;
 const PLAYER_Z=CAM_HEIGHT*CAM_DEPTH;
 const MAX_SPEED=SEG_LEN/STEP, ACCEL=MAX_SPEED/5, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
@@ -146,7 +147,7 @@ function project(p,cx,cy,cz,w,h,rw){
   p.camera.x=(p.world.x||0)-cx; p.camera.y=(p.world.y||0)-cy; p.camera.z=(p.world.z||0)-cz;
   p.screen.scale=CAM_DEPTH/p.camera.z;
   p.screen.x=Math.round((w/2)+(p.screen.scale*p.camera.x*w/2));
-  p.screen.y=Math.round((h/2)-(p.screen.scale*p.camera.y*h/2));
+  p.screen.y=Math.round((h*HORIZON_Y)-(p.screen.scale*p.camera.y*h/2));
   p.screen.w=Math.round(           (p.screen.scale*rw  *w/2));
 }
 
@@ -183,14 +184,14 @@ function addDownToEnd(n=200){ addRoad(n,n,n,-C.EASY,-lastY()/SEG_LEN); }
 
 function placeScenery(){
   const st=STAGES[stageIndex];
-  for(let n=12;n<segments.length;n+=rInt(3,7)){
-    const side=(n%2===0)?1:-1, off=side*(1.28+Math.random()*1.5);
+  for(let n=12;n<segments.length;n+=rInt(2,3)){
+    const side=(n%2===0)?1:-1, off=side*(1.06+Math.random()*0.5);       // dense, hugging the kerb
     segments[n].sprites.push({type:rPick(st.scenery),offset:off});
   }
-  // recurring landmark store on the right
+  // recurring landmark store on the right, at the kerb
   const store=st.bg==='coast'?'store':'market';
-  for(let n=160;n<segments.length-60;n+=rInt(240,340)){
-    segments[n].sprites.push({type:store,offset:2.7});
+  for(let n=160;n<segments.length-60;n+=rInt(220,320)){
+    segments[n].sprites.push({type:store,offset:1.5});
   }
 }
 function placeCheckpoints(){
@@ -366,7 +367,7 @@ function drawSegment(seg){
 function drawBackground(st,pY){
   const g=ctx.createLinearGradient(0,0,0,H*0.6);
   st.sky.forEach((c,i)=>g.addColorStop(i/(st.sky.length-1),c)); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  const horizon=Math.round(H*0.46+pY*0.000016*H);
+  const horizon=Math.round(H*HORIZON_Y+pY*0.000016*H);
   // big hazy sun (coast stage)
   if(st.bg==='coast'){
     const sx=W*0.70, sy=horizon-H*0.26, R=W*0.17;
@@ -534,13 +535,13 @@ function drawSprite(t,s,fog,seed){
       ctx.restore();
       ctx.fillStyle=shade('#161616',fog); ctx.fillRect(-2.6*s,-post-d-d*0.28,5.2*s,d*0.42);  // !
       ctx.beginPath(); ctx.arc(0,-post-d+d*0.34,3*s,0,7); ctx.fill(); break; }
-    case 'brownstone':{ const w=188*s,h=345*s, k=Math.max(1,2*s);
+    case 'brownstone':{ const w=285*s,h=560*s, k=Math.max(1,2*s);
       ctx.fillStyle=shade('#241008',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
       ctx.fillStyle=shade('#9c5a32',fog); ctx.fillRect(-w/2,-h,w,h);
       for(let r=0;r<4;r++)for(let cc=0;cc<3;cc++){
         ctx.fillStyle=shade((r+cc)%2?'#c98':'#5a3520',fog); ctx.fillRect(-w/2+8*s+cc*(w/3),-h+10*s+r*(h/4.4),w/5,h/6); }
       ctx.fillStyle=shade('#5a3520',fog); poly([-w/2,-h, w/2,-h, 0,-h-h*0.16]); break; }
-    case 'tower':{ const w=160*s,h=470*s, k=Math.max(1,2*s);
+    case 'tower':{ const w=245*s,h=720*s, k=Math.max(1,2*s);
       ctx.fillStyle=shade('#2a323c',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
       ctx.fillStyle=shade('#8b97a6',fog); ctx.fillRect(-w/2,-h,w,h);
       for(let r=0;r<14;r++)for(let cc=0;cc<4;cc++){ ctx.fillStyle=shade((r+cc)%3===0?'#cfe6ff':'#5a6b7c',fog);
@@ -561,7 +562,7 @@ function drawSprite(t,s,fog,seed){
   }
 }
 function storefront(s,fog,name){
-  const w=266*s,h=216*s, k=Math.max(1,2*s);
+  const w=330*s,h=270*s, k=Math.max(1,2*s);
   ctx.fillStyle=shade('#241808',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);              // keyline
   ctx.fillStyle=shade('#c9a673',fog); ctx.fillRect(-w/2,-h,w,h);                         // brick wall
   ctx.fillStyle=shade('#7a4a26',fog); poly([-w/2,-h, w/2,-h, w/2,-h-16*s, -w/2,-h-16*s]); // cornice
@@ -643,8 +644,8 @@ function drawPlayer(seg,pct){
   const updown=seg.p1.world.y-seg.p2.world.y;
   const sp=speed/MAX_SPEED, t=Date.now(), wind=0.4+sp;
   const bob=(speed>0)?Math.sin(t*0.03)*1.4*sp*(H/700):0;
-  const bw=W*0.66, bh=bw*0.72;
-  const cx=W/2, cy=H-H*0.008+bob;
+  const bw=W*0.64, bh=bw*0.72;
+  const cx=W/2, cy=H-H*0.006+bob;
   ctx.save(); ctx.translate(cx,cy);
   const lean=steer*0.08+(updown>0?-0.012:0.012); ctx.transform(1,0,lean,1,0,0);
   // ground contact shadow
