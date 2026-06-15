@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Music Box</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #4a3820;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #8b7355;
+      font-weight: 400;
+    }
+
+    .music-box {
+      background: linear-gradient(135deg, #6b4423 0%, #8b5a3c 50%, #6b4423 100%);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 
+        0 8px 24px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .music-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .mechanism {
+      position: relative;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .winding-key {
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, #d4a76a 0%, #b8945f 100%);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 
+        0 4px 12px rgba(0,0,0,0.3),
+        inset 0 2px 4px rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      touch-action: none;
+    }
+
+    .winding-key:active {
+      transform: scale(0.95);
+    }
+
+    .winding-key::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 8px;
+      background: linear-gradient(90deg, #b8945f 0%, #d4a76a 50%, #b8945f 100%);
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .winding-key::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle, #8b7355 0%, #6b5943 100%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .winding-key.rotating {
+      animation: rotate 0.3s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .wind-indicator {
+      width: 100%;
+      max-width: 200px;
+      height: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .wind-level {
+      height: 100%;
+      background: linear-gradient(90deg, #d4a76a 0%, #f4d9a6 100%);
+      border-radius: 6px;
+      width: 0%;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px rgba(212, 167, 106, 0.5);
+    }
+
+    .status {
+      text-align: center;
+      color: #f5f0e8;
+      font-size: 14px;
+      font-weight: 500;
+      min-height: 20px;
+      opacity: 0.9;
+    }
+
+    .melody-selector {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .melody-label {
+      color: #f5f0e8;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .melody-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .melody-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #f5f0e8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .melody-btn:active {
+      transform: scale(0.95);
+    }
+
+    .melody-btn.active {
+      background: linear-gradient(135deg, #d4a76a 0%, #b8945f 100%);
+      border-color: #d4a76a;
+      box-shadow: 0 2px 8px rgba(212, 167, 106, 0.4);
+    }
+
+    .instructions {
+      text-align: center;
+      color: #8b7355;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Music Box</h1>
+      <div class="subtitle">Wind it up, let it play</div>
+    </header>
+
+    <div class="music-box">
+      <div class="mechanism">
+        <div class="winding-key" id="windingKey"></div>
+        <div class="wind-indicator">
+          <div class="wind-level" id="windLevel"></div>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="melody-selector">
+        <div class="melody-label">Melody</div>
+        <div class="melody-options" id="melodyOptions"></div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      Tap and hold the key to wind up the music box. Release to hear it play.
+    </div>
+  </div>
+
+  <script>
+    // Music box state
+    let windLevel = 0;
+    let isWinding = false;
+    let isPlaying = false;
+    let currentMelodyIndex = 0;
+    let audioContext = null;
+    let playbackInterval = null;
+    let noteIndex = 0;
+
+    // Melodies (note frequencies and durations)
+    const melodies = [
+      {
+        name: 'Twinkle',
+        notes: [
+          {freq: 261.63, duration: 0.4}, // C
+          {freq: 261.63, duration: 0.4}, // C
+          {freq: 392.00, duration: 0.4}, // G
+          {freq: 392.00, duration: 0.4}, // G
+          {freq: 440.00, duration: 0.4}, // A
+          {freq: 440.00, duration: 0.4}, // A
+          {freq: 392.00, duration: 0.8}, // G
+          {freq: 349.23, duration: 0.4}, // F
+          {freq: 349.23, duration: 0.4}, // F
+          {freq: 329.63, duration: 0.4}, // E
+          {freq: 329.63, duration: 0.4}, // E
+          {freq: 293.66, duration: 0.4}, // D
+          {freq: 293.66, duration: 0.4}, // D
+          {freq: 261.63, duration: 0.8}, // C
+        ]
+      },
+      {
+        name: 'Für Elise',
+        notes: [
+          {freq: 329.63, duration: 0.3}, // E
+          {freq: 311.13, duration: 0.3}, // D#
+          {freq: 329.63, duration: 0.3}, // E
+          {freq: 311.13, duration: 0.3}, // D#
+          {freq: 329.63, duration: 0.3}, // E
+          {freq: 246.94, duration: 0.3}, // B
+          {freq: 293.66, duration: 0.3}, // D
+          {freq: 261.63, duration: 0.3}, // C
+          {freq: 220.00, duration: 0.6}, // A
+        ]
+      },
+      {
+        name: 'Swan Lake',
+        notes: [
+          {freq: 329.63, duration: 0.5}, // E
+          {freq: 293.66, duration: 0.5}, // D
+          {freq: 261.63, duration: 0.5}, // C
+          {freq: 246.94, duration: 0.5}, // B
+          {freq: 220.00, duration: 0.5}, // A
+          {freq: 246.94, duration: 0.5}, // B
+          {freq: 261.63, duration: 1.0}, // C
+        ]
+      },
+      {
+        name: 'Lullaby',
+        notes: [
+          {freq: 392.00, duration: 0.6}, // G
+          {freq: 329.63, duration: 0.3}, // E
+          {freq: 392.00, duration: 0.6}, // G
+          {freq: 329.63, duration: 0.3}, // E
+          {freq: 392.00, duration: 0.6}, // G
+          {freq: 523.25, duration: 0.6}, // C
+          {freq: 493.88, duration: 1.2}, // B
+        ]
+      }
+    ];
+
+    // DOM elements
+    const windingKey = document.getElementById('windingKey');
+    const windLevelEl = document.getElementById('windLevel');
+    const statusEl = document.getElementById('status');
+    const melodyOptionsEl = document.getElementById('melodyOptions');
+
+    // Initialize audio context on first interaction
+    function initAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    // Play a single note
+    function playNote(frequency, duration, tempo = 1.0) {
+      if (!audioContext) return;
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+
+      const adjustedDuration = duration / tempo;
+      const now = audioContext.currentTime;
+
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + adjustedDuration);
+
+      oscillator.start(now);
+      oscillator.stop(now + adjustedDuration);
+    }
+
+    // Play melody with decreasing tempo
+    function playMelody() {
+      if (windLevel <= 0 || isPlaying) return;
+
+      isPlaying = true;
+      noteIndex = 0;
+
+      const melody = melodies[currentMelodyIndex];
+      
+      function playNext() {
+        if (noteIndex >= melody.notes.length || windLevel <= 0) {
+          isPlaying = false;
+          windingKey.classList.remove('rotating');
+          if (windLevel <= 0) {
+            statusEl.textContent = '';
+          }
+          clearInterval(playbackInterval);
+          return;
+        }
+
+        const note = melody.notes[noteIndex];
+        const tempo = Math.max(0.3, windLevel / 100); // Slower as wind decreases
+        
+        playNote(note.freq, note.duration, tempo);
+        
+        windLevel = Math.max(0, windLevel - 2);
+        updateWindDisplay();
+
+        statusEl.textContent = 'Playing...';
+        
+        noteIndex++;
+        
+        // Next note timing based on current tempo
+        const nextDelay = (note.duration / tempo) * 1000;
+        setTimeout(playNext, nextDelay);
+      }
+
+      playNext();
+    }
+
+    // Update wind level display
+    function updateWindDisplay() {
+      windLevelEl.style.width = windLevel + '%';
+    }
+
+    // Wind up mechanism
+    let windInterval = null;
+
+    function startWinding() {
+      if (isPlaying) return;
+      
+      initAudio();
+      isWinding = true;
+      windingKey.classList.add('rotating');
+      statusEl.textContent = 'Winding...';
+
+      windInterval = setInterval(() => {
+        windLevel = Math.min(100, windLevel + 3);
+        updateWindDisplay();
+
+        if (windLevel >= 100) {
+          statusEl.textContent = 'Fully wound!';
+        }
+      }, 50);
+    }
+
+    function stopWinding() {
+      if (!isWinding) return;
+      
+      isWinding = false;
+      clearInterval(windInterval);
+      windingKey.classList.remove('rotating');
+
+      if (windLevel > 10) {
+        setTimeout(() => playMelody(), 200);
+      } else {
+        statusEl.textContent = 'Wind it up more...';
+        setTimeout(() => statusEl.textContent = '', 2000);
+      }
+    }
+
+    // Event listeners for winding key
+    windingKey.addEventListener('mousedown', startWinding);
+    windingKey.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startWinding();
+    });
+
+    windingKey.addEventListener('mouseup', stopWinding);
+    windingKey.addEventListener('mouseleave', stopWinding);
+    windingKey.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      stopWinding();
+    });
+    windingKey.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      stopWinding();
+    });
+
+    // Render melody options
+    function renderMelodyOptions() {
+      melodyOptionsEl.innerHTML = '';
+      melodies.forEach((melody, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'melody-btn' + (index === currentMelodyIndex ? ' active' : '');
+        btn.textContent = melody.name;
+        btn.addEventListener('click', () => {
+          currentMelodyIndex = index;
+          renderMelodyOptions();
+          localStorage.setItem('musicBoxMelody', index);
+        });
+        melodyOptionsEl.appendChild(btn);
+      });
+    }
+
+    // Load saved melody preference
+    const savedMelody = localStorage.getItem('musicBoxMelody');
+    if (savedMelody !== null) {
+      currentMelodyIndex = parseInt(savedMelody, 10);
+    }
+
+    // Initialize
+    renderMelodyOptions();
+    updateWindDisplay();
+  </script>
+</body>
+</html>
