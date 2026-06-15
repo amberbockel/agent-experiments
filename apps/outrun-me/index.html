@@ -106,15 +106,15 @@ const STAGES=[
     hill:'#1fb046', hill2:'#15912f', haze:'#dcf1ff',
     light:{ road:'#9fa2ad', grass:'#5fd45a', rumble:'#e3001b', lane:'#f2ebdc' },
     dark :{ road:'#82848f', grass:'#3da342', rumble:'#f3ede0' },
-    scenery:['palm','palm','palm','palm','sign','umbrella','rock','boat','store','parkedcar'],
+    scenery:['pine','pine','dune','umbrella','boat','rock','pine','dune','sign','store','parkedcar','pine'],
     cars:['carRed','carBlue','beetle','suv'] },
   { name:'BOSTON', bg:'city',
     sky:['#3a7fc4','#7fb0dc','#d6e4f0'],
     ocean:'#2c6e9e', oceanLite:'#5fa0cc', sand:'#9aa3ad',
     hill:'#6e80a0', hill2:'#4e5d72', haze:'#d6e4f0',
-    light:{ road:'#8e9099', grass:'#6fb85f', rumble:'#c9ccd3', lane:'#f2c019' },
-    dark :{ road:'#74767f', grass:'#4e9447', rumble:'#9da0a8' },
-    scenery:['tower','brownstone','exit','market','warn','sign','parkedcar','tower','brownstone'],
+    light:{ road:'#8e9099', grass:'#80848d', rumble:'#c9ccd3', lane:'#f2c019' },
+    dark :{ road:'#74767f', grass:'#71757e', rumble:'#9da0a8' },
+    scenery:['brownstone','tower','brownstone','market','streetlamp','sign','parkedcar','brownstone','tower','warn','brownstone','streetlamp','exit'],
     cars:['taxi','beetle','suv','carBlue'] }
 ];
 
@@ -199,7 +199,7 @@ function placeCheckpoints(){
   for(let i=1;i<=4;i++){ const idx=gap*i; if(segments[idx]) segments[idx].checkpoint=true; }
 }
 function placeTraffic(){
-  const st=STAGES[stageIndex]; cars=[]; const count=20+stageIndex*8;
+  const st=STAGES[stageIndex]; cars=[]; const count=40+stageIndex*16;
   for(let i=0;i<count;i++){
     const seg=rInt(30,segments.length-30), off=lerp(-0.7,0.7,Math.random()), sp=rPick(st.cars);
     const spd=(sp==='suv'||sp==='taxi')?0.55:0.6+Math.random()*0.22;
@@ -324,10 +324,25 @@ function shade(hex,fog){ return fade(hex,Math.max(0.18,fog)); }
 
 function drawSegment(seg){
   const p1=seg.p1.screen,p2=seg.p2.screen,c=seg.color,fog=seg.fog;
-  // grass
-  ctx.fillStyle=fade(c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
-  // bold red/white rumble strips (the iconic OutRun road edge)
+  const st=STAGES[stageIndex];
   const r1=p1.w/4.2,r2=p2.w/4.2;
+  // base ground
+  ctx.fillStyle=fade(c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
+  // side terrain — coast: ocean (left) + beach (right); city: concrete sidewalks
+  if(st.bg==='coast'){
+    ctx.fillStyle=fade(st.ocean,fog);
+    poly([0,p2.y, p2.x-p2.w-r2,p2.y, p1.x-p1.w-r1,p1.y, 0,p1.y]);
+    ctx.fillStyle=fade(st.oceanLite,fog);                                   // surf line at the water's edge
+    poly([p2.x-p2.w-r2-p2.w*0.13,p2.y, p2.x-p2.w-r2,p2.y, p1.x-p1.w-r1,p1.y, p1.x-p1.w-r1-p1.w*0.13,p1.y]);
+    ctx.fillStyle=fade(st.sand,fog);
+    poly([p2.x+p2.w+r2,p2.y, W,p2.y, W,p1.y, p1.x+p1.w+r1,p1.y]);
+  } else {
+    ctx.fillStyle=fade('#9a9da6',fog);                                      // concrete sidewalks
+    const sw2=p2.w*0.55, sw1=p1.w*0.55;
+    poly([p2.x-p2.w-r2-sw2,p2.y, p2.x-p2.w-r2,p2.y, p1.x-p1.w-r1,p1.y, p1.x-p1.w-r1-sw1,p1.y]);
+    poly([p2.x+p2.w+r2+sw2,p2.y, p2.x+p2.w+r2,p2.y, p1.x+p1.w+r1,p1.y, p1.x+p1.w+r1+sw1,p1.y]);
+  }
+  // bold red/white rumble strips (the iconic OutRun road edge)
   ctx.fillStyle=fade(c.rumble,fog);
   poly([p2.x-p2.w-r2,p2.y, p2.x-p2.w,p2.y, p1.x-p1.w,p1.y, p1.x-p1.w-r1,p1.y]);
   poly([p2.x+p2.w+r2,p2.y, p2.x+p2.w,p2.y, p1.x+p1.w,p1.y, p1.x+p1.w+r1,p1.y]);
@@ -521,6 +536,23 @@ function drawSprite(t,s,fog,seed){
     case 'rock':{ const w=60*s,h=34*s; ctx.fillStyle=shade('#9a8f7e',fog);
       ctx.beginPath(); ctx.ellipse(0,-h/2,w/2,h/2,0,0,7); ctx.fill();
       ctx.fillStyle=shade('#7d7464',fog); ctx.beginPath(); ctx.ellipse(w*0.12,-h*0.3,w/3,h/3,0,0,7); ctx.fill(); break; }
+    case 'pine':{ const h=235*s, tw=11*s, lean=((seed%3)-1)*6*s;
+      ctx.fillStyle=shade('#5a3c22',fog); ctx.fillRect(-tw*0.4,-h*0.30,tw*0.8,h*0.30);          // trunk
+      const tiers=[[-h*0.26,54*s],[-h*0.50,45*s],[-h*0.74,34*s],[-h*0.92,22*s]];
+      for(const [yb,wd] of tiers){ ctx.fillStyle=shade('#0b3a18',fog); poly([lean*( -yb/h),yb-h*0.30, -wd-2*s,yb+3*s, wd+2*s,yb+3*s]); }   // dark keyline
+      for(const [yb,wd] of tiers){ ctx.fillStyle=shade('#1f7e34',fog); poly([lean*(-yb/h),yb-h*0.28, -wd,yb, wd,yb]); }                  // green
+      break; }
+    case 'dune':{ const w=170*s,h=50*s; ctx.fillStyle=shade('#e7cd96',fog);
+      ctx.beginPath(); ctx.ellipse(0,0,w/2,h,0,Math.PI,2*Math.PI); ctx.fill();                   // sand mound
+      ctx.fillStyle=shade('#cea868',fog); ctx.beginPath(); ctx.ellipse(w*0.14,0,w*0.32,h*0.7,0,Math.PI,2*Math.PI); ctx.fill();
+      ctx.strokeStyle=shade('#9cbf4c',fog); ctx.lineWidth=Math.max(1,2.2*s);                      // beach grass
+      for(let i=-3;i<=3;i++){ const gx=i*w*0.10; ctx.beginPath(); ctx.moveTo(gx,-h*0.25); ctx.lineTo(gx-5*s,-h*0.25-24*s); ctx.moveTo(gx,-h*0.25); ctx.lineTo(gx+5*s,-h*0.25-26*s); ctx.stroke(); }
+      break; }
+    case 'streetlamp':{ const h=230*s, side=(seed%2?1:-1);
+      ctx.fillStyle=shade('#23272e',fog); ctx.fillRect(-3*s,-h,6*s,h);                            // pole
+      ctx.fillRect(0,-h, side*30*s, 4*s);                                                          // arm
+      ctx.fillStyle=shade('#ffe9a8',fog); ctx.beginPath(); ctx.ellipse(side*26*s,-h+5*s,8*s,5*s,0,0,7); ctx.fill();   // lamp head
+      break; }
     case 'boat':{ const w=120*s,h=52*s; ctx.fillStyle=shade('#e8e2d2',fog);
       poly([-w/2,-h*0.4, w/2,-h*0.4, w*0.36,0, -w*0.36,0]);
       ctx.fillStyle=shade('#c33',fog); ctx.fillRect(-2*s,-h,4*s,h*0.6);
@@ -535,12 +567,21 @@ function drawSprite(t,s,fog,seed){
       ctx.restore();
       ctx.fillStyle=shade('#161616',fog); ctx.fillRect(-2.6*s,-post-d-d*0.28,5.2*s,d*0.42);  // !
       ctx.beginPath(); ctx.arc(0,-post-d+d*0.34,3*s,0,7); ctx.fill(); break; }
-    case 'brownstone':{ const w=285*s,h=560*s, k=Math.max(1,2*s);
-      ctx.fillStyle=shade('#241008',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
-      ctx.fillStyle=shade('#9c5a32',fog); ctx.fillRect(-w/2,-h,w,h);
-      for(let r=0;r<4;r++)for(let cc=0;cc<3;cc++){
-        ctx.fillStyle=shade((r+cc)%2?'#c98':'#5a3520',fog); ctx.fillRect(-w/2+8*s+cc*(w/3),-h+10*s+r*(h/4.4),w/5,h/6); }
-      ctx.fillStyle=shade('#5a3520',fog); poly([-w/2,-h, w/2,-h, 0,-h-h*0.16]); break; }
+    case 'brownstone':{ const w=272*s,h=545*s, k=Math.max(1,2.4*s);
+      const bricks=['#9c5a32','#824326','#b06a3a','#6f4030','#a8603c'];
+      const brick=bricks[seed%bricks.length], trim=shade('#39200f',fog);
+      ctx.fillStyle=shade('#180b05',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);              // keyline
+      ctx.fillStyle=shade(brick,fog); ctx.fillRect(-w/2,-h,w,h);
+      ctx.fillStyle=trim; ctx.fillRect(-w/2-k,-h,w+k*2,h*0.05);                              // cornice
+      ctx.fillStyle=shade('#c8c2b4',fog); ctx.fillRect(-w/2,-h*0.03,w,h*0.03);              // stoop base
+      ctx.fillStyle=shade('#241510',fog); ctx.fillRect(-w*0.11,-h*0.17,w*0.22,h*0.17);     // door
+      const rows=6, cols=3, mx=w*0.12, gw=(w-2*mx)/cols, gh=(h*0.74)/rows, ww=gw*0.58, wh=gh*0.58;
+      for(let r=0;r<rows;r++)for(let cc=0;cc<cols;cc++){
+        const wx=-w/2+mx+cc*gw+(gw-ww)/2, wy=-h+h*0.08+r*gh;
+        ctx.fillStyle=trim; ctx.fillRect(wx-2*s,wy-2*s,ww+4*s,wh+4*s);                       // frame
+        const lit=(r*7+cc*13+seed)%5; ctx.fillStyle=shade(lit<2?'#ffd98a':lit<3?'#bfe6ff':'#26323e',fog);
+        ctx.fillRect(wx,wy,ww,wh); }
+      break; }
     case 'tower':{ const w=245*s,h=720*s, k=Math.max(1,2*s);
       ctx.fillStyle=shade('#2a323c',fog); ctx.fillRect(-w/2-k,-h-k,w+k*2,h+k);   // keyline
       ctx.fillStyle=shade('#8b97a6',fog); ctx.fillRect(-w/2,-h,w,h);
@@ -582,7 +623,7 @@ function storefront(s,fog,name){
 /* ----------------------------- traffic cars ----------------------------- */
 // low, wide rear-view sedan (matches the reference traffic proportions)
 function sedanBody(px,o,hi,body,dk,roof,checker){
-  const w=108*px, h=44*px;
+  const w=262*px, h=104*px;
   ctx.fillStyle='#0a0b0d'; poly([-w*0.31-o,-h*0.50, w*0.31+o,-h*0.50, w*0.25+o,-h-o, -w*0.25-o,-h-o]); // cabin outline
   ctx.fillStyle=roof;      poly([-w*0.30,-h*0.52, w*0.30,-h*0.52, w*0.245,-h, -w*0.245,-h]);            // cabin/pillars
   ctx.fillStyle='#0c1117'; poly([-w*0.255,-h*0.55, w*0.255,-h*0.55, w*0.205,-h*0.93, -w*0.205,-h*0.93]);// rear glass
@@ -597,7 +638,7 @@ function sedanBody(px,o,hi,body,dk,roof,checker){
   ctx.fillStyle='#cfd3da'; ctx.fillRect(-w/2,-h*0.075,w,h*0.05);           // chrome bumper
 }
 function beetleBody(px,o){
-  const w=94*px,h=46*px;
+  const w=228*px,h=112*px;
   ctx.fillStyle='#0a0b0d'; ctx.beginPath(); ctx.moveTo(-w/2-o,o); ctx.quadraticCurveTo(-w/2-o,-h-o,0,-h-o); ctx.quadraticCurveTo(w/2+o,-h-o,w/2+o,o); ctx.closePath(); ctx.fill();
   const dome=(col,ins)=>{ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(-w/2+ins,0); ctx.quadraticCurveTo(-w/2+ins,-h+ins,0,-h+ins); ctx.quadraticCurveTo(w/2-ins,-h+ins,w/2-ins,0); ctx.closePath(); ctx.fill();};
   dome('#e4cf3e',0);
@@ -638,7 +679,7 @@ const hairImg=new Image(); hairImg.src='hair.png';
 const _img=s=>{const i=new Image(); i.src=s; return i;};
 const parkedImg=_img('parkedcar.png');
 const trafficImg={ suv:_img('jeep.png') };          // only the real SUV uses the extracted Jeep
-const trafficW={ suv:124 };
+const trafficW={ suv:300 };
 function drawPlayer(seg,pct){
   const steer=keys.left?-1:keys.right?1:0;
   const updown=seg.p1.world.y-seg.p2.world.y;
