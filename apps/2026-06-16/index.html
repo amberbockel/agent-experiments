@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>System Prompt Tester</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --accent: #007AFF;
+      --border: #E5E5EA;
+      --success: #34C759;
+      --warning: #FF9500;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border: #38383A;
+      }
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+    }
+    
+    header {
+      padding: 16px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+    
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .section {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    
+    .prompt-styles {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+    
+    .style-chip {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      font-size: 15px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .style-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    
+    .style-chip:active {
+      transform: scale(0.95);
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    textarea::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .input-label {
+      display: block;
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .btn:active {
+      opacity: 0.8;
+    }
+    
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .results {
+      display: none;
+    }
+    
+    .results.visible {
+      display: block;
+    }
+    
+    .comparison {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .response-card {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .response-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    
+    .response-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 12px;
+    }
+    
+    .response-body {
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg);
+    }
+    
+    .badge.verbose {
+      background: var(--warning);
+      color: white;
+    }
+    
+    .badge.concise {
+      background: var(--success);
+      color: white;
+    }
+    
+    .badge.structured {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .prompt-preview {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>System Prompt Tester</h1>
+    <div class="subtitle">See how prompt style shapes AI behavior</div>
+  </header>
+  
+  <main>
+    <div class="section">
+      <div class="section-title">1. Choose a system prompt style</div>
+      <div class="prompt-styles">
+        <div class="style-chip active" data-style="minimal">Minimal</div>
+        <div class="style-chip" data-style="detailed">Detailed</div>
+        <div class="style-chip" data-style="persona">Persona</div>
+        <div class="style-chip" data-style="structured">Structured</div>
+        <div class="style-chip" data-style="custom">Custom</div>
+      </div>
+      <div id="customPromptArea" style="display: none;">
+        <label class="input-label">Your custom system prompt</label>
+        <textarea id="customPrompt" placeholder="Write your own system prompt..."></textarea>
+      </div>
+      <div class="prompt-preview" id="promptPreview"></div>
+    </div>
+    
+    <div class="section">
+      <label class="input-label">2. Enter your user query</label>
+      <textarea id="userQuery" placeholder="Example: Summarize the key benefits of meditation in 3 bullet points"></textarea>
+    </div>
+    
+    <div class="section">
+      <button class="btn" id="testBtn">Compare Responses</button>
+    </div>
+    
+    <div class="results" id="results">
+      <div class="section">
+        <div class="section-title">Results</div>
+        <div class="comparison" id="comparison"></div>
+      </div>
+    </div>
+  </main>
+  
+  <script>
+    const SYSTEM_PROMPTS = {
+      minimal: "Answer the user's question.",
+      detailed: "You are a helpful AI assistant. Answer the user's question clearly and accurately. Use bullet points when appropriate. Keep responses concise but complete. If you're uncertain, say so. Avoid speculation.",
+      persona: "You are a friendly, knowledgeable teacher who loves helping people learn. Your goal is to make complex topics accessible and engaging. Use examples and analogies when helpful. Keep a warm, encouraging tone.",
+      structured: "Follow this process:\n1. Understand the user's question\n2. Break it into key components\n3. Address each component systematically\n4. Synthesize a clear, actionable answer\n5. Verify your reasoning\n\nBe thorough but concise."
+    };
+    
+    const RESPONSE_PATTERNS = {
+      minimal: {
+        style: (query) => {
+          // Terse, direct, minimal formatting
+          if (query.toLowerCase().includes('bullet')) {
+            return '• Reduces stress\n• Improves focus\n• Enhances emotional regulation';
+          }
+          return 'Meditation reduces stress, improves focus, and enhances emotional regulation.';
+        },
+        wordCount: 20,
+        tone: 'Direct, no frills',
+        badge: 'concise'
+      },
+      detailed: {
+        style: (query) => {
+          if (query.toLowerCase().includes('bullet')) {
+            return '**Key benefits of meditation:**\n\n• **Stress reduction** — Regular practice lowers cortisol levels and helps manage anxiety\n• **Improved focus** — Strengthens attention span and concentration abilities\n• **Emotional regulation** — Builds awareness of emotions and improves response control\n\nMeditation has been shown to provide these benefits with consistent practice over time.';
+          }
+          return 'Meditation offers several scientifically-backed benefits. It reduces stress by lowering cortisol levels, improves focus and concentration through strengthening neural pathways, and enhances emotional regulation by building mindfulness and self-awareness. These benefits typically develop with consistent practice.';
+        },
+        wordCount: 65,
+        tone: 'Professional, thorough',
+        badge: 'verbose'
+      },
+      persona: {
+        style: (query) => {
+          if (query.toLowerCase().includes('bullet')) {
+            return 'Great question! Here are three wonderful benefits you\'ll notice:\n\n• **Calmer mind** — Like hitting a mental reset button, meditation helps you let go of stress\n• **Sharper focus** — Think of it as a workout for your attention muscle\n• **Emotional balance** — You\'ll find yourself responding thoughtfully instead of reacting impulsively\n\nThe best part? Even 5-10 minutes a day makes a real difference!';
+          }
+          return 'I\'m so glad you\'re curious about meditation! The benefits are really remarkable. You\'ll likely notice reduced stress (it\'s like giving your nervous system a break), improved focus (your mind becomes less scattered), and better emotional regulation (you respond instead of react). Even just a few minutes daily can make a meaningful difference.';
+        },
+        wordCount: 70,
+        tone: 'Warm, encouraging',
+        badge: 'verbose'
+      },
+      structured: {
+        style: (query) => {
+          if (query.toLowerCase().includes('bullet')) {
+            return '**Analysis:** The user wants three specific benefits in bullet format.\n\n**Response:**\n1. **Stress reduction** — Decreases cortisol, activates parasympathetic nervous system\n2. **Enhanced focus** — Strengthens prefrontal cortex, improves sustained attention\n3. **Emotional regulation** — Increases awareness of emotional states, improves response flexibility\n\n**Verification:** Response is concise, evidence-based, and directly addresses the request.';
+          }
+          return '**Understanding the question:** User seeks meditation benefits.\n\n**Key components:** Physical, cognitive, and emotional impacts.\n\n**Systematic answer:**\n- Physical: Reduces stress hormones\n- Cognitive: Improves attention and focus\n- Emotional: Enhances self-regulation\n\n**Synthesis:** Meditation provides measurable benefits across stress, focus, and emotional control.\n\n**Reasoning check:** Answer is evidence-based and actionable.';
+        },
+        wordCount: 85,
+        tone: 'Analytical, step-by-step',
+        badge: 'structured'
+      },
+      custom: {
+        style: (query) => {
+          return 'Custom prompt responses will vary based on your specific instructions. The style, tone, length, and structure will reflect whatever you wrote in your system prompt.';
+        },
+        wordCount: 30,
+        tone: 'Variable',
+        badge: 'concise'
+      }
+    };
+    
+    let currentStyle = 'minimal';
+    let customPromptText = '';
+    
+    // DOM elements
+    const chips = document.querySelectorAll('.style-chip');
+    const customPromptArea = document.getElementById('customPromptArea');
+    const customPrompt = document.getElementById('customPrompt');
+    const promptPreview = document.getElementById('promptPreview');
+    const userQuery = document.getElementById('userQuery');
+    const testBtn = document.getElementById('testBtn');
+    const results = document.getElementById('results');
+    const comparison = document.getElementById('comparison');
+    
+    // Initialize
+    updatePromptPreview();
+    
+    // Load saved custom prompt
+    const saved = localStorage.getItem('systemPromptTester_custom');
+    if (saved) {
+      customPrompt.value = saved;
+      customPromptText = saved;
+    }
+    
+    // Event listeners
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentStyle = chip.dataset.style;
+        
+        if (currentStyle === 'custom') {
+          customPromptArea.style.display = 'block';
+        } else {
+          customPromptArea.style.display = 'none';
+        }
+        
+        updatePromptPreview();
+      });
+    });
+    
+    customPrompt.addEventListener('input', (e) => {
+      customPromptText = e.target.value;
+      localStorage.setItem('systemPromptTester_custom', customPromptText);
+      updatePromptPreview();
+    });
+    
+    testBtn.addEventListener('click', runComparison);
+    
+    function updatePromptPreview() {
+      const prompt = currentStyle === 'custom' ? customPromptText : SYSTEM_PROMPTS[currentStyle];
+      promptPreview.textContent = prompt || '(No custom prompt yet)';
+    }
+    
+    function runComparison() {
+      const query = userQuery.value.trim();
+      
+      if (!query) {
+        alert('Please enter a user query first');
+        return;
+      }
+      
+      if (currentStyle === 'custom' && !customPromptText) {
+        alert('Please write a custom system prompt or choose a preset style');
+        return;
+      }
+      
+      // Generate responses
+      comparison.innerHTML = '';
+      
+      // Show current style result
+      const currentPattern = RESPONSE_PATTERNS[currentStyle];
+      const currentResponse = currentPattern.style(query);
+      
+      comparison.innerHTML += createResponseCard(
+        currentStyle.charAt(0).toUpperCase() + currentStyle.slice(1),
+        currentResponse,
+        currentPattern.wordCount,
+        currentPattern.tone,
+        currentPattern.badge,
+        true
+      );
+      
+      // Show comparison with other styles
+      Object.keys(RESPONSE_PATTERNS).forEach(style => {
+        if (style !== currentStyle && style !== 'custom') {
+          const pattern = RESPONSE_PATTERNS[style];
+          const response = pattern.style(query);
+          comparison.innerHTML += createResponseCard(
+            style.charAt(0).toUpperCase() + style.slice(1),
+            response,
+            pattern.wordCount,
+            pattern.tone,
+            pattern.badge,
+            false
+          );
+        }
+      });
+      
+      results.classList.add('visible');
+      results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    function createResponseCard(title, body, wordCount, tone, badge, isCurrent) {
+      return `
+        <div class="response-card">
+          <div class="response-header">
+            <div class="response-title">${title}${isCurrent ? ' ✓' : ''}</div>
+            <span class="badge ${badge}">${badge}</span>
+          </div>
+          <div class="response-meta">
+            <span>~${wordCount} words</span>
+            <span>•</span>
+            <span>${tone}</span>
+          </div>
+          <div class="response-body">${body}</div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
