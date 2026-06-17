@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-06-17",
+      "slug": "2026-06-17",
+      "title": "Breathing Buddy",
+      "category": "delightful",
+      "oneLiner": "A gentle animated companion that breathes with you — tap to start, follow the rhythm, feel calmer. Perfect for desk stress or bedtime wind-down.",
+      "path": "apps/2026-06-17/"
+    },
+    {
       "date": "2026-06-16",
       "slug": "2026-06-16",
       "title": "System Prompt Tester",

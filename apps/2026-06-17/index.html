@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Breathing Buddy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+    }
+
+    #instruction {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+      transition: opacity 0.3s ease;
+    }
+
+    #instruction.hidden {
+      opacity: 0;
+    }
+
+    #phase {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      text-align: center;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #phase.visible {
+      opacity: 1;
+    }
+
+    #counter {
+      position: absolute;
+      bottom: env(safe-area-inset-bottom, 24px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #reset {
+      position: absolute;
+      top: env(safe-area-inset-top, 20px);
+      right: env(safe-area-inset-right, 20px);
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      transition: background 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #reset:active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="ui">
+    <div id="instruction">Tap to breathe</div>
+    <div id="phase"></div>
+    <div id="counter">0 breaths</div>
+    <button id="reset">Reset</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const instruction = document.getElementById('instruction');
+    const phaseEl = document.getElementById('phase');
+    const counterEl = document.getElementById('counter');
+    const resetBtn = document.getElementById('reset');
+
+    let width, height, centerX, centerY;
+    let breathing = false;
+    let startTime = 0;
+    let totalBreaths = parseInt(localStorage.getItem('breathCount') || '0');
+    let currentPhase = '';
+    let bgHue = 220; // Start with blue
+
+    // Breathing cycle: 4s in, 7s hold, 8s out = 19s total
+    const INHALE_DURATION = 4000;
+    const HOLD_DURATION = 7000;
+    const EXHALE_DURATION = 8000;
+    const CYCLE_DURATION = INHALE_DURATION + HOLD_DURATION + EXHALE_DURATION;
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.scale(dpr, dpr);
+      centerX = width / 2;
+      centerY = height / 2;
+    }
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function getBreathingState(elapsed) {
+      const cyclePos = elapsed % CYCLE_DURATION;
+      
+      if (cyclePos < INHALE_DURATION) {
+        // Inhaling
+        const t = cyclePos / INHALE_DURATION;
+        return {
+          phase: 'Breathe in...',
+          scale: 0.5 + easeInOutCubic(t) * 0.5, // 0.5 → 1.0
+          hue: 220 + t * 40 // Blue to purple
+        };
+      } else if (cyclePos < INHALE_DURATION + HOLD_DURATION) {
+        // Holding
+        const t = (cyclePos - INHALE_DURATION) / HOLD_DURATION;
+        return {
+          phase: 'Hold...',
+          scale: 1.0,
+          hue: 260 + t * 20 // Purple to violet
+        };
+      } else {
+        // Exhaling
+        const t = (cyclePos - INHALE_DURATION - HOLD_DURATION) / EXHALE_DURATION;
+        return {
+          phase: 'Breathe out...',
+          scale: 1.0 - easeInOutCubic(t) * 0.5, // 1.0 → 0.5
+          hue: 280 - t * 60 // Violet back to blue
+        };
+      }
+    }
+
+    function updateCounter() {
+      const plural = totalBreaths === 1 ? 'breath' : 'breaths';
+      counterEl.textContent = `${totalBreaths} ${plural}`;
+    }
+
+    function draw(timestamp) {
+      if (!breathing) {
+        // Idle state - gentle pulse
+        const pulse = Math.sin(timestamp / 2000) * 0.05 + 0.5;
+        drawBackground(220);
+        drawBlob(pulse, 220);
+        requestAnimationFrame(draw);
+        return;
+      }
+
+      const elapsed = timestamp - startTime;
+      const state = getBreathingState(elapsed);
+
+      // Update phase text
+      if (state.phase !== currentPhase) {
+        currentPhase = state.phase;
+        phaseEl.textContent = state.phase;
+      }
+
+      // Check for completed breaths
+      const completedCycles = Math.floor(elapsed / CYCLE_DURATION);
+      if (completedCycles > Math.floor((elapsed - 16.67) / CYCLE_DURATION)) {
+        totalBreaths++;
+        localStorage.setItem('breathCount', totalBreaths.toString());
+        updateCounter();
+      }
+
+      drawBackground(state.hue);
+      drawBlob(state.scale, state.hue);
+
+      requestAnimationFrame(draw);
+    }
+
+    function drawBackground(hue) {
+      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height));
+      gradient.addColorStop(0, `hsl(${hue}, 60%, 25%)`);
+      gradient.addColorStop(1, `hsl(${hue - 20}, 70%, 15%)`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function drawBlob(scale, hue) {
+      const baseSize = Math.min(width, height) * 0.35;
+      const size = baseSize * scale;
+
+      // Outer glow
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size * 1.5);
+      glowGradient.addColorStop(0, `hsla(${hue}, 80%, 70%, 0.3)`);
+      glowGradient.addColorStop(0.5, `hsla(${hue}, 70%, 60%, 0.15)`);
+      glowGradient.addColorStop(1, `hsla(${hue}, 60%, 50%, 0)`);
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, size * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = glowGradient;
+      ctx.fill();
+
+      // Main blob with soft gradient
+      const blobGradient = ctx.createRadialGradient(
+        centerX - size * 0.3, 
+        centerY - size * 0.3, 
+        0,
+        centerX, 
+        centerY, 
+        size
+      );
+      blobGradient.addColorStop(0, `hsl(${hue + 10}, 85%, 75%)`);
+      blobGradient.addColorStop(0.6, `hsl(${hue}, 75%, 65%)`);
+      blobGradient.addColorStop(1, `hsl(${hue - 10}, 65%, 55%)`);
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+      ctx.fillStyle = blobGradient;
+      ctx.fill();
+
+      // Inner highlight
+      const highlightGradient = ctx.createRadialGradient(
+        centerX - size * 0.4,
+        centerY - size * 0.4,
+        0,
+        centerX - size * 0.2,
+        centerY - size * 0.2,
+        size * 0.6
+      );
+      highlightGradient.addColorStop(0, `hsla(${hue + 30}, 100%, 90%, 0.4)`);
+      highlightGradient.addColorStop(1, `hsla(${hue + 20}, 90%, 80%, 0)`);
+
+      ctx.beginPath();
+      ctx.arc(centerX - size * 0.25, centerY - size * 0.25, size * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = highlightGradient;
+      ctx.fill();
+    }
+
+    function toggleBreathing() {
+      breathing = !breathing;
+      
+      if (breathing) {
+        startTime = performance.now();
+        instruction.classList.add('hidden');
+        phaseEl.classList.add('visible');
+      } else {
+        instruction.classList.remove('hidden');
+        phaseEl.classList.remove('visible');
+        currentPhase = '';
+      }
+    }
+
+    function reset() {
+      totalBreaths = 0;
+      localStorage.setItem('breathCount', '0');
+      updateCounter();
+    }
+
+    // Event listeners
+    canvas.addEventListener('click', toggleBreathing);
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      reset();
+    });
+
+    window.addEventListener('resize', resize);
+
+    // Initialize
+    resize();
+    updateCounter();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
