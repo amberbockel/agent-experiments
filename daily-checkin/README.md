@@ -74,6 +74,12 @@ backend for the 9:30am cron and to remember which phones to nudge. This project
 is built to deploy as **one unit on Vercel** — the static journal *and* the API
 together, same origin, no CORS to think about.
 
+This deploys **entirely on the GitHub account this repo already lives in** — no
+Vercel, no second service. The journal is served by **GitHub Pages**, and the
+daily push is sent by a **scheduled GitHub Actions workflow**.
+
+**Live journal:** https://amberbockel.github.io/agent-experiments/daily-checkin/
+
 ### What's in here
 
 ```
@@ -81,82 +87,57 @@ daily-checkin/
 ├── index.html          the journal (PWA)
 ├── manifest.json       installable-app metadata ("Today")
 ├── sw.js               service worker: shows the push, opens the app on tap
-├── config.js           your VAPID public key + API location (safe to commit)
+├── config.js           your VAPID public key (safe to commit)
 ├── icons/              the typographic "t" app icon (192 / 512 / etc.)
-├── api/
-│   ├── subscribe.js    POST: store a phone's push subscription
-│   ├── unsubscribe.js  POST: forget it
-│   ├── test-push.js    POST: send a nudge right now (the "Try it" button)
-│   ├── cron-daily.js   the 9:30am job
-│   └── _lib/push.js    shared web-push + storage + the soft message wording
 ├── scripts/
-│   ├── generate-vapid.mjs   makes your push keys
+│   ├── send-daily.mjs       the push sender (run by GitHub Actions)
+│   ├── generate-vapid.mjs   regenerate push keys if you ever want to rotate
 │   └── make_icons.py        regenerates the icons (needs Python + Pillow)
-├── vercel.json         the two cron triggers
+├── api/                optional Vercel backend (not used by the GitHub setup)
 └── package.json
+
+.github/workflows/daily-nudge.yml   the 9:30am job (and the manual test button)
 ```
 
-### One-time deploy
+### Turning the 9:30am nudge on (one-time, ~2 minutes)
 
-1. **Install + make your push keys**
-   ```bash
-   cd daily-checkin
-   npm install
-   node scripts/generate-vapid.mjs
-   ```
-   It prints a **PUBLIC** key and a **PRIVATE** key. Keep the terminal open.
+The journal already works the moment it's on Pages. To switch on the daily push:
 
-2. **Put the public key in `config.js`**
-   ```js
-   vapidPublicKey: 'paste-the-PUBLIC-key-here'
-   ```
-   (Leave `apiBase: ''` — that means "use the same site," which is what you want
-   when the journal and API live together on Vercel.)
+1. **Open the journal on your phone** and turn on **"A soft nudge at 9:30am"** in
+   ⚙ settings, allowing notifications when asked.
+2. Settings then shows a **nudge code**. Tap **Copy the code**.
+3. In GitHub: **repo → Settings → Secrets and variables → Actions → New
+   repository secret**, name it **`PUSH_SUBSCRIPTION`**, and paste the code.
+4. Add one more secret, **`VAPID_PRIVATE_KEY`** — its value is given to you
+   separately (it's the private half of the key already in `config.js`).
+5. **Test it now:** repo → **Actions** tab → **Daily nudge** → **Run workflow**.
+   A notification should arrive within a few seconds. After that it runs on its
+   own every morning.
 
-3. **Deploy to Vercel**
-   ```bash
-   npm i -g vercel      # if you don't have it
-   vercel                # link/create the project, accept the defaults
-   vercel --prod         # publish
-   ```
+> Adding a second device? Turn nudges on there too, then make `PUSH_SUBSCRIPTION`
+> a JSON array of both codes: `[ {…device one…}, {…device two…} ]`.
 
-4. **Create a KV store and connect it**
-   In the Vercel dashboard → your project → **Storage** → create a
-   **KV** (Upstash) database and **Connect** it to the project. That auto-adds the
-   `KV_REST_API_URL` / `KV_REST_API_TOKEN` env vars. This is where push
-   subscriptions live (and *only* push subscriptions).
+### The 9:30am schedule + timezones
 
-5. **Add the env vars** (Project → Settings → Environment Variables):
-   | Name | Value |
-   |---|---|
-   | `VAPID_PUBLIC_KEY` | the PUBLIC key from step 1 |
-   | `VAPID_PRIVATE_KEY` | the PRIVATE key from step 1 |
-   | `VAPID_SUBJECT` | `mailto:amberbockel@gmail.com` |
-   | `APP_URL` | your deployed URL, e.g. `https://daily-checkin.vercel.app/index.html` |
-   | `CRON_SECRET` | any long random string (Vercel uses it to authorize the cron) |
+GitHub Actions cron runs in **UTC only**, so the workflow fires **twice** (13:30
+and 14:30 UTC). `send-daily.mjs` checks the local hour in your timezone and only
+the run that equals 9:30am local actually sends — correct through daylight-saving
+with no babysitting. (Actions cron can be a few minutes late under load; for a
+soft morning nudge that's fine.)
 
-6. **Redeploy** so the env vars take effect: `vercel --prod`.
+- Default timezone is **America/New_York**. To change it, edit `TZ_NAME` in
+  `.github/workflows/daily-nudge.yml` and adjust the two `cron:` times so one of
+  them lands on 9:30am local.
 
-7. **Open the deployed URL on your phone** and follow the *one-time setup* above,
-   then tap **Try it** in settings to confirm the whole path works.
+### Optional: the Vercel backend instead
 
-### The 9:30am cron + timezones
-
-Vercel cron only runs in **UTC**, so `vercel.json` schedules the job **twice**
-(13:30 and 14:30 UTC). The handler checks the local hour in your timezone and
-only sends at 9:30am — so it stays correct through daylight-saving changes on its
-own, and a once-a-day lock makes sure it only ever sends once.
-
-- Default timezone is **America/New_York**. To use a different one, set a
-  `TZ_NAME` env var (e.g. `America/Los_Angeles`) and adjust the two UTC times in
-  `vercel.json` so one of them equals 9:30 local.
-
-### Hosting the journal on GitHub Pages instead
-
-Optional. If you'd rather serve the journal from GitHub Pages and keep only the
-API on Vercel, set `apiBase` in `config.js` to your Vercel URL (e.g.
-`https://daily-checkin.vercel.app`). The API already sends the right CORS headers
-for that. Same origin on Vercel is simpler, though — recommended.
+If you'd ever prefer a real subscribe endpoint and KV storage, the `api/` folder
+and `vercel.json` are a complete Vercel app (subscribe / unsubscribe / test-push
++ cron). Deploy with `vercel --prod`, create + connect a KV store, set the
+`VAPID_*` / `APP_URL` / `CRON_SECRET` env vars, then put your Vercel URL in
+`config.js` as `apiBase`. The app switches to that automatically and the in-app
+**"Try it"** button starts working. You don't need any of this for the GitHub
+setup above.
 
 ### Not included on purpose
 

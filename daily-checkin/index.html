@@ -244,6 +244,16 @@
     }
     .status-line { font-size: 14px; color: var(--ink-soft); margin-top: 10px; min-height: 18px; font-style: italic; }
 
+    .nudge-code { margin-top: 16px; padding: 16px; background: var(--cream-deep); border-radius: 12px; }
+    .nudge-code .nc-intro { font-size: 14px; line-height: 1.55; color: var(--ink); margin-bottom: 12px; }
+    .nudge-code textarea {
+      width: 100%; height: 96px; resize: none; border: 1px solid var(--line);
+      border-radius: 8px; background: var(--cream); color: var(--ink-soft);
+      font-family: var(--sans); font-size: 11px; line-height: 1.4; padding: 8px; margin-bottom: 10px;
+      white-space: pre; overflow: auto;
+    }
+    .nudge-code .nc-hint { font-size: 13px; color: var(--ink-soft); margin-top: 8px; font-style: italic; min-height: 16px; }
+
     /* earlier list */
     .entry-item {
       display: block; width: 100%; text-align: left; appearance: none; border: none;
@@ -332,7 +342,7 @@
       </label>
     </div>
 
-    <div class="row">
+    <div class="row" id="testRow">
       <div>
         <div class="label">Send a test nudge</div>
         <div class="desc">See what it feels like, right now.</div>
@@ -341,6 +351,16 @@
     </div>
 
     <div class="status-line" id="settingsStatus"></div>
+
+    <div class="nudge-code" id="nudgeCode" hidden>
+      <p class="nc-intro">One-time step to switch the 9:30am nudge on:
+        copy the code below and paste it into the repo secret named
+        <strong>PUSH_SUBSCRIPTION</strong> (GitHub → Settings → Secrets and
+        variables → Actions). After that it’s automatic.</p>
+      <textarea id="nudgeCodeText" readonly spellcheck="false"></textarea>
+      <button class="pill-btn" id="copyCodeBtn">Copy the code</button>
+      <p class="nc-hint" id="copyCodeHint"></p>
+    </div>
 
     <div class="note">
       Everything you write stays on this device. It’s never sent anywhere, and no
@@ -553,6 +573,10 @@
      * ============================================================= */
     var SUPPORTED = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
     var PUSH_READY = SUPPORTED && !!CFG.vapidPublicKey;
+    // 'server' = an /api backend registers the device for you (optional Vercel setup).
+    // 'github' = no server; you paste a one-time "nudge code" into a repo secret and
+    //            a GitHub Actions workflow sends the daily push.
+    var MODE = API ? 'server' : 'github';
     var swReg = null;
 
     function setStatus(msg) { document.getElementById('settingsStatus').textContent = msg || ''; }
@@ -581,10 +605,36 @@
       });
     }
 
-    // turn nudges ON: ask permission -> subscribe -> register with backend
+    // Reveal the one-time "nudge code" to paste into the PUSH_SUBSCRIPTION secret.
+    function showNudgeCode(sub) {
+      if (MODE !== 'github') return;
+      var box = document.getElementById('nudgeCode');
+      var txt = document.getElementById('nudgeCodeText');
+      txt.value = JSON.stringify(sub);
+      box.hidden = false;
+    }
+    function hideNudgeCode() {
+      var box = document.getElementById('nudgeCode');
+      if (box) box.hidden = true;
+    }
+
+    // Get (or create) the device's push subscription.
+    function getSubscription() {
+      return registerSW().then(function (reg) {
+        if (!reg) throw new Error('no sw');
+        return reg.pushManager.getSubscription().then(function (sub) {
+          return sub || reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(CFG.vapidPublicKey)
+          });
+        });
+      });
+    }
+
+    // turn nudges ON: ask permission -> subscribe -> (server: register) / (github: show code)
     function enableNudges() {
       if (!PUSH_READY) {
-        setStatus('Nudges aren’t set up on the server yet. The journal works fine without them.');
+        setStatus('This browser can’t do notifications, but the journal works fully.');
         return Promise.resolve(false);
       }
       setStatus('Just a moment…');
@@ -594,25 +644,25 @@
           window.storage.set('notify', 'off');
           return false;
         }
-        return registerSW().then(function (reg) {
-          if (!reg) throw new Error('no sw');
-          return reg.pushManager.getSubscription().then(function (sub) {
-            return sub || reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(CFG.vapidPublicKey)
+        return getSubscription().then(function (sub) {
+          if (MODE === 'server') {
+            var userId = window.storage.get('userId') || null;
+            return api('/api/subscribe', { subscription: sub, userId: userId }).then(function (r) {
+              if (!r.ok) throw new Error('subscribe failed');
+              return r.json();
+            }).then(function (data) {
+              if (data && data.userId) window.storage.set('userId', data.userId);
+              window.storage.set('notify', 'on');
+              setStatus('You’ll get a soft nudge around 9:30am.');
+              return true;
             });
-          });
-        }).then(function (sub) {
-          var userId = window.storage.get('userId') || null;
-          return api('/api/subscribe', { subscription: sub, userId: userId }).then(function (r) {
-            if (!r.ok) throw new Error('subscribe failed');
-            return r.json();
-          }).then(function (data) {
-            if (data && data.userId) window.storage.set('userId', data.userId);
-            window.storage.set('notify', 'on');
-            setStatus('You’ll get a soft nudge around 9:30am.');
-            return true;
-          });
+          }
+          // github mode: keep the subscription on-device and surface the code to paste
+          window.storage.set('pushSub', sub.toJSON ? sub.toJSON() : sub);
+          window.storage.set('notify', 'on');
+          showNudgeCode(window.storage.get('pushSub'));
+          setStatus('Almost there — copy the code below into the repo secret (one time).');
+          return true;
         }).catch(function () {
           setStatus('Couldn’t set that up just now. The journal still works — try again later.');
           window.storage.set('notify', 'off');
@@ -624,6 +674,7 @@
     // turn nudges OFF
     function disableNudges() {
       window.storage.set('notify', 'off');
+      hideNudgeCode();
       var userId = window.storage.get('userId');
       var p = registerSW().then(function (reg) {
         if (!reg) return null;
@@ -631,17 +682,19 @@
       }).then(function (sub) {
         if (sub) { sub.unsubscribe().catch(function () {}); }
       });
-      if (userId) {
+      window.storage.remove('pushSub');
+      if (MODE === 'server' && userId) {
         api('/api/unsubscribe', { userId: userId }).catch(function () {});
       }
-      setStatus('Nudges are off. Nothing will reach you.');
+      setStatus(MODE === 'github'
+        ? 'Nudges are off on this device. (You can also delete the PUSH_SUBSCRIPTION secret.)'
+        : 'Nudges are off. Nothing will reach you.');
       return p;
     }
 
     function sendTest() {
       var userId = window.storage.get('userId');
       var btn = document.getElementById('testBtn');
-      if (!PUSH_READY) { setStatus('Nudges aren’t set up on the server yet.'); return; }
       if (Notification.permission !== 'granted' || !userId) {
         setStatus('Turn nudges on first, then you can send a test.');
         return;
@@ -658,18 +711,34 @@
     // settings UI wiring
     var nudgeToggle = document.getElementById('nudgeToggle');
     var testBtn = document.getElementById('testBtn');
+    var testRow = document.getElementById('testRow');
+
+    // The in-app "Try it" button only applies to the optional server backend.
+    // In github mode, testing is done from the Actions tab ("Run workflow").
+    if (MODE !== 'server') { testRow.hidden = true; }
 
     function refreshNudgeUI() {
       var on = window.storage.get('notify') === 'on' &&
                SUPPORTED && Notification.permission === 'granted';
       nudgeToggle.checked = !!on;
-      var userId = window.storage.get('userId');
       nudgeToggle.disabled = !PUSH_READY;
-      testBtn.disabled = !(PUSH_READY && on && userId);
+
+      if (MODE === 'server') {
+        var userId = window.storage.get('userId');
+        testBtn.disabled = !(PUSH_READY && on && userId);
+      }
+
+      if (on && MODE === 'github') {
+        var stored = window.storage.get('pushSub');
+        if (stored) showNudgeCode(stored); else hideNudgeCode();
+      } else {
+        hideNudgeCode();
+      }
+
       if (!SUPPORTED) {
         setStatus('This browser can’t do notifications, but the journal works fully.');
       } else if (!CFG.vapidPublicKey) {
-        setStatus('Nudges aren’t connected yet. (Add the server key to switch them on.)');
+        setStatus('Nudges aren’t connected yet.');
       } else {
         setStatus('');
       }
@@ -677,13 +746,31 @@
 
     nudgeToggle.addEventListener('change', function () {
       if (nudgeToggle.checked) {
-        enableNudges().then(function (ok) { nudgeToggle.checked = !!ok; testBtn.disabled = !ok; });
+        enableNudges().then(function (ok) {
+          nudgeToggle.checked = !!ok;
+          if (MODE === 'server') testBtn.disabled = !ok;
+        });
       } else {
         disableNudges();
-        testBtn.disabled = true;
+        if (MODE === 'server') testBtn.disabled = true;
       }
     });
     testBtn.addEventListener('click', sendTest);
+
+    // copy the nudge code
+    document.getElementById('copyCodeBtn').addEventListener('click', function () {
+      var txt = document.getElementById('nudgeCodeText');
+      var hint = document.getElementById('copyCodeHint');
+      txt.select(); txt.setSelectionRange(0, txt.value.length);
+      var done = function () { hint.textContent = 'Copied. Paste it into the PUSH_SUBSCRIPTION secret.'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt.value).then(done, function () {
+          try { document.execCommand('copy'); done(); } catch (e) { hint.textContent = 'Select the text above and copy it.'; }
+        });
+      } else {
+        try { document.execCommand('copy'); done(); } catch (e) { hint.textContent = 'Select the text above and copy it.'; }
+      }
+    });
 
     /* ---------------------------------------------------------------
      * the first-run soft prompt — only after she's engaged a little

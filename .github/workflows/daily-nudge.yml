@@ -1,0 +1,56 @@
+name: Daily nudge
+
+# Sends the one soft "Today" notification at ~9:30am New York time.
+# GitHub cron is UTC-only, so this fires twice (13:30 and 14:30 UTC); the
+# script checks the local hour and only the one that equals 9:30am local
+# actually sends. That keeps it correct across daylight-saving changes.
+#
+# To send a test right now: Actions tab -> "Daily nudge" -> "Run workflow".
+#
+# Requires two repo secrets (Settings -> Secrets and variables -> Actions):
+#   VAPID_PRIVATE_KEY  - the private push key
+#   PUSH_SUBSCRIPTION  - the "nudge code" the app shows in Settings once you
+#                        turn notifications on (an object, or a JSON array for
+#                        more than one device)
+
+on:
+  schedule:
+    - cron: '30 13 * * *'
+    - cron: '30 14 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Send now, regardless of the time (use for a test)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-nudge
+  cancel-in-progress: false
+
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: daily-checkin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install web-push --no-save
+      - run: node scripts/send-daily.mjs
+        env:
+          # Public key — safe to keep in the workflow file (matches config.js).
+          VAPID_PUBLIC_KEY: 'BAKEaW6tJjmGeuuyy5mISgHXvaH1khDLWS-tv7IeBs4PS0PALxgyjrgFS3TWNQIJTY9cnCqliwBojvB5JDBsBJA'
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          VAPID_SUBJECT: 'mailto:amberbockel@gmail.com'
+          APP_URL: 'https://amberbockel.github.io/agent-experiments/daily-checkin/index.html'
+          TZ_NAME: 'America/New_York'
+          TARGET_HOUR: '9'
+          FORCE: ${{ github.event.inputs.force }}

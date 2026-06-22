@@ -2,17 +2,17 @@
 //
 // Two values, both safe to commit. Edit them after you deploy.
 window.TODAY_CONFIG = {
-  // Where the push API lives.
-  //   ''  -> call the same origin you're served from (use this if you host this
-  //          whole folder on Vercel — the simplest setup, no CORS).
-  //   'https://your-project.vercel.app'  -> use this if you serve the journal
-  //          from GitHub Pages but the API from Vercel.
+  // How nudges are delivered:
+  //   ''  -> "GitHub mode" (the default here). No server. A GitHub Actions
+  //          workflow sends the daily push; when you turn nudges on, Settings
+  //          shows a "nudge code" to paste into the PUSH_SUBSCRIPTION repo secret.
+  //   'https://your-project.vercel.app'  -> "server mode". If you ever stand up
+  //          the optional Vercel backend (see api/ and README), put its URL here
+  //          and the app will register your device automatically.
   apiBase: '',
 
-  // Your VAPID *public* key. Paste it here after running
-  //   node scripts/generate-vapid.mjs
-  // A public key is meant to be shared — it is safe in this file.
-  // Leave it empty and the journal still works; the gentle-nudge feature
-  // just stays switched off until you fill this in.
-  vapidPublicKey: ''
+  // VAPID *public* key. Safe to expose — that's what a public key is for.
+  // This matches the private key stored in the VAPID_PRIVATE_KEY repo secret.
+  // (Regenerate anytime with: node scripts/generate-vapid.mjs)
+  vapidPublicKey: 'BAKEaW6tJjmGeuuyy5mISgHXvaH1khDLWS-tv7IeBs4PS0PALxgyjrgFS3TWNQIJTY9cnCqliwBojvB5JDBsBJA'
 };
