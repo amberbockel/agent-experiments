@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+  <title>Today</title>
+  <meta name="description" content="A quiet place to check in with yourself, one day at a time." />
+  <meta name="theme-color" content="#b8503a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Today" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --terracotta: #b8503a;
+      --terracotta-soft: #c8674f;
+      --cream: #efe7d8;
+      --cream-deep: #e6dcc9;
+      --ink: #3a342c;
+      --ink-soft: #6f675a;
+      --line: #d9cdb8;
+      --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+               Georgia, 'Noto Serif', 'Times New Roman', serif;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--serif);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding:
+        calc(env(safe-area-inset-top) + 22px)
+        calc(env(safe-area-inset-right) + 22px)
+        calc(env(safe-area-inset-bottom) + 28px)
+        calc(env(safe-area-inset-left) + 22px);
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ---------- header ---------- */
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .mark { line-height: 1; }
+    .mark h1 {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--terracotta);
+    }
+    .mark .date {
+      margin-top: 6px;
+      font-size: 16px;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+    .icon-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--ink-soft);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      flex: none;
+    }
+    .icon-btn:hover, .icon-btn:active { background: var(--cream-deep); color: var(--ink); }
+    .icon-btn svg { width: 22px; height: 22px; }
+
+    /* ---------- prompt + writing ---------- */
+    .prompt {
+      font-size: 23px;
+      line-height: 1.45;
+      color: var(--ink);
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+    .prompt::first-letter { color: var(--terracotta); }
+
+    .pad {
+      position: relative;
+      background:
+        repeating-linear-gradient(
+          var(--cream), var(--cream) 37px,
+          var(--line) 37px, var(--line) 38px
+        );
+      border-radius: 10px;
+      padding: 6px 2px;
+    }
+    textarea#entry {
+      display: block;
+      width: 100%;
+      min-height: 46vh;
+      resize: none;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 19px;
+      line-height: 38px;        /* matches the ruled lines */
+      padding: 0 8px;
+    }
+    textarea#entry::placeholder { color: var(--ink-soft); opacity: 0.7; font-style: italic; }
+
+    .footnote {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      min-height: 22px;
+    }
+    .saved {
+      font-size: 14px;
+      font-style: italic;
+      color: var(--ink-soft);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .saved.show { opacity: 1; }
+    .link-btn {
+      appearance: none; border: none; background: none;
+      font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
+      cursor: pointer; padding: 6px 0; border-bottom: 1px solid transparent;
+    }
+    .link-btn:hover { color: var(--terracotta); border-bottom-color: var(--terracotta); }
+
+    /* ---------- soft nudge prompt (inline card) ---------- */
+    .nudge-card {
+      position: fixed;
+      left: 50%; bottom: 22px; transform: translateX(-50%) translateY(140%);
+      width: min(560px, calc(100vw - 36px));
+      background: var(--terracotta);
+      color: #fbf6ee;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 14px 40px rgba(58, 35, 26, 0.28);
+      transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 40;
+    }
+    .nudge-card.show { transform: translateX(-50%) translateY(0); }
+    .nudge-card p { font-size: 17px; line-height: 1.45; margin-bottom: 14px; }
+    .nudge-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn {
+      appearance: none; border: none; cursor: pointer;
+      font-family: var(--serif); font-size: 16px;
+      padding: 9px 18px; border-radius: 10px; transition: opacity 0.15s ease, background 0.15s ease;
+    }
+    .btn-ghost { background: transparent; color: #fbf6ee; opacity: 0.85; }
+    .btn-ghost:hover { opacity: 1; }
+    .btn-solid { background: #fbf6ee; color: var(--terracotta); font-weight: 600; }
+    .btn-solid:hover { background: #fff; }
+
+    /* ---------- install banner ---------- */
+    .install-banner {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(140%);
+      width: min(560px, calc(100vw - 36px));
+      background: var(--ink); color: var(--cream);
+      border-radius: 14px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 14px 40px rgba(58, 35, 26, 0.28);
+      transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 35;
+    }
+    .install-banner.show { transform: translateX(-50%) translateY(0); }
+    .install-banner span { flex: 1; font-size: 15px; line-height: 1.4; }
+    .install-banner .btn-solid { background: var(--cream); color: var(--ink); padding: 7px 14px; font-size: 15px; }
+    .install-banner .x { color: var(--cream); opacity: 0.7; }
+
+    /* ---------- panels (settings / earlier) ---------- */
+    .scrim {
+      position: fixed; inset: 0; background: rgba(58, 35, 26, 0.4);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 50;
+    }
+    .scrim.show { opacity: 1; pointer-events: auto; }
+    .sheet {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      max-width: 680px; margin: 0 auto;
+      background: var(--cream); color: var(--ink);
+      border-radius: 22px 22px 0 0;
+      padding: 26px 24px calc(env(safe-area-inset-bottom) + 30px);
+      transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 60; max-height: 86vh; overflow-y: auto;
+      box-shadow: 0 -10px 40px rgba(58, 35, 26, 0.18);
+    }
+    .sheet.show { transform: translateY(0); }
+    .sheet h2 {
+      font-size: 26px; font-weight: 600; color: var(--terracotta); margin-bottom: 4px;
+    }
+    .sheet .sub { color: var(--ink-soft); font-style: italic; margin-bottom: 22px; font-size: 15px; }
+
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 16px 0; border-top: 1px solid var(--line);
+    }
+    .row:first-of-type { border-top: none; }
+    .row .label { font-size: 18px; }
+    .row .desc { font-size: 14px; color: var(--ink-soft); margin-top: 3px; line-height: 1.4; }
+
+    /* toggle */
+    .switch { position: relative; width: 52px; height: 30px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; background: var(--cream-deep);
+      border: 1px solid var(--line); border-radius: 30px; transition: 0.25s; cursor: pointer;
+    }
+    .slider::before {
+      content: ''; position: absolute; height: 22px; width: 22px; left: 4px; top: 3px;
+      background: #fff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .switch input:checked + .slider { background: var(--terracotta); border-color: var(--terracotta); }
+    .switch input:checked + .slider::before { transform: translateX(21px); }
+    .switch input:disabled + .slider { opacity: 0.45; cursor: not-allowed; }
+
+    .pill-btn {
+      appearance: none; border: 1px solid var(--terracotta); background: transparent;
+      color: var(--terracotta); font-family: var(--serif); font-size: 16px;
+      padding: 9px 16px; border-radius: 999px; cursor: pointer; transition: 0.15s; flex: none;
+    }
+    .pill-btn:hover { background: var(--terracotta); color: #fbf6ee; }
+    .pill-btn:disabled { opacity: 0.4; cursor: not-allowed; background: transparent; color: var(--terracotta); }
+
+    .note {
+      margin-top: 20px; font-size: 14px; line-height: 1.55; color: var(--ink-soft);
+      background: var(--cream-deep); border-radius: 12px; padding: 14px 16px;
+    }
+    .status-line { font-size: 14px; color: var(--ink-soft); margin-top: 10px; min-height: 18px; font-style: italic; }
+
+    .nudge-code { margin-top: 16px; padding: 16px; background: var(--cream-deep); border-radius: 12px; }
+    .nudge-code .nc-intro { font-size: 14px; line-height: 1.55; color: var(--ink); margin-bottom: 12px; }
+    .nudge-code textarea {
+      width: 100%; height: 96px; resize: none; border: 1px solid var(--line);
+      border-radius: 8px; background: var(--cream); color: var(--ink-soft);
+      font-family: var(--sans); font-size: 11px; line-height: 1.4; padding: 8px; margin-bottom: 10px;
+      white-space: pre; overflow: auto;
+    }
+    .nudge-code .nc-hint { font-size: 13px; color: var(--ink-soft); margin-top: 8px; font-style: italic; min-height: 16px; }
+
+    /* earlier list */
+    .entry-item {
+      display: block; width: 100%; text-align: left; appearance: none; border: none;
+      background: transparent; cursor: pointer; padding: 15px 0; border-top: 1px solid var(--line);
+      font-family: var(--serif);
+    }
+    .entry-item:first-child { border-top: none; }
+    .entry-item .ei-date { font-size: 16px; color: var(--terracotta); }
+    .entry-item .ei-snip { font-size: 15px; color: var(--ink-soft); margin-top: 4px; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .empty { color: var(--ink-soft); font-style: italic; padding: 24px 0; text-align: center; }
+
+    .sheet-close {
+      position: absolute; top: 18px; right: 18px; width: 38px; height: 38px;
+      border-radius: 50%; border: none; background: var(--cream-deep); color: var(--ink-soft);
+      cursor: pointer; display: grid; place-items: center;
+    }
+    .sheet-close:hover { color: var(--ink); }
+
+    /* viewing a past day, read-only */
+    .past-view { font-size: 18px; line-height: 1.7; white-space: pre-wrap; color: var(--ink); margin-top: 4px; }
+    .past-prompt { font-size: 16px; color: var(--ink-soft); font-style: italic; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="mark">
+      <h1>Today</h1>
+      <div class="date" id="todayDate"></div>
+    </div>
+    <button class="icon-btn" id="openSettings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <p class="prompt" id="prompt"></p>
+    <div class="pad">
+      <textarea id="entry" placeholder="Write as much or as little as you like. Or nothing at all." spellcheck="true" autocomplete="off"></textarea>
+    </div>
+    <div class="footnote">
+      <span class="saved" id="saved">saved</span>
+      <button class="link-btn" id="openEarlier">earlier days</button>
+    </div>
+  </main>
+
+  <!-- soft nudge permission prompt -->
+  <div class="nudge-card" id="nudgeCard" role="dialog" aria-live="polite">
+    <p>Want a soft nudge at 9:30am? You can change this anytime.</p>
+    <div class="nudge-actions">
+      <button class="btn btn-ghost" id="nudgeNo">Not now</button>
+      <button class="btn btn-solid" id="nudgeYes">Yes</button>
+    </div>
+  </div>
+
+  <!-- add to home screen -->
+  <div class="install-banner" id="installBanner">
+    <span>Today can live on your home screen.</span>
+    <button class="btn btn-solid" id="installYes">Add</button>
+    <button class="icon-btn x" id="installNo" aria-label="Dismiss">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- panels -->
+  <div class="scrim" id="scrim"></div>
+
+  <section class="sheet" id="settingsSheet" aria-label="Settings">
+    <button class="sheet-close" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2>Settings</h2>
+    <p class="sub">Small things, your way.</p>
+
+    <div class="row">
+      <div>
+        <div class="label">A soft nudge at 9:30am</div>
+        <div class="desc">One quiet notification a day. No streaks, no counting.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="nudgeToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row" id="testRow">
+      <div>
+        <div class="label">Send a test nudge</div>
+        <div class="desc">See what it feels like, right now.</div>
+      </div>
+      <button class="pill-btn" id="testBtn">Try it</button>
+    </div>
+
+    <div class="status-line" id="settingsStatus"></div>
+
+    <div class="nudge-code" id="nudgeCode" hidden>
+      <p class="nc-intro">One-time step to switch the 9:30am nudge on:
+        copy the code below and paste it into the repo secret named
+        <strong>PUSH_SUBSCRIPTION</strong> (GitHub → Settings → Secrets and
+        variables → Actions). After that it’s automatic.</p>
+      <textarea id="nudgeCodeText" readonly spellcheck="false"></textarea>
+      <button class="pill-btn" id="copyCodeBtn">Copy the code</button>
+      <p class="nc-hint" id="copyCodeHint"></p>
+    </div>
+
+    <div class="note">
+      Everything you write stays on this device. It’s never sent anywhere, and no
+      one — not even this app — can read it but you.
+    </div>
+  </section>
+
+  <section class="sheet" id="earlierSheet" aria-label="Earlier days">
+    <button class="sheet-close" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 id="earlierTitle">Earlier days</h2>
+    <p class="sub" id="earlierSub">Whenever you’d like to look back.</p>
+    <div id="earlierList"></div>
+  </section>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var CFG = window.TODAY_CONFIG || {};
+    var API = (CFG.apiBase || '').replace(/\/+$/, '');
+
+    /* ---------------------------------------------------------------
+     * storage — the journal lives here, on the device, and nowhere else.
+     * ------------------------------------------------------------- */
+    window.storage = {
+      _p: 'today:',
+      get: function (k) {
+        try { var v = localStorage.getItem(this._p + k); return v == null ? null : JSON.parse(v); }
+        catch (e) { return null; }
+      },
+      set: function (k, v) {
+        try { localStorage.setItem(this._p + k, JSON.stringify(v)); } catch (e) {}
+      },
+      remove: function (k) { try { localStorage.removeItem(this._p + k); } catch (e) {} },
+      entries: function () { return this.get('entries') || {}; },
+      getEntry: function (dateKey) { var e = this.entries()[dateKey]; return e || null; },
+      setEntry: function (dateKey, text, promptText) {
+        var all = this.entries();
+        if (!text || !text.trim()) { delete all[dateKey]; }
+        else { all[dateKey] = { text: text, prompt: promptText, updated: Date.now() }; }
+        this.set('entries', all);
+      }
+    };
+
+    /* ---------------------------------------------------------------
+     * dates + prompts
+     * ------------------------------------------------------------- */
+    function dateKey(d) {
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+    function longDate(d) {
+      return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+
+    // Warm, unhurried openers. Picked by the date so the day's prompt stays put.
+    var PROMPTS = [
+      'What’s the weather like inside you today?',
+      'Name one small thing that was kind to you today.',
+      'What did your body ask for today — did it get any of it?',
+      'Was there a moment today you’d like to keep?',
+      'What are you carrying that you could set down for a minute?',
+      'Where did you find a little quiet today?',
+      'What felt like company today — a person, a place, a song?',
+      'What’s something you noticed today that you might once have walked past?',
+      'If today had a color, what would it be?',
+      'What were you gentle with today?',
+      'What’s one thing you don’t have to do tomorrow?',
+      'What’s true right now, in this minute?',
+      'What softened, even a little, since this morning?',
+      'Who would you like to thank today, even if only here?',
+      'What’s asking for your patience these days?',
+      'What did rest look like today, if it came at all?',
+      'What small comfort is within reach right now?',
+      'What would you say to yesterday-you, if you could?',
+      'What’s one thing that’s enough, just as it is?',
+      'What are you slowly letting yourself off the hook for?'
+    ];
+    function promptFor(d) {
+      // stable per calendar day
+      var seed = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+      return PROMPTS[((seed % PROMPTS.length) + PROMPTS.length) % PROMPTS.length];
+    }
+
+    var today = new Date();
+    var todayKey = dateKey(today);
+    var todayPrompt = promptFor(today);
+
+    document.getElementById('todayDate').textContent = longDate(today);
+    document.getElementById('prompt').textContent = todayPrompt;
+
+    /* ---------------------------------------------------------------
+     * writing + autosave
+     * ------------------------------------------------------------- */
+    var ta = document.getElementById('entry');
+    var savedEl = document.getElementById('saved');
+    var existing = window.storage.getEntry(todayKey);
+    if (existing) ta.value = existing.text;
+
+    var saveTimer = null, savedTimer = null, engaged = false;
+    function showSaved() {
+      savedEl.classList.add('show');
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(function () { savedEl.classList.remove('show'); }, 1400);
+    }
+    ta.addEventListener('input', function () {
+      if (!engaged) { engaged = true; maybeArmNudge(); }
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () {
+        window.storage.setEntry(todayKey, ta.value, todayPrompt);
+        showSaved();
+      }, 600);
+    });
+    // save on the way out, too
+    window.addEventListener('pagehide', function () {
+      window.storage.setEntry(todayKey, ta.value, todayPrompt);
+    });
+
+    /* ---------------------------------------------------------------
+     * panels
+     * ------------------------------------------------------------- */
+    var scrim = document.getElementById('scrim');
+    var settingsSheet = document.getElementById('settingsSheet');
+    var earlierSheet = document.getElementById('earlierSheet');
+    var openSheets = [];
+
+    function openSheet(sheet) {
+      scrim.classList.add('show');
+      sheet.classList.add('show');
+      if (openSheets.indexOf(sheet) === -1) openSheets.push(sheet);
+    }
+    function closeSheets() {
+      scrim.classList.remove('show');
+      settingsSheet.classList.remove('show');
+      earlierSheet.classList.remove('show');
+      openSheets = [];
+    }
+    scrim.addEventListener('click', closeSheets);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) {
+      b.addEventListener('click', closeSheets);
+    });
+
+    document.getElementById('openSettings').addEventListener('click', function () {
+      refreshNudgeUI();
+      openSheet(settingsSheet);
+    });
+    document.getElementById('openEarlier').addEventListener('click', function () {
+      renderEarlier();
+      openSheet(earlierSheet);
+    });
+
+    /* ---------------------------------------------------------------
+     * earlier days
+     * ------------------------------------------------------------- */
+    function renderEarlier() {
+      var all = window.storage.entries();
+      var keys = Object.keys(all).filter(function (k) { return k !== todayKey; }).sort().reverse();
+      var list = document.getElementById('earlierList');
+      list.innerHTML = '';
+      if (!keys.length) {
+        list.innerHTML = '<div class="empty">Nothing here yet. That’s perfectly fine.</div>';
+        return;
+      }
+      keys.forEach(function (k) {
+        var e = all[k];
+        var d = new Date(k + 'T00:00:00');
+        var btn = document.createElement('button');
+        btn.className = 'entry-item';
+        var snip = (e.text || '').replace(/\s+/g, ' ').trim();
+        btn.innerHTML = '<div class="ei-date">' + longDate(d) + '</div>' +
+                        '<div class="ei-snip"></div>';
+        btn.querySelector('.ei-snip').textContent = snip;
+        btn.addEventListener('click', function () { viewPast(k, e); });
+        list.appendChild(btn);
+      });
+    }
+    function viewPast(k, e) {
+      var d = new Date(k + 'T00:00:00');
+      document.getElementById('earlierTitle').textContent = longDate(d);
+      document.getElementById('earlierSub').textContent = 'A look back.';
+      var list = document.getElementById('earlierList');
+      list.innerHTML = '';
+      if (e.prompt) {
+        var p = document.createElement('div');
+        p.className = 'past-prompt';
+        p.textContent = e.prompt;
+        list.appendChild(p);
+      }
+      var body = document.createElement('div');
+      body.className = 'past-view';
+      body.textContent = e.text || '';
+      list.appendChild(body);
+      var back = document.createElement('button');
+      back.className = 'link-btn';
+      back.style.marginTop = '22px';
+      back.textContent = '← all earlier days';
+      back.addEventListener('click', function () {
+        document.getElementById('earlierTitle').textContent = 'Earlier days';
+        document.getElementById('earlierSub').textContent = 'Whenever you’d like to look back.';
+        renderEarlier();
+      });
+      list.appendChild(back);
+    }
+
+    /* ===============================================================
+     * gentle nudges (web push)
+     * ============================================================= */
+    var SUPPORTED = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+    var PUSH_READY = SUPPORTED && !!CFG.vapidPublicKey;
+    // 'server' = an /api backend registers the device for you (optional Vercel setup).
+    // 'github' = no server; you paste a one-time "nudge code" into a repo secret and
+    //            a GitHub Actions workflow sends the daily push.
+    var MODE = API ? 'server' : 'github';
+    var swReg = null;
+
+    function setStatus(msg) { document.getElementById('settingsStatus').textContent = msg || ''; }
+
+    function urlBase64ToUint8Array(base64String) {
+      var padding = '='.repeat((4 - base64String.length % 4) % 4);
+      var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      var raw = atob(base64);
+      var out = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+
+    function registerSW() {
+      if (!('serviceWorker' in navigator)) return Promise.resolve(null);
+      return navigator.serviceWorker.register('sw.js').then(function (reg) {
+        swReg = reg; return reg;
+      }).catch(function () { return null; });
+    }
+
+    function api(path, body) {
+      return fetch(API + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+    }
+
+    // Reveal the one-time "nudge code" to paste into the PUSH_SUBSCRIPTION secret.
+    function showNudgeCode(sub) {
+      if (MODE !== 'github') return;
+      var box = document.getElementById('nudgeCode');
+      var txt = document.getElementById('nudgeCodeText');
+      txt.value = JSON.stringify(sub);
+      box.hidden = false;
+    }
+    function hideNudgeCode() {
+      var box = document.getElementById('nudgeCode');
+      if (box) box.hidden = true;
+    }
+
+    // Get (or create) the device's push subscription.
+    function getSubscription() {
+      return registerSW().then(function (reg) {
+        if (!reg) throw new Error('no sw');
+        return reg.pushManager.getSubscription().then(function (sub) {
+          return sub || reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(CFG.vapidPublicKey)
+          });
+        });
+      });
+    }
+
+    // turn nudges ON: ask permission -> subscribe -> (server: register) / (github: show code)
+    function enableNudges() {
+      if (!PUSH_READY) {
+        setStatus('This browser can’t do notifications, but the journal works fully.');
+        return Promise.resolve(false);
+      }
+      setStatus('Just a moment…');
+      return Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') {
+          setStatus('No nudges for now. You can turn them on whenever you like.');
+          window.storage.set('notify', 'off');
+          return false;
+        }
+        return getSubscription().then(function (sub) {
+          if (MODE === 'server') {
+            var userId = window.storage.get('userId') || null;
+            return api('/api/subscribe', { subscription: sub, userId: userId }).then(function (r) {
+              if (!r.ok) throw new Error('subscribe failed');
+              return r.json();
+            }).then(function (data) {
+              if (data && data.userId) window.storage.set('userId', data.userId);
+              window.storage.set('notify', 'on');
+              setStatus('You’ll get a soft nudge around 9:30am.');
+              return true;
+            });
+          }
+          // github mode: keep the subscription on-device and surface the code to paste
+          window.storage.set('pushSub', sub.toJSON ? sub.toJSON() : sub);
+          window.storage.set('notify', 'on');
+          showNudgeCode(window.storage.get('pushSub'));
+          setStatus('Almost there — copy the code below into the repo secret (one time).');
+          return true;
+        }).catch(function () {
+          setStatus('Couldn’t set that up just now. The journal still works — try again later.');
+          window.storage.set('notify', 'off');
+          return false;
+        });
+      });
+    }
+
+    // turn nudges OFF
+    function disableNudges() {
+      window.storage.set('notify', 'off');
+      hideNudgeCode();
+      var userId = window.storage.get('userId');
+      var p = registerSW().then(function (reg) {
+        if (!reg) return null;
+        return reg.pushManager.getSubscription();
+      }).then(function (sub) {
+        if (sub) { sub.unsubscribe().catch(function () {}); }
+      });
+      window.storage.remove('pushSub');
+      if (MODE === 'server' && userId) {
+        api('/api/unsubscribe', { userId: userId }).catch(function () {});
+      }
+      setStatus(MODE === 'github'
+        ? 'Nudges are off on this device. (You can also delete the PUSH_SUBSCRIPTION secret.)'
+        : 'Nudges are off. Nothing will reach you.');
+      return p;
+    }
+
+    function sendTest() {
+      var userId = window.storage.get('userId');
+      var btn = document.getElementById('testBtn');
+      if (Notification.permission !== 'granted' || !userId) {
+        setStatus('Turn nudges on first, then you can send a test.');
+        return;
+      }
+      btn.disabled = true; setStatus('Sending a test nudge…');
+      api('/api/test-push', { userId: userId }).then(function (r) {
+        if (!r.ok) throw new Error('bad');
+        setStatus('Sent. It should arrive in a few seconds.');
+      }).catch(function () {
+        setStatus('That didn’t go through. The journal still works regardless.');
+      }).then(function () { btn.disabled = false; });
+    }
+
+    // settings UI wiring
+    var nudgeToggle = document.getElementById('nudgeToggle');
+    var testBtn = document.getElementById('testBtn');
+    var testRow = document.getElementById('testRow');
+
+    // The in-app "Try it" button only applies to the optional server backend.
+    // In github mode, testing is done from the Actions tab ("Run workflow").
+    if (MODE !== 'server') { testRow.hidden = true; }
+
+    function refreshNudgeUI() {
+      var on = window.storage.get('notify') === 'on' &&
+               SUPPORTED && Notification.permission === 'granted';
+      nudgeToggle.checked = !!on;
+      nudgeToggle.disabled = !PUSH_READY;
+
+      if (MODE === 'server') {
+        var userId = window.storage.get('userId');
+        testBtn.disabled = !(PUSH_READY && on && userId);
+      }
+
+      if (on && MODE === 'github') {
+        var stored = window.storage.get('pushSub');
+        if (stored) showNudgeCode(stored); else hideNudgeCode();
+      } else {
+        hideNudgeCode();
+      }
+
+      if (!SUPPORTED) {
+        setStatus('This browser can’t do notifications, but the journal works fully.');
+      } else if (!CFG.vapidPublicKey) {
+        setStatus('Nudges aren’t connected yet.');
+      } else {
+        setStatus('');
+      }
+    }
+
+    nudgeToggle.addEventListener('change', function () {
+      if (nudgeToggle.checked) {
+        enableNudges().then(function (ok) {
+          nudgeToggle.checked = !!ok;
+          if (MODE === 'server') testBtn.disabled = !ok;
+        });
+      } else {
+        disableNudges();
+        if (MODE === 'server') testBtn.disabled = true;
+      }
+    });
+    testBtn.addEventListener('click', sendTest);
+
+    // copy the nudge code
+    document.getElementById('copyCodeBtn').addEventListener('click', function () {
+      var txt = document.getElementById('nudgeCodeText');
+      var hint = document.getElementById('copyCodeHint');
+      txt.select(); txt.setSelectionRange(0, txt.value.length);
+      var done = function () { hint.textContent = 'Copied. Paste it into the PUSH_SUBSCRIPTION secret.'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt.value).then(done, function () {
+          try { document.execCommand('copy'); done(); } catch (e) { hint.textContent = 'Select the text above and copy it.'; }
+        });
+      } else {
+        try { document.execCommand('copy'); done(); } catch (e) { hint.textContent = 'Select the text above and copy it.'; }
+      }
+    });
+
+    /* ---------------------------------------------------------------
+     * the first-run soft prompt — only after she's engaged a little
+     * ------------------------------------------------------------- */
+    var nudgeCard = document.getElementById('nudgeCard');
+    var nudgeArmed = false;
+    function maybeArmNudge() {
+      if (nudgeArmed) return;
+      nudgeArmed = true;
+      // show only if push is possible, never asked before, and not already decided
+      if (!PUSH_READY) return;
+      if (Notification.permission !== 'default') return;
+      if (window.storage.get('notify')) return;        // already chose at some point
+      if (window.storage.get('asked')) return;
+      setTimeout(function () {
+        if (Notification.permission === 'default' && !window.storage.get('asked')) {
+          nudgeCard.classList.add('show');
+        }
+      }, 6000); // a quiet pause after the first words, never on the first tap
+    }
+    // also arm on a slower timer even without typing, so it can appear on a calm first visit
+    setTimeout(maybeArmNudge, 22000);
+
+    document.getElementById('nudgeYes').addEventListener('click', function () {
+      window.storage.set('asked', 1);
+      nudgeCard.classList.remove('show');
+      enableNudges();
+    });
+    document.getElementById('nudgeNo').addEventListener('click', function () {
+      window.storage.set('asked', 1);
+      nudgeCard.classList.remove('show');
+    });
+
+    /* ---------------------------------------------------------------
+     * add to home screen (Android Chrome)
+     * ------------------------------------------------------------- */
+    var deferredPrompt = null;
+    var installBanner = document.getElementById('installBanner');
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (window.storage.get('installDismissed')) return;
+      setTimeout(function () { installBanner.classList.add('show'); }, 3500);
+    });
+    document.getElementById('installYes').addEventListener('click', function () {
+      installBanner.classList.remove('show');
+      if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
+    });
+    document.getElementById('installNo').addEventListener('click', function () {
+      installBanner.classList.remove('show');
+      window.storage.set('installDismissed', 1);
+    });
+    window.addEventListener('appinstalled', function () {
+      installBanner.classList.remove('show');
+    });
+
+    /* ---------------------------------------------------------------
+     * boot
+     * ------------------------------------------------------------- */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () { registerSW(); });
+    }
+  })();
+  </script>
+</body>
+</html>
