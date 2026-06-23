@@ -9,9 +9,11 @@ no counts, no "you missed yesterday." It will never make you feel behind.
 Once a day, around **9:30am**, it can send one soft nudge to your phone — *"The
 journal's here when you are."* You can turn that on or off whenever you like.
 
-**Everything you write stays on your phone.** It is never uploaded, never synced,
-never readable by anyone but you. The only thing the little server ever knows is
-"send a nudge to this phone at 9:30am" — never a single word of what you wrote.
+**By default, everything you write stays on your phone** — never uploaded, never
+synced, and (with a passcode set) encrypted at rest. The only thing the little
+nudge server ever knows is "send a nudge to this phone at 9:30am" — never a single
+word of what you wrote. The one exception is entirely your choice: if you switch
+on the optional Google Docs backup below, a copy is mirrored into your own Drive.
 
 ---
 
@@ -49,6 +51,28 @@ If it arrives, the real 9:30am nudge will too.
 
 Open **⚙ settings** and switch **"A soft nudge at 9:30am"** off. That's it —
 nothing further will reach you, and you can switch it back on later with no fuss.
+
+## Backing up to a Google Doc (optional)
+
+If you'd like a copy of your writing in your own Google Drive, the journal can
+quietly mirror entries into a Google Doc. It uses a tiny **Google Apps Script**
+that runs as you — no Google Cloud project and no separate login.
+
+Heads-up, so it's a clear choice: a backed-up copy **leaves your phone and lives
+in your Google account in plain text**, outside the passcode lock. The journal
+itself stays on-device; this is an extra copy you control.
+
+Setup (~3 minutes):
+1. Open **`google-apps-script.gs`** in this folder and follow the steps at the
+   top: paste it into a new project at https://script.google.com, then
+   **Deploy ▸ New deployment ▸ Web app** (Execute as **Me**, Access **Anyone**),
+   and copy the **Web app URL** (ends in `/exec`).
+2. In the journal: **⚙ settings → Back up to Google Docs → Set up**. Paste the
+   URL and the secret, then **Connect**. A Doc named **"Today — journal"** appears
+   in your Drive, and it updates a few seconds after you write.
+
+To turn it off, open that setting and clear the URL. The Doc is a one-way mirror
+of the app — edit your journal in the app, not in the Doc.
 
 ## Keeping it just for you (passcode lock)
 
