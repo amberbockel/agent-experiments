@@ -50,6 +50,19 @@ If it arrives, the real 9:30am nudge will too.
 Open **⚙ settings** and switch **"A soft nudge at 9:30am"** off. That's it —
 nothing further will reach you, and you can switch it back on later with no fuss.
 
+## Keeping it just for you (passcode lock)
+
+In **⚙ settings → Passcode lock → Set**, choose a passcode. From then on, opening
+the journal asks for it first, and if you set the app aside for a minute it
+re-locks on its own. Your entries are **encrypted** with that passcode — in
+storage they're unreadable without it, so even someone poking around the phone's
+browser data can't read them.
+
+One honest caveat: because nothing is stored anywhere but your phone, **the
+passcode can't be recovered**. If you forget it, the existing entries can't be
+read. Pick something you'll remember. (Tap **Change** in the same place to set a
+new one anytime.)
+
 ---
 
 ## If web push ever doesn't work — the simple fallback

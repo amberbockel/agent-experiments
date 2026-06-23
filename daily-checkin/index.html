@@ -273,12 +273,58 @@
     }
     .sheet-close:hover { color: var(--ink); }
 
+    /* lock screen */
+    .lock {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--cream);
+      display: grid; place-items: center;
+      padding: calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);
+    }
+    .lock[hidden] { display: none; }
+    .lock-inner { width: min(360px, 100%); text-align: center; }
+    .lock-mark {
+      width: 64px; height: 64px; margin: 0 auto 22px; border-radius: 16px;
+      background: var(--terracotta); color: #efe7d8;
+      font-family: var(--serif); font-weight: 600; font-size: 40px;
+      display: grid; place-items: center; line-height: 1;
+    }
+    .lock h2 { font-family: var(--serif); font-size: 27px; font-weight: 600; color: var(--terracotta); margin-bottom: 10px; }
+    .lock-sub { font-size: 15px; line-height: 1.5; color: var(--ink-soft); margin-bottom: 22px; }
+    .lock-input {
+      width: 100%; font-family: var(--serif); font-size: 19px; text-align: center;
+      padding: 13px 14px; margin-bottom: 12px; border: 1px solid var(--line);
+      border-radius: 12px; background: #fff; color: var(--ink); outline: none;
+    }
+    .lock-input:focus { border-color: var(--terracotta); }
+    .lock-btn {
+      width: 100%; appearance: none; border: none; cursor: pointer;
+      font-family: var(--serif); font-size: 17px; font-weight: 600;
+      background: var(--terracotta); color: #fbf6ee; padding: 13px; border-radius: 12px;
+      transition: background 0.15s ease;
+    }
+    .lock-btn:hover { background: #a8462f; }
+    .lock-msg { font-size: 14px; color: var(--terracotta); margin-top: 14px; min-height: 18px; font-style: italic; }
+    .lock-skip { display: inline-block; margin-top: 14px; }
+
     /* viewing a past day, read-only */
     .past-view { font-size: 18px; line-height: 1.7; white-space: pre-wrap; color: var(--ink); margin-top: 4px; }
     .past-prompt { font-size: 16px; color: var(--ink-soft); font-style: italic; margin-bottom: 14px; }
   </style>
 </head>
 <body>
+  <div class="lock" id="lockScreen" hidden>
+    <div class="lock-inner">
+      <div class="lock-mark">t</div>
+      <h2 id="lockTitle">Just for you</h2>
+      <p class="lock-sub" id="lockSub">Enter your passcode.</p>
+      <input id="lockPass" class="lock-input" type="password" autocomplete="off" autocapitalize="off" aria-label="Passcode" />
+      <input id="lockPass2" class="lock-input" type="password" autocomplete="off" autocapitalize="off" aria-label="Confirm passcode" hidden />
+      <button class="lock-btn" id="lockGo">Open</button>
+      <p class="lock-msg" id="lockMsg" aria-live="polite"></p>
+      <button class="link-btn lock-skip" id="lockSkip" hidden>Maybe later</button>
+    </div>
+  </div>
+
   <header>
     <div class="mark">
       <h1>Today</h1>
@@ -350,6 +396,14 @@
       <button class="pill-btn" id="testBtn">Try it</button>
     </div>
 
+    <div class="row" id="lockRow">
+      <div>
+        <div class="label" id="lockRowLabel">Passcode lock</div>
+        <div class="desc" id="lockRowDesc">Keep the journal just for you.</div>
+      </div>
+      <button class="pill-btn" id="lockSetBtn">Set</button>
+    </div>
+
     <div class="status-line" id="settingsStatus"></div>
 
     <div class="nudge-code" id="nudgeCode" hidden>
@@ -385,8 +439,14 @@
     var API = (CFG.apiBase || '').replace(/\/+$/, '');
 
     /* ---------------------------------------------------------------
-     * storage — the journal lives here, on the device, and nowhere else.
+     * storage — entries live here, on the device, and nowhere else.
+     * With a passcode set, they're encrypted at rest (AES-GCM); the
+     * decrypted copy lives only in memory while the app is open.
      * ------------------------------------------------------------- */
+    var ENTRIES = {};   // in-memory journal, populated once unlocked
+    var VKEY = null;    // CryptoKey derived from the passcode (null = no lock)
+    var VSALT = null;   // salt bytes for that key
+
     window.storage = {
       _p: 'today:',
       get: function (k) {
@@ -397,15 +457,164 @@
         try { localStorage.setItem(this._p + k, JSON.stringify(v)); } catch (e) {}
       },
       remove: function (k) { try { localStorage.removeItem(this._p + k); } catch (e) {} },
-      entries: function () { return this.get('entries') || {}; },
-      getEntry: function (dateKey) { var e = this.entries()[dateKey]; return e || null; },
+      entries: function () { return ENTRIES; },
+      getEntry: function (dateKey) { return ENTRIES[dateKey] || null; },
       setEntry: function (dateKey, text, promptText) {
-        var all = this.entries();
-        if (!text || !text.trim()) { delete all[dateKey]; }
-        else { all[dateKey] = { text: text, prompt: promptText, updated: Date.now() }; }
-        this.set('entries', all);
+        if (!text || !text.trim()) { delete ENTRIES[dateKey]; }
+        else { ENTRIES[dateKey] = { text: text, prompt: promptText, updated: Date.now() }; }
+        persistEntries();
       }
     };
+
+    /* ---------------------------------------------------------------
+     * encryption helpers (Web Crypto) + the passcode lock
+     * ------------------------------------------------------------- */
+    var CRYPTO_OK = !!(window.crypto && window.crypto.subtle && window.TextEncoder);
+    var _enc = CRYPTO_OK ? new TextEncoder() : null;
+    var _dec = CRYPTO_OK ? new TextDecoder() : null;
+
+    function b64(bytes) { var s = ''; for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s); }
+    function unb64(str) { var raw = atob(str), out = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i); return out; }
+
+    function deriveKey(pass, salt) {
+      return crypto.subtle.importKey('raw', _enc.encode(pass), 'PBKDF2', false, ['deriveKey'])
+        .then(function (base) {
+          return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+            base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+        });
+    }
+    function encryptObj(key, obj) {
+      var iv = crypto.getRandomValues(new Uint8Array(12));
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, _enc.encode(JSON.stringify(obj)))
+        .then(function (ct) { return { iv: b64(iv), ct: b64(new Uint8Array(ct)) }; });
+    }
+    function decryptObj(key, blob) {
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(blob.iv) }, key, unb64(blob.ct))
+        .then(function (pt) { return JSON.parse(_dec.decode(pt)); });
+    }
+
+    // Persist entries — encrypted if a passcode is set, plain otherwise.
+    // Writes are coalesced so rapid typing can't pile up overlapping encrypts.
+    var _persisting = false, _persistAgain = false;
+    function persistEntries() {
+      if (!VKEY) { window.storage.set('entries', ENTRIES); return; }
+      if (_persisting) { _persistAgain = true; return; }
+      _persisting = true;
+      encryptObj(VKEY, ENTRIES).then(function (data) {
+        window.storage.set('vault', { salt: b64(VSALT), data: data });
+        window.storage.remove('entries'); // never leave a plaintext copy behind
+      }).catch(function () {}).then(function () {
+        _persisting = false;
+        if (_persistAgain) { _persistAgain = false; persistEntries(); }
+      });
+    }
+
+    // --- lock screen UI ---
+    var lockEl = document.getElementById('lockScreen');
+    var lockTitle = document.getElementById('lockTitle');
+    var lockSub = document.getElementById('lockSub');
+    var lockPass = document.getElementById('lockPass');
+    var lockPass2 = document.getElementById('lockPass2');
+    var lockGo = document.getElementById('lockGo');
+    var lockMsg = document.getElementById('lockMsg');
+    var lockSkip = document.getElementById('lockSkip');
+    var _lockHandler = null;
+
+    function lockShow() { lockEl.hidden = false; }
+    function lockHide() { lockEl.hidden = true; lockPass.value = ''; lockPass2.value = ''; lockMsg.textContent = ''; }
+    function bind(btn, fn) { btn.onclick = fn; }
+
+    function setLockHandler(fn) {
+      _lockHandler = fn;
+      lockGo.onclick = fn;
+    }
+
+    // Ask for the existing passcode to unlock.
+    function lockUnlock(vault, onDone) {
+      lockTitle.textContent = 'Just for you';
+      lockSub.textContent = 'Enter your passcode to open the journal.';
+      lockPass2.hidden = true;
+      lockSkip.hidden = true;
+      lockGo.textContent = 'Open';
+      lockMsg.textContent = '';
+      lockShow();
+      setTimeout(function () { lockPass.focus(); }, 60);
+      setLockHandler(function () {
+        var pass = lockPass.value;
+        if (!pass) return;
+        lockMsg.textContent = 'One moment…';
+        deriveKey(pass, unb64(vault.salt)).then(function (key) {
+          return decryptObj(key, vault.data).then(function (obj) {
+            VKEY = key; VSALT = unb64(vault.salt);
+            lockHide();
+            onDone(obj || {});
+          });
+        }).catch(function () {
+          lockMsg.textContent = 'That passcode doesn’t match. Try again.';
+          lockPass.value = ''; lockPass.focus();
+        });
+      });
+    }
+
+    // Set a new passcode (first time, or changing it). Encrypts current entries.
+    function lockSetup(currentEntries, onDone, allowSkip) {
+      lockTitle.textContent = 'A passcode, just for you';
+      lockSub.textContent = 'So this stays yours alone. Choose something you’ll remember — there’s no way to recover it, since nothing is stored anywhere but here.';
+      lockPass.value = ''; lockPass2.value = ''; lockPass2.hidden = false;
+      lockSkip.hidden = !allowSkip;
+      lockGo.textContent = 'Set passcode';
+      lockMsg.textContent = '';
+      lockShow();
+      setTimeout(function () { lockPass.focus(); }, 60);
+      setLockHandler(function () {
+        var a = lockPass.value, b = lockPass2.value;
+        if (a.length < 4) { lockMsg.textContent = 'Make it at least 4 characters.'; return; }
+        if (a !== b) { lockMsg.textContent = 'Those two don’t match yet.'; lockPass2.value = ''; lockPass2.focus(); return; }
+        lockMsg.textContent = 'One moment…';
+        var salt = crypto.getRandomValues(new Uint8Array(16));
+        deriveKey(a, salt).then(function (key) {
+          VKEY = key; VSALT = salt;
+          return encryptObj(key, currentEntries).then(function (data) {
+            window.storage.set('vault', { salt: b64(salt), data: data });
+            window.storage.remove('entries');
+            lockHide();
+            onDone();
+          });
+        }).catch(function () { lockMsg.textContent = 'Something went wrong. Try once more.'; });
+      });
+      lockSkip.onclick = function () { lockHide(); onDone(); };
+    }
+
+    // Submit on Enter from either field.
+    [lockPass, lockPass2].forEach(function (el) {
+      el.addEventListener('keydown', function (e) { if (e.key === 'Enter' && _lockHandler) _lockHandler(); });
+    });
+
+    /* ---------------------------------------------------------------
+     * lock gate — decide what to show before the journal opens
+     * ------------------------------------------------------------- */
+    function runLockGate() {
+      var vault = window.storage.get('vault');
+      var legacy = window.storage.get('entries') || {};
+      if (vault && CRYPTO_OK) { lockUnlock(vault, startApp); return; }
+      // No passcode yet. Open straight into the journal; she can add a lock
+      // from Settings whenever she likes (kept low-pressure, not forced here).
+      startApp(legacy);
+    }
+
+    // Auto-relock: if the app is set aside for a while, ask for the passcode again.
+    var _hiddenAt = 0;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { _hiddenAt = Date.now(); return; }
+      if (VKEY && _hiddenAt && (Date.now() - _hiddenAt > 60000) && lockEl.hidden) {
+        var vault = window.storage.get('vault');
+        if (vault) lockUnlock(vault, function () { /* already loaded; just unlock */ });
+      }
+    });
+
+    function startApp(initialEntries) {
+      if (initialEntries) ENTRIES = initialEntries;
 
     /* ---------------------------------------------------------------
      * dates + prompts
@@ -508,6 +717,7 @@
 
     document.getElementById('openSettings').addEventListener('click', function () {
       refreshNudgeUI();
+      updateLockRow();
       openSheet(settingsSheet);
     });
     document.getElementById('openEarlier').addEventListener('click', function () {
@@ -828,11 +1038,46 @@
     });
 
     /* ---------------------------------------------------------------
+     * passcode lock (settings)
+     * ------------------------------------------------------------- */
+    var lockSetBtn = document.getElementById('lockSetBtn');
+    var lockRowLabel = document.getElementById('lockRowLabel');
+    var lockRowDesc = document.getElementById('lockRowDesc');
+    var lockRow = document.getElementById('lockRow');
+
+    function updateLockRow() {
+      var has = !!window.storage.get('vault');
+      if (!CRYPTO_OK) {
+        lockRowLabel.textContent = 'Passcode lock';
+        lockRowDesc.textContent = 'Not available in this browser.';
+        lockSetBtn.disabled = true;
+        return;
+      }
+      if (has) {
+        lockRowLabel.textContent = 'Passcode lock';
+        lockRowDesc.textContent = 'On. Asked for when you open the journal.';
+        lockSetBtn.textContent = 'Change';
+      } else {
+        lockRowLabel.textContent = 'Passcode lock';
+        lockRowDesc.textContent = 'Keep the journal just for you.';
+        lockSetBtn.textContent = 'Set';
+      }
+    }
+    lockSetBtn.addEventListener('click', function () {
+      closeSheets();
+      lockSetup(ENTRIES, function () { updateLockRow(); }, false);
+    });
+
+    /* ---------------------------------------------------------------
      * boot
      * ------------------------------------------------------------- */
+    updateLockRow();
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () { registerSW(); });
     }
+    } // end startApp
+
+    runLockGate();
   })();
   </script>
 </body>
