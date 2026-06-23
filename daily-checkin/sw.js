@@ -8,7 +8,7 @@
  * because the writing itself lives on the device and shouldn't depend on a network.
  */
 
-const CACHE = 'today-v1';
+const CACHE = 'today-v2';
 const SHELL = [
   './',
   './index.html',

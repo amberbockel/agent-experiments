@@ -254,6 +254,11 @@
     }
     .nudge-code .nc-hint { font-size: 13px; color: var(--ink-soft); margin-top: 8px; font-style: italic; min-height: 16px; }
 
+    .gdoc-setup { margin-top: 14px; padding: 16px; background: var(--cream-deep); border-radius: 12px; }
+    .gdoc-setup .nc-intro { font-size: 14px; line-height: 1.55; color: var(--ink); margin-bottom: 12px; }
+    .gdoc-setup .lock-input { text-align: left; font-size: 14px; font-family: var(--sans); margin-bottom: 10px; }
+    .gdoc-setup .nc-hint { font-size: 13px; color: var(--ink-soft); margin-top: 8px; font-style: italic; min-height: 16px; }
+
     /* earlier list */
     .entry-item {
       display: block; width: 100%; text-align: left; appearance: none; border: none;
@@ -402,6 +407,24 @@
         <div class="desc" id="lockRowDesc">Keep the journal just for you.</div>
       </div>
       <button class="pill-btn" id="lockSetBtn">Set</button>
+    </div>
+
+    <div class="row" id="gdocRow">
+      <div>
+        <div class="label">Back up to Google Docs</div>
+        <div class="desc" id="gdocDesc">Mirror entries into a Doc in your Drive.</div>
+      </div>
+      <button class="pill-btn" id="gdocBtn">Set up</button>
+    </div>
+
+    <div class="gdoc-setup" id="gdocSetup" hidden>
+      <p class="nc-intro">Paste the Web app URL and secret from your Google Apps
+        Script (the <strong>google-apps-script.gs</strong> file has the 3-step
+        setup). This stays on your device only.</p>
+      <input id="gdocUrl" class="lock-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" />
+      <input id="gdocSecret" class="lock-input" type="text" placeholder="secret" autocomplete="off" />
+      <button class="pill-btn" id="gdocConnect">Connect</button>
+      <p class="nc-hint" id="gdocHint"></p>
     </div>
 
     <div class="status-line" id="settingsStatus"></div>
@@ -684,11 +707,13 @@
       saveTimer = setTimeout(function () {
         window.storage.setEntry(todayKey, ta.value, todayPrompt);
         showSaved();
+        scheduleDocSync();
       }, 600);
     });
     // save on the way out, too
     window.addEventListener('pagehide', function () {
       window.storage.setEntry(todayKey, ta.value, todayPrompt);
+      syncToDoc('leave');
     });
 
     /* ---------------------------------------------------------------
@@ -718,6 +743,8 @@
     document.getElementById('openSettings').addEventListener('click', function () {
       refreshNudgeUI();
       updateLockRow();
+      updateGdocRow();
+      gdocSetup.hidden = true;
       openSheet(settingsSheet);
     });
     document.getElementById('openEarlier').addEventListener('click', function () {
@@ -1069,9 +1096,92 @@
     });
 
     /* ---------------------------------------------------------------
+     * Google Docs backup (optional) — mirrors entries into a Doc you own.
+     * The Apps Script URL + secret live only on this device.
+     * ------------------------------------------------------------- */
+    var gdocRow = document.getElementById('gdocRow');
+    var gdocBtn = document.getElementById('gdocBtn');
+    var gdocDesc = document.getElementById('gdocDesc');
+    var gdocSetup = document.getElementById('gdocSetup');
+    var gdocUrlEl = document.getElementById('gdocUrl');
+    var gdocSecretEl = document.getElementById('gdocSecret');
+    var gdocConnect = document.getElementById('gdocConnect');
+    var gdocHint = document.getElementById('gdocHint');
+    var gdocSyncTimer = null;
+
+    function gdocConf() { return window.storage.get('gdoc'); }
+
+    function updateGdocRow() {
+      var c = gdocConf();
+      if (c && c.url) {
+        var last = window.storage.get('gdocLast');
+        gdocDesc.textContent = last
+          ? 'On · last backed up ' + new Date(last).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+          : 'On.';
+        gdocBtn.textContent = 'Manage';
+      } else {
+        gdocDesc.textContent = 'Mirror entries into a Doc in your Drive.';
+        gdocBtn.textContent = 'Set up';
+      }
+    }
+
+    // Fire-and-forget POST. Apps Script can't do CORS preflight, so we send
+    // text/plain (a "simple" request) and don't try to read the response.
+    function syncToDoc(reason) {
+      var c = gdocConf();
+      if (!c || !c.url) return;
+      try {
+        fetch(c.url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ secret: c.secret || '', entries: ENTRIES }),
+          keepalive: reason === 'leave'
+        }).then(function () {
+          window.storage.set('gdocLast', Date.now());
+        }).catch(function () { /* backup is best-effort; the journal is unaffected */ });
+        if (reason !== 'leave') window.storage.set('gdocLast', Date.now());
+      } catch (e) { /* ignore */ }
+    }
+
+    function scheduleDocSync() {
+      if (!gdocConf()) return;
+      clearTimeout(gdocSyncTimer);
+      gdocSyncTimer = setTimeout(function () { syncToDoc('auto'); }, 4000);
+    }
+
+    gdocBtn.addEventListener('click', function () {
+      var c = gdocConf();
+      if (c && c.url) { gdocUrlEl.value = c.url; gdocSecretEl.value = c.secret || ''; }
+      gdocSetup.hidden = !gdocSetup.hidden;
+      gdocHint.textContent = (c && c.url) ? 'Connected. Re-connect to update, or clear the URL to turn off.' : '';
+    });
+
+    gdocConnect.addEventListener('click', function () {
+      var url = gdocUrlEl.value.trim();
+      var secret = gdocSecretEl.value.trim();
+      if (!url) {
+        window.storage.remove('gdoc');
+        window.storage.remove('gdocLast');
+        gdocHint.textContent = 'Backup turned off. Nothing more will be sent.';
+        updateGdocRow();
+        return;
+      }
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url)) {
+        gdocHint.textContent = 'That doesn’t look like a /exec Web app URL. Check the deployment.';
+        return;
+      }
+      window.storage.set('gdoc', { url: url, secret: secret });
+      gdocHint.textContent = 'Connected. Sending your first backup — check your Drive for “Today — journal” in a moment.';
+      syncToDoc('connect');
+      updateGdocRow();
+    });
+
+    /* ---------------------------------------------------------------
      * boot
      * ------------------------------------------------------------- */
     updateLockRow();
+    updateGdocRow();
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () { registerSW(); });
     }
