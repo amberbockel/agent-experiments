@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-16",
+      "slug": "2026-10-16",
+      "title": "Pocket AI",
+      "category": "trend",
+      "oneLiner": "Scan your device and see which on-device AI models you could actually run in the browser — live WebGPU + Gemma / LiteRT.js numbers, and nothing leaves your phone.",
+      "path": "apps/2026-10-16/"
+    },
+    {
       "date": "2026-06-17",
       "slug": "2026-06-17",
       "title": "Breathing Buddy",
@@ -162,7 +170,8 @@
       "title": "Product Launch Checklist",
       "category": "business",
       "oneLiner": "Track everything you need to launch a new product — photos, pricing, listings, marketing — with a reusable checklist that saves progress and celebrates when you ship.",
-      "path": "apps/2026-06-04/"
+      "path": "apps/2026-06-04/",
+      "flagship": true
     },
     {
       "date": "2026-06-03",
@@ -218,8 +227,7 @@
       "title": "Dreamhouse FM",
       "category": "trend",
       "oneLiner": "Design spaces for how they make people feel, not just how they look — adjust lighting, materials, and layout, then get AI emotional analysis for healing environments.",
-      "path": "apps/dreamhouse-fm/",
-      "flagship": true
+      "path": "apps/dreamhouse-fm/"
     },
     {
       "date": "2026-05-08",
