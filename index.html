@@ -175,10 +175,14 @@ const TAG_CLASS = { productivity: '', delightful: 'delightful', trend: 'trend', 
 
 // Map flagship slugs to emojis (kept here, not in manifest, to avoid touching content schema)
 const FLAGSHIP_EMOJI = {
-  'portfolio-builder': '🌸',
   '2026-04-30-jeopardy': '🎤',
-  '2026-05-02': '🤖',
-  'outrun-me': '🏎️'
+  '2026-06-12-bomb-squad': '💣',
+  '2026-06-10-prompt-builder': '🛠️',
+  '2026-06-11': '🫙',
+  '2026-06-08-bull-run': '🐂',
+  '2026-06-08-speed-sketch': '✏️',
+  '2026-06-08': '📊',
+  '2026-06-07': '🛡️'
 };
 
 async function load() {
@@ -200,7 +204,7 @@ async function load() {
     }
 
     // Split into flagships and recent drops
-    const flagships = apps.filter(a => a.flagship);
+    const flagships = apps.filter(a => a.flagship).sort((a, b) => a.flagship - b.flagship);
     const recent = apps.filter(a => !a.flagship);
 
     if (flagships.length > 0) {

@@ -49,7 +49,8 @@
       "title": "Bomb Squad",
       "category": "delightful",
       "oneLiner": "Push-your-luck card game — draw for points or cash out before the bomb explodes. Defuse bombs, bank points, beat your high score.",
-      "path": "apps/2026-06-12-bomb-squad/"
+      "path": "apps/2026-06-12-bomb-squad/",
+      "flagship": 2
     },
     {
       "date": "2026-06-11",
@@ -57,7 +58,8 @@
       "title": "Gratitude Jar",
       "category": "delightful",
       "oneLiner": "Add gratitude notes to a virtual jar, shake your phone to pull one out and remember what matters — a warm pocket ritual for hard days.",
-      "path": "apps/2026-06-11/"
+      "path": "apps/2026-06-11/",
+      "flagship": 4
     },
     {
       "date": "2026-06-10",
@@ -65,7 +67,8 @@
       "title": "Prompt Builder",
       "category": "trend",
       "oneLiner": "Answer 5 questions → get a tool-optimized AI prompt. Stop guessing what to write — build better prompts in 60 seconds.",
-      "path": "apps/2026-06-10-prompt-builder/"
+      "path": "apps/2026-06-10-prompt-builder/",
+      "flagship": 3
     },
     {
       "date": "2026-06-09",
@@ -81,7 +84,8 @@
       "title": "Bull Run",
       "category": "delightful",
       "oneLiner": "Number placement puzzle — play 10 cards across 4 rows, avoid taking penalty bulls. Fast, strategic, endlessly replayable.",
-      "path": "apps/2026-06-08-bull-run/"
+      "path": "apps/2026-06-08-bull-run/",
+      "flagship": 5
     },
     {
       "date": "2026-06-08",
@@ -97,7 +101,8 @@
       "title": "Speed Sketch Battle",
       "category": "delightful",
       "oneLiner": "Instant-play drawing game — 30-second sketches, pass the phone, vote for the best. Zero onboarding, pure party game energy.",
-      "path": "apps/2026-06-08-speed-sketch/"
+      "path": "apps/2026-06-08-speed-sketch/",
+      "flagship": 6
     },
     {
       "date": "2026-06-08",
@@ -105,7 +110,8 @@
       "title": "Sponsor Pitch Calculator",
       "category": "business",
       "oneLiner": "Calculate what to charge for sponsored Substack posts based on subscriber count, engagement rate, niche positioning, and content format — know your worth before the pitch.",
-      "path": "apps/2026-06-08/"
+      "path": "apps/2026-06-08/",
+      "flagship": 7
     },
     {
       "date": "2026-06-07",
@@ -113,7 +119,8 @@
       "title": "AI Safety Inspector",
       "category": "trend",
       "oneLiner": "Paste any AI-generated text and get instant analysis of hallucination markers, confidence signals, hedging patterns, and potential fabrications — learn to read AI output critically.",
-      "path": "apps/2026-06-07/"
+      "path": "apps/2026-06-07/",
+      "flagship": 8
     },
     {
       "date": "2026-06-06",
@@ -153,8 +160,7 @@
       "title": "OUTRUN ME — Amber's SL",
       "category": "games",
       "oneLiner": "A full pseudo-3D arcade racer on a 2D canvas — drive the red 380SL convertible (pup riding shotgun) down the Cape Cod coast and through Boston, beating the clock at every checkpoint. Vanilla JS, zero assets, mobile-ready.",
-      "path": "apps/outrun-me/",
-      "flagship": true
+      "path": "apps/outrun-me/"
     },
     {
       "date": "2026-06-04",
@@ -218,8 +224,7 @@
       "title": "Dreamhouse FM",
       "category": "trend",
       "oneLiner": "Design spaces for how they make people feel, not just how they look — adjust lighting, materials, and layout, then get AI emotional analysis for healing environments.",
-      "path": "apps/dreamhouse-fm/",
-      "flagship": true
+      "path": "apps/dreamhouse-fm/"
     },
     {
       "date": "2026-05-08",
@@ -275,8 +280,7 @@
       "title": "How AI Actually Works",
       "category": "delightful",
       "oneLiner": "A 30-minute interactive class for middle schoolers — fill-in-the-blank game, jargon-busting vocab, AI lie detector, and a real LLM running in the browser.",
-      "path": "apps/2026-05-02/",
-      "flagship": true
+      "path": "apps/2026-05-02/"
     },
     {
       "date": "2026-04-30",
@@ -284,8 +288,7 @@
       "title": "Portfolio Builder",
       "category": "productivity",
       "oneLiner": "Shared CMS for Amber Miro's portfolio system — 12 pieces, 9 documents, 19 tasks, all sync'd via Telegram.",
-      "path": "apps/portfolio-builder/",
-      "flagship": true
+      "path": "apps/portfolio-builder/"
     },
     {
       "date": "2026-04-30",
@@ -294,7 +297,7 @@
       "category": "delightful",
       "oneLiner": "Mobile Jeopardy board for the family — 47 categories, 705 questions, fresh 5×5 board every round.",
       "path": "apps/2026-04-30-jeopardy/",
-      "flagship": true
+      "flagship": 1
     },
     {
       "date": "2026-05-02",
@@ -326,8 +329,7 @@
       "title": "OutRun '86",
       "category": "games",
       "oneLiner": "Pseudo-3D arcade driving game inspired by the 1986 classic — cruise the beach highway in your red Mercedes 380SL, hit checkpoints for bonus time, and race against the clock with mobile-optimized touch controls.",
-      "path": "apps/2026-06-04-outrun/",
-      "flagship": true
+      "path": "apps/2026-06-04-outrun/"
     }
   ]
 }
