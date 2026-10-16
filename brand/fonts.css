@@ -1,0 +1,17 @@
+/* amberbockel brand fonts — vendored (latin subset), self-hosted for offline use */
+/* DM Sans — variable 300–800 */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('fonts/DMSans.woff2') format('woff2');
+}
+/* Prata — display serif, 400 only */
+@font-face {
+  font-family: 'Prata';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/Prata-400.woff2') format('woff2');
+}

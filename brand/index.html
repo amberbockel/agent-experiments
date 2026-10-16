@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>amberbockel brand kit</title>
+<meta name="description" content="Living reference for the amberbockel brand kit used across agent experiments." />
+<link rel="stylesheet" href="amberbockel.css" />
+<style>
+  .wrap { padding: var(--ab-7) 0 var(--ab-9); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--ab-3); align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--ab-3); }
+  .swatch { height: 64px; border-radius: var(--ab-r-md); border: 1px solid var(--ab-line); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; }
+  section { margin-top: var(--ab-7); }
+  .lbl { font-size: var(--ab-text-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--ab-faint); margin-bottom: var(--ab-3); }
+</style>
+</head>
+<body>
+<button class="ab-btn ab-btn--glass ab-theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" id="tt">◐</button>
+<div class="ab-container wrap">
+  <span class="ab-eyebrow">Design System</span>
+  <h1>amberbockel brand kit</h1>
+  <p>Flat, minimal, delightful — clean glassmorphism and precision typography. Prata &amp; DM Sans, one pink accent, dark-first with a light toggle.</p>
+
+  <section>
+    <div class="lbl">Type</div>
+    <div class="ab-card">
+      <h1 style="margin:0 0 8px">Display — Prata</h1>
+      <h3 style="margin:0 0 12px">Subhead — DM Sans 600</h3>
+      <p style="margin:0">Body in DM Sans. The quick brown fox jumps over the lazy dog. <a href="#">A link in accent pink.</a></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="lbl">Color</div>
+    <div class="grid">
+      <div class="swatch" style="background:var(--ab-accent);color:#fff">accent</div>
+      <div class="swatch" style="background:var(--ab-accent-soft);color:var(--ab-accent)">accent-soft</div>
+      <div class="swatch" style="background:var(--ab-surface);color:var(--ab-muted)">surface</div>
+      <div class="swatch ab-glass" style="color:var(--ab-muted)">glass</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="lbl">Buttons</div>
+    <div class="row">
+      <button class="ab-btn ab-btn--primary">Primary</button>
+      <button class="ab-btn ab-btn--secondary">Secondary</button>
+      <button class="ab-btn ab-btn--ghost">Ghost</button>
+      <button class="ab-btn ab-btn--glass">Glass</button>
+      <button class="ab-btn ab-btn--primary ab-btn--lg">Large</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="lbl">Form + tags</div>
+    <div class="ab-card">
+      <label class="ab-label" for="x">Email</label>
+      <input class="ab-input" id="x" placeholder="you@example.com" />
+      <div class="row" style="margin-top:16px">
+        <span class="ab-tag">Trend</span>
+        <span class="ab-tag ab-tag--muted">Productivity</span>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+  const KEY='ab-theme', root=document.documentElement;
+  try{ root.dataset.theme = localStorage.getItem(KEY) || 'dark'; }catch(e){}
+  function toggleTheme(){ root.dataset.theme = root.dataset.theme==='light'?'dark':'light';
+    try{ localStorage.setItem(KEY, root.dataset.theme); }catch(e){} }
+</script>
+</body>
+</html>
