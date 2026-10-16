@@ -4,278 +4,394 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Product Launch Checklist</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --bg: #F2F2F7;
-      --surface: #FFFFFF;
-      --text: #1C1C1E;
-      --text-secondary: #8E8E93;
-      --border: #E5E5EA;
-      --accent: #14B8A6;
-      --accent-light: #E6F7F5;
-      --done: #34C759;
-      --radius: 12px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #000000;
-        --surface: #1C1C1E;
-        --text: #F2F2F7;
-        --text-secondary: #8E8E93;
-        --border: #38383A;
-        --accent: #5EEAD4;
-        --accent-light: #1E3A37;
-        --done: #32D74B;
+  <link rel="stylesheet" href="../../brand/amberbockel.css">
+  <script>
+    // Set theme before paint to avoid flash of the wrong theme.
+    (function () {
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('ab-theme') || 'dark';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark';
       }
-    }
-
+    })();
+  </script>
+  <style>
+    /* ---------- APP LAYER (brand tokens only) ---------- */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      min-height: 100dvh;
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        calc(var(--ab-8) + 20px + env(safe-area-inset-bottom))
+        env(safe-area-inset-left);
     }
 
     .container {
-      max-width: 600px;
+      width: 100%;
+      max-width: 640px;
       margin: 0 auto;
-      padding: 24px 20px;
+      padding: var(--ab-6) max(var(--ab-4), env(safe-area-inset-left)) var(--ab-6)
+               max(var(--ab-4), env(safe-area-inset-right));
     }
 
+    /* ---------- HEADER ---------- */
     header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: var(--ab-6);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: var(--ab-text-xs);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--ab-accent);
+      font-weight: 600;
+      margin-bottom: var(--ab-3);
     }
 
     h1 {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
+      font-size: var(--ab-display-sm);
+      margin-bottom: var(--ab-2);
     }
 
     .subtitle {
-      font-size: 15px;
-      color: var(--text-secondary);
+      font-size: var(--ab-text-base);
+      color: var(--ab-muted);
+      margin: 0;
     }
 
+    /* ---------- PROGRESS RING ---------- */
     .progress-ring {
       position: relative;
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 24px;
+      width: 148px;
+      height: 148px;
+      margin: 0 auto var(--ab-6);
     }
 
     .progress-ring svg {
       transform: rotate(-90deg);
+      width: 148px;
+      height: 148px;
+      display: block;
     }
 
     .progress-ring circle {
       fill: none;
       stroke-width: 8;
+      /* r=54 at scale ~1.233 to fill 148px viewport frame via transform */
     }
 
     .progress-ring .background {
-      stroke: var(--border);
+      stroke: var(--ab-line);
     }
 
     .progress-ring .progress {
-      stroke: var(--accent);
+      stroke: var(--ab-accent);
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.5s ease;
+      filter: drop-shadow(0 0 6px var(--ab-accent-soft));
+      transition: stroke-dashoffset .6s var(--ab-ease);
     }
 
     .progress-text {
       position: absolute;
-      top: 50%;
+      top: 48%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 32px;
-      font-weight: 700;
+      font-family: var(--ab-font-display);
+      font-size: 2.5rem;
+      font-weight: 400;
+      line-height: 1;
       font-variant-numeric: tabular-nums;
+      color: var(--ab-text);
     }
 
     .progress-label {
       position: absolute;
-      top: 62%;
+      top: 64%;
       left: 50%;
       transform: translate(-50%, 0);
-      font-size: 13px;
-      color: var(--text-secondary);
+      font-size: var(--ab-text-xs);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ab-faint);
     }
 
+    /* ---------- PHASES (glass cards) ---------- */
     .phase {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
+      background: var(--ab-glass-bg);
+      border: 1px solid var(--ab-glass-border);
+      border-radius: var(--ab-r-lg);
+      backdrop-filter: blur(14px) saturate(1.2);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      padding: var(--ab-5);
+      margin-bottom: var(--ab-4);
     }
 
     .phase-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      gap: var(--ab-3);
+      margin-bottom: var(--ab-3);
     }
 
     .phase-title {
-      font-size: 19px;
-      font-weight: 600;
+      font-family: var(--ab-font-display);
+      font-size: var(--ab-text-xl);
+      font-weight: 400;
+      letter-spacing: 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--ab-2);
+    }
+
+    .phase-title span:first-child {
+      font-size: 1.15rem;
+      line-height: 1;
     }
 
     .phase-count {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      background: var(--accent-light);
-      padding: 4px 10px;
-      border-radius: 999px;
+      flex-shrink: 0;
+      font-size: var(--ab-text-xs);
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--ab-accent);
+      background: var(--ab-accent-soft);
+      padding: 5px 11px;
+      border-radius: var(--ab-r-pill);
+      font-variant-numeric: tabular-nums;
     }
 
+    /* ---------- TASK ROWS ---------- */
     .task {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
+      gap: var(--ab-3);
+      min-height: 44px;
+      padding: var(--ab-2) var(--ab-2);
+      margin: 2px calc(var(--ab-2) * -1);
+      border-radius: var(--ab-r-sm);
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      transition: background-color var(--ab-dur) var(--ab-ease);
     }
 
-    .task:last-child {
-      border-bottom: none;
+    .task:hover {
+      background: var(--ab-glass-hover);
+    }
+
+    .task:active {
+      transform: scale(.99);
     }
 
     .task input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      position: relative;
       width: 24px;
       height: 24px;
-      margin-top: 2px;
-      cursor: pointer;
+      margin-top: 8px;
       flex-shrink: 0;
-      accent-color: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--ab-glass-highlight);
+      border-radius: 7px;
+      background: var(--ab-glass-bg);
+      transition: background-color var(--ab-dur) var(--ab-ease),
+                  border-color var(--ab-dur) var(--ab-ease),
+                  transform var(--ab-dur) var(--ab-ease);
+    }
+
+    .task input[type="checkbox"]:hover {
+      border-color: var(--ab-accent);
+    }
+
+    .task input[type="checkbox"]:checked {
+      background: var(--ab-accent);
+      border-color: var(--ab-accent);
+    }
+
+    .task input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 3px;
+      width: 5px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2.5px 2.5px 0;
+      transform: rotate(45deg);
+    }
+
+    .task input[type="checkbox"]:active {
+      transform: scale(.9);
     }
 
     .task label {
       cursor: pointer;
-      font-size: 17px;
+      font-size: var(--ab-text-base);
       line-height: 1.5;
+      padding-top: 6px;
       flex: 1;
+      color: var(--ab-text);
+      transition: color var(--ab-dur) var(--ab-ease);
     }
 
     .task.done label {
-      color: var(--text-secondary);
+      color: var(--ab-faint);
       text-decoration: line-through;
     }
 
+    /* ---------- FIXED ACTION BAR ---------- */
     .actions {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 12px 20px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      z-index: 40;
       display: flex;
-      gap: 12px;
+      gap: var(--ab-3);
+      padding: var(--ab-3) max(var(--ab-4), env(safe-area-inset-left));
+      padding-bottom: calc(var(--ab-3) + env(safe-area-inset-bottom));
+      background: var(--ab-glass-bg);
+      border-top: 1px solid var(--ab-glass-border);
+      backdrop-filter: blur(18px) saturate(1.2);
+      -webkit-backdrop-filter: blur(18px) saturate(1.2);
     }
 
-    button {
+    .actions .ab-btn {
       flex: 1;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      -webkit-tap-highlight-color: transparent;
+      max-width: 640px;
     }
 
-    button:active {
-      opacity: 0.7;
-    }
+    .actions > .ab-btn:first-child { margin-left: auto; }
+    .actions > .ab-btn:last-child { margin-right: auto; }
 
-    button.secondary {
-      background: var(--border);
-      color: var(--text);
-    }
-
+    /* ---------- CELEBRATION ---------- */
     .celebration {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      inset: 0;
+      z-index: 1000;
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
-      padding: 20px;
+      padding: var(--ab-5);
+      background: rgba(0, 0, 0, .66);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .celebration.show {
       display: flex;
+      animation: ab-fade-in var(--ab-dur) var(--ab-ease);
     }
 
     .celebration-content {
-      background: var(--surface);
-      border-radius: 20px;
-      padding: 40px 32px;
-      text-align: center;
+      position: relative;
       max-width: 400px;
+      width: 100%;
+      text-align: center;
+      padding: var(--ab-7) var(--ab-6);
+      background: var(--ab-surface);
+      border: 1px solid var(--ab-glass-border);
+      border-radius: var(--ab-r-lg);
+      box-shadow: 0 24px 80px rgba(224, 26, 138, .18);
+      overflow: hidden;
+    }
+
+    .celebration-content::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(420px 220px at 50% -10%, var(--ab-accent-soft), transparent 70%);
+      pointer-events: none;
+    }
+
+    .celebration.show .celebration-content {
+      animation: ab-pop-in 420ms var(--ab-ease) both;
     }
 
     .celebration-emoji {
+      position: relative;
       font-size: 64px;
-      margin-bottom: 16px;
+      line-height: 1;
+      margin-bottom: var(--ab-4);
+    }
+
+    .celebration.show .celebration-emoji {
+      animation: ab-pop-emoji 600ms var(--ab-ease) both;
     }
 
     .celebration-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 12px;
+      position: relative;
+      font-family: var(--ab-font-display);
+      font-weight: 400;
+      font-size: var(--ab-display-sm);
+      letter-spacing: -.01em;
+      margin-bottom: var(--ab-3);
+      color: var(--ab-text);
     }
 
     .celebration-text {
-      font-size: 17px;
-      color: var(--text-secondary);
-      margin-bottom: 24px;
+      position: relative;
+      font-size: var(--ab-text-base);
+      color: var(--ab-muted);
+      margin-bottom: var(--ab-6);
     }
 
-    .celebration button {
-      width: 100%;
+    .celebration .ab-btn { position: relative; }
+
+    @keyframes ab-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes ab-pop-in {
+      from { opacity: 0; transform: translateY(12px) scale(.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes ab-pop-emoji {
+      0%   { transform: scale(0) rotate(-20deg); }
+      60%  { transform: scale(1.25) rotate(8deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    /* ---------- THEME TOGGLE ---------- */
+    .ab-theme-toggle {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(16px, env(safe-area-inset-right));
+      z-index: 60;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: var(--ab-r-pill);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .celebration.show,
+      .celebration.show .celebration-content,
+      .celebration.show .celebration-emoji { animation: none !important; }
     }
   </style>
 </head>
 <body>
+  <button class="ab-btn ab-btn--glass ab-theme-toggle" id="theme-toggle"
+          type="button" aria-label="Toggle light or dark theme" title="Toggle theme">◐</button>
+
   <div class="container">
     <header>
+      <span class="eyebrow">Agent Experiments</span>
       <h1>Product Launch</h1>
       <p class="subtitle">Ship your next creative product</p>
     </header>
 
     <div class="progress-ring">
-      <svg width="120" height="120">
+      <svg width="148" height="148" viewBox="0 0 120 120">
         <circle class="background" cx="60" cy="60" r="54"></circle>
         <circle class="progress" cx="60" cy="60" r="54" stroke-dasharray="339.292" stroke-dashoffset="339.292"></circle>
       </svg>
@@ -287,8 +403,8 @@
   </div>
 
   <div class="actions">
-    <button class="secondary" id="reset">Reset</button>
-    <button id="export">Export</button>
+    <button class="ab-btn ab-btn--glass" id="reset">Reset</button>
+    <button class="ab-btn ab-btn--primary" id="export">Export</button>
   </div>
 
   <div class="celebration" id="celebration">
@@ -296,7 +412,7 @@
       <div class="celebration-emoji">🎉</div>
       <div class="celebration-title">Ready to Ship!</div>
       <div class="celebration-text">You've completed every task. Time to launch your product to the world.</div>
-      <button id="celebrate-close">Let's Go</button>
+      <button class="ab-btn ab-btn--primary ab-btn--lg ab-btn--block" id="celebrate-close">Let's Go</button>
     </div>
   </div>
 
@@ -378,7 +494,7 @@
         const phaseEl = document.createElement('div');
         phaseEl.className = 'phase';
 
-        const doneCount = phase.tasks.filter((_, taskIndex) => 
+        const doneCount = phase.tasks.filter((_, taskIndex) =>
           state[`${phaseIndex}-${taskIndex}`]
         ).length;
 
@@ -395,20 +511,20 @@
         phase.tasks.forEach((task, taskIndex) => {
           const taskId = `${phaseIndex}-${taskIndex}`;
           const checked = state[taskId];
-          
+
           const taskEl = document.createElement('div');
           taskEl.className = `task ${checked ? 'done' : ''}`;
-          
+
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
           checkbox.id = taskId;
           checkbox.checked = checked;
           checkbox.addEventListener('change', () => toggleTask(taskId));
-          
+
           const label = document.createElement('label');
           label.htmlFor = taskId;
           label.textContent = task;
-          
+
           taskEl.appendChild(checkbox);
           taskEl.appendChild(label);
           phaseEl.appendChild(taskEl);
@@ -431,12 +547,12 @@
       const total = Object.keys(state).length;
       const done = Object.values(state).filter(Boolean).length;
       const percent = Math.round((done / total) * 100);
-      
+
       const circle = document.querySelector('.progress-ring .progress');
       const circumference = 339.292;
       const offset = circumference - (done / total) * circumference;
       circle.style.strokeDashoffset = offset;
-      
+
       document.querySelector('.progress-text').textContent = `${percent}%`;
     }
 
@@ -459,7 +575,7 @@
       const total = Object.keys(state).length;
       const done = Object.values(state).filter(Boolean).length;
       let text = `Product Launch Checklist (${done}/${total} complete)\n\n`;
-      
+
       phases.forEach((phase, pi) => {
         text += `${phase.emoji} ${phase.title}\n`;
         phase.tasks.forEach((task, ti) => {
@@ -493,6 +609,22 @@
         document.getElementById('celebration').classList.add('show');
       }, 500);
     }
+  </script>
+
+  <script>
+    // Brand light/dark theme toggle (persists per viewer).
+    (function () {
+      const KEY = 'ab-theme';
+      const root = document.documentElement;
+      try { root.dataset.theme = localStorage.getItem(KEY) || 'dark'; } catch (e) { root.dataset.theme = 'dark'; }
+      const btn = document.getElementById('theme-toggle');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+          try { localStorage.setItem(KEY, root.dataset.theme); } catch (e) {}
+        });
+      }
+    })();
   </script>
 </body>
 </html>
