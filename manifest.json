@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-17",
+      "slug": "2026-10-17",
+      "title": "Quiet Notes",
+      "category": "productivity",
+      "oneLiner": "Paste a meeting transcript and get action items, decisions and open questions — no bot joins the call and nothing leaves your browser.",
+      "path": "apps/2026-10-17/"
+    },
+    {
       "date": "2026-10-16",
       "slug": "2026-10-16-pub-quiz",
       "title": "Pub Quiz Night",

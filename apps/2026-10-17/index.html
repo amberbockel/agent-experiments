@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiet Notes — bot-free meeting notes</title>
+<meta name="description" content="Paste a transcript and get action items, decisions and open questions — entirely in your browser.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:calc(var(--ab-space-2,16px) + env(safe-area-inset-top)) 0 16px;gap:16px}
+  .top a{color:inherit;text-decoration:none;opacity:.7;min-height:44px;display:inline-flex;align-items:center}
+  .top a:hover{opacity:1}
+  .hero{padding:24px 0 32px}
+  .hero h1{font-size:clamp(2.25rem,9vw,3.5rem);line-height:1.05;margin:8px 0 16px}
+  .hero p{max-width:52ch;opacity:.75;margin:0}
+  .stack{display:grid;gap:24px;padding-bottom:64px}
+  .ab-card{padding:24px}
+  textarea.ab-textarea{width:100%;min-height:200px;resize:vertical;font:inherit;line-height:1.55}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+  .row .grow{flex:1}
+  .privacy{font-size:.8125rem;opacity:.6}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  h2{font-size:1.5rem;margin:0 0 16px}
+  .sec+.sec{margin-top:32px}
+  .sec h3{font-family:var(--ab-font-body,'DM Sans',sans-serif);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin:0 0 8px;font-weight:600}
+  ul.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .item{display:flex;gap:16px;align-items:flex-start;padding:12px 16px;border-radius:16px;background:color-mix(in srgb,currentColor 5%,transparent);transition:background .2s,opacity .2s}
+  .item:hover{background:color-mix(in srgb,currentColor 9%,transparent)}
+  .item label{display:flex;gap:16px;align-items:flex-start;cursor:pointer;flex:1;min-height:44px;align-items:center}
+  .item input{width:20px;height:20px;accent-color:#e01a8a;flex:none}
+  .item input:checked~.txt{opacity:.45;text-decoration:line-through}
+  .item .txt{flex:1;line-height:1.45}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .plain{padding:12px 16px;border-radius:16px;background:color-mix(in srgb,currentColor 5%,transparent);line-height:1.45}
+  .who{display:grid;grid-template-columns:auto 1fr auto;gap:8px 16px;align-items:center;font-size:.9375rem}
+  .bar{height:8px;border-radius:99px;background:color-mix(in srgb,currentColor 10%,transparent);overflow:hidden}
+  .bar i{display:block;height:100%;background:#e01a8a;border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+  .empty{opacity:.55;font-size:.9375rem;padding:8px 0}
+  mark{background:none;color:#e01a8a;font-weight:600}
+  .reveal{animation:up .45s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.reveal{animation:none}.bar i{transition:none}}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="ab-container" style="max-width:720px">
+  <nav class="top">
+    <a href="../../" aria-label="Back to gallery">← Agent Experiments</a>
+    <button class="ab-btn ab-btn--ghost" id="theme" aria-label="Toggle light or dark theme">◐</button>
+  </nav>
+
+  <header class="hero">
+    <span class="ab-eyebrow">Productivity · On-device</span>
+    <h1>Quiet Notes</h1>
+    <p>No bot joins your call. Paste a transcript and get the action items, decisions and loose ends — processed right here, never uploaded.</p>
+  </header>
+
+  <main class="stack">
+    <section class="ab-card" aria-labelledby="in">
+      <label class="ab-label" for="src" id="in">Transcript</label>
+      <textarea class="ab-textarea" id="src" spellcheck="false" placeholder="Maya: Let's start with the launch date.&#10;Jon: I'll send the revised deck by Friday.&#10;…"></textarea>
+      <div class="row">
+        <button class="ab-btn ab-btn--primary" id="go">Extract notes</button>
+        <button class="ab-btn ab-btn--glass" id="sample">Try a sample</button>
+        <button class="ab-btn ab-btn--ghost" id="clear">Clear</button>
+        <span class="grow"></span>
+        <span class="privacy">🔒 Runs offline in your browser</span>
+      </div>
+    </section>
+
+    <section class="ab-card reveal" id="out" hidden aria-live="polite">
+      <h2>Meeting notes</h2>
+      <div class="stats" id="stats"></div>
+      <div id="body"></div>
+      <div class="row">
+        <button class="ab-btn ab-btn--secondary" id="copy">Copy as Markdown</button>
+        <span class="privacy" id="msg" role="status"></span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('ab-theme')||'dark'}catch(e){root.dataset.theme='dark'}
+document.getElementById('theme').onclick=()=>{
+  root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
+  try{localStorage.setItem('ab-theme',root.dataset.theme)}catch(e){}
+};
+
+const SAMPLE=`Maya: Thanks everyone. First topic is the launch date for the new onboarding flow.
+Jon: Engineering says we can be ready by November 4th if we cut the referral screen.
+Maya: Okay, let's go with November 4th and drop the referral screen.
+Priya: Agreed. I'll update the roadmap by tomorrow.
+Jon: I'll send the revised scope doc to design by Friday.
+Maya: Priya, can you check whether legal has signed off on the new consent copy?
+Priya: Yes, I'll ping them today.
+Sam: Who is owning the support macros for launch week?
+Maya: Good question. We decided to hold the pricing change until January, so that's off the table for now.
+Sam: Then I need to draft the help-center articles before next Wednesday.
+Jon: Do we know how many beta users are still on the old flow?
+Maya: Not yet. Sam, please pull the numbers from analytics, about 12% last I saw.
+Sam: Will do, by EOD Thursday.`;
+
+const DAYS='monday|tuesday|wednesday|thursday|friday|saturday|sunday';
+const DUE=new RegExp(`\\b(by (?:eod|end of day|end of week|tomorrow|today|(?:${DAYS})|\\d{1,2}/\\d{1,2})(?: ?\\w+)?|before next (?:${DAYS})|next (?:${DAYS}|week|month)|tomorrow|today|eod(?: (?:${DAYS}))?|this (?:week|${DAYS})|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \\d{1,2}(?:st|nd|rd|th)?|(?:${DAYS}))\\b`,'i');
+const ACT=/\b(i['’]ll|i will|we['’]ll|will do|can you|could you|please|need to|needs to|todo|action item|going to|gonna|i can take|i['’]ve got|let me|should (?:send|check|draft|update|pull|write|share|book|ping))\b/i;
+const DEC=/\b(decided|agreed?|let['’]s go with|we['’]ll go with|going with|approved|final call|settled on|signed off|hold (?:the|off))\b/i;
+const YES_ANS=/^(yes|yeah|yep|not yet|no|correct|sure|good question)/i;
+
+function parse(text){
+  const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const turns=lines.map(l=>{
+    const m=l.match(/^(?:\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*)?([A-Z][\w .'-]{0,24}):\s+(.*)$/);
+    return m?{who:m[1].trim(),text:m[2]}:{who:null,text:l};
+  });
+  const names=[...new Set(turns.map(t=>t.who).filter(Boolean))];
+  return {turns,names};
+}
+const sentences=t=>t.match(/[^.!?]+[.!?]*/g)?.map(s=>s.trim()).filter(s=>s.length>3)||[];
+
+function analyze(text){
+  const {turns,names}=parse(text);
+  const actions=[],decisions=[],questions=[],facts=[];
+  const words={};
+  turns.forEach((t,i)=>{
+    const w=t.text.split(/\s+/).length;
+    if(t.who)words[t.who]=(words[t.who]||0)+w;
+    sentences(t.text).forEach(s=>{
+      const low=s.toLowerCase();
+      if(/\?$/.test(s)&&!/^(ok|okay|right|sound)/i.test(s)&&!/\b(can|could) you\b/i.test(s)){
+        const next=turns[i+1];
+        questions.push({text:s,who:t.who,open:!(next&&next.who&&next.who!==t.who&&/^(yes|yeah|yep|correct|sure|no\b)/i.test(next.text))});
+        if(!/\b(can|could) you\b/i.test(s))return;
+      }
+      if(DEC.test(s)&&!/\?$/.test(s)&&!/^(agreed?\.?)$/i.test(s)){decisions.push({text:s,who:t.who});}
+      if(ACT.test(s)){
+        let owner=t.who;
+        const addr=s.match(/\b([A-Z][a-z]+),\s*(?:can|could|please)\b/)||s.match(/\b(?:ask|have|get)\s+([A-Z][a-z]+)\b/);
+        if(addr&&names.includes(addr[1]))owner=addr[1];
+        else if(/\b(can|could) you\b|\bplease\b/i.test(s)){
+          const prev=turns[i+1];owner=prev&&prev.who&&prev.who!==t.who?prev.who:owner;
+        }
+        const nm=s.match(/^([A-Z][a-z]+) (?:will|to|needs to)\b/);
+        if(nm&&names.includes(nm[1]))owner=nm[1];
+        const due=(s.match(DUE)||[])[0]||(turns[i+1]&&turns[i+1].text.match(/^(?:will do,? )?(by [\w ]+)/i)||[])[1]||null;
+        const clean=s.replace(/^(yes|yeah|okay|ok|sure|not yet),?\.?\s*/i,'');
+        if(!actions.some(a=>a.text===clean))actions.push({text:clean,owner,due,done:false});
+      }
+      const f=s.match(/\b\d+(?:\.\d+)?%|\$\d[\d,.]*[kmb]?|\b\d{1,3}(?:,\d{3})+\b/i);
+      if(f&&!ACT.test(s)&&!DEC.test(s))facts.push({text:s});
+    });
+  });
+  // merge "Will do, by X" style follow-ups: drop actions that are just acknowledgements
+  const real=actions.filter(a=>!/^will do\b/i.test(a.text)||false);
+  // if a "will do" carried a due date, attach it to previous action by same owner
+  actions.forEach((a,i)=>{if(/^will do\b/i.test(a.text)&&a.due){const p=[...real].reverse().find(x=>x.owner===a.owner&&!x.due);if(p)p.due=a.due}});
+  const total=Object.values(words).reduce((a,b)=>a+b,0)||1;
+  const talk=Object.entries(words).sort((a,b)=>b[1]-a[1]).map(([n,w])=>({n,pct:Math.round(w/total*100)}));
+  return {actions:real,decisions,questions,facts,talk,names,turns:turns.length};
+}
+
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);
+let last=null;
+
+function render(r){
+  last=r;
+  $('stats').innerHTML=[`${r.turns} turns`,`${r.names.length} speakers`,`${r.actions.length} actions`,`${r.decisions.length} decisions`].map(t=>`<span class="ab-tag">${t}</span>`).join('');
+  const sec=(title,html,empty)=>`<div class="sec"><h3>${title}</h3>${html||`<div class="empty">${empty}</div>`}</div>`;
+  const acts=r.actions.length?`<ul class="list">${r.actions.map((a,i)=>`<li class="item"><label><input type="checkbox" data-i="${i}"><span class="txt">${esc(a.text)}<span class="meta">${a.owner?`<span class="ab-tag">${esc(a.owner)}</span>`:''}${a.due?`<span class="ab-tag"><mark>${esc(a.due)}</mark></span>`:''}</span></span></label></li>`).join('')}</ul>`:'';
+  const decs=r.decisions.length?`<ul class="list">${r.decisions.map(d=>`<li class="plain">${esc(d.text)}</li>`).join('')}</ul>`:'';
+  const qs=r.questions.length?`<ul class="list">${r.questions.map(q=>`<li class="plain">${esc(q.text)}${q.who?` <span class="ab-tag">${esc(q.who)}</span>`:''}${q.open?' <span class="ab-tag"><mark>open</mark></span>':''}</li>`).join('')}</ul>`:'';
+  const nums=r.facts.length?`<ul class="list">${r.facts.map(f=>`<li class="plain">${esc(f.text)}</li>`).join('')}</ul>`:'';
+  const talk=r.talk.length?`<div class="who">${r.talk.map(t=>`<span>${esc(t.n)}</span><div class="bar"><i style="width:0" data-w="${t.pct}"></i></div><span>${t.pct}%</span>`).join('')}</div>`:'';
+  $('body').innerHTML=sec('Action items',acts,'No commitments detected. Try phrases like “I’ll send…” or “Priya, can you…”.')+sec('Decisions',decs,'No decisions detected.')+sec('Open questions',qs,'No questions raised.')+sec('Numbers mentioned',nums,'No figures spotted.')+sec('Talk time',talk,'Add “Name: …” prefixes to see who spoke.');
+  $('out').hidden=false;
+  requestAnimationFrame(()=>document.querySelectorAll('.bar i').forEach(b=>b.style.width=b.dataset.w+'%'));
+  $('out').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+}
+function md(r){
+  const L=['# Meeting notes',''];
+  L.push('## Action items',...(r.actions.length?r.actions.map(a=>`- [ ] ${a.text}${a.owner?` — **${a.owner}**`:''}${a.due?` (${a.due})`:''}`):['- none']),'');
+  L.push('## Decisions',...(r.decisions.length?r.decisions.map(d=>`- ${d.text}`):['- none']),'');
+  L.push('## Open questions',...(r.questions.length?r.questions.map(q=>`- ${q.text}${q.open?' _(open)_':''}`):['- none']),'');
+  return L.join('\n');
+}
+$('go').onclick=()=>{const t=$('src').value.trim();if(!t){$('src').focus();return}render(analyze(t))};
+$('sample').onclick=()=>{$('src').value=SAMPLE;$('go').click()};
+$('clear').onclick=()=>{$('src').value='';$('out').hidden=true;$('src').focus()};
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(md(last));$('msg').textContent='Copied ✓'}
+  catch(e){const t=$('src');$('msg').textContent='Copy blocked — select manually'}
+  setTimeout(()=>$('msg').textContent='',2200);
+};
+</script>
+</body>
+</html>
