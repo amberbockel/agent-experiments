@@ -88,11 +88,11 @@
 
 /* -------------------------------- constants ----------------------------- */
 const FPS=60, STEP=1/FPS;
-const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=2400, LANES=2;
+const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=2520, LANES=2;
 const FOV=100, CAM_HEIGHT=1000, CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
 const DRAW_DIST=220, FOG_DENSITY=4;
 const PLAYER_Z=CAM_HEIGHT*CAM_DEPTH;
-const HORIZON=0.42;   // vertical vanishing point, raised so more road shows (OutRun-style)
+const HORIZON=0.47;   // ~50/50 sky-to-ground split (OutRun beach)
 const MAX_SPEED=SEG_LEN/STEP, ACCEL=MAX_SPEED/5, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
 const OFFROAD_DECEL=-MAX_SPEED/2, OFFROAD_LIM=MAX_SPEED/4, CENTRIFUGAL=0.3;
 const SPRITE_SCALE=0.3;    // collision width as a fraction of the road half-width
@@ -102,12 +102,12 @@ const START_POS=200*4+100;  // start mid-segment (non-boundary) so the near road
 /* ------------------------------- stages --------------------------------- */
 const STAGES=[
   { name:'CAPE COD', bg:'coast',
-    sky:['#2f84e6','#5fb0f2','#c3e9ff'],
-    ocean:'#1f7fb8', oceanLite:'#5fc4e6', sand:'#ead9a6',
-    hill:'#2f9e52', hill2:'#227a40', haze:'#cdeaf6',
-    light:{ road:'#9a9aa2', grass:'#49c24e', rumble:'#e21b24', lane:'#ffffff' },
-    dark :{ road:'#86868e', grass:'#3aa63f', rumble:'#ffffff' },
-    scenery:['umbrella','rock','boat','store','sign'],
+    sky:['#2f82ea','#58a8f0','#bfe4ff'],
+    ocean:'#1f7fb8', oceanLite:'#78d2ee', sand:'#ead9a6',
+    hill:'#cdbd86', hill2:'#d8c993', haze:'#e7dcc0',
+    light:{ road:'#b4b4ba', grass:'#e6d3a0', rumble:'#e21b24', lane:'#ffffff' },
+    dark :{ road:'#a7a7af', grass:'#d6c088', rumble:'#ffffff' },
+    scenery:['clamShack','capeHouse','duneGrass','rock','boat'],
     cars:['carRed','carBlue','beetle','suv'] },
   { name:'BOSTON', bg:'city',
     sky:['#5aa9ee','#8ec8f4','#cbe6fb'],
@@ -187,21 +187,36 @@ function addDownToEnd(n=200){ addRoad(n,n,n,-C.EASY,-lastY()/SEG_LEN); }
 
 function placeScenery(){
   const st=STAGES[stageIndex];
-  // palms lining BOTH sides of the coast road (OutRun signature)
   if(st.bg==='coast'){
-    for(let n=14;n<segments.length-16;n+=rInt(4,6)){
-      segments[n].sprites.push({type:'palm',offset:-(1.35+Math.random()*0.5)});
-      segments[Math.min(n+2,segments.length-1)].sprites.push({type:'palm',offset:(1.35+Math.random()*0.5)});
+    // sparse, VARIED palm line (not a solid wall)
+    for(let n=14;n<segments.length-16;n+=rInt(8,15)){
+      const side=Math.random()<0.5?-1:1;
+      segments[n].sprites.push({type:'palm',offset:side*(1.18+Math.random()*0.4)});
+      if(Math.random()<0.45) segments[Math.min(n+3,segments.length-1)].sprites.push({type:'palm',offset:-side*(1.2+Math.random()*0.4)});
     }
+    // beach-grass tufts close to the road edge
+    for(let n=16;n<segments.length-8;n+=rInt(3,6)){
+      const side=(n%2===0)?1:-1; segments[n].sprites.push({type:'duneGrass',offset:side*(1.08+Math.random()*0.35)});
+    }
+    // Cape Cod buildings set back from the road
+    const builds=['clamShack','capeHouse','capeHouse','clamShack'];
+    for(let n=40;n<segments.length-40;n+=rInt(24,44)){
+      const side=Math.random()<0.5?-1:1;
+      segments[n].sprites.push({type:rPick(builds),offset:side*(1.28+Math.random()*0.42)});
+    }
+    // occasional cape lighthouse on a point
+    for(let n=120;n<segments.length-60;n+=rInt(360,520)){
+      segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.55});
+    }
+    return;
   }
+  // city stage keeps the original billboards
   for(let n=12;n<segments.length;n+=rInt(5,10)){
     const side=(n%2===0)?1:-1, off=side*(2.0+Math.random()*2.2);
     segments[n].sprites.push({type:rPick(st.scenery),offset:off});
   }
-  // recurring landmark store on the right
-  const store=st.bg==='coast'?'store':'market';
   for(let n=160;n<segments.length-60;n+=rInt(240,340)){
-    segments[n].sprites.push({type:store,offset:2.7});
+    segments[n].sprites.push({type:'market',offset:2.7});
   }
 }
 function placeCheckpoints(){
@@ -302,7 +317,7 @@ function update(dt){
   updateAudio(sp);
 }
 function spriteW(t){ switch(t){ case 'palm':case 'tower':case 'brownstone':return SPRITE_SCALE*0.8;
-  case 'boat':case 'store':case 'market':case 'suv':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
+  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
 
 /* ------------------------------ juice / FX ------------------------------ */
 function spawnParticle(dust,color){
@@ -403,7 +418,7 @@ function drawSegment(seg){
     const band=Math.floor(seg.index/RUMBLE_LEN)%2;
     // double-yellow centre (always)
     const cy1=p1.w/26,cy2=p2.w/26, gap1=p1.w/10,gap2=p2.w/10;
-    ctx.fillStyle=fade('#f2c83a',fog);
+    ctx.fillStyle=fade('#e9e9ef',fog);
     poly([p2.x-gap2-cy2,p2.y, p2.x-gap2+cy2,p2.y, p1.x-gap1+cy1,p1.y, p1.x-gap1-cy1,p1.y]);
     poly([p2.x+gap2-cy2,p2.y, p2.x+gap2+cy2,p2.y, p1.x+gap1+cy1,p1.y, p1.x+gap1-cy1,p1.y]);
     // dashed white lane lines
@@ -424,18 +439,18 @@ function drawBackground(st,pY){
   // ground fallback (keeps gaps grass-coloured instead of sky at the start line)
   ctx.fillStyle=st.dark.grass; ctx.fillRect(0,horizon,W,H-horizon);
   // --- soft sun with bloom (slow parallax, sits deepest in the scene) ---
-  const sunx=Math.round(W*0.70-skyOffset*0.12*W), suny=horizon-H*0.21;
-  const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,W*0.20);
-  sg.addColorStop(0,'rgba(255,252,220,0.98)'); sg.addColorStop(0.42,'rgba(255,214,120,0.6)');
-  sg.addColorStop(1,'rgba(255,180,90,0)');
+  const sunx=Math.round(W*0.72-skyOffset*0.10*W), suny=horizon-H*0.26;
+  const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,W*0.13);
+  sg.addColorStop(0,'rgba(255,252,224,0.85)'); sg.addColorStop(0.5,'rgba(255,224,150,0.35)');
+  sg.addColorStop(1,'rgba(255,200,120,0)');
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=sg;
-  ctx.beginPath(); ctx.arc(sunx,suny,W*0.20,0,7); ctx.fill();
-  ctx.fillStyle='rgba(255,248,206,0.95)'; ctx.beginPath(); ctx.arc(sunx,suny,W*0.058,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(sunx,suny,W*0.13,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,250,218,0.8)'; ctx.beginPath(); ctx.arc(sunx,suny,W*0.042,0,7); ctx.fill();
   ctx.restore();
   // clouds (faster parallax than the sun)
   ctx.fillStyle='rgba(255,255,255,0.92)';
   for(const cl of clouds){
-    const cx=((cl.x - skyOffset*0.3)%1+1)%1*W, cy=horizon-H*0.16-cl.y*H*0.4, s=cl.s*W*0.06;
+    const cx=((cl.x - skyOffset*0.3)%1+1)%1*W, cy=horizon-H*0.14-cl.y*H*0.34, s=cl.s*W*0.088;
     cloud(cx,cy,s); cloud(cx-W,cy,s); cloud(cx+W,cy,s);
   }
   if(st.bg==='coast') drawCoast(st,horizon); else drawCity(st,horizon);
@@ -444,22 +459,16 @@ function cloud(x,y,s){ ctx.beginPath();
   ctx.arc(x,y,s,0,7); ctx.arc(x+s,y+s*0.2,s*0.8,0,7); ctx.arc(x-s,y+s*0.2,s*0.7,0,7); ctx.arc(x+s*0.4,y-s*0.4,s*0.7,0,7); ctx.fill(); }
 
 function drawCoast(st,horizon){
-  // ocean band
-  ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.05,W,H*0.10);
-  ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.05,W,H*0.018);
-  // sparkling sea highlights (own slow parallax)
-  ctx.fillStyle='rgba(255,255,255,0.75)';
-  const seaY=horizon-H*0.042, drift=Math.floor(skyOffset*260);
-  for(let i=0;i<26;i++){ const sx=((i*61+drift)%W+W)%W, sy=seaY+(i*13%Math.max(2,Math.round(H*0.028)));
+  // thin open SEA strip along the horizon
+  ctx.fillStyle=st.ocean;     ctx.fillRect(0,horizon-H*0.030,W,H*0.030);
+  ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.030,W,H*0.009);
+  // sparkling sea highlights (slow parallax)
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  const seaY=horizon-H*0.024, drift=Math.floor(skyOffset*260);
+  for(let i=0;i<32;i++){ const sx=((i*53+drift)%W+W)%W, sy=seaY+(i*11%Math.max(2,Math.round(H*0.015)));
     if((i*7+drift)%3===0) ctx.fillRect(sx,sy,2,1); }
-  // layered hazy coastal hills (farther = hazier and lower)
-  drawHills(fade(st.hill2,0.42),horizon-H*0.016,H*0.050,treeOffset*W*0.5, 0.90,7);
-  drawHills(fade(st.hill2,0.60),horizon,         H*0.058,treeOffset*W*0.75,0.95,6);
-  drawHills(fade(st.hill, 0.80),horizon+H*0.010, H*0.052,treeOffset*W,     1.00,5);
-  // tiny lighthouse on a point
-  const lx=(0.78 - hillOffset*0.6)%1; const px=((lx%1+1)%1)*W;
-  ctx.fillStyle='#f4f4f4'; ctx.fillRect(px-3,horizon-H*0.065,6,H*0.05);
-  ctx.fillStyle='#d33'; ctx.fillRect(px-3,horizon-H*0.05,6,H*0.012);
+  // low pale dune line just inland of the sea (soft, hazy; no green mountains)
+  drawHills(fade(st.sand,0.50),horizon+H*0.003,H*0.024,treeOffset*W*0.5,0.85,9);
 }
 function drawCity(st,horizon){
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.03,W,H*0.07);       // Charles River
@@ -528,8 +537,12 @@ function drawSceneSprite(seg,sprite){
 }
 function drawSprite(t,s,fog){
   switch(t){
-    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.max(0.3,s*2.0);
+    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.min(Math.max(0.3,s*4.6),W*0.050);
       blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }
+    case 'clamShack':{ blitSprite(sprite('clamShack',buildClamShack),0,0,Math.min(Math.max(0.3,s*5.4),W*0.072), 0.5+0.5*fog); break; }
+    case 'capeHouse':{ blitSprite(sprite('capeHouse',buildCapeHouse),0,0,Math.min(Math.max(0.3,s*5.4),W*0.075),0.5+0.5*fog); break; }
+    case 'lighthouse':{ blitSprite(sprite('lighthouse',buildLighthouse),0,0,Math.min(Math.max(0.35,s*5.8),W*0.082),0.55+0.45*fog); break; }
+    case 'duneGrass':{ blitSprite(sprite('duneGrass',buildDuneGrass),0,0,Math.min(Math.max(0.3,s*3.4),W*0.020), 0.5+0.5*fog); break; }
     case 'umbrella':{ const h=70*s;
       ctx.strokeStyle=shade('#777',fog); ctx.lineWidth=Math.max(1,4*s);
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-h); ctx.stroke();
@@ -560,7 +573,7 @@ function drawSprite(t,s,fog){
       ctx.globalAlpha=fog; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font=`bold ${Math.max(6,13*s)}px Courier`;
       ctx.fillText('OUTRUN',0,-122*s+h*0.65); ctx.globalAlpha=1; break; }
     case 'taxi':{ const cv=sprite('car_taxi',()=>buildCarSprite(CAR_DEFS.taxi));
-      blitSprite(cv,0,0,Math.max(0.3,s*1.6),fog); break; }   // parked taxi as scenery
+      blitSprite(cv,0,0,Math.min(Math.max(0.3,s*2.6),W*0.02),fog); break; }   // parked taxi as scenery
   }
 }
 function buildingSign(s,fog,wall,roof,text,band){
@@ -581,7 +594,7 @@ function drawVehicle(type,x,y,scale,clip,fog){
   const cv=sprite('car_'+type,()=>buildCarSprite(def));
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
   // scale sprite to the road perspective: small at horizon, growing smoothly in
-  const bs=px*2.0, alpha=0.35+0.65*(fog==null?1:fog);
+  const bs=Math.min(px*4.4, W*0.022), alpha=0.35+0.65*(fog==null?1:fog);
   blitSprite(cv,x,y+6*px,bs,alpha);
   ctx.restore();
 }
@@ -630,7 +643,9 @@ function blitSprite(cv,cx,yBottom,bs,alpha){
 }
 
 /* ---- hero car: rear-view red convertible + woman driver + pup -------------- */
-function buildPlayerSprite(){
+/* Animation: each frame bakes a hair-sway phase + a dog head pose.           */
+const PLAYER_FRAMES=[{h:0,d:0},{h:1,d:0},{h:2,d:1},{h:3,d:2},{h:2,d:2},{h:1,d:1}];
+function buildPlayerFrame(hairPhase,dogPose){
   const NW=64, NH=52, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
   const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
   const blob=(rows,col)=>{ c.fillStyle=col; for(const [y,x0,x1] of rows) c.fillRect(x0,y,x1-x0+1,1); };
@@ -679,26 +694,40 @@ function buildPlayerSprite(){
   // --- DRIVER (woman), left seat, centre x=24 — REAR VIEW (back of head) ---
   P(18,17,12,5,TOP); P(18,20,12,2,TOPD);             // shoulders / upper back
   P(22,13,4,4,SK);                                     // nape (back of neck)
-  // brown hair mass covering the whole back of the head
+  // static dark hair mass over the back of the head
   blob([[3,21,27],[4,20,28],[5,19,29],[6,19,29],[7,19,29],[8,19,29],[9,19,29],[10,20,28],[11,21,27],[12,22,26]],HY);
-  // wind-blown tail streaming to the left
-  blob([[4,12,20],[5,10,20],[6,9,19],[7,10,18],[8,12,17]],HY);
-  P(19,4,2,8,HYD); P(10,9,7,1,HYD);                   // shadow side + tail underside
-  P(24,3,1,9,HYL); P(11,5,5,1,HYL);                   // centre-back parting highlight + tail hi
-  P(27,7,2,1,SG);                                      // sunglasses arm at the temple
-  P(28,8,1,2,SKD);                                     // ear hint at the side
-  // --- PUP (dog), shotgun seat — 3/4 HEAD OUT THE SIDE, muzzle to our right ---
-  P(36,16,10,6,DG); P(37,16,8,1,DGB);                 // chest / scruff, leaning to the side
-  // furry head turned to the right (skull on the left, muzzle poking out right)
-  blob([[4,39,45],[5,38,46],[6,37,47],[7,37,47],[8,37,47],[9,37,47],[10,38,46],[11,39,45],[12,40,44]],DG);
-  // muzzle in profile, protruding over the car's right side
-  blob([[8,46,51],[9,46,52],[10,47,51]],DGB);
-  P(51,8,2,2,NOSE);                                    // black nose at the tip
-  P(49,11,3,2,TNG);                                    // little tongue hanging below
-  // one floppy near ear (darker) hanging down the back of the head
-  blob([[3,37,41],[4,36,41],[5,36,42],[6,37,42],[7,38,43]],DGD);
-  P(44,7,2,2,NOSE);                                    // the visible eye
-  P(40,5,4,1,DGB); P(45,7,1,3,DGB);                    // fur highlights on the crown + cheek
+  P(19,4,2,8,HYD); P(24,3,1,9,HYL);                   // crown shadow + parting highlight
+  P(27,7,2,1,SG); P(28,8,1,2,SKD);                    // sunglasses arm + ear hint
+  // ANIMATED ponytail hanging down the back, swaying with the wind
+  const sway=[-3,-1,1,3][hairPhase];
+  for(let i=0;i<11;i++){ const t=i/10, x=Math.round(23+sway*t*t), y=12+i;
+    P(x,y,3,1,HY); P(x,y,1,1,HYD); if(i>6) P(x+2,y,1,1,HYL); }
+  P(Math.round(23+sway),23,3,2,HY);                   // tail tip
+  // ANIMATED wind wisps whipping off to the left (length varies by phase)
+  const whip=[7,10,13,10][hairPhase];
+  for(let i=0;i<whip;i++){ const x=18-i, y=4+Math.floor(i*0.5); P(x,y,2,1,i<whip-2?HY:HYL); }
+  // --- PUP (dog), shotgun seat — head out the window, looking around ---
+  P(36,16,10,6,DG); P(37,16,8,1,DGB);                 // chest / scruff
+  if(dogPose===0){                                     // snout out to OUR RIGHT
+    blob([[4,39,45],[5,38,46],[6,37,47],[7,37,47],[8,37,47],[9,37,47],[10,38,46],[11,39,45],[12,40,44]],DG);
+    blob([[8,46,51],[9,46,52],[10,47,51]],DGB);        // muzzle right
+    P(51,8,2,2,NOSE); P(49,11,3,2,TNG);                // nose + tongue
+    blob([[3,37,41],[4,36,41],[5,36,42],[6,37,42],[7,38,43]],DGD); // near ear (back-left)
+    P(44,7,2,2,NOSE); P(40,5,4,1,DGB); P(45,7,1,3,DGB);// eye + fur hi
+  } else if(dogPose===2){                              // glance to OUR LEFT
+    blob([[4,39,45],[5,38,46],[6,37,47],[7,37,47],[8,37,47],[9,37,47],[10,38,46],[11,39,45],[12,40,44]],DG);
+    blob([[8,33,38],[9,32,38],[10,33,37]],DGB);        // muzzle left
+    P(31,8,2,2,NOSE); P(32,11,3,2,TNG);                // nose + tongue
+    blob([[3,43,47],[4,43,48],[5,42,48],[6,42,47],[7,41,46]],DGD); // near ear (back-right)
+    P(40,7,2,2,NOSE); P(44,5,4,1,DGB); P(38,7,1,3,DGB);// eye + fur hi
+  } else {                                             // looking FORWARD (back of head)
+    blob([[4,38,46],[5,37,47],[6,37,47],[7,37,47],[8,37,47],[9,38,46],[10,38,46],[11,39,45]],DG);
+    blob([[2,36,39],[3,35,39],[4,36,40]],DGD);         // left ear up
+    blob([[2,45,48],[3,45,49],[4,44,48]],DGD);         // right ear up
+    P(39,6,1,4,DGD); P(43,6,1,4,DGD);                  // scruff
+    P(38,7,1,3,DGB); P(45,7,1,3,DGB);                  // side fur hi
+    P(41,11,3,2,DGB); P(42,12,2,1,NOSE);               // snout hint + nose (pointing away)
+  }
   return cv;
 }
 
@@ -724,6 +753,63 @@ function buildPalmSprite(){
 }
 
 /* ---- traffic cars: rear-view pixel coupes / SUV / taxi -------------------- */
+/* ---- Cape Cod / New England roadside buildings (pixel art) --------------- */
+function buildClamShack(){
+  const NW=44,NH=34, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+  const W1='#9b968a',WD='#7c776b',WL='#b4b0a4',RF='#5f6b6e',RFD='#45504f',RFL='#7b878a',
+        SNW='#efe9da',RED='#c0392b',WIN='#26262c',SILL='#c9c3b4',LOB='#d8482f',POST='#6b655a';
+  P(10,30,3,4,POST); P(31,30,3,4,POST);                 // legs
+  P(8,16,28,16,W1);                                     // walls
+  for(let y=19;y<32;y+=3) P(8,y,28,1,WD);               // weathered planks
+  P(8,16,1,16,WD); P(35,16,1,16,WD); P(8,16,28,1,WL);
+  for(let i=0;i<9;i++){ const y=16-i,x0=Math.round(5+i*1.6),x1=Math.round(39-i*1.6); P(x0,y,Math.max(1,x1-x0),1,i>7?RFL:RF); }
+  P(4,15,36,1,RFD);                                     // eave
+  P(11,17,22,6,SNW); P(11,17,22,1,WD);                  // sign board
+  P(13,19,4,2,RED); P(19,19,6,2,RED); P(27,19,4,2,RED); // painted "CLAMS"
+  P(33,17,3,2,LOB);                                     // lobster accent
+  P(15,24,13,6,WIN); P(15,24,13,1,SILL); P(15,30,13,1,SILL); P(21,24,1,6,SILL); // order window
+  return cv;
+}
+function buildCapeHouse(){
+  const NW=44,NH=42, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+  const SH='#8f897e',SHD='#736e63',TRIM='#f2efe6',RF='#565049',RFD='#3e3a34',RFL='#6e685e',
+        BR='#9a4b38',BRD='#7a3a2a',PANE='#3a4f5e',SHUT='#4f5a4a',DOOR='#55504a',
+        FLP='#d0d0d0',FR='#d1322b',FW='#f0f0f0',FB='#2a4b9a';
+  for(let i=0;i<14;i++){ const y=4+i,x0=Math.round(21-i*1.15),x1=Math.round(21+i*1.15); P(x0,y,Math.max(1,x1-x0),1,i<2?RFL:RF); }
+  P(6,16,30,1,RFD);                                     // eave
+  P(27,6,4,8,BR); P(27,6,4,1,BRD); P(27,9,4,1,BRD);     // chimney
+  P(7,2,1,9,FLP); P(8,2,6,1,FR); P(8,3,6,1,FW); P(8,4,6,1,FR); P(8,2,3,2,FB); // US flag
+  P(9,16,26,24,SH);                                     // shingle walls
+  for(let y=19;y<40;y+=3) P(9,y,26,1,SHD);
+  P(9,16,2,24,TRIM); P(33,16,2,24,TRIM); P(9,38,26,2,TRIM); // white trim
+  const win=x=>{ P(x-1,22,8,9,SHUT); P(x,23,6,7,TRIM); P(x+1,24,4,5,PANE); P(x+3,24,1,5,TRIM); };
+  win(13); win(24);                                     // shuttered windows
+  P(19,31,5,9,DOOR); P(19,31,5,1,TRIM); P(23,35,1,1,'#d9c24a'); // door
+  return cv;
+}
+function buildLighthouse(){
+  const NW=22,NH=50, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+  const WT='#f1f1f1',WTD='#d2d2d8',RED='#d8322b',GL='#2b3238',GLL='#8fd0e6',BASE='#8a857a',BASED='#6c6860';
+  for(let y=14;y<46;y++){ const t=(y-14)/32,half=Math.round(3+t*4); P(11-half,y,half*2,1,WT); P(11-half,y,1,1,WTD); P(10+half,y,1,1,WTD); }
+  P(5,22,12,3,RED); P(4,34,14,3,RED);                   // red bands
+  P(6,10,10,5,BASED); P(7,6,8,5,GL); P(8,7,2,3,GLL);    // lantern room
+  for(let i=0;i<4;i++) P(7+i,5-i,8-2*i,1,RED); P(9,2,4,2,RED); // red cap
+  P(3,45,16,4,BASE); P(3,45,16,1,'#a39d90'); P(6,47,4,2,BASED); // rocky base
+  return cv;
+}
+function buildDuneGrass(){
+  const NW=20,NH=16, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+  const G='#9aad5a',GL='#c6cf86',GD='#7a8c44';
+  const blades=[-5,-2,0,2,5,-3,3];
+  blades.forEach((dx,k)=>{ const col=k%3===0?GD:(k%3===1?G:GL);
+    for(let i=0;i<10;i++){ const t=i/9,x=Math.round(10+dx*t*1.2),y=15-Math.round(i*1.4); P(x,y,1,2,col); } });
+  P(8,14,4,2,GD);
+  return cv;
+}
 function buildCarSprite(def){
   const tall=!!def.tall, NW=50, NH=tall?36:30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
   const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
@@ -775,7 +861,10 @@ function drawPlayer(seg,pct){
   ctx.save(); ctx.translate(cx,cy);
   ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.beginPath(); ctx.ellipse(0,6*px,78*px,15*px,0,0,7); ctx.fill();
   const lean=steer*0.10+(updown>0?-0.02:0.02); ctx.transform(1,0,lean,1,0,0);
-  const bs=px*1.95, sp=sprite('player',buildPlayerSprite);
+  const bs=px*1.95;
+  const reduced=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const fi=(reduced||speed<MAX_SPEED*0.015)?0:(Math.floor(Date.now()/150)%PLAYER_FRAMES.length);
+  const fr=PLAYER_FRAMES[fi], sp=sprite('player_'+fi,()=>buildPlayerFrame(fr.h,fr.d));
   blitSprite(sp,0,10*px,bs,null);
   // tail-light bloom — soft glow always on, flares when braking (eased, additive)
   const braking=keys.brake?1:0, ty=10*px-52*bs+27*bs;
