@@ -191,22 +191,22 @@ function placeScenery(){
     // sparse, VARIED palm line (not a solid wall)
     for(let n=14;n<segments.length-16;n+=rInt(8,15)){
       const side=Math.random()<0.5?-1:1;
-      segments[n].sprites.push({type:'palm',offset:side*(1.18+Math.random()*0.4)});
-      if(Math.random()<0.45) segments[Math.min(n+3,segments.length-1)].sprites.push({type:'palm',offset:-side*(1.2+Math.random()*0.4)});
+      segments[n].sprites.push({type:'palm',offset:side*(1.10+Math.random()*0.28)});
+      if(Math.random()<0.45) segments[Math.min(n+3,segments.length-1)].sprites.push({type:'palm',offset:-side*(1.12+Math.random()*0.28)});
     }
     // beach-grass tufts close to the road edge
     for(let n=16;n<segments.length-8;n+=rInt(3,6)){
-      const side=(n%2===0)?1:-1; segments[n].sprites.push({type:'duneGrass',offset:side*(1.08+Math.random()*0.35)});
+      const side=(n%2===0)?1:-1; segments[n].sprites.push({type:'duneGrass',offset:side*(1.04+Math.random()*0.28)});
     }
     // Cape Cod buildings set back from the road
     const builds=['clamShack','capeHouse','capeHouse','clamShack'];
     for(let n=40;n<segments.length-40;n+=rInt(24,44)){
       const side=Math.random()<0.5?-1:1;
-      segments[n].sprites.push({type:rPick(builds),offset:side*(1.28+Math.random()*0.42)});
+      segments[n].sprites.push({type:rPick(builds),offset:side*(1.08+Math.random()*0.26)});
     }
     // occasional cape lighthouse on a point
     for(let n=120;n<segments.length-60;n+=rInt(360,520)){
-      segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.55});
+      segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.3});
     }
     return;
   }
@@ -537,12 +537,12 @@ function drawSceneSprite(seg,sprite){
 }
 function drawSprite(t,s,fog){
   switch(t){
-    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.min(Math.max(0.3,s*4.6),W*0.050);
+    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.min(Math.max(0.3,s*15),W*0.17);
       blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }
-    case 'clamShack':{ blitSprite(sprite('clamShack',buildClamShack),0,0,Math.min(Math.max(0.3,s*5.4),W*0.072), 0.5+0.5*fog); break; }
-    case 'capeHouse':{ blitSprite(sprite('capeHouse',buildCapeHouse),0,0,Math.min(Math.max(0.3,s*5.4),W*0.075),0.5+0.5*fog); break; }
-    case 'lighthouse':{ blitSprite(sprite('lighthouse',buildLighthouse),0,0,Math.min(Math.max(0.35,s*5.8),W*0.082),0.55+0.45*fog); break; }
-    case 'duneGrass':{ blitSprite(sprite('duneGrass',buildDuneGrass),0,0,Math.min(Math.max(0.3,s*3.4),W*0.020), 0.5+0.5*fog); break; }
+    case 'clamShack':{ blitSprite(sprite('clamShack',buildClamShack),0,0,Math.min(Math.max(0.3,s*18),W*0.20), 0.5+0.5*fog); break; }
+    case 'capeHouse':{ blitSprite(sprite('capeHouse',buildCapeHouse),0,0,Math.min(Math.max(0.3,s*18),W*0.20),0.5+0.5*fog); break; }
+    case 'lighthouse':{ blitSprite(sprite('lighthouse',buildLighthouse),0,0,Math.min(Math.max(0.35,s*20),W*0.24),0.55+0.45*fog); break; }
+    case 'duneGrass':{ blitSprite(sprite('duneGrass',buildDuneGrass),0,0,Math.min(Math.max(0.3,s*9),W*0.06), 0.5+0.5*fog); break; }
     case 'umbrella':{ const h=70*s;
       ctx.strokeStyle=shade('#777',fog); ctx.lineWidth=Math.max(1,4*s);
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-h); ctx.stroke();
@@ -594,7 +594,7 @@ function drawVehicle(type,x,y,scale,clip,fog){
   const cv=sprite('car_'+type,()=>buildCarSprite(def));
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
   // scale sprite to the road perspective: small at horizon, growing smoothly in
-  const bs=Math.min(px*4.4, W*0.022), alpha=0.35+0.65*(fog==null?1:fog);
+  const bs=Math.min(px*9.5, W*0.11), alpha=0.35+0.65*(fog==null?1:fog);
   blitSprite(cv,x,y+6*px,bs,alpha);
   ctx.restore();
 }
@@ -644,7 +644,7 @@ function blitSprite(cv,cx,yBottom,bs,alpha){
 
 /* ---- hero car: rear-view red convertible + woman driver + pup -------------- */
 /* Animation: each frame bakes a hair-sway phase + a dog head pose.           */
-const PLAYER_FRAMES=[{h:0,d:0},{h:1,d:0},{h:2,d:1},{h:3,d:2},{h:2,d:2},{h:1,d:1}];
+const PLAYER_FRAMES=[{h:0,d:0},{h:1,d:0},{h:2,d:1},{h:3,d:2},{h:4,d:2},{h:5,d:1},{h:6,d:0},{h:7,d:0}];
 function buildPlayerFrame(hairPhase,dogPose){
   const NW=64, NH=52, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
   const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
@@ -698,14 +698,20 @@ function buildPlayerFrame(hairPhase,dogPose){
   blob([[3,21,27],[4,20,28],[5,19,29],[6,19,29],[7,19,29],[8,19,29],[9,19,29],[10,20,28],[11,21,27],[12,22,26]],HY);
   P(19,4,2,8,HYD); P(24,3,1,9,HYL);                   // crown shadow + parting highlight
   P(27,7,2,1,SG); P(28,8,1,2,SKD);                    // sunglasses arm + ear hint
-  // ANIMATED ponytail hanging down the back, swaying with the wind
-  const sway=[-3,-1,1,3][hairPhase];
-  for(let i=0;i<11;i++){ const t=i/10, x=Math.round(23+sway*t*t), y=12+i;
-    P(x,y,3,1,HY); P(x,y,1,1,HYD); if(i>6) P(x+2,y,1,1,HYL); }
-  P(Math.round(23+sway),23,3,2,HY);                   // tail tip
-  // ANIMATED wind wisps whipping off to the left (length varies by phase)
-  const whip=[7,10,13,10][hairPhase];
-  for(let i=0;i<whip;i++){ const x=18-i, y=4+Math.floor(i*0.5); P(x,y,2,1,i<whip-2?HY:HYL); }
+  // FLOWING long dark hair: a ribbon streaming back over the shoulder, with a
+  // travelling wave so it ripples continuously in the wind (phase 0..7 = full loop)
+  const ph=hairPhase*(Math.PI/4);
+  for(let i=0;i<20;i++){ const t=i/19;
+    const baseX=21-i*0.95, baseY=6+i*0.32;
+    const wave=Math.sin(i*0.5-ph)*(1.6+t*3.4);        // amplitude grows toward the tip
+    const x=Math.round(baseX), y=Math.round(baseY+wave), w=i<11?3:2;
+    P(x,y,w,2,HY); P(x,y,1,1,HYD);
+    if(i%3===0) P(x+Math.max(0,w-2),y,1,1,HYL);        // moving sheen on the strands
+  }
+  // a second, shorter upper strand whipping for volume
+  for(let i=0;i<12;i++){ const t=i/11;
+    const x=Math.round(22-i*0.8), y=Math.round(4+i*0.2+Math.sin(i*0.6-ph-0.8)*(1+t*2));
+    P(x,y,2,1,i<9?HY:HYL); }
   // --- PUP (dog), shotgun seat — head out the window, looking around ---
   P(36,16,10,6,DG); P(37,16,8,1,DGB);                 // chest / scruff
   if(dogPose===0){                                     // snout out to OUR RIGHT
@@ -863,7 +869,7 @@ function drawPlayer(seg,pct){
   const lean=steer*0.10+(updown>0?-0.02:0.02); ctx.transform(1,0,lean,1,0,0);
   const bs=px*1.95;
   const reduced=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const fi=(reduced||speed<MAX_SPEED*0.015)?0:(Math.floor(Date.now()/150)%PLAYER_FRAMES.length);
+  const fi=(reduced||speed<MAX_SPEED*0.015)?0:(Math.floor(Date.now()/110)%PLAYER_FRAMES.length);
   const fr=PLAYER_FRAMES[fi], sp=sprite('player_'+fi,()=>buildPlayerFrame(fr.h,fr.d));
   blitSprite(sp,0,10*px,bs,null);
   // tail-light bloom — soft glow always on, flares when braking (eased, additive)
