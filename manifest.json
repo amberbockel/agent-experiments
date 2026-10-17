@@ -5,6 +5,14 @@
   "apps": [
     {
       "date": "2026-10-16",
+      "slug": "2026-10-16-pub-quiz",
+      "title": "Pub Quiz Night",
+      "category": "games",
+      "oneLiner": "A proper pub-quiz night in your pocket — one phone runs the show, your teams battle across themed rounds, and the quizmaster taps to reveal answers and award the points.",
+      "path": "apps/2026-10-16-pub-quiz/"
+    },
+    {
+      "date": "2026-10-16",
       "slug": "2026-10-16",
       "title": "Pocket AI",
       "category": "trend",

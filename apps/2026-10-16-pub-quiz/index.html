@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="build-version" content="2026-10-16-pub-quiz">
+<meta name="theme-color" content="#1a120b">
+<title>Pub Quiz Night 🍺</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍺</text></svg>">
+<style>
+  :root {
+    --bg: #14100c;
+    --board: #1d2a23;
+    --board-edge: #0e1812;
+    --wood: #3a2817;
+    --wood-light: #5a3d23;
+    --chalk: #f3ede0;
+    --chalk-dim: #b9b09c;
+    --amber: #ffb347;
+    --amber-bright: #ffcf6b;
+    --neon: #ff7eb6;
+    --neon-blue: #5cd6ff;
+    --green: #6ddf8e;
+    --red: #ff6f6f;
+    --gold: #ffd34e;
+    --panel: #221a12;
+    --panel-2: #2c2217;
+    --line: rgba(243,237,224,0.14);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    font-family: 'Georgia', 'Iowan Old Style', 'Times New Roman', serif;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, rgba(255,179,71,0.10), transparent 60%),
+      radial-gradient(ellipse 100% 60% at 50% 110%, rgba(92,214,255,0.06), transparent 60%),
+      var(--bg);
+    color: var(--chalk);
+    min-height:100vh; min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    user-select:none; -webkit-user-select:none;
+  }
+  .app {
+    max-width: 680px; margin:0 auto; min-height:100dvh;
+    display:flex; flex-direction:column;
+    padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+  }
+  .screen { flex:1; display:flex; flex-direction:column; padding:18px 16px 24px; animation: fade .32s ease; }
+  @keyframes fade { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+  .hidden { display:none !important; }
+
+  /* Neon title */
+  .neon-wrap { text-align:center; padding: 10px 0 4px; }
+  .kicker { letter-spacing:.42em; font-size:11px; text-transform:uppercase; color:var(--chalk-dim); margin-bottom:8px; font-family: ui-sans-serif, system-ui, sans-serif; }
+  .neon-title {
+    font-weight:700; line-height:.98; font-size: clamp(34px, 13vw, 58px);
+    color: var(--amber-bright);
+    text-shadow: 0 0 6px rgba(255,179,71,.8), 0 0 18px rgba(255,179,71,.55), 0 0 36px rgba(255,126,182,.3);
+  }
+  .neon-sub { display:block; font-size: clamp(16px,6vw,24px); color:var(--neon); text-shadow:0 0 10px rgba(255,126,182,.6); letter-spacing:.04em; margin-top:2px;}
+  .tag { color:var(--chalk-dim); font-size:14px; margin-top:12px; font-style:italic; }
+
+  /* Buttons */
+  .btn {
+    font-family: ui-sans-serif, system-ui, sans-serif; font-weight:700; font-size:16px;
+    border:none; border-radius:14px; padding:16px 20px; cursor:pointer; width:100%;
+    background: linear-gradient(180deg, var(--amber-bright), var(--amber));
+    color:#2a1a08; box-shadow: 0 6px 0 #a9731f, 0 10px 20px rgba(0,0,0,.35);
+    transition: transform .08s ease, box-shadow .08s ease; min-height:54px;
+  }
+  .btn:active { transform: translateY(4px); box-shadow:0 2px 0 #a9731f, 0 4px 10px rgba(0,0,0,.35); }
+  .btn.ghost { background: transparent; color:var(--chalk); border:1.5px solid var(--line); box-shadow:none; }
+  .btn.ghost:active { transform:none; background: rgba(255,255,255,.05); }
+  .btn.small { width:auto; font-size:14px; padding:10px 16px; min-height:44px; }
+  .row { display:flex; gap:10px; }
+  .row > * { flex:1; }
+
+  /* Setup / teams */
+  h2.sect { font-family: ui-sans-serif, system-ui, sans-serif; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:var(--amber); margin:4px 0 12px; }
+  .team-list { display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .team-row {
+    display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:10px 12px;
+  }
+  .swatch { width:26px; height:26px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.35); cursor:pointer; }
+  .team-name {
+    flex:1; background:transparent; border:none; color:var(--chalk); font-size:17px; font-family:inherit;
+    padding:6px 4px; min-width:0; border-bottom:1px dashed transparent;
+  }
+  .team-name:focus { outline:none; border-bottom-color:var(--line); }
+  .icon-btn { background:transparent; border:none; color:var(--chalk-dim); font-size:20px; cursor:pointer; padding:6px 8px; border-radius:8px; }
+  .icon-btn:active { background:rgba(255,255,255,.07); color:var(--red); }
+  .color-pop { display:flex; flex-wrap:wrap; gap:8px; padding:10px 2px 4px; }
+  .color-dot { width:30px; height:30px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+  .color-dot.sel { border-color:var(--chalk); transform:scale(1.12); }
+
+  /* Round intro */
+  .round-badge { font-family: ui-sans-serif, system-ui, sans-serif; letter-spacing:.3em; text-transform:uppercase; font-size:12px; color:var(--chalk-dim); }
+  .round-num { font-size:15px; color:var(--amber); letter-spacing:.2em; font-family: ui-sans-serif, system-ui, sans-serif; margin-top:6px; }
+  .round-title { font-size: clamp(30px,10vw,46px); line-height:1.02; margin:10px 0 6px; color:var(--chalk); text-shadow:0 2px 10px rgba(0,0,0,.4); }
+  .round-emoji { font-size:60px; margin:14px 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+  .round-desc { color:var(--chalk-dim); font-size:16px; max-width:34ch; margin:0 auto; line-height:1.5; }
+
+  /* Question card */
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+  .pill { font-family: ui-sans-serif, system-ui, sans-serif; font-size:12px; letter-spacing:.08em; color:var(--chalk-dim); background:var(--panel); border:1px solid var(--line); padding:6px 12px; border-radius:999px; }
+  .pill b { color:var(--amber); }
+  .progress { height:6px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; margin-bottom:16px; }
+  .progress > i { display:block; height:100%; background:linear-gradient(90deg,var(--amber),var(--neon)); transition:width .3s ease; }
+  .q-card {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.03), transparent),
+      var(--board);
+    border:1px solid var(--board-edge);
+    border-radius:18px; padding:22px 18px; box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), 0 10px 30px rgba(0,0,0,.3);
+    position:relative; margin-bottom:16px;
+  }
+  .q-card::after { content:""; position:absolute; inset:7px; border:1px dashed rgba(243,237,224,.12); border-radius:12px; pointer-events:none; }
+  .q-cat { font-family: ui-sans-serif, system-ui, sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; }
+  .q-text { font-size: clamp(20px,5.6vw,26px); line-height:1.3; }
+  .opts { display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+  .opt {
+    display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+    background:var(--panel); border:1.5px solid var(--line); color:var(--chalk);
+    border-radius:14px; padding:14px 14px; font-size:17px; font-family:inherit; cursor:pointer;
+    transition: border-color .15s, background .15s, transform .08s;
+  }
+  .opt:active { transform:scale(.99); }
+  .opt .letter {
+    width:30px; height:30px; flex-shrink:0; border-radius:8px; display:grid; place-items:center;
+    background:rgba(255,255,255,.07); font-weight:700; font-family: ui-sans-serif,system-ui,sans-serif; color:var(--amber); font-size:15px;
+  }
+  .opt.picked { border-color:var(--amber); background:rgba(255,179,71,.12); }
+  .opt.correct { border-color:var(--green); background:rgba(109,223,142,.16); }
+  .opt.correct .letter { background:var(--green); color:#0c2415; }
+  .opt.wrong { border-color:var(--red); background:rgba(255,111,111,.12); opacity:.85; }
+  .opt.wrong .letter { background:var(--red); color:#2a0b0b; }
+  .opt.dim { opacity:.5; }
+
+  .reveal-box { background:rgba(109,223,142,.1); border:1px solid rgba(109,223,142,.4); border-radius:14px; padding:14px 16px; margin-bottom:14px; animation:fade .3s ease; }
+  .reveal-box .lbl { font-family: ui-sans-serif,system-ui,sans-serif; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--green); margin-bottom:6px; }
+  .reveal-box .ans { font-size:21px; color:var(--chalk); }
+  .reveal-box .note { font-size:14px; color:var(--chalk-dim); margin-top:8px; line-height:1.45; font-style:italic; }
+
+  .award-wrap { margin-bottom:14px; animation:fade .3s ease; }
+  .award-wrap .lbl { font-family: ui-sans-serif,system-ui,sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; text-align:center; }
+  .award-chips { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .chip {
+    display:flex; align-items:center; gap:8px; border:2px solid var(--line); background:var(--panel);
+    color:var(--chalk); border-radius:999px; padding:10px 16px; font-size:16px; cursor:pointer; font-family:inherit;
+    transition: transform .08s, border-color .15s, background .15s; min-height:46px;
+  }
+  .chip:active { transform:scale(.96); }
+  .chip .cdot { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+  .chip.awarded { border-color:var(--green); background:rgba(109,223,142,.18); box-shadow:0 0 0 3px rgba(109,223,142,.1); }
+  .chip .plus { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:700; color:var(--green); font-size:14px; }
+
+  /* Scoreboard */
+  .board-title { text-align:center; font-size: clamp(26px,8vw,38px); margin-bottom:4px; color:var(--amber-bright); text-shadow:0 0 12px rgba(255,179,71,.4); }
+  .board-sub { text-align:center; color:var(--chalk-dim); font-size:14px; margin-bottom:20px; font-style:italic; }
+  .score-list { display:flex; flex-direction:column; gap:12px; margin-bottom:8px; }
+  .score-row {
+    display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:14px 16px; position:relative; overflow:hidden;
+  }
+  .score-row .rank { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:700; font-size:18px; color:var(--chalk-dim); width:26px; text-align:center; }
+  .score-row.lead .rank { color:var(--gold); }
+  .score-row .cdot { width:22px; height:22px; border-radius:50%; flex-shrink:0; border:2px solid rgba(255,255,255,.3); }
+  .score-row .nm { flex:1; font-size:19px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .score-row .pts { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:700; font-size:22px; color:var(--amber); min-width:26px; text-align:right; }
+  .score-row .crown { font-size:17px; margin-left:2px; line-height:1; }
+
+  /* Results */
+  .confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:5; }
+  .confetti i { position:absolute; top:-12px; width:9px; height:14px; opacity:.9; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity:.4; } }
+  .winner-emoji { font-size:72px; text-align:center; animation: pop .5s ease; }
+  @keyframes pop { 0%{transform:scale(0);} 70%{transform:scale(1.2);} 100%{transform:scale(1);} }
+  .winner-label { text-align:center; font-family: ui-sans-serif,system-ui,sans-serif; letter-spacing:.3em; text-transform:uppercase; font-size:12px; color:var(--chalk-dim); margin-top:10px; }
+  .winner-name { text-align:center; font-size: clamp(32px,11vw,50px); color:var(--gold); text-shadow:0 0 16px rgba(255,211,78,.5); margin:4px 0 2px; line-height:1.05; }
+  .winner-pts { text-align:center; color:var(--chalk-dim); font-size:16px; margin-bottom:20px; }
+
+  .foot { margin-top:auto; padding-top:18px; display:flex; flex-direction:column; gap:10px; }
+  .muted-link { text-align:center; color:var(--chalk-dim); font-size:13px; font-family: ui-sans-serif,system-ui,sans-serif; background:none; border:none; cursor:pointer; padding:6px; }
+  .muted-link:active { color:var(--chalk); }
+  .divider { height:1px; background:var(--line); margin:16px 0; }
+  .center { text-align:center; }
+  .small-note { font-size:13px; color:var(--chalk-dim); font-family: ui-sans-serif,system-ui,sans-serif; line-height:1.5; }
+  .add-team-btn { border:1.5px dashed var(--line); background:transparent; color:var(--amber); border-radius:14px; padding:14px; width:100%; font-family: ui-sans-serif,system-ui,sans-serif; font-weight:600; font-size:15px; cursor:pointer; }
+  .add-team-btn:active { background:rgba(255,179,71,.08); }
+  .resume-banner { background:rgba(92,214,255,.1); border:1px solid rgba(92,214,255,.4); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+  .resume-banner p { font-size:14px; color:var(--chalk); margin-bottom:10px; line-height:1.4; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== SETUP ===== -->
+  <section class="screen" id="setup">
+    <div class="neon-wrap">
+      <div class="kicker">The Local · Est. tonight</div>
+      <div class="neon-title">PUB QUIZ<span class="neon-sub">· NIGHT ·</span></div>
+      <div class="tag">Pass the phone. Rally your table. Last orders at the scoreboard.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div id="resumeSlot"></div>
+
+    <h2 class="sect">Your Teams</h2>
+    <div class="team-list" id="teamList"></div>
+    <button class="add-team-btn" id="addTeam">+ Add a team</button>
+
+    <div class="foot">
+      <p class="small-note center">7 rounds · 50 questions · General Knowledge, Music, Sport, History &amp; Geography, Science &amp; Nature, Film &amp; TV and a Wildcard finish.</p>
+      <button class="btn" id="startBtn">Start the Quiz 🍺</button>
+    </div>
+  </section>
+
+  <!-- ===== ROUND INTRO ===== -->
+  <section class="screen hidden" id="roundIntro">
+    <div class="topbar">
+      <button class="btn ghost small" id="riBack">‹ Teams</button>
+      <span class="pill">Round <b id="riNum">1</b> / 7</span>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+      <div class="round-badge">Next up</div>
+      <div class="round-emoji" id="riEmoji">🧠</div>
+      <div class="round-title" id="riTitle">General Knowledge</div>
+      <div class="round-desc" id="riDesc"></div>
+      <div class="round-num" id="riCount">8 questions</div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="riStart">Bring on the questions →</button>
+    </div>
+  </section>
+
+  <!-- ===== QUESTION ===== -->
+  <section class="screen hidden" id="question">
+    <div class="topbar">
+      <span class="pill" id="qRound">🧠 General Knowledge</span>
+      <span class="pill">Q <b id="qNum">1</b> / <span id="qTotal">8</span></span>
+    </div>
+    <div class="progress"><i id="qProg" style="width:0%"></i></div>
+
+    <div class="q-card">
+      <div class="q-cat" id="qCat">1 point</div>
+      <div class="q-text" id="qText">Question</div>
+    </div>
+
+    <div class="opts" id="qOpts"></div>
+    <div class="reveal-box hidden" id="revealBox">
+      <div class="lbl">Correct answer</div>
+      <div class="ans" id="revealAns"></div>
+      <div class="note hidden" id="revealNote"></div>
+    </div>
+
+    <div class="award-wrap hidden" id="awardWrap">
+      <div class="lbl">Tap every team that got it right (+1)</div>
+      <div class="award-chips" id="awardChips"></div>
+    </div>
+
+    <div class="foot">
+      <button class="btn" id="revealBtn">Reveal Answer</button>
+      <button class="btn hidden" id="nextBtn">Next →</button>
+    </div>
+  </section>
+
+  <!-- ===== SCOREBOARD ===== -->
+  <section class="screen hidden" id="scoreboard">
+    <div class="board-title" id="sbTitle">Scoreboard</div>
+    <div class="board-sub" id="sbSub">After Round 1</div>
+    <div class="score-list" id="sbList"></div>
+    <div class="foot">
+      <button class="btn" id="sbNext">Next Round →</button>
+    </div>
+  </section>
+
+  <!-- ===== RESULTS ===== -->
+  <section class="screen hidden" id="results">
+    <div class="confetti hidden" id="confetti"></div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div class="winner-emoji">🏆</div>
+      <div class="winner-label">Tonight's Champions</div>
+      <div class="winner-name" id="winName">—</div>
+      <div class="winner-pts" id="winPts"></div>
+      <div class="divider"></div>
+      <div class="score-list" id="finalList"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="playAgain">Play Again (same teams)</button>
+      <button class="btn ghost" id="newGame">New Teams</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Content: 7 rounds, 50 questions ---------- */
+const ROUNDS = [
+  { title:"General Knowledge", emoji:"🧠", desc:"A warm-up pint of trivia to shake off the week.",
+    questions:[
+      { q:"What is the capital city of Australia?", opts:["Sydney","Canberra","Melbourne","Perth"], a:1 },
+      { q:"How many sides does a hexagon have?", opts:["5","6","7","8"], a:1 },
+      { q:"What is the chemical symbol for gold?", opts:["Gd","Go","Au","Ag"], a:2 },
+      { q:"Which planet is known as the Red Planet?", opts:["Venus","Jupiter","Mars","Mercury"], a:2 },
+      { q:"What is the largest mammal on Earth?", opts:["African elephant","Blue whale","Giraffe","Hippopotamus"], a:1 },
+      { q:"The Statue of Liberty was a gift to the USA from which country?", opts:["Britain","Spain","France","Italy"], a:2 },
+      { q:"How many colours are traditionally said to be in a rainbow?", opts:["5","6","7","8"], a:2 },
+      { q:"What is the hardest naturally occurring substance on Earth?", opts:["Granite","Diamond","Titanium","Quartz"], a:1 }
+    ]
+  },
+  { title:"Music", emoji:"🎸", desc:"Name that tune — or at least the band that played it.",
+    questions:[
+      { q:"Which band released the 1969 album “Abbey Road”?", opts:["The Rolling Stones","The Beatles","The Who","Led Zeppelin"], a:1 },
+      { q:"Which artist is widely nicknamed the “Queen of Pop”?", opts:["Cher","Madonna","Whitney Houston","Diana Ross"], a:1 },
+      { q:"How many strings does a standard guitar have?", opts:["4","5","6","7"], a:2 },
+      { q:"Which keyboard instrument has 88 keys?", opts:["Accordion","Organ","Piano","Harpsichord"], a:2 },
+      { q:"“Bohemian Rhapsody” was a hit single for which band?", opts:["Queen","ABBA","The Eagles","Fleetwood Mac"], a:0 },
+      { q:"Which US artist released the 2014 album “1989”?", opts:["Beyoncé","Katy Perry","Taylor Swift","Lady Gaga"], a:2 },
+      { q:"In music, what does the term “forte” instruct you to do?", opts:["Play softly","Play loudly","Play faster","Play slower"], a:1 }
+    ]
+  },
+  { title:"Sport", emoji:"⚽", desc:"Elbows off the table — this round is a contact sport.",
+    questions:[
+      { q:"How many players from one team are on the pitch in a game of association football (soccer)?", opts:["9","10","11","12"], a:2 },
+      { q:"In which sport would you perform a “slam dunk”?", opts:["Volleyball","Basketball","Tennis","Handball"], a:1 },
+      { q:"How often are the modern Summer Olympic Games normally held?", opts:["Every 2 years","Every 3 years","Every 4 years","Every 5 years"], a:2 },
+      { q:"Which nation has won the men's FIFA World Cup the most times?", opts:["Germany","Italy","Argentina","Brazil"], a:3 },
+      { q:"In tennis, what word is used for a score of zero?", opts:["Nil","Love","Duck","Blank"], a:1 },
+      { q:"How many rings appear on the Olympic flag?", opts:["4","5","6","7"], a:1 },
+      { q:"The Grand Slam tennis tournament known as Wimbledon is played in which country?", opts:["United States","France","Australia","England"], a:3 }
+    ]
+  },
+  { title:"History & Geography", emoji:"🗺️", desc:"From ancient empires to the far corners of the map.",
+    questions:[
+      { q:"Who was the first President of the United States?", opts:["Thomas Jefferson","George Washington","Abraham Lincoln","John Adams"], a:1 },
+      { q:"The Great Wall is a famous landmark in which country?", opts:["Japan","India","China","Mongolia"], a:2 },
+      { q:"In which year did World War II end?", opts:["1918","1942","1945","1950"], a:2 },
+      { q:"What is the capital of Japan?", opts:["Osaka","Kyoto","Tokyo","Nagoya"], a:2 },
+      { q:"Which is the largest ocean on Earth?", opts:["Atlantic","Indian","Arctic","Pacific"], a:3 },
+      { q:"The Pyramids of Giza are located in which country?", opts:["Mexico","Egypt","Sudan","Iraq"], a:1 },
+      { q:"Which ancient civilization built the mountain city of Machu Picchu?", opts:["Aztec","Maya","Inca","Olmec"], a:2 }
+    ]
+  },
+  { title:"Science & Nature", emoji:"🔬", desc:"The round where the table's know-it-all finally earns their keep.",
+    questions:[
+      { q:"Which gas do plants absorb from the air to carry out photosynthesis?", opts:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"], a:1 },
+      { q:"How many bones are in the adult human body?", opts:["186","196","206","216"], a:2 },
+      { q:"Which part of the cell is often called its “powerhouse”?", opts:["Nucleus","Ribosome","Mitochondria","Golgi body"], a:2 },
+      { q:"What is the most abundant gas in Earth's atmosphere?", opts:["Oxygen","Carbon dioxide","Hydrogen","Nitrogen"], a:3 },
+      { q:"How many hearts does an octopus have?", opts:["1","2","3","4"], a:2 },
+      { q:"What is the chemical formula for water?", opts:["CO₂","H₂O","O₂","NaCl"], a:1 },
+      { q:"Which is the largest planet in our solar system?", opts:["Saturn","Neptune","Jupiter","Earth"], a:2 }
+    ]
+  },
+  { title:"Film & TV", emoji:"🎬", desc:"Lights, camera — and absolutely no talking during the quiz.",
+    questions:[
+      { q:"The line “May the Force be with you” comes from which film franchise?", opts:["Star Trek","Star Wars","Guardians of the Galaxy","Dune"], a:1 },
+      { q:"Who played Jack Dawson in the 1997 film “Titanic”?", opts:["Brad Pitt","Tom Cruise","Leonardo DiCaprio","Johnny Depp"], a:2 },
+      { q:"Which studio produced “Toy Story,” the first fully computer-animated feature film?", opts:["DreamWorks","Pixar","Disney Animation","Illumination"], a:1 },
+      { q:"What is the name of the coffee house in the sitcom “Friends”?", opts:["Central Perk","The Grind","Café Nervosa","Luke's Diner"], a:0 },
+      { q:"Who directed the 1975 thriller “Jaws”?", opts:["George Lucas","Steven Spielberg","Ridley Scott","Martin Scorsese"], a:1 },
+      { q:"In “Game of Thrones,” what are the words (motto) of House Stark?", opts:["Hear Me Roar","Winter Is Coming","Fire and Blood","We Do Not Sow"], a:1 },
+      { q:"“Life is like a box of chocolates” is a famous line from which 1994 film?", opts:["The Shawshank Redemption","Pulp Fiction","Forrest Gump","The Lion King"], a:2 }
+    ]
+  },
+  { title:"The Wildcard Round", emoji:"🎲", desc:"Anything goes — a couple are straight questions, so put the pens down and shout it out.",
+    questions:[
+      { q:"What is the collective noun for a group of crows?", opts:["A parliament","A murder","A gaggle","A pack"], a:1 },
+      { q:"What is the national animal of Scotland?", opts:["The stag","The lion","The unicorn","The golden eagle"], a:2 },
+      { q:"In the NATO phonetic alphabet, which word represents the letter “Z”?", a:null, answer:"Zulu", note:"The full set runs Alpha, Bravo, Charlie … all the way to Yankee and Zulu." },
+      { q:"Pizza as we know it was first developed in which country, specifically the city of Naples?", opts:["Greece","Italy","France","Spain"], a:1 },
+      { q:"How many minutes are there in a full 24-hour day?", opts:["1,200","1,440","1,800","2,400"], a:1 },
+      { q:"What is the term for a word or phrase that reads the same forwards and backwards, such as “level”?", a:null, answer:"A palindrome", note:"“Racecar” and “kayak” are classic examples." },
+      { q:"What is the fear of spiders called?", opts:["Claustrophobia","Acrophobia","Arachnophobia","Agoraphobia"], a:2 }
+    ]
+  }
+];
+
+const TEAM_COLORS = ["#ff7eb6","#5cd6ff","#6ddf8e","#ffd34e","#c792ea","#ff9f6b","#7ee8c0","#ff6f6f"];
+const LETTERS = ["A","B","C","D"];
+const STORE_KEY = "pubquiz_v1";
+
+/* ---------- State ---------- */
+let state = null; // {teams:[{name,color,score}], r, q, revealed, awarded:[]}
+
+function defaultTeams(){
+  return [
+    { name:"Team 1", color:TEAM_COLORS[0], score:0 },
+    { name:"Team 2", color:TEAM_COLORS[1], score:0 }
+  ];
+}
+
+/* ---------- Persistence (try/catch wrapped) ---------- */
+function save(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load(){
+  try { const r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : null; } catch(e){ return null; }
+}
+function clearSave(){
+  try { localStorage.removeItem(STORE_KEY); } catch(e){}
+}
+
+/* ---------- DOM helpers ---------- */
+const $ = id => document.getElementById(id);
+const screens = ["setup","roundIntro","question","scoreboard","results"];
+function show(name){
+  screens.forEach(s => $(s).classList.toggle("hidden", s!==name));
+  window.scrollTo(0,0);
+}
+
+/* ---------- Setup screen (team editing) ---------- */
+let setupTeams = defaultTeams();
+let colorPopFor = -1;
+
+function renderTeams(){
+  const list = $("teamList");
+  list.innerHTML = "";
+  setupTeams.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.className = "team-row";
+
+    const sw = document.createElement("div");
+    sw.className = "swatch";
+    sw.style.background = t.color;
+    sw.title = "Change colour";
+    sw.onclick = () => { colorPopFor = (colorPopFor===i ? -1 : i); renderTeams(); };
+    row.appendChild(sw);
+
+    const inp = document.createElement("input");
+    inp.className = "team-name";
+    inp.value = t.name;
+    inp.maxLength = 22;
+    inp.setAttribute("aria-label","Team name");
+    inp.oninput = e => { setupTeams[i].name = e.target.value; };
+    inp.onblur = e => { if(!e.target.value.trim()){ setupTeams[i].name = "Team "+(i+1); renderTeams(); } };
+    row.appendChild(inp);
+
+    if (setupTeams.length > 1){
+      const del = document.createElement("button");
+      del.className = "icon-btn";
+      del.innerHTML = "✕";
+      del.title = "Remove team";
+      del.onclick = () => { setupTeams.splice(i,1); if(colorPopFor===i) colorPopFor=-1; renderTeams(); };
+      row.appendChild(del);
+    }
+    list.appendChild(row);
+
+    if (colorPopFor === i){
+      const pop = document.createElement("div");
+      pop.className = "color-pop";
+      TEAM_COLORS.forEach(c => {
+        const d = document.createElement("div");
+        d.className = "color-dot" + (c===t.color ? " sel":"");
+        d.style.background = c;
+        d.onclick = () => { setupTeams[i].color = c; colorPopFor=-1; renderTeams(); };
+        pop.appendChild(d);
+      });
+      list.appendChild(pop);
+    }
+  });
+}
+
+$("addTeam").onclick = () => {
+  if (setupTeams.length >= 8) return;
+  const used = setupTeams.map(t=>t.color);
+  const color = TEAM_COLORS.find(c=>!used.includes(c)) || TEAM_COLORS[setupTeams.length % TEAM_COLORS.length];
+  setupTeams.push({ name:"Team "+(setupTeams.length+1), color, score:0 });
+  renderTeams();
+};
+
+$("startBtn").onclick = () => {
+  const teams = setupTeams
+    .map(t => ({ name:(t.name||"").trim() || "Team", color:t.color, score:0 }));
+  if (teams.length < 1) return;
+  state = { teams, r:0, q:0, revealed:false, awarded:[] };
+  save();
+  showRoundIntro();
+};
+
+/* ---------- Resume banner ---------- */
+function renderResume(){
+  const slot = $("resumeSlot");
+  slot.innerHTML = "";
+  const saved = load();
+  if (saved && saved.teams && saved.r < ROUNDS.length && !(saved.r===0 && saved.q===0 && !saved.revealed)){
+    const b = document.createElement("div");
+    b.className = "resume-banner";
+    const p = document.createElement("p");
+    p.textContent = `A quiz is already in progress — Round ${saved.r+1}, Question ${saved.q+1}, ${saved.teams.length} team(s).`;
+    const row = document.createElement("div");
+    row.className = "row";
+    const resume = document.createElement("button");
+    resume.className = "btn small";
+    resume.textContent = "Resume";
+    resume.onclick = () => { state = saved; route(); };
+    const discard = document.createElement("button");
+    discard.className = "btn ghost small";
+    discard.textContent = "Start fresh";
+    discard.onclick = () => { clearSave(); renderResume(); };
+    row.appendChild(resume); row.appendChild(discard);
+    b.appendChild(p); b.appendChild(row);
+    slot.appendChild(b);
+  }
+}
+
+function route(){
+  // decide where a resumed state belongs
+  if (!state) { show("setup"); return; }
+  if (state.r >= ROUNDS.length){ showResults(); return; }
+  showQuestion();
+}
+
+/* ---------- Round intro ---------- */
+function showRoundIntro(){
+  const r = ROUNDS[state.r];
+  $("riNum").textContent = state.r+1;
+  $("riEmoji").textContent = r.emoji;
+  $("riTitle").textContent = r.title;
+  $("riDesc").textContent = r.desc;
+  $("riCount").textContent = r.questions.length + " questions";
+  show("roundIntro");
+}
+$("riStart").onclick = () => { state.q = 0; state.revealed=false; state.awarded=[]; save(); showQuestion(); };
+$("riBack").onclick = () => {
+  if (confirm("Leave this quiz and go back to team setup? Scores will be lost.")){
+    clearSave(); state=null; setupTeams = defaultTeams(); colorPopFor=-1; renderTeams(); renderResume(); show("setup");
+  }
+};
+
+/* ---------- Question ---------- */
+function showQuestion(){
+  const r = ROUNDS[state.r];
+  const item = r.questions[state.q];
+  state.pick = undefined; // local only
+  $("qRound").textContent = r.emoji + " " + r.title;
+  $("qNum").textContent = state.q+1;
+  $("qTotal").textContent = r.questions.length;
+  $("qProg").style.width = ((state.q)/r.questions.length*100) + "%";
+  $("qCat").textContent = "1 point" + (item.a===null ? " · Say it out loud" : "");
+  $("qText").textContent = item.q;
+
+  const optsBox = $("qOpts");
+  optsBox.innerHTML = "";
+  const revealed = !!state.revealed;
+
+  if (item.a === null){
+    // straight question -> reveal only, no options
+    // nothing in opts box
+  } else {
+    item.opts.forEach((opt, i) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = `<span class="letter">${LETTERS[i]}</span><span>${opt}</span>`;
+      b.onclick = () => {
+        if (state.revealed) return;
+        state.pick = i;
+        [...optsBox.children].forEach((c,ci)=>c.classList.toggle("picked", ci===i));
+      };
+      optsBox.appendChild(b);
+    });
+  }
+
+  // reveal box
+  const rb = $("revealBox");
+  const ansEl = $("revealAns");
+  const noteEl = $("revealNote");
+  if (item.a === null){
+    ansEl.textContent = item.answer;
+  } else {
+    ansEl.textContent = LETTERS[item.a] + ". " + item.opts[item.a];
+  }
+  if (item.note){ noteEl.textContent = item.note; noteEl.classList.remove("hidden"); }
+  else { noteEl.classList.add("hidden"); }
+
+  // award chips
+  renderAwardChips();
+
+  // visibility
+  rb.classList.toggle("hidden", !revealed);
+  $("awardWrap").classList.toggle("hidden", !revealed);
+  $("revealBtn").classList.toggle("hidden", revealed);
+  $("nextBtn").classList.toggle("hidden", !revealed);
+
+  if (revealed) applyRevealStyles();
+
+  show("question");
+}
+
+function renderAwardChips(){
+  const box = $("awardChips");
+  box.innerHTML = "";
+  state.teams.forEach((t, i) => {
+    const chip = document.createElement("button");
+    chip.className = "chip" + (state.awarded.includes(i) ? " awarded":"");
+    chip.innerHTML = `<span class="cdot" style="background:${t.color}"></span><span>${escapeHtml(t.name)}</span><span class="plus">${state.awarded.includes(i)?"✓ +1":"+1"}</span>`;
+    chip.onclick = () => {
+      const idx = state.awarded.indexOf(i);
+      if (idx>=0) state.awarded.splice(idx,1);
+      else state.awarded.push(i);
+      save();
+      renderAwardChips();
+    };
+    box.appendChild(chip);
+  });
+}
+
+function applyRevealStyles(){
+  const item = ROUNDS[state.r].questions[state.q];
+  if (item.a === null) return;
+  const optsBox = $("qOpts");
+  [...optsBox.children].forEach((c,ci) => {
+    c.classList.remove("picked");
+    if (ci === item.a) c.classList.add("correct");
+    else if (ci === state.pick) c.classList.add("wrong");
+    else c.classList.add("dim");
+  });
+}
+
+$("revealBtn").onclick = () => {
+  state.revealed = true;
+  save();
+  $("revealBox").classList.remove("hidden");
+  $("awardWrap").classList.remove("hidden");
+  $("revealBtn").classList.add("hidden");
+  $("nextBtn").classList.remove("hidden");
+  applyRevealStyles();
+};
+
+$("nextBtn").onclick = () => {
+  // commit awarded points
+  state.awarded.forEach(i => { state.teams[i].score += 1; });
+  state.awarded = [];
+  state.revealed = false;
+  state.pick = undefined;
+  const r = ROUNDS[state.r];
+  if (state.q + 1 < r.questions.length){
+    state.q += 1;
+    save();
+    showQuestion();
+  } else {
+    // end of round -> scoreboard
+    save();
+    showScoreboard();
+  }
+};
+
+/* ---------- Scoreboard ---------- */
+function sortedTeams(){
+  return state.teams
+    .map((t,i)=>({...t, i}))
+    .sort((a,b)=> b.score - a.score);
+}
+function showScoreboard(){
+  const last = state.r >= ROUNDS.length-1;
+  $("sbTitle").textContent = last ? "Last Round Done!" : "Scoreboard";
+  $("sbSub").textContent = "After Round " + (state.r+1) + " · " + ROUNDS[state.r].title;
+  const list = $("sbList");
+  list.innerHTML = "";
+  const sorted = sortedTeams();
+  const top = sorted.length ? sorted[0].score : 0;
+  sorted.forEach((t, rank) => {
+    const row = document.createElement("div");
+    const lead = t.score === top && top > 0;
+    row.className = "score-row" + (lead ? " lead":"");
+    row.innerHTML =
+      `<span class="rank">${rank+1}</span>`+
+      `<span class="cdot" style="background:${t.color}"></span>`+
+      `<span class="nm">${escapeHtml(t.name)}</span>`+
+      `<span class="pts">${t.score}</span>`+
+      (lead ? `<span class="crown">👑</span>` : ``);
+    list.appendChild(row);
+  });
+  $("sbNext").textContent = last ? "See Final Results 🏆" : "Next Round →";
+  show("scoreboard");
+}
+$("sbNext").onclick = () => {
+  if (state.r >= ROUNDS.length-1){
+    state.r = ROUNDS.length; // mark finished
+    save();
+    showResults();
+  } else {
+    state.r += 1; state.q = 0; state.revealed=false; state.awarded=[];
+    save();
+    showRoundIntro();
+  }
+};
+
+/* ---------- Results ---------- */
+function showResults(){
+  const sorted = sortedTeams();
+  const top = sorted.length ? sorted[0].score : 0;
+  const winners = sorted.filter(t => t.score === top && top >= 0);
+  const tie = winners.length > 1 && top > 0;
+  if (top === 0){
+    $("winName").textContent = "It's a draw!";
+    $("winPts").textContent = "Nobody scored — rematch required.";
+  } else if (tie){
+    $("winName").textContent = winners.map(w=>w.name).join(" & ");
+    $("winPts").textContent = "A tie at " + top + " point" + (top===1?"":"s") + "! Sudden-death pint-off?";
+  } else {
+    $("winName").textContent = winners[0].name;
+    $("winName").style.color = winners[0].color;
+    $("winName").style.textShadow = "0 0 16px " + winners[0].color + "66";
+    $("winPts").textContent = top + " point" + (top===1?"":"s") + " — the drinks are on them.";
+  }
+  const list = $("finalList");
+  list.innerHTML = "";
+  sorted.forEach((t, rank) => {
+    const row = document.createElement("div");
+    const lead = t.score === top && top > 0;
+    row.className = "score-row" + (lead ? " lead":"");
+    row.innerHTML =
+      `<span class="rank">${rank+1}</span>`+
+      `<span class="cdot" style="background:${t.color}"></span>`+
+      `<span class="nm">${escapeHtml(t.name)}</span>`+
+      `<span class="pts">${t.score}</span>`+
+      (lead ? `<span class="crown">${rank===0?"🏆":"👑"}</span>` : ``);
+    list.appendChild(row);
+  });
+  show("results");
+  if (top > 0) fireConfetti();
+}
+
+function fireConfetti(){
+  const c = $("confetti");
+  c.classList.remove("hidden");
+  c.innerHTML = "";
+  const colors = TEAM_COLORS;
+  for (let i=0;i<70;i++){
+    const p = document.createElement("i");
+    p.style.left = Math.random()*100 + "%";
+    p.style.background = colors[i % colors.length];
+    p.style.animationDuration = (2.2 + Math.random()*2.2) + "s";
+    p.style.animationDelay = (Math.random()*0.8) + "s";
+    p.style.transform = "rotate(" + (Math.random()*360) + "deg)";
+    c.appendChild(p);
+  }
+  setTimeout(()=>{ c.classList.add("hidden"); }, 6000);
+}
+
+$("playAgain").onclick = () => {
+  state.teams.forEach(t => t.score = 0);
+  state.r = 0; state.q = 0; state.revealed=false; state.awarded=[];
+  save();
+  showRoundIntro();
+};
+$("newGame").onclick = () => {
+  clearSave();
+  state = null;
+  setupTeams = defaultTeams();
+  colorPopFor = -1;
+  $("winName").style.color = "";
+  $("winName").style.textShadow = "";
+  renderTeams();
+  renderResume();
+  show("setup");
+};
+
+/* ---------- util ---------- */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ---------- init ---------- */
+renderTeams();
+renderResume();
+show("setup");
+</script>
+</body>
+</html>
