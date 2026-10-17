@@ -146,7 +146,7 @@
 
   .award-wrap { margin-bottom:14px; animation:fade .3s ease; }
   .award-wrap .lbl { font-family: ui-sans-serif,system-ui,sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; text-align:center; }
-  .award-chips { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .award-chips { display:flex; flex-direction:column; gap:10px; }
   .chip {
     display:flex; align-items:center; gap:8px; border:2px solid var(--line); background:var(--panel);
     color:var(--chalk); border-radius:999px; padding:10px 16px; font-size:16px; cursor:pointer; font-family:inherit;
@@ -155,7 +155,10 @@
   .chip:active { transform:scale(.96); }
   .chip .cdot { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
   .chip.awarded { border-color:var(--green); background:rgba(109,223,142,.18); box-shadow:0 0 0 3px rgba(109,223,142,.1); }
-  .chip .plus { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:700; color:var(--green); font-size:14px; }
+  .chip .cnm { flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip .cscore { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:800; font-size:19px; color:var(--amber-bright); min-width:22px; text-align:center; font-variant-numeric:tabular-nums; }
+  .chip .plus { font-family: ui-sans-serif,system-ui,sans-serif; font-weight:700; color:var(--chalk-dim); font-size:13px; min-width:30px; text-align:right; }
+  .chip.awarded .plus { color:var(--green); }
 
   /* Scoreboard */
   .board-title { text-align:center; font-size: clamp(26px,8vw,38px); margin-bottom:4px; color:var(--amber-bright); text-shadow:0 0 12px rgba(255,179,71,.4); }
@@ -258,7 +261,7 @@
     </div>
 
     <div class="award-wrap hidden" id="awardWrap">
-      <div class="lbl">Tap every team that got it right (+1)</div>
+      <div class="lbl">Who got it right? Tap a team to give it +1 — scores update live</div>
       <div class="award-chips" id="awardChips"></div>
     </div>
 
@@ -597,13 +600,17 @@ function renderAwardChips(){
   const box = $("awardChips");
   box.innerHTML = "";
   state.teams.forEach((t, i) => {
+    const on = state.awarded.includes(i);
     const chip = document.createElement("button");
-    chip.className = "chip" + (state.awarded.includes(i) ? " awarded":"");
-    chip.innerHTML = `<span class="cdot" style="background:${t.color}"></span><span>${escapeHtml(t.name)}</span><span class="plus">${state.awarded.includes(i)?"✓ +1":"+1"}</span>`;
+    chip.className = "chip" + (on ? " awarded":"");
+    chip.innerHTML = `<span class="cdot" style="background:${t.color}"></span>`
+      + `<span class="cnm">${escapeHtml(t.name)}</span>`
+      + `<span class="cscore">${t.score}</span>`
+      + `<span class="plus">${on?"✓ +1":"+1"}</span>`;
     chip.onclick = () => {
       const idx = state.awarded.indexOf(i);
-      if (idx>=0) state.awarded.splice(idx,1);
-      else state.awarded.push(i);
+      if (idx>=0){ state.awarded.splice(idx,1); t.score -= 1; }   // un-award: take the point back
+      else { state.awarded.push(i); t.score += 1; }               // award: give the point now
       save();
       renderAwardChips();
     };
@@ -634,8 +641,7 @@ $("revealBtn").onclick = () => {
 };
 
 $("nextBtn").onclick = () => {
-  // commit awarded points
-  state.awarded.forEach(i => { state.teams[i].score += 1; });
+  // points are already committed live as each team is tapped
   state.awarded = [];
   state.revealed = false;
   state.pick = undefined;
