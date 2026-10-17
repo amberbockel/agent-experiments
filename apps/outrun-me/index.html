@@ -88,24 +88,26 @@
 
 /* -------------------------------- constants ----------------------------- */
 const FPS=60, STEP=1/FPS;
-const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=2000, LANES=2;
+const SEG_LEN=200, RUMBLE_LEN=3, ROAD_WIDTH=2400, LANES=2;
 const FOV=100, CAM_HEIGHT=1000, CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
 const DRAW_DIST=220, FOG_DENSITY=4;
 const PLAYER_Z=CAM_HEIGHT*CAM_DEPTH;
+const HORIZON=0.42;   // vertical vanishing point, raised so more road shows (OutRun-style)
 const MAX_SPEED=SEG_LEN/STEP, ACCEL=MAX_SPEED/5, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
 const OFFROAD_DECEL=-MAX_SPEED/2, OFFROAD_LIM=MAX_SPEED/4, CENTRIFUGAL=0.3;
 const SPRITE_SCALE=0.3;    // collision width as a fraction of the road half-width
 const SPRITE_PX=0.0018;    // converts projected scale → pixels for billboard drawing
+const START_POS=200*4+100;  // start mid-segment (non-boundary) so the near road is never a degenerate z=0 band
 
 /* ------------------------------- stages --------------------------------- */
 const STAGES=[
   { name:'CAPE COD', bg:'coast',
-    sky:['#5fb7ff','#8fd0ff','#c7ecff'],
-    ocean:'#1c83b0', oceanLite:'#39a9d4', sand:'#ead9a6',
-    hill:'#3a9d52', hill2:'#2f7e43', haze:'#cdeaf6',
-    light:{ road:'#9a9aa0', grass:'#46b450', rumble:'#d22', lane:'#ffffff' },
-    dark :{ road:'#8f8f96', grass:'#3aa346', rumble:'#ffffff' },
-    scenery:['palm','palm','umbrella','rock','boat','store','sign'],
+    sky:['#2f84e6','#5fb0f2','#c3e9ff'],
+    ocean:'#1f7fb8', oceanLite:'#5fc4e6', sand:'#ead9a6',
+    hill:'#2f9e52', hill2:'#227a40', haze:'#cdeaf6',
+    light:{ road:'#9a9aa2', grass:'#49c24e', rumble:'#e21b24', lane:'#ffffff' },
+    dark :{ road:'#86868e', grass:'#3aa63f', rumble:'#ffffff' },
+    scenery:['umbrella','rock','boat','store','sign'],
     cars:['carRed','carBlue','beetle','suv'] },
   { name:'BOSTON', bg:'city',
     sky:['#5aa9ee','#8ec8f4','#cbe6fb'],
@@ -124,6 +126,8 @@ let state='menu', stageIndex=0;
 let position=0, speed=0, playerX=0;
 let skyOffset=0, hillOffset=0, treeOffset=0;
 let score=0, hiScore=0, timeLeft=0, totalTime=0, stageBannerT=0;
+let shake=0, rumbleBuzz=0;            // juice: screen-shake energy + rumble-strip buzz
+const particles=[];                  // exhaust / dust puffs
 const keys={left:false,right:false,gas:false,brake:false};
 
 /* ------------------------------ math utils ------------------------------ */
@@ -146,7 +150,7 @@ function project(p,cx,cy,cz,w,h,rw){
   p.camera.x=(p.world.x||0)-cx; p.camera.y=(p.world.y||0)-cy; p.camera.z=(p.world.z||0)-cz;
   p.screen.scale=CAM_DEPTH/p.camera.z;
   p.screen.x=Math.round((w/2)+(p.screen.scale*p.camera.x*w/2));
-  p.screen.y=Math.round((h/2)-(p.screen.scale*p.camera.y*h/2));
+  p.screen.y=Math.round((h*HORIZON)-(p.screen.scale*p.camera.y*h/2));
   p.screen.w=Math.round(           (p.screen.scale*rw  *w/2));
 }
 
@@ -183,8 +187,15 @@ function addDownToEnd(n=200){ addRoad(n,n,n,-C.EASY,-lastY()/SEG_LEN); }
 
 function placeScenery(){
   const st=STAGES[stageIndex];
-  for(let n=12;n<segments.length;n+=rInt(4,9)){
-    const side=(n%2===0)?1:-1, off=side*(1.6+Math.random()*2.4);
+  // palms lining BOTH sides of the coast road (OutRun signature)
+  if(st.bg==='coast'){
+    for(let n=14;n<segments.length-16;n+=rInt(4,6)){
+      segments[n].sprites.push({type:'palm',offset:-(1.35+Math.random()*0.5)});
+      segments[Math.min(n+2,segments.length-1)].sprites.push({type:'palm',offset:(1.35+Math.random()*0.5)});
+    }
+  }
+  for(let n=12;n<segments.length;n+=rInt(5,10)){
+    const side=(n%2===0)?1:-1, off=side*(2.0+Math.random()*2.2);
     segments[n].sprites.push({type:rPick(st.scenery),offset:off});
   }
   // recurring landmark store on the right
@@ -195,7 +206,7 @@ function placeScenery(){
 }
 function placeCheckpoints(){
   const gap=Math.floor(segments.length/5);
-  for(let i=1;i<=4;i++){ const idx=gap*i; if(segments[idx]) segments[idx].checkpoint=true; }
+  for(let i=1;i<=4;i++){ const idx=gap*i; if(segments[idx]){ segments[idx].checkpoint=true; segments[idx].banner='CHECK'; } }
 }
 function placeTraffic(){
   const st=STAGES[stageIndex]; cars=[]; const count=14+stageIndex*4;
@@ -214,6 +225,7 @@ function buildTrack(){
   const s0=findSegment(PLAYER_Z).index;
   for(let n=0;n<3;n++) segments[s0+2+n].color={road:'#ddd',grass:segments[s0].color.grass,rumble:'#ddd'};
   for(let n=1;n<=10;n++) segments[segments.length-n].color={road:n%2?'#111':'#eee',grass:'#bbb',rumble:n%2?'#eee':'#111'};
+  if(segments[s0+44]) segments[s0+44].banner='START';
   trackLength=segments.length*SEG_LEN;
   placeScenery(); placeCheckpoints(); placeTraffic();
   // clouds
@@ -258,12 +270,24 @@ function update(dt){
   else speed=accelerate(speed,DECEL,dt);
   if((playerX<-1||playerX>1)&&speed>OFFROAD_LIM){
     speed=accelerate(speed,OFFROAD_DECEL,dt);
+    shake=Math.max(shake,0.5*sp);                                   // juice: off-road rattle
+    if(Math.random()<0.5) spawnParticle(1.0,'#c9b98a');            // kicked-up dust
     for(const s of pSeg.sprites){ if(overlap(playerX,pW,s.offset,spriteW(s.type),1)){
-      speed=MAX_SPEED/5; position=increase(pSeg.p2.world.z,-PLAYER_Z,trackLength); break; } }
+      speed=MAX_SPEED/5; position=increase(pSeg.p2.world.z,-PLAYER_Z,trackLength); shake=1; break; } }
   }
+  // juice: tyres buzz the red/white rumble strip right at the road edge
+  const edge=Math.abs(playerX);
+  if(edge>0.82 && edge<1.0 && speed>OFFROAD_LIM){ rumbleBuzz=1; shake=Math.max(shake,0.28*sp); }
+  else rumbleBuzz=lerp(rumbleBuzz,0,0.2);
   for(const car of pSeg.cars){ const cw=(car.sprite==='suv'||car.sprite==='taxi')?0.16:0.12;
     if(speed>car.speed && overlap(playerX,pW,car.offset,cw,0.8)){
-      speed=car.speed*(car.speed/speed); position=increase(car.z,-PLAYER_Z,trackLength); break; } }
+      speed=car.speed*(car.speed/speed); position=increase(car.z,-PLAYER_Z,trackLength); shake=1; break; }
+    else if(overlap(playerX,pW,car.offset,cw,1.6)) shake=Math.max(shake,0.35*sp);  // close-pass thump
+  }
+  // juice: exhaust puffs under throttle
+  if(keys.gas && speed>MAX_SPEED*0.15 && Math.random()<0.4) spawnParticle(0.0,'rgba(210,210,220,0.9)');
+  updateParticles(dt);
+  shake=lerp(shake,0,0.12);                                         // eased decay, no linear snap
   playerX=clamp(playerX,-2,2); speed=clamp(speed,0,MAX_SPEED);
   const segDelta=(position-start)/SEG_LEN;
   skyOffset =increase(skyOffset, 0.0008*pSeg.curve*segDelta,1);
@@ -280,6 +304,45 @@ function update(dt){
 function spriteW(t){ switch(t){ case 'palm':case 'tower':case 'brownstone':return SPRITE_SCALE*0.8;
   case 'boat':case 'store':case 'market':case 'suv':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
 
+/* ------------------------------ juice / FX ------------------------------ */
+function spawnParticle(dust,color){
+  particles.push({ x:W/2+(Math.random()*2-1)*W*0.055, y:H-H*0.085,
+    vx:(Math.random()*2-1)*(dust?95:34), vy:(dust?-15-Math.random()*45:28+Math.random()*70),
+    life:0, max:dust?0.65:0.45, size:(dust?3:2)+Math.random()*2, dust, color });
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i];
+    p.life+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=dt*40; p.size+=dt*(p.dust?16:12);
+    if(p.life>=p.max) particles.splice(i,1); }
+}
+function drawParticles(){
+  for(const p of particles){ ctx.globalAlpha=Math.max(0,1-p.life/p.max)*0.55; ctx.fillStyle=p.color;
+    const s=Math.round(p.size); ctx.fillRect(Math.round(p.x-s/2),Math.round(p.y-s/2),s,s); }
+  ctx.globalAlpha=1;
+}
+function drawSpeedLines(){
+  const sp=speed/MAX_SPEED; if(sp<0.5) return;
+  const cx=W/2, cy=H*0.46, n=12, t=Date.now();
+  ctx.save(); ctx.globalCompositeOperation='screen';
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=Math.max(1,W*0.004);
+  ctx.globalAlpha=(sp-0.5)/0.5*0.18;
+  for(let i=0;i<n;i++){ const jit=((i*97+Math.floor(t*0.03))%100)/100;
+    const ang=(i/n)*6.283+jit*0.5, r0=W*0.34, r1=W*(0.4+0.55*sp)*(0.7+0.5*jit);
+    ctx.beginPath(); ctx.moveTo(cx+Math.cos(ang)*r0, cy+Math.sin(ang)*r0*0.75);
+    ctx.lineTo(cx+Math.cos(ang)*r1, cy+Math.sin(ang)*r1*0.75); ctx.stroke(); }
+  ctx.restore(); ctx.globalAlpha=1;
+}
+let _scan=null;
+function scanPattern(){ if(_scan) return _scan;
+  const c=makeCanvas(2,3), g=c.getContext('2d'); g.fillStyle='rgba(0,0,0,0.20)'; g.fillRect(0,2,2,1);
+  _scan=ctx.createPattern(c,'repeat'); return _scan; }
+function drawPostFX(){
+  ctx.fillStyle=scanPattern(); ctx.fillRect(0,0,W,H);                 // CRT scanlines
+  const g=ctx.createRadialGradient(W/2,H*0.48,H*0.24,W/2,H*0.5,H*0.74);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.40)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);                            // soft vignette
+}
+
 /* -------------------------------- render -------------------------------- */
 function render(){
   const st=STAGES[stageIndex];
@@ -287,6 +350,8 @@ function render(){
   const pSeg=findSegment(position+PLAYER_Z), pPct=pctRem(position+PLAYER_Z,SEG_LEN);
   const pY=lerp(pSeg.p2.world.y,pSeg.p1.world.y,pPct);
   ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(shake>0.001){ const m=shake*7*(W/480); ctx.translate((Math.random()*2-1)*m,(Math.random()*2-1)*m*0.7); }
   drawBackground(st,pY);
   let maxy=H, x=0, dx=-(base.curve*basePct);
   for(let n=0;n<DRAW_DIST;n++){
@@ -306,11 +371,16 @@ function render(){
       const sc=lerp(seg.p2.screen.scale,seg.p1.screen.scale,car.percent);
       const sx=lerp(seg.p2.screen.x,seg.p1.screen.x,car.percent)+(sc*car.offset*ROAD_WIDTH*W/2);
       const sy=lerp(seg.p2.screen.y,seg.p1.screen.y,car.percent);
-      drawVehicle(car.sprite,sx,sy,sc,seg.clip);
+      drawVehicle(car.sprite,sx,sy,sc,seg.clip,seg.fog);
     }
+    if(seg.banner) drawBanner(seg,seg.banner);
   }
   drawPlayer(pSeg,pPct);
+  drawParticles();
+  ctx.restore();            // end screen-shake
+  drawSpeedLines();
   drawHUD(st);
+  drawPostFX();
 }
 function poly(p){ ctx.beginPath(); ctx.moveTo(p[0],p[1]); for(let i=2;i<p.length;i+=2)ctx.lineTo(p[i],p[i+1]); ctx.closePath(); ctx.fill(); }
 function fade(hex,fog){ const haze=STAGES[stageIndex].haze; if(fog>=1)return hex;
@@ -350,9 +420,20 @@ function drawSegment(seg){
 function drawBackground(st,pY){
   const g=ctx.createLinearGradient(0,0,0,H*0.6);
   st.sky.forEach((c,i)=>g.addColorStop(i/(st.sky.length-1),c)); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  const horizon=Math.round(H*0.46+pY*0.000016*H);
-  // clouds
-  ctx.fillStyle='rgba(255,255,255,0.9)';
+  const horizon=Math.round(H*HORIZON+pY*0.000016*H);
+  // ground fallback (keeps gaps grass-coloured instead of sky at the start line)
+  ctx.fillStyle=st.dark.grass; ctx.fillRect(0,horizon,W,H-horizon);
+  // --- soft sun with bloom (slow parallax, sits deepest in the scene) ---
+  const sunx=Math.round(W*0.70-skyOffset*0.12*W), suny=horizon-H*0.21;
+  const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,W*0.20);
+  sg.addColorStop(0,'rgba(255,252,220,0.98)'); sg.addColorStop(0.42,'rgba(255,214,120,0.6)');
+  sg.addColorStop(1,'rgba(255,180,90,0)');
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=sg;
+  ctx.beginPath(); ctx.arc(sunx,suny,W*0.20,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,248,206,0.95)'; ctx.beginPath(); ctx.arc(sunx,suny,W*0.058,0,7); ctx.fill();
+  ctx.restore();
+  // clouds (faster parallax than the sun)
+  ctx.fillStyle='rgba(255,255,255,0.92)';
   for(const cl of clouds){
     const cx=((cl.x - skyOffset*0.3)%1+1)%1*W, cy=horizon-H*0.16-cl.y*H*0.4, s=cl.s*W*0.06;
     cloud(cx,cy,s); cloud(cx-W,cy,s); cloud(cx+W,cy,s);
@@ -366,9 +447,15 @@ function drawCoast(st,horizon){
   // ocean band
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.05,W,H*0.10);
   ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.05,W,H*0.018);
-  // distant green headland (two parallax layers)
-  drawHills(st.hill2,horizon-H*0.02,H*0.10,treeOffset*W*0.6,0.95,6);
-  drawHills(st.hill, horizon,        H*0.075,treeOffset*W,    1.0,5);
+  // sparkling sea highlights (own slow parallax)
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  const seaY=horizon-H*0.042, drift=Math.floor(skyOffset*260);
+  for(let i=0;i<26;i++){ const sx=((i*61+drift)%W+W)%W, sy=seaY+(i*13%Math.max(2,Math.round(H*0.028)));
+    if((i*7+drift)%3===0) ctx.fillRect(sx,sy,2,1); }
+  // layered hazy coastal hills (farther = hazier and lower)
+  drawHills(fade(st.hill2,0.42),horizon-H*0.016,H*0.050,treeOffset*W*0.5, 0.90,7);
+  drawHills(fade(st.hill2,0.60),horizon,         H*0.058,treeOffset*W*0.75,0.95,6);
+  drawHills(fade(st.hill, 0.80),horizon+H*0.010, H*0.052,treeOffset*W,     1.00,5);
   // tiny lighthouse on a point
   const lx=(0.78 - hillOffset*0.6)%1; const px=((lx%1+1)%1)*W;
   ctx.fillStyle='#f4f4f4'; ctx.fillRect(px-3,horizon-H*0.065,6,H*0.05);
@@ -403,6 +490,33 @@ function drawHills(color,horizon,amp,shift,alpha,n){
     ctx.lineTo(cx+span/2,horizon-amp*(0.3+0.2*Math.cos(i*2.3))); }
   ctx.lineTo(W,horizon+4); ctx.closePath(); ctx.fill(); ctx.restore();
 }
+/* --------------- overhead banner / checkpoint arch (OutRun) -------------- */
+function stripedPost(x,baseY,topY,pw){
+  const step=Math.max(4,pw*2.2);
+  for(let y=topY,i=0;y<baseY;y+=step,i++){ ctx.fillStyle=i%2?'#d22222':'#f4f4f4';
+    ctx.fillRect(Math.round(x-pw/2),Math.round(y),Math.max(1,Math.round(pw)),Math.ceil(Math.min(step,baseY-y))); }
+}
+function drawBanner(seg,label){
+  const p=seg.p2.screen, w=p.w; if(!w||w<=3||p.y>seg.clip) return;
+  const lx=p.x-w, rx=p.x+w, postH=w*1.15, topY=p.y-postH, pw=Math.max(2,w*0.085);
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,seg.clip); ctx.clip();
+  stripedPost(lx,p.y,topY,pw); stripedPost(rx,p.y,topY,pw);
+  const bh=Math.max(9,w*0.42);
+  if(label==='CHECK'){
+    const n=10, cw=(rx-lx)/n;
+    for(let i=0;i<n;i++){ ctx.fillStyle=i%2?'#1a1a1a':'#f4f4f4'; ctx.fillRect(lx+i*cw,topY,cw+1,bh); }
+    ctx.fillStyle='#ffd24a'; ctx.fillRect(lx,topY+bh*0.34,rx-lx,bh*0.32);
+    ctx.fillStyle='#c0392b'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`900 ${Math.max(7,bh*0.40)}px Courier`; ctx.fillText('CHECK POINT',p.x,topY+bh*0.5);
+  } else {
+    const bc=Math.max(2,bh*0.14);
+    ctx.fillStyle='#efe9da'; ctx.fillRect(lx,topY,rx-lx,bh);
+    ctx.fillStyle='#b23227'; ctx.fillRect(lx,topY,rx-lx,bc); ctx.fillRect(lx,topY+bh-bc,rx-lx,bc);
+    ctx.fillStyle='#c0392b'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`900 ${Math.max(9,bh*0.60)}px Courier`; ctx.fillText(label,p.x,topY+bh*0.52);
+  }
+  ctx.restore();
+}
 
 /* --------------------------- scenery sprites ---------------------------- */
 function drawSceneSprite(seg,sprite){
@@ -414,12 +528,8 @@ function drawSceneSprite(seg,sprite){
 }
 function drawSprite(t,s,fog){
   switch(t){
-    case 'palm':{ const h=160*s;
-      ctx.strokeStyle=shade('#7a5230',fog); ctx.lineWidth=Math.max(1,9*s); ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(8*s,-h*0.55,3*s,-h); ctx.stroke();
-      ctx.fillStyle=shade('#1f9e3a',fog);
-      for(let a=0;a<7;a++){ ctx.save(); ctx.translate(3*s,-h); ctx.rotate((a/7)*Math.PI-Math.PI*0.5-0.3);
-        ctx.beginPath(); ctx.ellipse(30*s,0,32*s,8*s,0,0,7); ctx.fill(); ctx.restore(); } break; }
+    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.max(0.3,s*2.0);
+      blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }
     case 'umbrella':{ const h=70*s;
       ctx.strokeStyle=shade('#777',fog); ctx.lineWidth=Math.max(1,4*s);
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-h); ctx.stroke();
@@ -449,7 +559,8 @@ function drawSprite(t,s,fog){
       ctx.fillStyle=shade('#1f8a4a',fog); ctx.fillRect(-w/2,-122*s,w,h);
       ctx.globalAlpha=fog; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font=`bold ${Math.max(6,13*s)}px Courier`;
       ctx.fillText('OUTRUN',0,-122*s+h*0.65); ctx.globalAlpha=1; break; }
-    case 'taxi': drawVehicleBody('taxi',s*1.0,fog); break;   // parked taxi as scenery
+    case 'taxi':{ const cv=sprite('car_taxi',()=>buildCarSprite(CAR_DEFS.taxi));
+      blitSprite(cv,0,0,Math.max(0.3,s*1.6),fog); break; }   // parked taxi as scenery
   }
 }
 function buildingSign(s,fog,wall,roof,text,band){
@@ -464,10 +575,15 @@ function buildingSign(s,fog,wall,roof,text,band){
 }
 
 /* ----------------------------- traffic cars ----------------------------- */
-function drawVehicle(type,x,y,scale,clip){
-  const px=scale*ROAD_WIDTH*W/2*SPRITE_PX; if(px<=0.04)return; if(y-1>clip)return;
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip(); ctx.translate(x,y);
-  drawVehicleBody(type,px,1); ctx.restore();
+function drawVehicle(type,x,y,scale,clip,fog){
+  const px=scale*ROAD_WIDTH*W/2*SPRITE_PX; if(px<=0.02)return; if(y-1>clip)return;
+  const def=CAR_DEFS[type]||CAR_DEFS.carRed;
+  const cv=sprite('car_'+type,()=>buildCarSprite(def));
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
+  // scale sprite to the road perspective: small at horizon, growing smoothly in
+  const bs=px*2.0, alpha=0.35+0.65*(fog==null?1:fog);
+  blitSprite(cv,x,y+6*px,bs,alpha);
+  ctx.restore();
 }
 function drawVehicleBody(type,px,fog){
   if(type==='suv'){ const w=110*px,h=78*px;
@@ -494,64 +610,181 @@ function drawVehicleBody(type,px,fog){
   ctx.fillStyle='#ff3030'; ctx.fillRect(-w/2+4*px,-h*0.32,w*0.15,h*0.16); ctx.fillRect(w/2-4*px-w*0.15,-h*0.32,w*0.15,h*0.16);
 }
 
-/* ------------------------ player car (380SL + crew) --------------------- */
+/* ===========================================================================
+   PIXEL-ART SPRITE ENGINE
+   Each sprite is painted once onto a small offscreen canvas at its native
+   (low) resolution using integer fillRects, then blitted to the main canvas
+   scaled by an integer-ish factor with imageSmoothingEnabled=false.  That
+   gives crisp 16-bit sprites that scale with the car's on-screen size.
+   ======================================================================== */
+const _sprCache={};
+function makeCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+function blitSprite(cv,cx,yBottom,bs,alpha){
+  const w=Math.round(cv.width*bs), h=Math.round(cv.height*bs);
+  if(w<1||h<1) return;
+  if(alpha!=null) ctx.globalAlpha=alpha;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(cv, Math.round(cx-w/2), Math.round(yBottom-h), w, h);
+  ctx.imageSmoothingEnabled=true;
+  if(alpha!=null) ctx.globalAlpha=1;
+}
+
+/* ---- hero car: rear-view red convertible + woman driver + pup -------------- */
+function buildPlayerSprite(){
+  const NW=64, NH=52, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
+  const blob=(rows,col)=>{ c.fillStyle=col; for(const [y,x0,x1] of rows) c.fillRect(x0,y,x1-x0+1,1); };
+  const R='#e21228', r='#9a0c1c', rd='#5f0712', RH='#ff5a4e', RL='#ff9c86',
+        CH='#e9ecf2', CM='#aab0bc', CD='#6d7380',
+        TL='#ff3b3b', TC='#ffd8c8', TD='#8c0f13', AM='#ffb020',
+        K='#0d0d12', K2='#23242d',
+        RIM='#8a92a2', HUB='#cfd4de',
+        ST='#2a1d12', STH='#4a3420',
+        SK='#b67a46', SKD='#8a5630',                   // warm medium-brown skin
+        HY='#17141b', HYD='#090810', HYL='#302b36',   // near-black dark hair (mid / shade / subtle sheen)
+        SG='#15151b', SGH='#45454f',
+        DG='#e8b461', DGD='#b4792f', DGB='#f6d49a', NOSE='#17110d', TNG='#ff6f91',
+        TOP='#15b9a7', TOPD='#0e8678';
+  // --- tires (drawn first, body overlaps inner edge) ---
+  P(4,30,11,14,K);  P(49,30,11,14,K);
+  P(6,34,6,6,RIM);  P(51,34,6,6,RIM);
+  P(7,35,3,3,HUB);  P(52,35,3,3,HUB);
+  // --- lower valance + exhaust ---
+  P(13,36,38,4,rd); P(13,39,38,2,K);
+  P(28,38,3,2,CM);  P(33,38,3,2,CM);
+  // --- body (red, built bottom-up, sides shaded) ---
+  P(9,26,46,5,R);   P(9,26,2,5,r);   P(53,26,2,5,r);
+  P(12,22,40,4,R);  P(12,22,2,4,r);  P(50,22,2,4,r);
+  P(16,19,32,3,R);
+  P(18,18,28,1,RH);                                  // top sheen line
+  P(22,20,3,10,RL);                                  // convex sheen column
+  // --- tail lights (two round-ish red lenses) ---
+  blob([[26,12,20],[27,11,21],[28,11,21],[29,12,20]],TD);
+  blob([[26,12,19],[27,12,20],[28,12,20]],TL);
+  P(14,27,3,1,TC);
+  blob([[26,44,52],[27,43,53],[28,43,53],[29,44,52]],TD);
+  blob([[26,45,52],[27,44,52],[28,44,52]],TL);
+  P(47,27,3,1,TC);
+  // --- centre grille panel + blank stylised plate (no number) ---
+  P(24,25,16,6,K); P(26,26,12,4,CM); P(27,27,10,2,'#e9ecf2');
+  // --- chrome bumper ---
+  P(9,31,46,4,CM);  P(9,31,46,1,CH);  P(9,34,46,1,CD);
+  // --- roll bar hoop (behind seats) ---
+  P(14,13,36,2,K);  P(14,13,36,1,CM);
+  P(15,13,2,6,K);   P(47,13,2,6,K);
+  // --- seats ---
+  P(17,15,12,7,ST); P(17,15,12,1,STH);
+  P(35,15,12,7,ST); P(35,15,12,1,STH);
+  P(29,17,6,5,K2);                                   // centre console shadow
+  // --- DRIVER (woman), left seat, centre x=24 — REAR VIEW (back of head) ---
+  P(18,17,12,5,TOP); P(18,20,12,2,TOPD);             // shoulders / upper back
+  P(22,13,4,4,SK);                                     // nape (back of neck)
+  // brown hair mass covering the whole back of the head
+  blob([[3,21,27],[4,20,28],[5,19,29],[6,19,29],[7,19,29],[8,19,29],[9,19,29],[10,20,28],[11,21,27],[12,22,26]],HY);
+  // wind-blown tail streaming to the left
+  blob([[4,12,20],[5,10,20],[6,9,19],[7,10,18],[8,12,17]],HY);
+  P(19,4,2,8,HYD); P(10,9,7,1,HYD);                   // shadow side + tail underside
+  P(24,3,1,9,HYL); P(11,5,5,1,HYL);                   // centre-back parting highlight + tail hi
+  P(27,7,2,1,SG);                                      // sunglasses arm at the temple
+  P(28,8,1,2,SKD);                                     // ear hint at the side
+  // --- PUP (dog), shotgun seat — 3/4 HEAD OUT THE SIDE, muzzle to our right ---
+  P(36,16,10,6,DG); P(37,16,8,1,DGB);                 // chest / scruff, leaning to the side
+  // furry head turned to the right (skull on the left, muzzle poking out right)
+  blob([[4,39,45],[5,38,46],[6,37,47],[7,37,47],[8,37,47],[9,37,47],[10,38,46],[11,39,45],[12,40,44]],DG);
+  // muzzle in profile, protruding over the car's right side
+  blob([[8,46,51],[9,46,52],[10,47,51]],DGB);
+  P(51,8,2,2,NOSE);                                    // black nose at the tip
+  P(49,11,3,2,TNG);                                    // little tongue hanging below
+  // one floppy near ear (darker) hanging down the back of the head
+  blob([[3,37,41],[4,36,41],[5,36,42],[6,37,42],[7,38,43]],DGD);
+  P(44,7,2,2,NOSE);                                    // the visible eye
+  P(40,5,4,1,DGB); P(45,7,1,3,DGB);                    // fur highlights on the crown + cheek
+  return cv;
+}
+
+/* ---- palm tree silhouette (OutRun signature) ------------------------------ */
+function buildPalmSprite(){
+  const NW=44, NH=58, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(Math.round(x),Math.round(y),w,h); };
+  const TR='#8a5a2e', TRD='#5e3c1c', TRL='#b07c3f',
+        FR='#1f9e3a', FRD='#15722a', FRL='#54c664';
+  const baseX=20;
+  // curved trunk with segment rings
+  for(let y=16;y<58;y++){ const t=(y-16)/42; const x=baseX+Math.sin(t*1.0)*4; P(x-1,y,3,1,TR); P(x-1,y,1,1,TRD); P(x+1,y,1,1,TRL); }
+  for(let y=20;y<58;y+=4){ const t=(y-16)/42; const x=baseX+Math.sin(t*1.0)*4; P(x-1,y,3,1,TRD); }
+  // full drooping frond crown (quadratic arches that arc up then droop at the tips)
+  const cX=20, cY=15;
+  const tips=[[-21,-1],[-16,-9],[-8,-14],[0,-16],[8,-14],[16,-9],[21,-1],[-13,6],[13,6]];
+  tips.forEach(tp=>{ const tx=cX+tp[0], ty=cY+tp[1], mx=(cX+tx)/2, my=Math.min(cY,ty)-6;
+    for(let i=0;i<=12;i++){ const t=i/12, it=1-t;
+      const x=it*it*cX+2*it*t*mx+t*t*tx, y=it*it*cY+2*it*t*my+t*t*ty;
+      const sz=i<8?2:1; P(x-sz/2,y-sz/2,sz,sz, i<3?FRD:(i<8?FR:FRL)); } });
+  P(cX-3,cY-2,6,4,FRD); P(cX-2,cY+1,2,2,'#6b4a1e');     // crown core + coconuts
+  return cv;
+}
+
+/* ---- traffic cars: rear-view pixel coupes / SUV / taxi -------------------- */
+function buildCarSprite(def){
+  const tall=!!def.tall, NW=50, NH=tall?36:30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
+  const B=def.body, D=def.dark, HiC=def.hi, GL='#9be9ff', GLD='#5fb6d8',
+        K='#0d0d12', CM='#aab0bc', CH='#e9ecf2', CD='#6d7380',
+        RIM='#8a92a2', HUB='#cfd4de', TL='#ff3b3b', TD='#8c0f13';
+  const g=NH-1;                                        // ground row
+  const cabTop=tall?4:7, cabBot=tall?18:16, bodyTop=cabBot-1, bodyBot=g-6;
+  // tires
+  P(4,bodyBot-3,9,9,K);  P(37,bodyBot-3,9,9,K);
+  P(6,bodyBot,5,4,RIM);  P(39,bodyBot,5,4,RIM);
+  P(7,bodyBot+1,3,2,HUB); P(40,bodyBot+1,3,2,HUB);
+  // cabin / roof
+  P(13,cabTop,24,cabBot-cabTop,D);
+  P(13,cabTop,24,1,HiC);
+  P(16,cabTop+2,18,cabBot-cabTop-4,GL);               // rear window
+  P(16,cabTop+2,18,1,GLD);
+  // body
+  P(6,bodyTop,38,bodyBot-bodyTop,B);
+  P(6,bodyTop,2,bodyBot-bodyTop,D);  P(42,bodyTop,2,bodyBot-bodyTop,D);
+  P(8,bodyTop,34,1,HiC);                               // body top sheen
+  // tail lights
+  P(8,bodyBot-6,8,4,TD);  P(9,bodyBot-6,6,3,TL);
+  P(34,bodyBot-6,8,4,TD); P(35,bodyBot-6,6,3,TL);
+  // blank plate (no number)
+  P(20,bodyBot-5,10,4,CM); P(21,bodyBot-4,8,2,CH);
+  // bumper
+  P(6,bodyBot,38,3,CM); P(6,bodyBot,38,1,CH); P(6,bodyBot+2,38,1,CD);
+  if(def.checker){ for(let i=0;i<9;i++){ P(6+i*(38/9),cabBot-2,38/9,2, i%2?'#111':'#fff'); } }
+  return cv;
+}
+const CAR_DEFS={
+  carRed :{body:'#e23b3b',dark:'#9c1f1f',hi:'#ff7a6a'},
+  carBlue:{body:'#2a6df0',dark:'#1b4aa8',hi:'#6fa0ff'},
+  beetle :{body:'#e8c93a',dark:'#b89a20',hi:'#fff07a'},
+  suv    :{body:'#2f6f4f',dark:'#1d4a33',hi:'#5fc088',tall:true},
+  taxi   :{body:'#f4c20d',dark:'#caa00a',hi:'#ffe77a',checker:true}
+};
+function sprite(key,builder){ return _sprCache[key]||(_sprCache[key]=builder()); }
+
+/* ------------------------ player car (hero convertible) --------------------- */
 function drawPlayer(seg,pct){
   const scale=CAM_DEPTH/PLAYER_Z;
   const bob=(speed>0)?(Math.sin(Date.now()*0.03)*1.2*(speed/MAX_SPEED)*(H/700)):0;
   const steer=keys.left?-1:keys.right?1:0;
   const updown=seg.p1.world.y-seg.p2.world.y;
-  const px=scale*ROAD_WIDTH*W/2*SPRITE_PX*2.1;
-  const cx=W/2, cy=H-H*0.13+bob;
+  const px=scale*ROAD_WIDTH*W/2*SPRITE_PX*1.45;
+  const cx=W/2, cy=H-H*0.10+bob;
   ctx.save(); ctx.translate(cx,cy);
   ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.beginPath(); ctx.ellipse(0,6*px,78*px,15*px,0,0,7); ctx.fill();
   const lean=steer*0.10+(updown>0?-0.02:0.02); ctx.transform(1,0,lean,1,0,0);
-
-  const w=120*px,h=56*px;
-  // body lower + boot
-  ctx.fillStyle='#c8142a'; ctx.fillRect(-w/2,-h,w,h*0.62);
-  ctx.fillStyle='#8e0d1c'; ctx.fillRect(-w/2,-h*0.42,w,h*0.42);
-  // chrome bumper
-  ctx.fillStyle='#dfe2e8'; ctx.fillRect(-w/2,-h*0.08,w,h*0.14);
-  ctx.fillStyle='#aeb3bd'; ctx.fillRect(-w/2,-h*0.02,w,h*0.05);
-  // tail lights
-  ctx.fillStyle='#ff2a2a'; ctx.fillRect(-w/2+7*px,-h*0.55,w*0.17,h*0.22); ctx.fillRect(w/2-7*px-w*0.17,-h*0.55,w*0.17,h*0.22);
-  ctx.fillStyle='#ffd24a'; ctx.fillRect(-w/2+7*px,-h*0.34,w*0.17,h*0.07); ctx.fillRect(w/2-7*px-w*0.17,-h*0.34,w*0.17,h*0.07);
-  // licence plate
-  ctx.fillStyle='#f2c83a'; ctx.fillRect(-w*0.24,-h*0.31,w*0.48,h*0.21);
-  ctx.fillStyle='#1a1a1a'; ctx.font=`bold ${Math.max(5,7.4*px)}px Courier`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('5ADK 68',0,-h*0.205);
-  // 380SL badge
-  ctx.fillStyle='#e9eef5'; ctx.font=`bold ${Math.max(4,7*px)}px Courier`; ctx.fillText('380SL',w*0.36,-h*0.50);
-  ctx.textBaseline='alphabetic';
-  // open cabin
-  ctx.fillStyle='#15100c'; ctx.fillRect(-w*0.34,-h*1.02,w*0.68,h*0.5);
-  ctx.fillStyle='#2a2017'; ctx.fillRect(-w*0.34,-h*1.02,w*0.68,h*0.12); // seat backs top
-  // wheels
-  ctx.fillStyle='#14141a'; ctx.beginPath(); ctx.ellipse(-w*0.42,h*0.05,14*px,11*px,0,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(w*0.42,h*0.05,14*px,11*px,0,0,7); ctx.fill();
-  ctx.fillStyle='#5a5a64'; ctx.beginPath(); ctx.ellipse(-w*0.42,h*0.05,6*px,5*px,0,0,7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(w*0.42,h*0.05,6*px,5*px,0,0,7); ctx.fill();
-
-  const wind=0.4+speed/MAX_SPEED, t=Date.now();
-  // ---- driver (Amber), left seat ----
-  const hairFlow=Math.sin(t*0.012)*7*px*wind;
-  ctx.fillStyle='#3a2418';
-  ctx.beginPath(); ctx.ellipse(-w*0.16-hairFlow,-h*1.12,15*px,24*px,0.35,0,7); ctx.fill();           // flowing hair
-  ctx.beginPath(); ctx.ellipse(-w*0.16,-h*1.18,12*px,12*px,0,0,7); ctx.fill();                          // head back
-  ctx.fillStyle='#f4c6a0'; ctx.beginPath(); ctx.arc(-w*0.16,-h*1.18,8.5*px,0,7); ctx.fill();            // skin nape
-  ctx.fillStyle='#222'; ctx.fillRect(-w*0.16-9*px,-h*1.22,18*px,4*px);                                  // sunglasses arm hint
-  ctx.fillStyle='#c8142a'; ctx.fillRect(-w*0.24,-h*0.62,w*0.16,h*0.22);                                 // shoulder
-
-  // ---- golden pup, right seat (ears flapping) ----
-  const earFlap=Math.sin(t*0.016+1)*9*px*wind;
-  ctx.fillStyle='#e0a94d';
-  ctx.beginPath(); ctx.arc(w*0.17,-h*1.14,10*px,0,7); ctx.fill();                                       // head
-  ctx.beginPath(); ctx.ellipse(w*0.17,-h*0.86,12*px,16*px,0,0,7); ctx.fill();                           // body
-  ctx.fillStyle='#c8893a';
-  ctx.beginPath(); ctx.ellipse(w*0.10-earFlap,-h*1.10+earFlap*0.3,5*px,12*px,-0.5,0,7); ctx.fill();     // left ear
-  ctx.beginPath(); ctx.ellipse(w*0.24+earFlap,-h*1.10+earFlap*0.3,5*px,12*px,0.5,0,7); ctx.fill();      // right ear
-  ctx.fillStyle='#3a2a1a'; ctx.beginPath(); ctx.arc(w*0.205,-h*1.20,2.4*px,0,7); ctx.fill();            // snout/nose
-
+  const bs=px*1.95, sp=sprite('player',buildPlayerSprite);
+  blitSprite(sp,0,10*px,bs,null);
+  // tail-light bloom — soft glow always on, flares when braking (eased, additive)
+  const braking=keys.brake?1:0, ty=10*px-52*bs+27*bs;
+  [15,48].forEach(nx=>{ const tx=(nx-32)*bs, rad=bs*(braking?6.5:3.4);
+    const gg=ctx.createRadialGradient(tx,ty,0,tx,ty,rad);
+    gg.addColorStop(0,braking?'rgba(255,100,80,0.95)':'rgba(255,60,50,0.45)');
+    gg.addColorStop(1,'rgba(255,40,40,0)');
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=gg;
+    ctx.beginPath(); ctx.arc(tx,ty,rad,0,7); ctx.fill(); ctx.restore(); });
   ctx.restore();
 }
 
@@ -619,7 +852,7 @@ function showOverlay(html,btn,stat){ const ov=overlay(); ov.classList.remove('hi
   document.getElementById('blurb').innerHTML=html; document.getElementById('startBtn').textContent=btn;
   document.getElementById('endStat').innerHTML=stat||''; }
 function hideOverlay(){ overlay().classList.add('hidden'); }
-function startStage(idx){ stageIndex=idx; buildTrack(); position=0; speed=0; playerX=0;
+function startStage(idx){ stageIndex=idx; buildTrack(); position=START_POS; speed=0; playerX=0;
   timeLeft=idx===0?80:65; if(idx===0){ score=0; totalTime=0; }
   segments.forEach(s=>s.passed=false); stageBannerT=2.4; state='play'; hideOverlay(); ensureAudio(); }
 function stageClear(){ speed=0; silenceAudio(); score+=Math.floor(timeLeft)*250; ding();
@@ -685,7 +918,7 @@ function init(){
   try{ hiScore=parseInt(localStorage.getItem('outrunme_hi')||'0',10)||0; }catch(e){}
   resize(); addEventListener('resize',resize);
   addEventListener('orientationchange',()=>setTimeout(resize,200));
-  bindInput(); buildTrack(); state='menu'; requestAnimationFrame(frame);
+  bindInput(); buildTrack(); position=START_POS; state='menu'; requestAnimationFrame(frame);
 }
 init();
 </script>
