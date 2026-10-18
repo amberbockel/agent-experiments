@@ -120,7 +120,15 @@ const STAGES=[
     light:{ road:'#8f8f96', grass:'#6f7d8a', rumble:'#d22', lane:'#ffffff' },
     dark :{ road:'#86868d', grass:'#65727e', rumble:'#ffffff' },
     scenery:['brownstone','tower','exit','market','sign','taxi'],
-    cars:['taxi','beetle','suv','carBlue'] }
+    cars:['taxi','beetle','suv','carBlue'] },
+  { name:'STORROW DRIVE', bg:'storrow',
+    sky:['#43347a','#b05f7a','#ffb765'],
+    ocean:'#2b5f86', oceanLite:'#5a93bc', sand:'#6f7d55',
+    hill:'#2e2a4a', hill2:'#221f3a', haze:'#f0c89a',
+    light:{ road:'#8a8a90', grass:'#4f8a3e', rumble:'#d22', lane:'#ffffff' },
+    dark :{ road:'#828288', grass:'#428034', rumble:'#ffffff' },
+    scenery:['brownstone','tree','streetlight'],
+    cars:['carRed','carBlue','suv','boxTruck','taxi','boxTruck'] }
 ];
 
 /* -------------------------------- state --------------------------------- */
@@ -196,12 +204,15 @@ function placeScenery(){
   const gap=Math.max(1,Math.floor(segments.length/5));
   const bands = st.bg==='coast'
     ? ['beach','village','town','beach','village']
+    : st.bg==='storrow'
+    ? ['riverside','riverside','riverside','riverside','riverside']
     : ['downtown','downtown','downtown','downtown','downtown'];
   for(let i=0;i<segments.length;i++) segments[i].biome=bands[Math.floor(i/gap)%bands.length];
   // tie the ground to the water: sand only at the beach, green New-England turf inland
   if(st.bg==='coast'){ const SAND=['#e6d3a0','#d6c088'], GRN=['#5aa83e','#4a9433'];
     for(let i=0;i<segments.length;i++){ const band=Math.floor(i/RUMBLE_LEN)%2;
       segments[i].grass=(segments[i].biome==='beach'?SAND:GRN)[band]; } }
+  if(st.bg==='storrow'){ placeStorrow(); return; }
   const BIG={
     beach:   ['palm','clamShack','palm','capeHouse','palm'],
     village: ['capeHouse','capeHouse','palm'],
@@ -241,15 +252,31 @@ function placeScenery(){
     if(segments[n2].biome==='beach') segments[n2].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.1});
   }
 }
+function placeStorrow(){
+  // RIGHT = Back Bay brownstones (+ the odd storefront); LEFT = Esplanade trees & river sailboats
+  for(let n=16;n<segments.length-20;n+=rInt(3,6)){
+    segments[n].sprites.push({type:(Math.random()<0.85?'brownstone':'storefront'), offset:(1.08+Math.random()*0.18)});
+    const m=Math.min(n+rInt(1,3),segments.length-1);
+    segments[m].sprites.push({type:'tree', offset:-(1.08+Math.random()*0.25)});
+    if(Math.random()<0.16) segments[Math.min(n+rInt(2,5),segments.length-1)].sprites.push({type:'sailboat', offset:-(2.2+Math.random()*0.9)});
+  }
+  for(let n=18;n<segments.length-8;n+=rInt(6,9)){
+    segments[n].sprites.push({type:'streetlight', offset:1.03});
+    segments[Math.min(n+3,segments.length-1)].sprites.push({type:'streetlight', offset:-1.03});
+  }
+  const lows=[];
+  for(let n=140;n<segments.length-50;n+=rInt(150,230)){ segments[n].lowbridge=true; lows.push(n); }
+  lows.slice(0,3).forEach(bi=>{ const s2=Math.max(10,bi-3); if(segments[s2]) segments[s2].sprites.push({type:'storrowed', offset:1.12}); });
+}
 function placeCheckpoints(){
   const gap=Math.floor(segments.length/5);
   for(let i=1;i<=4;i++){ const idx=gap*i; if(segments[idx]){ segments[idx].checkpoint=true; segments[idx].banner='CHECK'; } }
 }
 function placeTraffic(){
-  const st=STAGES[stageIndex]; cars=[]; const count=14+stageIndex*4;
+  const st=STAGES[stageIndex]; cars=[]; const count=14+stageIndex*4 + (stageIndex===2?18:0);
   for(let i=0;i<count;i++){
     const seg=rInt(30,segments.length-30), off=lerp(-0.7,0.7,Math.random()), sp=rPick(st.cars);
-    const spd=(sp==='suv'||sp==='taxi')?0.55:0.6+Math.random()*0.22;
+    const spd=(sp==='boxTruck')?0.46+Math.random()*0.08:(sp==='suv'||sp==='taxi')?0.55:0.6+Math.random()*0.22;
     cars.push({offset:off,z:seg*SEG_LEN,sprite:sp,speed:MAX_SPEED*spd,segment:null,percent:0});
   }
 }
@@ -286,7 +313,7 @@ function updateCars(dt,playerSeg,playerW){
   });
 }
 function carSteer(car,carSeg,playerSeg,playerW){
-  const look=20, cw=(car.sprite==='suv'||car.sprite==='taxi')?0.16:0.12;
+  const look=20, cw=(car.sprite==='boxTruck')?0.19:(car.sprite==='suv'||car.sprite==='taxi')?0.16:0.12;
   for(let i=1;i<look;i++){
     const seg=segments[(carSeg.index+i)%segments.length];
     if(seg===playerSeg && speed>car.speed && overlap(playerX,playerW,car.offset,cw,1.2))
@@ -320,7 +347,7 @@ function update(dt){
   const edge=Math.abs(playerX);
   if(edge>0.82 && edge<1.0 && speed>OFFROAD_LIM){ rumbleBuzz=1; shake=Math.max(shake,0.28*sp); }
   else rumbleBuzz=lerp(rumbleBuzz,0,0.2);
-  for(const car of pSeg.cars){ const cw=(car.sprite==='suv'||car.sprite==='taxi')?0.16:0.12;
+  for(const car of pSeg.cars){ const cw=(car.sprite==='boxTruck')?0.19:(car.sprite==='suv'||car.sprite==='taxi')?0.16:0.12;
     if(speed>car.speed && overlap(playerX,pW,car.offset,cw,0.8)){
       speed=car.speed*(car.speed/speed); position=increase(car.z,-PLAYER_Z,trackLength); shake=1; break; }
     else if(overlap(playerX,pW,car.offset,cw,1.6)) shake=Math.max(shake,0.35*sp);  // close-pass thump
@@ -343,7 +370,7 @@ function update(dt){
   updateAudio(sp);
 }
 function spriteW(t){ switch(t){ case 'palm':case 'tower':return SPRITE_SCALE*0.8;
-  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'storefront':case 'brownstone':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
+  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'storefront':case 'brownstone':case 'lighthouse':case 'tree':case 'storrowed':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
 
 /* ------------------------------ juice / FX ------------------------------ */
 function spawnParticle(dust,color){
@@ -419,6 +446,7 @@ function render(){
     }
     if(seg.banner) drawBanner(seg,seg.banner);
     if(seg.bridge) drawZakim(seg);
+    if(seg.lowbridge) drawLowBridge(seg);
   }
   drawPlayer(pSeg,pPct);
   drawParticles();
@@ -438,7 +466,7 @@ function drawSegment(seg){
   const p1=seg.p1.screen,p2=seg.p2.screen,c=seg.color,fog=seg.fog;
   ctx.fillStyle=fade(seg.grass||c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
   const r1=p1.w/6,r2=p2.w/6;
-  if(seg.biome==='beach'){
+  if(seg.biome==='beach'||seg.biome==='riverside'){
     const st=STAGES[stageIndex], bch2=p2.w*0.30, bch1=p1.w*0.30;        // sandy beach strip
     const e2=p2.x-p2.w-r2-bch2, e1=p1.x-p1.w-r1-bch1;                    // shoreline x (near/far)
     ctx.fillStyle=fade(st.ocean,fog);     poly([0,p2.y, e2,p2.y, e1,p1.y, 0,p1.y]);
@@ -475,13 +503,15 @@ function drawBackground(st,pY){
   // ground fallback (keeps gaps grass-coloured instead of sky at the start line)
   ctx.fillStyle=groundFill; ctx.fillRect(0,horizon,W,H-horizon);
   // --- soft sun with bloom (slow parallax, sits deepest in the scene) ---
-  const sunx=Math.round(W*0.72-skyOffset*0.10*W), suny=horizon-H*0.26;
-  const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,W*0.13);
-  sg.addColorStop(0,'rgba(255,252,224,0.85)'); sg.addColorStop(0.5,'rgba(255,224,150,0.35)');
-  sg.addColorStop(1,'rgba(255,200,120,0)');
+  const dusk=(st.bg==='storrow');
+  const sunx=Math.round(W*0.70-skyOffset*0.10*W), suny=dusk?(horizon-H*0.05):(horizon-H*0.26);
+  const sunR=dusk?W*0.22:W*0.13, coreR=dusk?W*0.085:W*0.042;
+  const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,sunR);
+  if(dusk){ sg.addColorStop(0,'rgba(255,216,150,0.95)'); sg.addColorStop(0.45,'rgba(255,150,92,0.5)'); sg.addColorStop(1,'rgba(255,110,70,0)'); }
+  else { sg.addColorStop(0,'rgba(255,252,224,0.85)'); sg.addColorStop(0.5,'rgba(255,224,150,0.35)'); sg.addColorStop(1,'rgba(255,200,120,0)'); }
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=sg;
-  ctx.beginPath(); ctx.arc(sunx,suny,W*0.13,0,7); ctx.fill();
-  ctx.fillStyle='rgba(255,250,218,0.8)'; ctx.beginPath(); ctx.arc(sunx,suny,W*0.042,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(sunx,suny,sunR,0,7); ctx.fill();
+  ctx.fillStyle=dusk?'rgba(255,204,140,0.9)':'rgba(255,250,218,0.8)'; ctx.beginPath(); ctx.arc(sunx,suny,coreR,0,7); ctx.fill();
   ctx.restore();
   // clouds (faster parallax than the sun)
   ctx.fillStyle='rgba(255,255,255,0.92)';
@@ -489,7 +519,7 @@ function drawBackground(st,pY){
     const cx=((cl.x - skyOffset*0.3)%1+1)%1*W, cy=horizon-H*0.14-cl.y*H*0.34, s=cl.s*W*0.088;
     cloud(cx,cy,s); cloud(cx-W,cy,s); cloud(cx+W,cy,s);
   }
-  if(st.bg==='coast') drawCoast(st,horizon); else drawCity(st,horizon);
+  if(st.bg==='coast') drawCoast(st,horizon); else if(st.bg==='storrow') drawStorrow(st,horizon); else drawCity(st,horizon);
 }
 function cloud(x,y,s){ ctx.beginPath();
   ctx.arc(x,y,s,0,7); ctx.arc(x+s,y+s*0.2,s*0.8,0,7); ctx.arc(x-s,y+s*0.2,s*0.7,0,7); ctx.arc(x+s*0.4,y-s*0.4,s*0.7,0,7); ctx.fill(); }
@@ -508,6 +538,44 @@ function drawCoast(st,horizon){
     drawHills(fade('#3f8a46',0.42),horizon-H*0.004,H*0.040,treeOffset*W*0.5,0.9,7);
     drawHills(fade('#2f7a38',0.68),horizon+H*0.006,H*0.046,treeOffset*W,    1.0,6);
   }
+}
+function drawStorrow(st,horizon){
+  const base=horizon-H*0.03;
+  // Charles River along the horizon
+  ctx.fillStyle=st.ocean;     ctx.fillRect(0,base,W,H*0.07);
+  ctx.fillStyle=st.oceanLite; ctx.fillRect(0,base,W,H*0.013);
+  // sunset streak on the water
+  ctx.save(); ctx.globalAlpha=0.5; ctx.fillStyle='#ffce84';
+  for(let i=0;i<9;i++) ctx.fillRect(W*0.60-i, base+i*2, W*0.14+i*2, 1); ctx.restore();
+  // dusk skyline silhouette
+  ctx.save(); ctx.globalAlpha=0.97; ctx.fillStyle=st.hill;
+  const span=W/11, sh=(treeOffset*W)%span;
+  for(let i=-1;i<=12;i++){ const bx=i*span-sh, bw=span*0.82, bh=H*(0.035+0.05*Math.abs(Math.sin(i*1.7))); ctx.fillRect(bx,base-bh,bw,bh); }
+  ctx.restore();
+  // Prudential-like boxy tower (with antenna + lit windows)
+  const prx=Math.round(W*0.55-(hillOffset*W*0.25)), prw=Math.round(W*0.05), prh=Math.round(H*0.17);
+  ctx.fillStyle=st.hill2; ctx.fillRect(prx-prw/2,base-prh,prw,prh); ctx.fillRect(prx-1,base-prh-H*0.028,2,H*0.028);
+  ctx.fillStyle='#ffd86a'; for(let y=base-prh+4;y<base-4;y+=5) for(let x=prx-prw/2+2;x<prx+prw/2-1;x+=4) if((x+y|0)%3===0) ctx.fillRect(x,y,2,2);
+  // Hancock-like slim glass tower (bluish, tapered highlight)
+  const hkx=Math.round(W*0.69-(hillOffset*W*0.25)), hkw=Math.round(W*0.035), hkh=Math.round(H*0.21);
+  ctx.fillStyle='#34506a'; ctx.fillRect(hkx-hkw/2,base-hkh,hkw,hkh);
+  ctx.fillStyle='#53809f'; ctx.fillRect(hkx-hkw/2,base-hkh,Math.max(2,hkw*0.4),hkh);
+  ctx.fillStyle='#ffd86a'; for(let y=base-hkh+5;y<base-4;y+=6) ctx.fillRect(hkx-hkw/2+1,y,hkw-2,1);
+}
+function drawLowBridge(seg){
+  const p=seg.p2.screen, w=p.w; if(!w||w<=3||p.y>seg.clip) return;
+  const lx=p.x-w-w*0.12, rx=p.x+w+w*0.12;
+  const clear=Math.max(6,w*0.95), deckY=p.y-clear, deckH=Math.max(4,w*0.42);
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,seg.clip); ctx.clip();
+  ctx.fillStyle='#5f636b'; ctx.fillRect(lx-w*0.2,deckY,w*0.22,clear+w*0.5); ctx.fillRect(rx-w*0.02,deckY,w*0.22,clear+w*0.5);
+  ctx.fillStyle='#787c84'; ctx.fillRect(lx,deckY,rx-lx,deckH);
+  ctx.fillStyle='#9aa0a8'; ctx.fillRect(lx,deckY,rx-lx,Math.max(1,deckH*0.22));
+  ctx.fillStyle='#43464d'; ctx.fillRect(lx,deckY+deckH,rx-lx,Math.max(1,deckH*0.14));
+  ctx.fillStyle='#55585f'; ctx.fillRect(lx,deckY-deckH*0.35,rx-lx,Math.max(1,deckH*0.2));
+  for(let x=lx;x<rx;x+=Math.max(3,w*0.12)) ctx.fillRect(x,deckY-deckH*0.35,Math.max(1,w*0.02),deckH*0.35);
+  const sw=Math.max(5,w*0.16); ctx.fillStyle='#f4c20d'; ctx.fillRect(p.x-sw/2,deckY+deckH*0.18,sw,deckH*0.55);
+  ctx.fillStyle='#1a1a1a'; ctx.fillRect(p.x-sw*0.3,deckY+deckH*0.3,sw*0.6,Math.max(1,deckH*0.12));
+  ctx.restore();
 }
 function drawCity(st,horizon){
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.03,W,H*0.07);       // Charles River
@@ -596,6 +664,9 @@ function drawSceneSprite(seg,sprite){
 function drawSprite(t,s,fog,side){
   side=side||1; const EA=(cv,bs)=>side*(cv.width*bs*0.5);
   switch(t){
+    case 'tree':{ const cv=sprite('tree',buildTree), bs=Math.min(Math.max(0.3,s*10),W*1.2); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'sailboat':{ const cv=sprite('sailboat',buildSailboat), bs=Math.min(Math.max(0.3,s*7),W*0.5); blitSprite(cv,0,0,bs,0.55+0.45*fog); break; }
+    case 'storrowed':{ const cv=sprite('storrowed',buildStorrowedTruck), bs=Math.min(Math.max(0.3,s*7),W*0.9); blitSprite(cv,EA(cv,bs),0,bs,0.6+0.4*fog); break; }
     case 'palm':{ const cv=sprite('palm',buildPalmSprite), bs=Math.min(Math.max(0.3,s*10),W*1.4);
       blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }   // palm stays centred (fronds overhang naturally)
     case 'clamShack':{ const cv=sprite('clamShack',buildClamShack), bs=Math.min(Math.max(0.3,s*11),W*1.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
@@ -650,8 +721,7 @@ function buildingSign(s,fog,wall,roof,text,band){
 /* ----------------------------- traffic cars ----------------------------- */
 function drawVehicle(type,x,y,scale,clip,fog){
   const px=scale*ROAD_WIDTH*W/2*SPRITE_PX; if(px<=0.02)return; if(y-1>clip)return;
-  const def=CAR_DEFS[type]||CAR_DEFS.carRed;
-  const cv=sprite('car_'+type,()=>buildCarSprite(def));
+  const cv = type==='boxTruck' ? sprite('car_boxTruck',buildBoxTruck) : sprite('car_'+type,()=>buildCarSprite(CAR_DEFS[type]||CAR_DEFS.carRed));
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
   // scale sprite to the road perspective: small at horizon, growing smoothly in
   const bs=Math.min(px*6.0, W*0.085), alpha=0.35+0.65*(fog==null?1:fog);
@@ -986,6 +1056,60 @@ function buildBrownstone(){
   P(32,96,2,14,RAIL); P(54,96,2,14,RAIL);                        // iron rails
   return cv;
 }
+function buildTree(){
+  const NW=46,NH=68, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const TR='#6e4a2e',TRD='#4a3018',L1='#3f8a46',L2='#2f7a38',L3='#58b25a';
+  for(let y=40;y<68;y++){ const x=23+Math.sin((y-40)/28)*2; P(x-2,y,4,1,TR); P(x-2,y,1,1,TRD); }
+  P(18,46,12,3,TRD);
+  const clus=[[23,22],[13,28],[33,28],[16,15],[30,15],[23,10],[23,30]];
+  clus.forEach((cc,i)=>{ c.fillStyle=[L2,L1,L3][i%3]; c.beginPath(); c.ellipse(cc[0],cc[1],12,11,0,0,7); c.fill(); });
+  c.fillStyle=L3; [[20,12],[30,20],[14,26]].forEach(h=>{ c.beginPath(); c.ellipse(h[0],h[1],5,4,0,0,7); c.fill(); });
+  c.fillStyle=L2; [[27,30],[16,32]].forEach(h=>{ c.beginPath(); c.ellipse(h[0],h[1],6,4,0,0,7); c.fill(); });
+  return cv;
+}
+function buildSailboat(){
+  const NW=42,NH=48, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const HULL='#8a2f24',HULLL='#b5483a',SAIL='#f4f4f0',SAILD='#d6d6cf',MAST='#9a9a9a',PENN='#d22';
+  c.fillStyle=HULL; c.beginPath(); c.moveTo(6,40); c.lineTo(36,40); c.lineTo(31,46); c.lineTo(11,46); c.closePath(); c.fill();
+  P(6,39,30,1,HULLL); P(20,6,2,34,MAST);
+  c.fillStyle=SAIL; c.beginPath(); c.moveTo(22,8); c.lineTo(22,38); c.lineTo(35,38); c.closePath(); c.fill();
+  c.fillStyle=SAILD; c.beginPath(); c.moveTo(22,8); c.lineTo(22,38); c.lineTo(26,38); c.closePath(); c.fill();
+  c.fillStyle=SAIL; c.beginPath(); c.moveTo(19,12); c.lineTo(19,38); c.lineTo(8,38); c.closePath(); c.fill();
+  P(22,4,7,3,PENN);
+  return cv;
+}
+function buildBoxTruck(){
+  const NW=52,NH=50, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const BOX='#eef0f2',BOXD='#c6cad0',BOXL='#ffffff',RIB='#d4d8de',
+        K='#0d0d12',CM='#aab0bc',CH='#e9ecf2',RIM='#8a92a2',HUB='#cfd4de',TL='#ff3b3b',TD='#8c0f13',BAR='#5a5f66';
+  const g=NH-1;
+  P(5,g-10,10,10,K); P(37,g-10,10,10,K); P(7,g-7,6,5,RIM); P(39,g-7,6,5,RIM); P(8,g-6,3,3,HUB); P(40,g-6,3,3,HUB);
+  P(6,4,40,34,BOX); P(6,4,40,2,BOXL); P(6,4,2,34,BOXD); P(44,4,2,34,BOXD);
+  for(let y=9;y<36;y+=4) P(9,y,34,1,RIB);
+  P(22,20,8,3,BAR);
+  P(4,38,44,4,BAR); P(4,42,44,3,CM); P(4,42,44,1,CH);
+  P(7,38,7,4,TD); P(8,38,5,3,TL); P(38,38,7,4,TD); P(39,38,5,3,TL);
+  return cv;
+}
+function buildStorrowedTruck(){
+  const NW=70,NH=48, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const BOX='#eef0f2',BOXD='#c6cad0',TORN='#b03a2a',K='#0d0d12',CM='#aab0bc',RIM='#8a92a2',CAB='#8a3a2a';
+  const g=NH-1;
+  P(10,g-9,9,9,K); P(44,g-9,9,9,K); P(12,g-6,5,4,RIM); P(46,g-6,5,4,RIM);
+  P(10,22,46,18,BOX); P(10,22,46,2,'#ffffff'); P(10,22,2,18,BOXD); P(54,22,2,18,BOXD);
+  for(let y=26;y<38;y+=4) P(13,y,40,1,BOXD);
+  c.fillStyle=TORN; c.beginPath(); c.moveTo(12,22); c.lineTo(30,8); c.lineTo(40,14); c.lineTo(52,22); c.closePath(); c.fill();
+  c.fillStyle='#d94f3a'; c.beginPath(); c.moveTo(16,21); c.lineTo(30,11); c.lineTo(36,15); c.closePath(); c.fill();
+  P(54,28,8,12,CAB); P(54,28,8,1,'#b5483a');
+  P(10,40,46,3,CM);
+  c.fillStyle='#ffd020'; P(16,2,40,9); c.fillStyle='#000'; c.fillRect(16,2,40,1); c.fillRect(16,10,40,1);
+  c.fillStyle='#c01818'; c.font='bold 7px Georgia'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('STORROWED!',36,6);
+  return cv;
+}
 function buildCarSprite(def){
   const tall=!!def.tall, NW=50, NH=tall?36:30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
   const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
@@ -1122,14 +1246,14 @@ function showOverlay(html,btn,stat){ const ov=overlay(); ov.classList.remove('hi
   document.getElementById('endStat').innerHTML=stat||''; }
 function hideOverlay(){ overlay().classList.add('hidden'); }
 function startStage(idx){ stageIndex=idx; buildTrack(); position=START_POS; speed=0; playerX=0;
-  timeLeft=idx===0?80:65; if(idx===0){ score=0; totalTime=0; }
+  timeLeft=idx===0?80:(idx===1?65:50); if(idx===0){ score=0; totalTime=0; }
   segments.forEach(s=>s.passed=false); stageBannerT=2.4; state='play'; hideOverlay(); ensureAudio(); }
 function stageClear(){ speed=0; silenceAudio(); score+=Math.floor(timeLeft)*250; ding();
   if(stageIndex+1<STAGES.length) state='stageclear',
     showOverlay(`Stage <b>${stageIndex+1}</b> cleared with <b>${Math.ceil(timeLeft)}s</b> left.<br>Next: <b>${STAGES[stageIndex+1].name}</b>.`,'NEXT STAGE ▶',`SCORE <b>${Math.floor(score).toString().padStart(6,'0')}</b>`);
   else win(); }
 function win(){ state='win'; silenceAudio(); saveHi();
-  showOverlay(`You drove the whole coast in <b>${totalTime.toFixed(1)}s</b>. 🏁<br>The pup approves.`,'DRIVE AGAIN',`FINAL SCORE <b>${Math.floor(score).toString().padStart(6,'0')}</b>`); }
+  showOverlay(`You conquered the Cape, Boston and Storrow Drive in <b>${totalTime.toFixed(1)}s</b>. 🏁<br>The pup approves.`,'DRIVE AGAIN',`FINAL SCORE <b>${Math.floor(score).toString().padStart(6,'0')}</b>`); }
 function endGame(){ state='gameover'; silenceAudio(); saveHi();
   showOverlay(`Out of time on <b>${STAGES[stageIndex].name}</b>.<br>Checkpoints buy seconds — keep your foot down.`,'RETRY STAGE',`SCORE <b>${Math.floor(score).toString().padStart(6,'0')}</b> · HI <b>${Math.floor(hiScore).toString().padStart(6,'0')}</b>`); }
 function saveHi(){ if(score>hiScore){ hiScore=score; try{localStorage.setItem('outrunme_hi',String(Math.floor(hiScore)));}catch(e){} } }
