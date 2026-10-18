@@ -93,7 +93,7 @@ const FOV=100, CAM_HEIGHT=1000, CAM_DEPTH=1/Math.tan((FOV/2)*Math.PI/180);
 const DRAW_DIST=220, FOG_DENSITY=4;
 const PLAYER_Z=CAM_HEIGHT*CAM_DEPTH;
 const HORIZON=0.47;   // ~50/50 sky-to-ground split (OutRun beach)
-const MAX_SPEED=SEG_LEN/STEP, ACCEL=MAX_SPEED/5, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
+const MAX_SPEED=SEG_LEN/STEP*1.32, ACCEL=MAX_SPEED/3.6, BRAKING=-MAX_SPEED, DECEL=-MAX_SPEED/5;
 const OFFROAD_DECEL=-MAX_SPEED/2, OFFROAD_LIM=MAX_SPEED/4, CENTRIFUGAL=0.3;
 const SPRITE_SCALE=0.3;    // collision width as a fraction of the road half-width
 const SPRITE_PX=0.0018;    // converts projected scale → pixels for billboard drawing
@@ -193,30 +193,43 @@ function placeScenery(){
     ? ['beach','village','town','beach','village']
     : ['downtown','downtown','downtown','downtown','downtown'];
   for(let i=0;i<segments.length;i++) segments[i].biome=bands[Math.floor(i/gap)%bands.length];
-  const BIG = {
-    beach:    ['palm','palm','clamShack','palm','duneGrass','clamShack'],
-    village:  ['capeHouse','capeHouse','palm','capeHouse','clamShack'],
-    town:     ['storefront','storefront','capeHouse','storefront'],
-    downtown: ['storefront','storefront','capeHouse','storefront']
+  const BIG={
+    beach:   ['clamShack','palm','clamShack','capeHouse','palm'],
+    village: ['capeHouse','capeHouse','clamShack','palm'],
+    town:    ['storefront','capeHouse','clamShack','storefront'],
+    downtown:['brownstone','brownstone','storefront','brownstone']
   };
-  // near-edge filler (small stuff), frequent, both sides, biome-aware
-  for(let n=12;n<segments.length-8;n+=rInt(2,4)){
-    const b=segments[n].biome, side=(n%2===0)?1:-1;
-    let t='duneGrass';
-    if(b==='beach') t=(n%5===0)?'duneFence':((n%7===0)?'beachRock':'duneGrass');
-    else if(b==='town'||b==='downtown') t=(n%3===0)?'streetlight':((n%7===0)?'beachRock':'duneGrass');
-    else t=(n%6===0)?'beachRock':'duneGrass';
-    segments[n].sprites.push({type:t,offset:side*(1.02+Math.random()*0.12)});
+  const FILL={ beach:['duneGrass','duneFence','beachRock','duneGrass'], village:['duneGrass','beachRock','duneGrass'],
+               town:['streetlight','duneGrass'], downtown:['streetlight','duneGrass'] };
+  const fill=b=> rPick(FILL[b]||FILL.beach);
+  // walk the track: a small CLUSTER of VARIED buildings (a little town), then an OPEN stretch
+  let n=14;
+  while(n<segments.length-24){
+    const b=segments[n].biome;
+    if(Math.random()<0.60){
+      const count=rInt(3,6); let last=null, lastSide=0, seg=n;
+      for(let k=0;k<count;k++){
+        const pool=BIG[b]||BIG.beach; let type; do{ type=rPick(pool); } while(type===last && pool.length>1); last=type;
+        let side=Math.random()<0.5?-1:1; if(side===lastSide) side=-side; lastSide=side;
+        seg=Math.min(seg+rInt(2,4), segments.length-2);
+        segments[seg].sprites.push({type, offset:side*(1.05+Math.random()*0.12)});
+        if(Math.random()<0.5) segments[Math.min(seg+1,segments.length-1)].sprites.push({type:fill(b), offset:-side*(1.03+Math.random()*0.1)});
+      }
+      n = seg + rInt(28,80);                 // OPEN gap before the next cluster
+    } else {
+      if(Math.random()<0.45){ const side=Math.random()<0.5?-1:1;
+        segments[n].sprites.push({type:(b==='beach'||b==='village')?'palm':fill(b), offset:side*(1.05+Math.random()*0.14)}); }
+      n += rInt(12,30);
+    }
   }
-  // big objects on BOTH sides, spaced, biome-aware
-  for(let n=16;n<segments.length-16;n+=rInt(4,7)){
-    const pool=BIG[segments[n].biome]||BIG.beach;
-    for(const side of [-1,1]){ if(Math.random()<0.45) continue;
-      segments[n].sprites.push({type:rPick(pool),offset:side*(1.05+Math.random()*0.14)}); }
+  // sparse natural texture where nothing else sits
+  for(let m=16;m<segments.length-8;m+=rInt(7,14)){
+    const b=segments[m].biome, side=(m%2===0)?1:-1;
+    if(segments[m].sprites.length===0) segments[m].sprites.push({type:fill(b), offset:side*(1.02+Math.random()*0.1)});
   }
-  // occasional landmark lighthouse on a beach point
-  for(let n=120;n<segments.length-60;n+=rInt(300,460)){
-    if(segments[n].biome==='beach') segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.1});
+  // rare lighthouse landmark on a beach point
+  for(let n2=140;n2<segments.length-80;n2+=rInt(600,1000)){
+    if(segments[n2].biome==='beach') segments[n2].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.1});
   }
 }
 function placeCheckpoints(){
@@ -233,14 +246,18 @@ function placeTraffic(){
 }
 function buildTrack(){
   segments=[];
-  addStraight(L.SHORT/2); addLowHills(); addS(); addCurve(L.MED,C.MED,Hh.LOW);
-  addBumps(); addHill(L.MED,Hh.HIGH); addS(); addCurve(L.LONG,-C.MED,Hh.NONE);
-  addStraight(); addCurve(L.MED,C.MED,Hh.MED); addLowHills(); addDownToEnd();
+  addStraight(L.SHORT/2); addCurve(L.MED,C.MED,Hh.LOW); addLowHills();
+  addCurve(L.LONG,C.HARD,Hh.NONE); addStraight(L.SHORT); addS();
+  addCurve(L.MED,-C.HARD,Hh.LOW); addBumps(); addHill(L.MED,Hh.HIGH);
+  addCurve(L.LONG,-C.MED,Hh.MED); addCurve(L.MED,C.HARD,Hh.NONE); addStraight();
+  addS(); addCurve(L.LONG,C.MED,Hh.MED); addLowHills();
+  addCurve(L.MED,-C.HARD,Hh.LOW); addDownToEnd();
   // start band + finish chequer
   const s0=findSegment(PLAYER_Z).index;
   for(let n=0;n<3;n++) segments[s0+2+n].color={road:'#ddd',grass:segments[s0].color.grass,rumble:'#ddd'};
   for(let n=1;n<=10;n++) segments[segments.length-n].color={road:n%2?'#111':'#eee',grass:'#bbb',rumble:n%2?'#eee':'#111'};
   if(segments[s0+44]) segments[s0+44].banner='START';
+  if(STAGES[stageIndex].bg==='city'){ const bi=Math.floor(segments.length*0.72); if(segments[bi]) segments[bi].bridge=true; }
   trackLength=segments.length*SEG_LEN;
   placeScenery(); placeCheckpoints(); placeTraffic();
   // clouds
@@ -316,8 +333,8 @@ function update(dt){
   if(start+dt*speed>=trackLength-PLAYER_Z) stageClear();
   updateAudio(sp);
 }
-function spriteW(t){ switch(t){ case 'palm':case 'tower':case 'brownstone':return SPRITE_SCALE*0.8;
-  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'storefront':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
+function spriteW(t){ switch(t){ case 'palm':case 'tower':return SPRITE_SCALE*0.8;
+  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'storefront':case 'brownstone':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
 
 /* ------------------------------ juice / FX ------------------------------ */
 function spawnParticle(dust,color){
@@ -360,6 +377,7 @@ function drawPostFX(){
 
 /* -------------------------------- render -------------------------------- */
 function render(){
+  if(!isFinite(W)||!isFinite(H)||W<=0||H<=0) return;
   const st=STAGES[stageIndex];
   const base=findSegment(position), basePct=pctRem(position,SEG_LEN);
   const pSeg=findSegment(position+PLAYER_Z), pPct=pctRem(position+PLAYER_Z,SEG_LEN);
@@ -389,6 +407,7 @@ function render(){
       drawVehicle(car.sprite,sx,sy,sc,seg.clip,seg.fog);
     }
     if(seg.banner) drawBanner(seg,seg.banner);
+    if(seg.bridge) drawZakim(seg);
   }
   drawPlayer(pSeg,pPct);
   drawParticles();
@@ -511,6 +530,25 @@ function stripedPost(x,baseY,topY,pw){
   for(let y=topY,i=0;y<baseY;y+=step,i++){ ctx.fillStyle=i%2?'#d22222':'#f4f4f4';
     ctx.fillRect(Math.round(x-pw/2),Math.round(y),Math.max(1,Math.round(pw)),Math.ceil(Math.min(step,baseY-y))); }
 }
+function drawZakim(seg){
+  const p=seg.p2.screen, w=p.w; if(!w||w<=3||p.y>seg.clip) return;
+  const lx=p.x-w-w*0.14, rx=p.x+w+w*0.14, towerH=w*5.2, topY=p.y-towerH, deckY=p.y-w*0.30;
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,seg.clip); ctx.clip();
+  ctx.fillStyle='#b4b8c0'; ctx.fillRect(lx,deckY,rx-lx,Math.max(2,w*0.16)); // deck beam over the road
+  function tower(cx){ const tw=Math.max(2,w*0.17), waistY=p.y-towerH*0.42, spireTopY=topY;
+    ctx.fillStyle='#d6dae2';
+    poly([cx-w*0.22,deckY, cx-tw*0.5,waistY, cx+tw*0.5,waistY, cx-w*0.22+tw,deckY]);  // left leg
+    poly([cx+w*0.22,deckY, cx+tw*0.5,waistY, cx-tw*0.5,waistY, cx+w*0.22-tw,deckY]);  // right leg
+    poly([cx-tw*0.5,waistY, cx+tw*0.5,waistY, cx+tw*0.22,spireTopY, cx-tw*0.22,spireTopY]); // obelisk spire
+    ctx.fillStyle='#eef1f6'; ctx.fillRect(cx-Math.max(1,tw*0.1),spireTopY,Math.max(1,tw*0.2),waistY-spireTopY);
+    return {x:cx, y:spireTopY+(waistY-spireTopY)*0.18}; }
+  const Lt=tower(lx), Rt=tower(rx);
+  ctx.strokeStyle='rgba(236,240,248,0.85)'; ctx.lineWidth=Math.max(1,w*0.014);
+  for(let i=1;i<=7;i++){ const t=i/7;
+    ctx.beginPath(); ctx.moveTo(Lt.x,Lt.y); ctx.lineTo(lx+(p.x-lx)*t, deckY); ctx.stroke();   // left fan
+    ctx.beginPath(); ctx.moveTo(Rt.x,Rt.y); ctx.lineTo(rx-(rx-p.x)*t, deckY); ctx.stroke(); } // right fan
+  ctx.restore();
+}
 function drawBanner(seg,label){
   const p=seg.p2.screen, w=p.w; if(!w||w<=3||p.y>seg.clip) return;
   const lx=p.x-w, rx=p.x+w, postH=w*1.15, topY=p.y-postH, pw=Math.max(2,w*0.085);
@@ -568,10 +606,7 @@ function drawSprite(t,s,fog,side){
       ctx.beginPath(); ctx.moveTo(2*s,-h); ctx.lineTo(w*0.3,-h*0.45); ctx.lineTo(2*s,-h*0.45); ctx.closePath(); ctx.fill(); break; }
     case 'store':{ buildingSign(s,fog,'#e9d8b0','#8a5a2b','AMBER\'S','#c0392b'); break; }
     case 'market':{ buildingSign(s,fog,'#cdb89a','#7a4a26','MARKET','#1f6e3a'); break; }
-    case 'brownstone':{ const w=110*s,h=170*s; ctx.fillStyle=shade('#9c5a32',fog); ctx.fillRect(-w/2,-h,w,h);
-      for(let r=0;r<4;r++)for(let cc=0;cc<3;cc++){
-        ctx.fillStyle=shade((r+cc)%2?'#c98':'#5a3520',fog); ctx.fillRect(-w/2+8*s+cc*(w/3),-h+10*s+r*(h/4.4),w/5,h/6); }
-      ctx.fillStyle=shade('#5a3520',fog); poly([-w/2,-h, w/2,-h, 0,-h-h*0.16]); break; }
+    case 'brownstone':{ const cv=sprite('brownstone',buildBrownstone), bs=Math.min(Math.max(0.3,s*11),W*1.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
     case 'tower':{ const w=90*s,h=240*s; ctx.fillStyle=shade('#8b97a6',fog); ctx.fillRect(-w/2,-h,w,h);
       for(let r=0;r<14;r++)for(let cc=0;cc<4;cc++){ ctx.fillStyle=shade((r+cc)%3===0?'#cfe6ff':'#5a6b7c',fog);
         ctx.fillRect(-w/2+6*s+cc*(w/4),-h+8*s+r*(h/15),w/7,h/22); } break; }
@@ -605,7 +640,7 @@ function drawVehicle(type,x,y,scale,clip,fog){
   const cv=sprite('car_'+type,()=>buildCarSprite(def));
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
   // scale sprite to the road perspective: small at horizon, growing smoothly in
-  const bs=Math.min(px*9.5, W*0.11), alpha=0.35+0.65*(fog==null?1:fog);
+  const bs=Math.min(px*3.4, W*0.06), alpha=0.35+0.65*(fog==null?1:fog);
   blitSprite(cv,x,y+6*px,bs,alpha);
   ctx.restore();
 }
@@ -915,6 +950,28 @@ function buildStreetlight(){
   c.fillStyle='rgba(255,220,130,0.35)'; c.fillRect(9,26,11,8);
   return cv;
 }
+function buildBrownstone(){
+  const NW=60,NH=116, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const BRN='#7e4a30',BRND='#5a3320',BRNL='#9a6342',MOR='#49291a',
+        TRIM='#e8e0d0',GLASS='#2b3640',GLASSL='#4a5a66',DOOR='#3a2518',
+        STOOP='#a09688',STOOPD='#6e665e',RAIL='#24242a';
+  P(4,8,52,108,BRN);                                             // facade
+  for(let y=8;y<116;y+=4) P(4,y,52,1,BRND);                      // brick courses
+  for(let y=8;y<116;y+=8) for(let x=4;x<56;x+=8) P(x,y,1,4,MOR);
+  for(let y=12;y<116;y+=8) for(let x=8;x<56;x+=8) P(x,y,1,4,MOR);
+  P(2,4,56,5,'#5a3320'); P(2,4,56,1,BRNL);                       // cornice
+  const bay=y=>{ P(7,y,32,22,BRNL); P(7,y,32,1,TRIM); P(7,y,1,22,BRND); P(38,y,1,22,BRND);
+    for(let k=0;k<3;k++){ const wx=9+k*10; P(wx,y+2,8,18,TRIM); P(wx+1,y+3,6,16,GLASS); P(wx+3,y+3,1,16,GLASSL); } };
+  bay(14); bay(42);                                              // projecting bay windows
+  const fw=(x,y)=>{ P(x,y,11,17,TRIM); P(x+1,y+1,9,15,GLASS); P(x+5,y+1,1,15,GLASSL); P(x+1,y+8,9,1,GLASSL); };
+  fw(10,72); fw(39,72);                                          // flat windows
+  P(36,80,16,30,DOOR); P(36,80,16,1,TRIM); P(36,80,1,30,TRIM); P(51,80,1,30,TRIM); P(44,96,1,3,'#d9c24a'); // door
+  P(32,104,24,4,STOOP); P(32,104,24,1,'#bcb4a8');               // stoop
+  for(let i=0;i<4;i++) P(33+i,108+i*2,22-i*2,3,i%2?STOOPD:STOOP); // steps
+  P(32,96,2,14,RAIL); P(54,96,2,14,RAIL);                        // iron rails
+  return cv;
+}
 function buildCarSprite(def){
   const tall=!!def.tall, NW=50, NH=tall?36:30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
   const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
@@ -1000,7 +1057,7 @@ function drawHUD(st){
   // ---- SPEED (left, below) ----
   hudBox(pad,y2,bw,bh);
   ctx.textAlign='left'; ctx.fillStyle='#ffd24a'; ctx.font=`bold ${fs*0.62}px Courier`; ctx.fillText('SPEED',pad+fs*0.32,y2+fs*0.72);
-  const kmh=Math.round((speed/MAX_SPEED)*312);
+  const kmh=Math.round((speed/MAX_SPEED)*334);
   ctx.textAlign='right'; ctx.fillStyle='#ff6a6a'; ctx.font=`bold ${fs*0.82}px Courier`; ctx.fillText(`${kmh} KM/H`,pad+bw-fs*0.34,y2+fs*1.28);
   // ---- STAGE (top-right) ----
   hudBox(W-pad-bw,pad,bw,bh);
@@ -1092,6 +1149,7 @@ function bindInput(){
 
 /* ------------------------------- resize --------------------------------- */
 function resize(){
+  if(!window.innerWidth||!window.innerHeight) return;   // ignore transient 0-size (pane resize / orientation)
   const dpr=Math.min(window.devicePixelRatio||1,2);
   let cw,ch;
   if(window.innerHeight/window.innerWidth>=1.0){ cw=window.innerWidth; ch=window.innerHeight; }   // portrait device → fill
