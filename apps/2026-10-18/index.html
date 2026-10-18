@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Switch Tax — the hidden cost of task switching</title>
+<meta name="description" content="A time tracker that prices every context switch. Tap between tasks and see what jumping around really costs you.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px 0}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 16px 48px;display:grid;gap:24px}
+  h1{font-family:var(--ab-font-display);font-weight:400;font-size:clamp(2rem,9vw,2.75rem);line-height:1.1;margin:8px 0 8px}
+  .lede{color:var(--ab-muted);margin:0}
+  .clock{font-variant-numeric:tabular-nums;font-family:var(--ab-font-display);font-size:clamp(2.5rem,14vw,3.5rem);line-height:1;margin:8px 0}
+  .now{display:flex;align-items:center;gap:8px;color:var(--ab-muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ab-faint)}
+  .live .dot{background:var(--ab-accent);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{min-height:44px;padding:0 16px;border-radius:var(--ab-r-pill);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);color:var(--ab-text);font:inherit;cursor:pointer;transition:all var(--ab-dur) var(--ab-ease)}
+  .chip:hover{background:var(--ab-glass-hover)}
+  .chip[aria-pressed=true]{border-color:var(--ab-accent);background:var(--ab-accent-soft)}
+  .chip:focus-visible{outline:2px solid var(--ab-accent);outline-offset:2px}
+  .add{display:flex;gap:8px}.add .ab-input{flex:1;min-width:0}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:16px}.stat b{display:block;font-family:var(--ab-font-display);font-weight:400;font-size:1.75rem;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--ab-muted);font-size:var(--ab-text-sm)}
+  .tax b{color:var(--ab-accent)}
+  .bar{display:flex;height:16px;border-radius:var(--ab-r-pill);overflow:hidden;background:var(--ab-glass-bg);gap:2px}
+  .bar i{display:block;min-width:2px;transition:flex var(--ab-dur)}
+  .rows{display:grid;gap:8px;margin:16px 0 0;padding:0;list-style:none}
+  .rows li{display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+  .rows em{font-style:normal;color:var(--ab-muted)}
+  .empty{color:var(--ab-muted);text-align:center;padding:16px}
+  .ctl{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .ctl input[type=range]{flex:1;min-width:160px;accent-color:var(--ab-accent);min-height:44px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .verdict{margin:0;font-size:var(--ab-text-lg)}
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="ab-eyebrow">Agent Experiments · Day 2026-10-18</span>
+  <button class="ab-btn ab-btn--ghost" id="theme" aria-label="Toggle light or dark theme">◐</button>
+</div>
+<main class="wrap">
+  <header>
+    <h1>Switch Tax</h1>
+    <p class="lede">Every time you jump tasks, you pay a refocus fee. Track your day and see the bill.</p>
+  </header>
+
+  <section class="ab-card" aria-label="Timer" style="padding:24px">
+    <div class="now" id="now"><span class="dot"></span><span id="nowLabel">Nothing running — pick a task</span></div>
+    <div class="clock" id="clock" aria-live="off">0:00:00</div>
+    <div class="chips" id="chips" role="group" aria-label="Tasks"></div>
+    <form class="add" id="addForm" style="margin-top:16px">
+      <label class="ab-label" for="newTask" style="position:absolute;left:-9999px">New task</label>
+      <input class="ab-input" id="newTask" placeholder="Add a task…" maxlength="28" autocomplete="off">
+      <button class="ab-btn ab-btn--glass" type="submit">Add</button>
+    </form>
+    <div class="row" style="margin-top:16px">
+      <button class="ab-btn ab-btn--secondary" id="pause">Pause</button>
+      <button class="ab-btn ab-btn--ghost" id="reset">Reset day</button>
+    </div>
+  </section>
+
+  <section aria-label="Results" style="display:grid;gap:16px">
+    <div class="stats">
+      <div class="ab-card stat"><b id="sSwitch">0</b><span>switches</span></div>
+      <div class="ab-card stat"><b id="sWork">0m</b><span>tracked</span></div>
+      <div class="ab-card stat tax"><b id="sTax">0m</b><span>estimated refocus tax</span></div>
+      <div class="ab-card stat"><b id="sRate">—</b><span>switches / hour</span></div>
+    </div>
+    <p class="verdict" id="verdict">Start tracking to get a verdict.</p>
+    <div class="ab-card" style="padding:24px">
+      <span class="ab-eyebrow">Where time went</span>
+      <div class="bar" id="bar" style="margin-top:16px" aria-hidden="true"></div>
+      <ul class="rows" id="rows"><li class="empty">No time logged yet.</li></ul>
+    </div>
+    <div class="ab-card" style="padding:24px">
+      <label class="ab-label" for="cost">Refocus cost per switch: <strong id="costV">10</strong> min</label>
+      <div class="ctl"><input type="range" id="cost" min="1" max="25" value="10">
+      </div>
+      <p class="lede" style="font-size:var(--ab-text-sm)">Research by Gloria Mark (UC Irvine) found people can take ~23 minutes to fully return to a task after an interruption. Real cost varies — tune it to your own brain. It's a gut-check, not a measurement.</p>
+    </div>
+  </section>
+</main>
+<script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('ab-theme')||'dark'}catch(e){root.dataset.theme='dark'}
+document.getElementById('theme').onclick=()=>{root.dataset.theme=root.dataset.theme==='light'?'dark':'light';try{localStorage.setItem('ab-theme',root.dataset.theme)}catch(e){}};
+
+const KEY='ab-switchtax';
+const COLORS=['var(--ab-accent)','var(--ab-indigo)','var(--ab-lavender)','var(--ab-green)','var(--ab-pink-soft)','var(--ab-muted)'];
+let S={tasks:['Deep work','Email','Meetings','Chat'],totals:{},switches:0,current:null,since:null,cost:10};
+try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.tasks)S=r}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+
+function bank(){ if(S.current&&S.since){S.totals[S.current]=(S.totals[S.current]||0)+(Date.now()-S.since);S.since=Date.now();} }
+function pick(t){
+  if(S.current===t&&S.since)return;
+  bank();
+  if(S.current&&S.current!==t)S.switches++;
+  S.current=t;S.since=Date.now();save();render();
+}
+function fmt(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h+':'+String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function short(ms){const m=Math.round(ms/60000);return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+'m'}
+function live(t){return (S.totals[t]||0)+(S.current===t&&S.since?Date.now()-S.since:0)}
+
+function render(){
+  const ch=$('chips');ch.innerHTML='';
+  S.tasks.forEach(t=>{const b=document.createElement('button');b.className='chip';b.type='button';b.textContent=t;
+    b.setAttribute('aria-pressed',S.current===t&&!!S.since);b.onclick=()=>pick(t);ch.appendChild(b)});
+  const running=!!(S.current&&S.since);
+  $('now').classList.toggle('live',running);
+  $('nowLabel').textContent=running?'Now: '+S.current:(S.current?'Paused on '+S.current:'Nothing running — pick a task');
+  $('pause').textContent=running?'Pause':'Resume';$('pause').disabled=!S.current;
+  $('cost').value=S.cost;$('costV').textContent=S.cost;
+  tick();
+}
+function tick(){
+  const total=S.tasks.reduce((a,t)=>a+live(t),0);
+  const cur=S.current?live(S.current):0;
+  $('clock').textContent=fmt(cur);
+  $('sSwitch').textContent=S.switches;
+  $('sWork').textContent=short(total);
+  const tax=S.switches*S.cost*60000;
+  $('sTax').textContent=short(tax);
+  const hrs=total/3600000;
+  $('sRate').textContent=hrs>=0.05?(S.switches/hrs).toFixed(1):'—';
+  const v=$('verdict');
+  if(!S.switches)v.textContent=total?'Single-tasking so far. Lovely.':'Start tracking to get a verdict.';
+  else if(tax>total*0.5)v.textContent='Ouch — the tax ('+short(tax)+') is more than half of your tracked time. Batch similar work.';
+  else v.textContent='You\'ve paid about '+short(tax)+' in refocus fees. Try one fewer switch per hour.';
+  const rows=$('rows'),bar=$('bar');
+  const used=S.tasks.filter(t=>live(t)>0);
+  bar.innerHTML=used.map((t,i)=>`<i style="flex:${live(t)};background:${COLORS[S.tasks.indexOf(t)%COLORS.length]}"></i>`).join('');
+  if(!used.length)rows.innerHTML='<li class="empty">No time logged yet.</li>';
+  else rows.innerHTML=used.sort((a,b)=>live(b)-live(a)).map(t=>`<li><span>${esc(t)}</span><em>${short(live(t))} · ${Math.round(live(t)/total*100)}%</em></li>`).join('');
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('pause').onclick=()=>{ if(S.since){bank();S.since=null}else if(S.current){S.since=Date.now()} save();render() };
+$('reset').onclick=()=>{ if(confirm('Reset today\'s tracking?')){S.totals={};S.switches=0;S.current=null;S.since=null;save();render()} };
+$('cost').oninput=e=>{S.cost=+e.target.value;$('costV').textContent=S.cost;save();tick()};
+$('addForm').onsubmit=e=>{e.preventDefault();const v=$('newTask').value.trim();
+  if(v&&!S.tasks.includes(v)&&S.tasks.length<12){S.tasks.push(v);save()} $('newTask').value='';render()};
+render();setInterval(tick,1000);
+</script>
+</body>
+</html>

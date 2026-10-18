@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-18",
+      "slug": "2026-10-18",
+      "title": "Switch Tax",
+      "category": "business",
+      "oneLiner": "A time tracker that prices every context switch — tap between tasks and see what jumping around really costs you.",
+      "path": "apps/2026-10-18/"
+    },
+    {
       "date": "2026-10-17",
       "slug": "2026-10-17",
       "title": "Quiet Notes",
