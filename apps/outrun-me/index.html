@@ -75,7 +75,11 @@
     <div class="stat" id="endStat"></div>
     <div class="hint">
       KEYS: ◀ ▶ steer &nbsp;·&nbsp; ▲ gas &nbsp;·&nbsp; ▼ brake &nbsp;·&nbsp; SPACE start<br>
-      MOBILE: on-screen pad &nbsp;·&nbsp; tap 🔊 for engine audio
+      MOBILE: on-screen pad &nbsp;·&nbsp; tap 🔊 for sound &amp; music
+    </div>
+    <div class="hint" style="margin-top:10px;font-size:10px;color:#8097b8;line-height:1.6;">
+      Music: &ldquo;Retroracing Beach&rdquo; by Bogart VGM (CC-BY 4.0)<br>
+      opengameart.org/content/retroracing-beach &nbsp;·&nbsp; facebook.com/BogartVGM
     </div>
   </div>
 
@@ -125,6 +129,7 @@ let segments=[], cars=[], trackLength=0, clouds=[];
 let state='menu', stageIndex=0;
 let position=0, speed=0, playerX=0;
 let skyOffset=0, hillOffset=0, treeOffset=0;
+let isBeachView=false, groundFill='#d6c088';
 let score=0, hiScore=0, timeLeft=0, totalTime=0, stageBannerT=0;
 let shake=0, rumbleBuzz=0;            // juice: screen-shake energy + rumble-strip buzz
 const particles=[];                  // exhaust / dust puffs
@@ -193,10 +198,14 @@ function placeScenery(){
     ? ['beach','village','town','beach','village']
     : ['downtown','downtown','downtown','downtown','downtown'];
   for(let i=0;i<segments.length;i++) segments[i].biome=bands[Math.floor(i/gap)%bands.length];
+  // tie the ground to the water: sand only at the beach, green New-England turf inland
+  if(st.bg==='coast'){ const SAND=['#e6d3a0','#d6c088'], GRN=['#5aa83e','#4a9433'];
+    for(let i=0;i<segments.length;i++){ const band=Math.floor(i/RUMBLE_LEN)%2;
+      segments[i].grass=(segments[i].biome==='beach'?SAND:GRN)[band]; } }
   const BIG={
-    beach:   ['clamShack','palm','clamShack','capeHouse','palm'],
-    village: ['capeHouse','capeHouse','clamShack','palm'],
-    town:    ['storefront','capeHouse','clamShack','storefront'],
+    beach:   ['palm','clamShack','palm','capeHouse','palm'],
+    village: ['capeHouse','capeHouse','palm'],
+    town:    ['storefront','capeHouse','storefront'],
     downtown:['brownstone','brownstone','storefront','brownstone']
   };
   const FILL={ beach:['duneGrass','duneFence','beachRock','duneGrass'], village:['duneGrass','beachRock','duneGrass'],
@@ -382,6 +391,8 @@ function render(){
   const base=findSegment(position), basePct=pctRem(position,SEG_LEN);
   const pSeg=findSegment(position+PLAYER_Z), pPct=pctRem(position+PLAYER_Z,SEG_LEN);
   const pY=lerp(pSeg.p2.world.y,pSeg.p1.world.y,pPct);
+  isBeachView=(st.bg==='coast' && base.biome==='beach');
+  groundFill=(st.bg==='coast') ? (isBeachView?'#d6c088':'#4a9433') : st.dark.grass;
   ctx.clearRect(0,0,W,H);
   ctx.save();
   if(shake>0.001){ const m=shake*7*(W/480); ctx.translate((Math.random()*2-1)*m,(Math.random()*2-1)*m*0.7); }
@@ -425,7 +436,7 @@ function shade(hex,fog){ return fade(hex,Math.max(0.18,fog)); }
 
 function drawSegment(seg){
   const p1=seg.p1.screen,p2=seg.p2.screen,c=seg.color,fog=seg.fog;
-  ctx.fillStyle=fade(c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
+  ctx.fillStyle=fade(seg.grass||c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
   const r1=p1.w/6,r2=p2.w/6;
   if(seg.biome==='beach'){
     const st=STAGES[stageIndex], bch2=p2.w*0.30, bch1=p1.w*0.30;        // sandy beach strip
@@ -462,7 +473,7 @@ function drawBackground(st,pY){
   st.sky.forEach((c,i)=>g.addColorStop(i/(st.sky.length-1),c)); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const horizon=Math.round(H*HORIZON+pY*0.000016*H);
   // ground fallback (keeps gaps grass-coloured instead of sky at the start line)
-  ctx.fillStyle=st.dark.grass; ctx.fillRect(0,horizon,W,H-horizon);
+  ctx.fillStyle=groundFill; ctx.fillRect(0,horizon,W,H-horizon);
   // --- soft sun with bloom (slow parallax, sits deepest in the scene) ---
   const sunx=Math.round(W*0.72-skyOffset*0.10*W), suny=horizon-H*0.26;
   const sg=ctx.createRadialGradient(sunx,suny,2,sunx,suny,W*0.13);
@@ -484,16 +495,19 @@ function cloud(x,y,s){ ctx.beginPath();
   ctx.arc(x,y,s,0,7); ctx.arc(x+s,y+s*0.2,s*0.8,0,7); ctx.arc(x-s,y+s*0.2,s*0.7,0,7); ctx.arc(x+s*0.4,y-s*0.4,s*0.7,0,7); ctx.fill(); }
 
 function drawCoast(st,horizon){
-  // thin open SEA strip along the horizon
-  ctx.fillStyle=st.ocean;     ctx.fillRect(0,horizon-H*0.030,W,H*0.030);
-  ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.030,W,H*0.009);
-  // sparkling sea highlights (slow parallax)
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  const seaY=horizon-H*0.024, drift=Math.floor(skyOffset*260);
-  for(let i=0;i<32;i++){ const sx=((i*53+drift)%W+W)%W, sy=seaY+(i*11%Math.max(2,Math.round(H*0.015)));
-    if((i*7+drift)%3===0) ctx.fillRect(sx,sy,2,1); }
-  // low pale dune line just inland of the sea (soft, hazy; no green mountains)
-  drawHills(fade(st.sand,0.50),horizon+H*0.003,H*0.024,treeOffset*W*0.5,0.85,9);
+  if(isBeachView){
+    ctx.fillStyle=st.ocean;     ctx.fillRect(0,horizon-H*0.030,W,H*0.030);
+    ctx.fillStyle=st.oceanLite; ctx.fillRect(0,horizon-H*0.030,W,H*0.009);
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    const seaY=horizon-H*0.024, drift=Math.floor(skyOffset*260);
+    for(let i=0;i<32;i++){ const sx=((i*53+drift)%W+W)%W, sy=seaY+(i*11%Math.max(2,Math.round(H*0.015)));
+      if((i*7+drift)%3===0) ctx.fillRect(sx,sy,2,1); }
+    drawHills(fade(st.sand,0.50),horizon+H*0.003,H*0.024,treeOffset*W*0.5,0.85,9);
+  } else {
+    // inland: hazy coastal-New-England treeline (no ocean)
+    drawHills(fade('#3f8a46',0.42),horizon-H*0.004,H*0.040,treeOffset*W*0.5,0.9,7);
+    drawHills(fade('#2f7a38',0.68),horizon+H*0.006,H*0.046,treeOffset*W,    1.0,6);
+  }
 }
 function drawCity(st,horizon){
   ctx.fillStyle=st.ocean; ctx.fillRect(0,horizon-H*0.03,W,H*0.07);       // Charles River
@@ -640,7 +654,7 @@ function drawVehicle(type,x,y,scale,clip,fog){
   const cv=sprite('car_'+type,()=>buildCarSprite(def));
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,clip); ctx.clip();
   // scale sprite to the road perspective: small at horizon, growing smoothly in
-  const bs=Math.min(px*3.4, W*0.06), alpha=0.35+0.65*(fog==null?1:fog);
+  const bs=Math.min(px*6.0, W*0.085), alpha=0.35+0.65*(fog==null?1:fog);
   blitSprite(cv,x,y+6*px,bs,alpha);
   ctx.restore();
 }
@@ -1082,7 +1096,11 @@ function drawHUD(st){
 
 /* ------------------------------- audio ---------------------------------- */
 let actx=null,eo=null,eg=null,so=null,soundOn=true;
-function ensureAudio(){ if(actx||!soundOn)return;
+let music=null;   // OutRun-style synthwave backing track (apps/outrun-me/music.mp3)
+function ensureMusic(){ if(music||!soundOn) return;
+  try{ music=new Audio('music.mp3'); music.loop=true; music.volume=0.33; music.preload='auto';
+    const p=music.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){ music=null; } }
+function ensureAudio(){ ensureMusic(); if(actx||!soundOn)return;
   try{ actx=new (window.AudioContext||window.webkitAudioContext)();
     eg=actx.createGain(); eg.gain.value=0; eg.connect(actx.destination);
     eo=actx.createOscillator(); eo.type='sawtooth'; eo.frequency.value=60;
@@ -1144,7 +1162,8 @@ function bindInput(){
   document.getElementById('startBtn').addEventListener('click',e=>{e.preventDefault();primaryAction();});
   overlay().addEventListener('click',e=>{ if(e.target===overlay())primaryAction(); });
   const snd=document.getElementById('snd');
-  snd.addEventListener('click',()=>{ soundOn=!soundOn; snd.textContent=soundOn?'🔊':'🔇'; if(!soundOn)silenceAudio(); else ensureAudio(); });
+  snd.addEventListener('click',()=>{ soundOn=!soundOn; snd.textContent=soundOn?'🔊':'🔇';
+    if(!soundOn){ silenceAudio(); if(music)music.pause(); } else { ensureAudio(); if(music){ const p=music.play(); if(p&&p.catch)p.catch(()=>{}); } } });
 }
 
 /* ------------------------------- resize --------------------------------- */

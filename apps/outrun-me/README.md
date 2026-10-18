@@ -45,3 +45,10 @@ fits in one dependency-free file that runs great on a phone.
 `index.html` is the entire app — no build step, no dependencies. To publish it on its own repo +
 GitHub Pages: drop this `index.html` at a new repo's root, push to `main`, then enable
 **Settings → Pages → Deploy from a branch → `main` / root**. Live in ~60s.
+
+## Credits
+
+- **Music:** &ldquo;Retroracing Beach&rdquo; by **Bogart VGM** — licensed **CC-BY 4.0**.
+  Source: https://opengameart.org/content/retroracing-beach · https://facebook.com/BogartVGM
+  (bundled as `apps/outrun-me/music.mp3`, looped at ~0.33 volume under the 🔊 toggle).
+- Everything else (art, engine sound, code) is procedurally generated / hand-authored for this project.
