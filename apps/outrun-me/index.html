@@ -187,36 +187,36 @@ function addDownToEnd(n=200){ addRoad(n,n,n,-C.EASY,-lastY()/SEG_LEN); }
 
 function placeScenery(){
   const st=STAGES[stageIndex];
-  if(st.bg==='coast'){
-    // sparse, VARIED palm line (not a solid wall)
-    for(let n=14;n<segments.length-16;n+=rInt(8,15)){
-      const side=Math.random()<0.5?-1:1;
-      segments[n].sprites.push({type:'palm',offset:side*(1.10+Math.random()*0.28)});
-      if(Math.random()<0.45) segments[Math.min(n+3,segments.length-1)].sprites.push({type:'palm',offset:-side*(1.12+Math.random()*0.28)});
-    }
-    // beach-grass tufts close to the road edge
-    for(let n=16;n<segments.length-8;n+=rInt(3,6)){
-      const side=(n%2===0)?1:-1; segments[n].sprites.push({type:'duneGrass',offset:side*(1.04+Math.random()*0.28)});
-    }
-    // Cape Cod buildings set back from the road
-    const builds=['clamShack','capeHouse','capeHouse','clamShack'];
-    for(let n=40;n<segments.length-40;n+=rInt(24,44)){
-      const side=Math.random()<0.5?-1:1;
-      segments[n].sprites.push({type:rPick(builds),offset:side*(1.08+Math.random()*0.26)});
-    }
-    // occasional cape lighthouse on a point
-    for(let n=120;n<segments.length-60;n+=rInt(360,520)){
-      segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.3});
-    }
-    return;
+  // --- biome zones that shift at each checkpoint band ---
+  const gap=Math.max(1,Math.floor(segments.length/5));
+  const bands = st.bg==='coast'
+    ? ['beach','village','town','beach','village']
+    : ['downtown','downtown','downtown','downtown','downtown'];
+  for(let i=0;i<segments.length;i++) segments[i].biome=bands[Math.floor(i/gap)%bands.length];
+  const BIG = {
+    beach:    ['palm','palm','clamShack','palm','duneGrass','clamShack'],
+    village:  ['capeHouse','capeHouse','palm','capeHouse','clamShack'],
+    town:     ['storefront','storefront','capeHouse','storefront'],
+    downtown: ['storefront','storefront','capeHouse','storefront']
+  };
+  // near-edge filler (small stuff), frequent, both sides, biome-aware
+  for(let n=12;n<segments.length-8;n+=rInt(2,4)){
+    const b=segments[n].biome, side=(n%2===0)?1:-1;
+    let t='duneGrass';
+    if(b==='beach') t=(n%5===0)?'duneFence':((n%7===0)?'beachRock':'duneGrass');
+    else if(b==='town'||b==='downtown') t=(n%3===0)?'streetlight':((n%7===0)?'beachRock':'duneGrass');
+    else t=(n%6===0)?'beachRock':'duneGrass';
+    segments[n].sprites.push({type:t,offset:side*(1.02+Math.random()*0.12)});
   }
-  // city stage keeps the original billboards
-  for(let n=12;n<segments.length;n+=rInt(5,10)){
-    const side=(n%2===0)?1:-1, off=side*(2.0+Math.random()*2.2);
-    segments[n].sprites.push({type:rPick(st.scenery),offset:off});
+  // big objects on BOTH sides, spaced, biome-aware
+  for(let n=16;n<segments.length-16;n+=rInt(4,7)){
+    const pool=BIG[segments[n].biome]||BIG.beach;
+    for(const side of [-1,1]){ if(Math.random()<0.45) continue;
+      segments[n].sprites.push({type:rPick(pool),offset:side*(1.05+Math.random()*0.14)}); }
   }
-  for(let n=160;n<segments.length-60;n+=rInt(240,340)){
-    segments[n].sprites.push({type:'market',offset:2.7});
+  // occasional landmark lighthouse on a beach point
+  for(let n=120;n<segments.length-60;n+=rInt(300,460)){
+    if(segments[n].biome==='beach') segments[n].sprites.push({type:'lighthouse',offset:(Math.random()<0.5?-1:1)*1.1});
   }
 }
 function placeCheckpoints(){
@@ -317,7 +317,7 @@ function update(dt){
   updateAudio(sp);
 }
 function spriteW(t){ switch(t){ case 'palm':case 'tower':case 'brownstone':return SPRITE_SCALE*0.8;
-  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
+  case 'boat':case 'store':case 'market':case 'suv':case 'clamShack':case 'capeHouse':case 'storefront':case 'lighthouse':return SPRITE_SCALE*1.1; default:return SPRITE_SCALE*0.7; } }
 
 /* ------------------------------ juice / FX ------------------------------ */
 function spawnParticle(dust,color){
@@ -408,6 +408,12 @@ function drawSegment(seg){
   const p1=seg.p1.screen,p2=seg.p2.screen,c=seg.color,fog=seg.fog;
   ctx.fillStyle=fade(c.grass,fog); ctx.fillRect(0,p1.y,W,p2.y-p1.y);
   const r1=p1.w/6,r2=p2.w/6;
+  if(seg.biome==='beach'){
+    const st=STAGES[stageIndex], bch2=p2.w*0.30, bch1=p1.w*0.30;        // sandy beach strip
+    const e2=p2.x-p2.w-r2-bch2, e1=p1.x-p1.w-r1-bch1;                    // shoreline x (near/far)
+    ctx.fillStyle=fade(st.ocean,fog);     poly([0,p2.y, e2,p2.y, e1,p1.y, 0,p1.y]);
+    ctx.fillStyle=fade(st.oceanLite,fog); poly([e2-Math.max(3,p2.w*0.08),p2.y, e2,p2.y, e1,p1.y, e1-Math.max(2,p1.w*0.08),p1.y]);
+  }
   ctx.fillStyle=fade(c.rumble,fog);
   poly([p2.x-p2.w-r2,p2.y, p2.x-p2.w,p2.y, p1.x-p1.w,p1.y, p1.x-p1.w-r1,p1.y]);
   poly([p2.x+p2.w+r2,p2.y, p2.x+p2.w,p2.y, p1.x+p1.w,p1.y, p1.x+p1.w+r1,p1.y]);
@@ -533,16 +539,21 @@ function drawSceneSprite(seg,sprite){
   const x=seg.p2.screen.x+(sc*sprite.offset*ROAD_WIDTH*W/2), y=seg.p2.screen.y;
   const s=sc*ROAD_WIDTH*W/2*SPRITE_PX; if(s<=0.04)return; if(y-1>seg.clip)return;
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,seg.clip); ctx.clip(); ctx.translate(x,y);
-  drawSprite(sprite.type,s,seg.fog); ctx.restore();
+  drawSprite(sprite.type,s,seg.fog,Math.sign(sprite.offset)||1); ctx.restore();
 }
-function drawSprite(t,s,fog){
+function drawSprite(t,s,fog,side){
+  side=side||1; const EA=(cv,bs)=>side*(cv.width*bs*0.5);
   switch(t){
-    case 'palm':{ const cv=sprite('palm',buildPalmSprite); const bs=Math.min(Math.max(0.3,s*15),W*0.17);
-      blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }
-    case 'clamShack':{ blitSprite(sprite('clamShack',buildClamShack),0,0,Math.min(Math.max(0.3,s*18),W*0.20), 0.5+0.5*fog); break; }
-    case 'capeHouse':{ blitSprite(sprite('capeHouse',buildCapeHouse),0,0,Math.min(Math.max(0.3,s*18),W*0.20),0.5+0.5*fog); break; }
-    case 'lighthouse':{ blitSprite(sprite('lighthouse',buildLighthouse),0,0,Math.min(Math.max(0.35,s*20),W*0.24),0.55+0.45*fog); break; }
-    case 'duneGrass':{ blitSprite(sprite('duneGrass',buildDuneGrass),0,0,Math.min(Math.max(0.3,s*9),W*0.06), 0.5+0.5*fog); break; }
+    case 'palm':{ const cv=sprite('palm',buildPalmSprite), bs=Math.min(Math.max(0.3,s*10),W*1.4);
+      blitSprite(cv,0,0,bs,0.45+0.55*fog); break; }   // palm stays centred (fronds overhang naturally)
+    case 'clamShack':{ const cv=sprite('clamShack',buildClamShack), bs=Math.min(Math.max(0.3,s*11),W*1.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'capeHouse':{ const cv=sprite('capeHouse',buildCapeHouse), bs=Math.min(Math.max(0.3,s*11),W*1.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'storefront':{ const cv=sprite('storefront',buildStorefront), bs=Math.min(Math.max(0.3,s*11),W*1.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'lighthouse':{ const cv=sprite('lighthouse',buildLighthouse), bs=Math.min(Math.max(0.35,s*11),W*1.5); blitSprite(cv,EA(cv,bs),0,bs,0.55+0.45*fog); break; }
+    case 'streetlight':{ const cv=sprite('streetlight',buildStreetlight), bs=Math.min(Math.max(0.3,s*11),W*0.6); blitSprite(cv,EA(cv,bs),0,bs,0.6+0.4*fog); break; }
+    case 'duneGrass':{ const cv=sprite('duneGrass',buildDuneGrass), bs=Math.min(Math.max(0.3,s*9),W*0.4); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'duneFence':{ const cv=sprite('duneFence',buildDuneFence), bs=Math.min(Math.max(0.3,s*9),W*0.45); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
+    case 'beachRock':{ const cv=sprite('beachRock',buildBeachRock), bs=Math.min(Math.max(0.3,s*8),W*0.35); blitSprite(cv,EA(cv,bs),0,bs,0.5+0.5*fog); break; }
     case 'umbrella':{ const h=70*s;
       ctx.strokeStyle=shade('#777',fog); ctx.lineWidth=Math.max(1,4*s);
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-h); ctx.stroke();
@@ -739,81 +750,169 @@ function buildPlayerFrame(hairPhase,dogPose){
 
 /* ---- palm tree silhouette (OutRun signature) ------------------------------ */
 function buildPalmSprite(){
-  const NW=44, NH=58, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
-  const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(Math.round(x),Math.round(y),w,h); };
-  const TR='#8a5a2e', TRD='#5e3c1c', TRL='#b07c3f',
-        FR='#1f9e3a', FRD='#15722a', FRL='#54c664';
-  const baseX=20;
-  // curved trunk with segment rings
-  for(let y=16;y<58;y++){ const t=(y-16)/42; const x=baseX+Math.sin(t*1.0)*4; P(x-1,y,3,1,TR); P(x-1,y,1,1,TRD); P(x+1,y,1,1,TRL); }
-  for(let y=20;y<58;y+=4){ const t=(y-16)/42; const x=baseX+Math.sin(t*1.0)*4; P(x-1,y,3,1,TRD); }
-  // full drooping frond crown (quadratic arches that arc up then droop at the tips)
-  const cX=20, cY=15;
-  const tips=[[-21,-1],[-16,-9],[-8,-14],[0,-16],[8,-14],[16,-9],[21,-1],[-13,6],[13,6]];
-  tips.forEach(tp=>{ const tx=cX+tp[0], ty=cY+tp[1], mx=(cX+tx)/2, my=Math.min(cY,ty)-6;
-    for(let i=0;i<=12;i++){ const t=i/12, it=1-t;
+  const NW=72, NH=116, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h))); };
+  const TR='#8a5a2e', TRD='#5e3c1c', TRL='#b58544',
+        FR='#249b3a', FRD='#15662a', FRM='#2fb347', FRL='#63c870';
+  // curved, textured trunk (widens toward the base, diamond segment rings)
+  for(let y=36;y<116;y++){ const t=(y-36)/80; const cx=42-t*t*9, hw=3+t*2.4;
+    P(cx-hw,y,hw*2,1,TR); P(cx-hw,y,1,1,TRD); P(cx+hw-1,y,1,1,TRD);
+    if(y%6<2) P(cx-hw+1,y,hw*2-2,1,TRD); else P(cx-1,y,2,1,TRL); }
+  P(34,33,14,5,TRD);                                        // crown base
+  // layered drooping fronds with midrib + leaflet texture
+  const cX=42, cY=33;
+  const tips=[[-31,3],[-27,-7],[-20,-16],[-11,-23],[0,-26],[11,-23],[20,-16],[27,-7],[31,3],[-16,11],[16,11],[0,13]];
+  tips.forEach((tp,k)=>{ const tx=cX+tp[0], ty=cY+tp[1], mx=(cX+tx)/2, my=Math.min(cY,ty)-11;
+    for(let i=0;i<=17;i++){ const t=i/17, it=1-t;
       const x=it*it*cX+2*it*t*mx+t*t*tx, y=it*it*cY+2*it*t*my+t*t*ty;
-      const sz=i<8?2:1; P(x-sz/2,y-sz/2,sz,sz, i<3?FRD:(i<8?FR:FRL)); } });
-  P(cX-3,cY-2,6,4,FRD); P(cX-2,cY+1,2,2,'#6b4a1e');     // crown core + coconuts
+      const sz=i<11?3:2; c.fillStyle=i<4?FRD:(i<9?FR:(i<14?FRM:FRL));
+      c.fillRect(Math.round(x-sz/2),Math.round(y-sz/2),sz,sz);
+      if(i>3 && i%2===0){ c.fillStyle=FRD; c.fillRect(Math.round(x),Math.round(y-2),1,1); c.fillRect(Math.round(x),Math.round(y+2),1,1); } } });
+  P(37,32,5,5,'#6b4a1e'); P(44,33,4,4,'#6b4a1e'); P(41,37,4,3,TRD);  // coconut cluster
   return cv;
 }
 
 /* ---- traffic cars: rear-view pixel coupes / SUV / taxi -------------------- */
 /* ---- Cape Cod / New England roadside buildings (pixel art) --------------- */
 function buildClamShack(){
-  const NW=44,NH=34, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
-  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
-  const W1='#9b968a',WD='#7c776b',WL='#b4b0a4',RF='#5f6b6e',RFD='#45504f',RFL='#7b878a',
-        SNW='#efe9da',RED='#c0392b',WIN='#26262c',SILL='#c9c3b4',LOB='#d8482f',POST='#6b655a';
-  P(10,30,3,4,POST); P(31,30,3,4,POST);                 // legs
-  P(8,16,28,16,W1);                                     // walls
-  for(let y=19;y<32;y+=3) P(8,y,28,1,WD);               // weathered planks
-  P(8,16,1,16,WD); P(35,16,1,16,WD); P(8,16,28,1,WL);
-  for(let i=0;i<9;i++){ const y=16-i,x0=Math.round(5+i*1.6),x1=Math.round(39-i*1.6); P(x0,y,Math.max(1,x1-x0),1,i>7?RFL:RF); }
-  P(4,15,36,1,RFD);                                     // eave
-  P(11,17,22,6,SNW); P(11,17,22,1,WD);                  // sign board
-  P(13,19,4,2,RED); P(19,19,6,2,RED); P(27,19,4,2,RED); // painted "CLAMS"
-  P(33,17,3,2,LOB);                                     // lobster accent
-  P(15,24,13,6,WIN); P(15,24,13,1,SILL); P(15,30,13,1,SILL); P(21,24,1,6,SILL); // order window
+  const NW=96,NH=84, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const W1='#a59f90',WD='#7c776b',WL='#c2bdaf',GAP='#655f54',
+        RF='#5f6b6e',RFD='#44504f',RFL='#86929a', SNW='#efe9da',SNB='#8a6a3a',
+        RED='#c0392b',BLU='#1f6ea8', WIN='#20242a',WINGL='#3a5a66',
+        WIRE='#4a463e',BULB='#ffd86a', PIC='#9a6a3e',PICD='#5e3c1c', LOB='#d8482f',POST='#5e5850';
+  P(16,74,5,9,POST); P(74,74,5,9,POST); P(45,76,5,7,POST);            // pilings
+  P(12,34,72,42,W1);                                                  // walls
+  for(let x=12;x<84;x+=5) P(x,34,1,42,GAP);                           // vertical planks
+  for(let y=42;y<76;y+=9) P(12,y,72,1,WD);                            // weathering bands
+  P(12,34,72,2,WL); P(12,34,2,42,WD); P(82,34,2,42,WD);
+  for(let i=0;i<14;i++){ const y=34-i,x0=Math.round(6+i*2),x1=Math.round(90-i*2); P(x0,y,Math.max(1,x1-x0),1,i>11?RFL:RF); }
+  P(4,33,88,2,RFD);                                                   // fascia / eave
+  for(let x=14;x<82;x+=9){ P(x,36,1,2,WIRE); P(x-1,38,3,3,BULB); }    // string lights
+  // hand-painted sign board
+  P(20,38,56,15,SNW); P(20,38,56,1,SNB); P(20,52,56,1,SNB); P(20,38,1,15,SNB); P(75,38,1,15,SNB);
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillStyle=RED; c.font='bold 10px Georgia'; c.fillText('CLAMS',48,44);
+  c.fillStyle=BLU; c.font='bold 6px Georgia'; c.fillText('LOBSTER ROLLS',48,50);
+  P(80,40,7,4,LOB); P(87,41,2,2,LOB);                                 // lobster cutout
+  // striped awning over the order window
+  for(let i=0;i<8;i++) P(31+i*4,54,4,4, i%2?'#f2efe6':'#d8453a');
+  P(31,53,32,1,'#8a2a22');
+  // order window with mullions
+  P(34,58,28,13,WIN); P(35,59,26,11,WINGL); P(47,58,1,13,WD); P(34,64,28,1,WD);
+  // picnic table out front
+  P(22,70,22,3,PIC); P(20,73,26,2,'#b07a44'); P(24,73,2,7,PICD); P(40,73,2,7,PICD);
   return cv;
 }
 function buildCapeHouse(){
-  const NW=44,NH=42, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
-  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
-  const SH='#8f897e',SHD='#736e63',TRIM='#f2efe6',RF='#565049',RFD='#3e3a34',RFL='#6e685e',
-        BR='#9a4b38',BRD='#7a3a2a',PANE='#3a4f5e',SHUT='#4f5a4a',DOOR='#55504a',
-        FLP='#d0d0d0',FR='#d1322b',FW='#f0f0f0',FB='#2a4b9a';
-  for(let i=0;i<14;i++){ const y=4+i,x0=Math.round(21-i*1.15),x1=Math.round(21+i*1.15); P(x0,y,Math.max(1,x1-x0),1,i<2?RFL:RF); }
-  P(6,16,30,1,RFD);                                     // eave
-  P(27,6,4,8,BR); P(27,6,4,1,BRD); P(27,9,4,1,BRD);     // chimney
-  P(7,2,1,9,FLP); P(8,2,6,1,FR); P(8,3,6,1,FW); P(8,4,6,1,FR); P(8,2,3,2,FB); // US flag
-  P(9,16,26,24,SH);                                     // shingle walls
-  for(let y=19;y<40;y+=3) P(9,y,26,1,SHD);
-  P(9,16,2,24,TRIM); P(33,16,2,24,TRIM); P(9,38,26,2,TRIM); // white trim
-  const win=x=>{ P(x-1,22,8,9,SHUT); P(x,23,6,7,TRIM); P(x+1,24,4,5,PANE); P(x+3,24,1,5,TRIM); };
-  win(13); win(24);                                     // shuttered windows
-  P(19,31,5,9,DOOR); P(19,31,5,1,TRIM); P(23,35,1,1,'#d9c24a'); // door
+  const NW=84,NH=98, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const SH='#8f897e',SHD='#6f6a60',SHL='#a6a094',TRIM='#f4f1ea',
+        RF='#4e4842',RFD='#34302b',RFL='#645e55',
+        BR='#9a4b38',BRM='#6e3327', PANE='#a6c8d8',PANED='#587886',SHUT='#45503f',
+        DOOR='#5a4a3a',DOORP='#6e5c48', BUSH='#3f7a3a',BUSHD='#2b5a2a',
+        FLR='#d1322b',FLB='#2a4b9a';
+  // steep gable roof with shingle rows
+  for(let i=0;i<40;i++){ const y=6+i,x0=Math.round(42-i*0.95),x1=Math.round(42+i*0.95); P(x0,y,Math.max(1,x1-x0),1,i<2?RFL:RF); }
+  for(let y=12;y<44;y+=4){ const half=Math.round((y-6)*0.95); P(42-half,y,half*2,1,RFD); }
+  P(6,44,72,2,RFD);
+  // dormer
+  for(let i=0;i<9;i++){ const y=21+i,x0=Math.round(42-i*0.75),x1=Math.round(42+i*0.75); P(x0,y,Math.max(1,x1-x0),1,RF); }
+  P(34,30,16,15,SH); P(34,30,16,1,RFD);
+  P(37,33,10,10,TRIM); P(38,34,8,8,PANE); P(42,34,1,8,TRIM); P(38,38,8,1,TRIM);
+  // brick chimney
+  P(58,8,8,18,BR); for(let y=10;y<26;y+=3) P(58,y,8,1,BRM); for(let x=60;x<66;x+=3) P(x,8,1,18,BRM); P(57,7,10,2,'#7a3a2a');
+  // US flag
+  P(8,2,1,15,'#cfcfcf'); P(9,2,10,1,FLR); P(9,3,10,1,TRIM); P(9,4,10,1,FLR); P(9,5,10,1,TRIM); P(9,6,10,1,FLR); P(9,2,5,3,FLB);
+  // cedar-shingle walls (staggered)
+  P(14,44,56,52,SH);
+  for(let y=48;y<96;y+=4){ for(let x=14+(((y/4)%2)?0:3); x<70; x+=6) P(x,y,1,4,SHD); P(14,y,56,1,SHL); }
+  P(14,44,2,52,TRIM); P(68,44,2,52,TRIM); P(14,94,56,2,TRIM);
+  // 6-pane shuttered windows
+  function win(x,y){ P(x-4,y,22,22,SHUT); P(x-4,y,3,22,'#374030'); P(x+15,y,3,22,'#374030');
+    P(x,y,14,20,TRIM); P(x+1,y+1,12,18,PANED);
+    for(let r=0;r<3;r++)for(let cc=0;cc<2;cc++) P(x+2+cc*6,y+2+r*6,4,4,PANE);
+    P(x+6,y+1,1,18,TRIM); P(x+1,y+7,12,1,TRIM); P(x+1,y+13,12,1,TRIM); }
+  win(22,54); win(46,54);
+  // paneled door + knob
+  P(35,72,14,24,DOOR); P(35,72,14,1,TRIM); P(35,72,1,24,TRIM); P(48,72,1,24,TRIM);
+  P(37,75,4,8,DOORP); P(43,75,4,8,DOORP); P(37,85,4,8,DOORP); P(43,85,4,8,DOORP); P(46,84,1,2,'#d9c24a');
+  // landscaping bushes flanking the door
+  P(25,86,9,10,BUSH); P(25,86,9,2,BUSHD); P(50,86,9,10,BUSH); P(50,88,9,2,BUSHD);
   return cv;
 }
 function buildLighthouse(){
-  const NW=22,NH=50, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
-  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
-  const WT='#f1f1f1',WTD='#d2d2d8',RED='#d8322b',GL='#2b3238',GLL='#8fd0e6',BASE='#8a857a',BASED='#6c6860';
-  for(let y=14;y<46;y++){ const t=(y-14)/32,half=Math.round(3+t*4); P(11-half,y,half*2,1,WT); P(11-half,y,1,1,WTD); P(10+half,y,1,1,WTD); }
-  P(5,22,12,3,RED); P(4,34,14,3,RED);                   // red bands
-  P(6,10,10,5,BASED); P(7,6,8,5,GL); P(8,7,2,3,GLL);    // lantern room
-  for(let i=0;i<4;i++) P(7+i,5-i,8-2*i,1,RED); P(9,2,4,2,RED); // red cap
-  P(3,45,16,4,BASE); P(3,45,16,1,'#a39d90'); P(6,47,4,2,BASED); // rocky base
+  const NW=44,NH=106, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const WT='#f2f2f2',WTD='#cfcfd6',WTL='#ffffff',RED='#d8322b',REDD='#a81f1a',
+        GL='#243038',GLL='#9fe0f0',RAIL='#3a3f44',ROCK='#7a7468',ROCKD='#56524a',ROCKL='#938c7e';
+  for(let y=26;y<94;y++){ const t=(y-26)/68, half=Math.round(5+t*8);
+    P(22-half,y,half*2,1,WT); P(22-half,y,2,1,WTD); P(21+half,y,1,1,WTD); P(21,y,2,1,WTL); }
+  P(10,34,24,6,RED); P(8,54,28,6,RED); P(6,74,32,6,RED);
+  P(10,39,24,1,REDD); P(8,59,28,1,REDD); P(6,79,32,1,REDD);
+  // gallery / railing deck
+  P(11,23,22,4,RAIL); P(11,22,22,1,'#565a60'); for(let x=12;x<32;x+=3) P(x,18,1,5,RAIL);
+  // lantern room (glass panes + dome)
+  P(14,8,16,12,GL); for(let x=16;x<30;x+=4) P(x,8,1,12,RAIL); P(15,9,13,2,GLL);
+  for(let i=0;i<6;i++) P(14+i,7-i,16-2*i,1,RED); P(20,0,4,3,'#555');
+  // rocky base
+  P(4,92,36,12,ROCK); P(4,92,36,2,ROCKL); P(4,103,36,1,ROCKD);
+  P(8,98,9,5,ROCKD); P(24,97,11,6,ROCKD); P(18,100,7,4,ROCKL);
   return cv;
 }
 function buildDuneGrass(){
-  const NW=20,NH=16, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
-  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
-  const G='#9aad5a',GL='#c6cf86',GD='#7a8c44';
-  const blades=[-5,-2,0,2,5,-3,3];
-  blades.forEach((dx,k)=>{ const col=k%3===0?GD:(k%3===1?G:GL);
-    for(let i=0;i<10;i++){ const t=i/9,x=Math.round(10+dx*t*1.2),y=15-Math.round(i*1.4); P(x,y,1,2,col); } });
-  P(8,14,4,2,GD);
+  const NW=32,NH=30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const G='#9aad5a',GL='#c6cf86',GD='#73854a';
+  const blades=[-10,-7,-4,-1,2,5,8,11,-6,6,0,-3,3];
+  blades.forEach((dx,k)=>{ const col=k%3===0?GD:(k%3===1?G:GL); const h=18+(k%4)*4;
+    for(let i=0;i<h;i++){ const t=i/(h-1), x=Math.round(16+dx*t+Math.sin(t*3)*1.6), y=29-Math.round(i*1.25); P(x,y,1,2,col); } });
+  P(11,27,10,3,GD);
+  return cv;
+}
+function buildDuneFence(){
+  const NW=56,NH=30, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const WD='#9a8a6e',WDD='#6e5f46',WDL='#b6a483',WIRE='#54493c';
+  for(let x=4;x<54;x+=4){ const h=16+((x/4)%3===0?5:0); P(x,29-h,2,h,(x/4)%2?WD:WDD); P(x,29-h,1,h,WDD); P(x+1,29-h,1,2,WDL); }
+  P(3,16,50,1,WIRE); P(3,24,50,1,WIRE);                 // twisted wires
+  return cv;
+}
+function buildBeachRock(){
+  const NW=44,NH=26, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const R='#8f887a',RD='#645e52',RL='#aaa392';
+  P(6,12,32,14,R); P(6,12,32,2,RL); P(6,24,32,2,RD);
+  P(12,6,18,8,R); P(12,6,18,1,RL); P(26,10,10,5,RD);
+  P(16,16,10,5,RD); P(30,14,8,8,R); P(30,14,8,1,RL);
+  return cv;
+}
+function buildStorefront(){
+  const NW=84,NH=96, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const BRK='#9c4a3c',BRKD='#73342a',CORN='#8a7a6a',CORNL='#b0a090',
+        SIGN='#242a30',SIGNT='#ffd86a', GLASS='#bfe0e8',GLASSD='#2a2f36',TRIM='#eef0f4',DOOR='#4a3f34';
+  P(8,16,68,80,BRK);                                             // brick facade
+  for(let y=16;y<96;y+=4) P(8,y,68,1,BRKD);                      // mortar courses
+  for(let y=16;y<96;y+=8){ for(let x=10;x<76;x+=8) P(x,y,1,4,BRKD); }
+  for(let y=20;y<96;y+=8){ for(let x=14;x<76;x+=8) P(x,y,1,4,BRKD); }
+  P(5,11,74,6,CORN); P(5,11,74,1,CORNL); P(5,16,74,1,BRKD);      // cornice
+  P(12,19,60,9,SIGN); c.fillStyle=SIGNT; c.font='bold 9px Georgia'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('MARKET',42,24);
+  for(let i=0;i<15;i++) P(8+i*4.6,58,5,6, i%2?'#f0efe8':'#2a6ea0'); P(8,57,68,1,'#1a4e78'); // awning
+  P(12,64,24,26,GLASSD); P(13,65,22,24,GLASS); P(23,65,1,24,TRIM); P(13,76,22,1,TRIM); // left window
+  P(48,64,24,26,GLASSD); P(49,65,22,24,GLASS); P(59,65,1,24,TRIM); P(49,76,22,1,TRIM); // right window
+  P(37,66,10,28,DOOR); P(37,66,10,1,TRIM); P(45,78,1,3,'#d9c24a'); // door + knob
+  return cv;
+}
+function buildStreetlight(){
+  const NW=20,NH=100, cv=makeCanvas(NW,NH), c=cv.getContext('2d');
+  const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));};
+  const POST='#2d3a33',POSTL='#46574d',HEAD='#20282a',LAMP='#ffe79a';
+  P(5,94,8,6,'#20282a'); P(4,98,10,2,'#20282a');                 // base
+  P(8,16,3,80,POST); P(8,16,1,80,POSTL);                         // post
+  P(8,16,8,2,POST); P(14,16,2,7,POST);                            // arm
+  P(11,21,7,5,HEAD); P(12,25,5,3,LAMP);                           // lamp head + glow
+  c.fillStyle='rgba(255,220,130,0.35)'; c.fillRect(9,26,11,8);
   return cv;
 }
 function buildCarSprite(def){
