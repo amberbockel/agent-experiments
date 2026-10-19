@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-19",
+      "slug": "2026-10-19",
+      "title": "Next Up",
+      "category": "trend",
+      "oneLiner": "A predictive app switcher that learns your habits on-device and guesses which app you'll open next — watch its accuracy climb as it learns.",
+      "path": "apps/2026-10-19/"
+    },
+    {
       "date": "2026-10-18",
       "slug": "2026-10-18",
       "title": "Switch Tax",

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Next Up — a predictive app switcher</title>
+<meta name="description" content="An app switcher that learns your habits. A tiny on-device model guesses which app you'll open next.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px 0}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 16px 48px;display:grid;gap:24px}
+  h1{font-family:var(--ab-font-display);font-weight:400;font-size:clamp(2rem,9vw,2.75rem);line-height:1.1;margin:8px 0}
+  h2{font-family:var(--ab-font-display);font-weight:400;font-size:1.25rem;margin:0 0 16px}
+  .lede{color:var(--ab-muted);margin:0}
+  .pred{padding:24px;display:grid;gap:16px}
+  .pred-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+  .pred-list li{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:16px;min-height:56px}
+  .pred-list li.top1 .glyph{background:var(--ab-accent);color:#fff;border-color:var(--ab-accent)}
+  .meter{height:8px;border-radius:var(--ab-r-pill);background:var(--ab-glass-bg);overflow:hidden;margin-top:8px}
+  .meter i{display:block;height:100%;background:var(--ab-accent);border-radius:inherit;transition:width .5s var(--ab-ease)}
+  .pname{font-weight:600}.pct{font-variant-numeric:tabular-nums;color:var(--ab-muted)}
+  .glyph{width:44px;height:44px;border-radius:var(--ab-r-md);display:grid;place-items:center;font-family:var(--ab-font-display);font-size:1.25rem;border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);transition:all var(--ab-dur) var(--ab-ease)}
+  .why{color:var(--ab-muted);font-size:var(--ab-text-sm);margin:0}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .tile{display:grid;justify-items:center;gap:8px;padding:16px 4px;min-height:88px;border-radius:var(--ab-r-lg);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);color:var(--ab-text);font:inherit;font-size:var(--ab-text-xs);cursor:pointer;transition:all var(--ab-dur) var(--ab-ease)}
+  .tile:hover{background:var(--ab-glass-hover);transform:translateY(-2px)}
+  .tile:active{transform:scale(.97)}
+  .tile:focus-visible,.chip:focus-visible{outline:2px solid var(--ab-accent);outline-offset:2px}
+  .tile[aria-current=true]{border-color:var(--ab-accent);background:var(--ab-accent-soft)}
+  .tile.guess{box-shadow:0 0 0 2px var(--ab-accent-ring)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat{padding:16px}.stat b{display:block;font-family:var(--ab-font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--ab-muted);font-size:var(--ab-text-xs)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .log{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none;min-height:32px}
+  .log li{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:var(--ab-text-xs);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg)}
+  .log li.hit{border-color:var(--ab-accent);background:var(--ab-accent-soft)}
+  .empty{color:var(--ab-muted);font-size:var(--ab-text-sm)}
+  @media (prefers-reduced-motion:reduce){.tile,.meter i{transition:none}}
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="ab-eyebrow">Agent Experiments · Day 2026-10-19</span>
+  <button class="ab-btn ab-btn--ghost" id="theme" aria-label="Toggle light or dark theme">◐</button>
+</div>
+<main class="wrap">
+  <header>
+    <h1>Next Up</h1>
+    <p class="lede">An app switcher that learns you. Open apps below — a tiny model, running only in this page, guesses what you'll reach for next.</p>
+  </header>
+
+  <section class="ab-card pred" aria-labelledby="ph">
+    <div><h2 id="ph">Predicted next</h2></div>
+    <ol class="pred-list" id="pred" aria-live="polite"></ol>
+    <p class="why" id="why"></p>
+  </section>
+
+  <section aria-labelledby="gh">
+    <h2 id="gh">Your apps</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="stats" aria-label="Accuracy">
+    <div class="ab-card stat"><b id="sTop1">–</b><span>Top-1 hit</span></div>
+    <div class="ab-card stat"><b id="sTop3">–</b><span>Top-3 hit</span></div>
+    <div class="ab-card stat"><b id="sN">0</b><span>Switches learned</span></div>
+  </section>
+
+  <section class="ab-card" style="padding:24px" aria-labelledby="lh">
+    <h2 id="lh">Recent guesses</h2>
+    <ul class="log" id="log"></ul>
+    <p class="empty" id="logEmpty">Tap an app to start. Highlighted squares were predicted correctly.</p>
+    <div class="row" style="margin-top:16px">
+      <button class="ab-btn ab-btn--glass" id="sim">Simulate a workday</button>
+      <button class="ab-btn ab-btn--ghost" id="reset">Forget everything</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const APPS = ['Mail','Calendar','Notes','Slides','Code','Chat','Maps','Music'];
+  const KEY = 'ab-nextup-v1';
+  const $ = id => document.getElementById(id);
+  // theme
+  const root = document.documentElement;
+  try { root.dataset.theme = localStorage.getItem('ab-theme') || 'dark'; } catch (e) { root.dataset.theme = 'dark'; }
+  $('theme').onclick = () => {
+    root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem('ab-theme', root.dataset.theme); } catch (e) {}
+  };
+
+  let state = { hist: [], hits1: 0, hits3: 0, tried: 0, recent: [] };
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.hist) state = s; } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  const bucket = h => h < 11 ? 0 : h < 14 ? 1 : h < 18 ? 2 : 3;
+  const BN = ['morning','midday','afternoon','evening'];
+
+  // Blend of order-2, order-1 and time-of-day-given-previous counts, with add-one smoothing.
+  function predict(hist, hour) {
+    const n = APPS.length, sc = new Array(n).fill(0.05);
+    const last = hist.length ? hist[hist.length-1].a : -1;
+    const prev = hist.length > 1 ? hist[hist.length-2].a : -1;
+    let used = [];
+    for (let i = 1; i < hist.length; i++) {
+      const cur = hist[i], p = hist[i-1].a, pp = i > 1 ? hist[i-2].a : -2;
+      if (p === last) {
+        sc[cur.a] += 1;
+        if (bucket(cur.h) === bucket(hour)) sc[cur.a] += 0.75;
+        if (pp === prev) sc[cur.a] += 2;
+      }
+    }
+    if (last < 0) for (const x of hist) sc[x.a] += 0.2;
+    const tot = sc.reduce((a,b)=>a+b,0);
+    return sc.map((v,i)=>({i,p:v/tot})).sort((a,b)=>b.p-a.p);
+  }
+
+  function record(a, hour, scored) {
+    if (state.hist.length) {
+      const ranked = predict(state.hist, hour);
+      state.tried++;
+      const hit1 = ranked[0].i === a, hit3 = ranked.slice(0,3).some(r => r.i === a);
+      if (hit1) state.hits1++;
+      if (hit3) state.hits3++;
+      state.recent.push({a, hit: hit1}); state.recent = state.recent.slice(-24);
+    }
+    state.hist.push({a, h: hour});
+    if (state.hist.length > 600) state.hist.shift();
+  }
+
+  function render() {
+    const hour = new Date().getHours();
+    const ranked = predict(state.hist, hour);
+    const last = state.hist.length ? state.hist[state.hist.length-1].a : -1;
+    const top = ranked.slice(0,3);
+    $('pred').innerHTML = state.hist.length < 2
+      ? '<li><span class="glyph">?</span><span class="pname">Still learning</span><span class="pct"></span></li>'
+      : top.map((r,k)=>`<li class="${k?'':'top1'}"><span class="glyph">${APPS[r.i][0]}</span><div><span class="pname">${APPS[r.i]}</span><div class="meter"><i style="width:${Math.round(r.p*100)}%"></i></div></div><span class="pct">${Math.round(r.p*100)}%</span></li>`).join('');
+    $('why').textContent = state.hist.length < 2
+      ? 'Open a few apps in a row — it needs a couple of switches to find a pattern.'
+      : `Based on ${last>=0?'what follows '+APPS[last]:'your history'}, your ${BN[bucket(hour)]} habits, and your last two apps.`;
+    $('grid').innerHTML = APPS.map((n,i)=>`<button class="tile${state.hist.length>1&&top[0].i===i?' guess':''}" data-i="${i}" aria-current="${i===last}"><span class="glyph">${n[0]}</span>${n}</button>`).join('');
+    const pct = (a,b)=> b ? Math.round(a/b*100)+'%' : '–';
+    $('sTop1').textContent = pct(state.hits1, state.tried);
+    $('sTop3').textContent = pct(state.hits3, state.tried);
+    $('sN').textContent = state.hist.length;
+    $('log').innerHTML = state.recent.map(r=>`<li class="${r.hit?'hit':''}" title="${APPS[r.a]}${r.hit?' (predicted)':''}">${APPS[r.a][0]}</li>`).join('');
+    $('logEmpty').hidden = state.recent.length > 0;
+  }
+
+  $('grid').addEventListener('click', e => {
+    const t = e.target.closest('.tile'); if (!t) return;
+    record(+t.dataset.i, new Date().getHours()); save(); render();
+    const again = document.querySelector(`.tile[data-i="${t.dataset.i}"]`); if (again) again.focus();
+  });
+
+  // A plausible routine with noise: Mail → Calendar → Notes → Code → Chat → Code ... Music/Maps at edges.
+  $('sim').onclick = () => {
+    const routine = [0,1,2,4,5,4,3,5,6,7];
+    let seed = Date.now() % 9973;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const hrs = [8,9,10,11,13,14,15,16,17,19];
+    for (let d = 0; d < 6; d++) routine.forEach((a,k) => {
+      const x = rnd() < 0.15 ? Math.floor(rnd()*APPS.length) : a;
+      record(x, hrs[k]);
+    });
+    save(); render();
+  };
+  $('reset').onclick = () => { state = { hist: [], hits1: 0, hits3: 0, tried: 0, recent: [] }; save(); render(); };
+  render();
+})();
+</script>
+</body>
+</html>
