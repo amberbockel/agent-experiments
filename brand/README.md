@@ -27,7 +27,7 @@ Then write semantic markup and reach for the classes:
 
 - **Tokens** — `--ab-*` custom properties for color, type scale, 8pt spacing, radii, motion.
 - **Type** — `Prata` (display serif, 400 only — never synth-bold) + `DM Sans` (body, variable 300–800) + system mono.
-- **Accent** — brand pink `#e01a8a` (same in both themes).
+- **Accent** — amberbockel periwinkle `#b5a4ff` (deepens to `#6e5cd6` in light mode for contrast).
 - **Components** — `.ab-btn` (`--primary` / `--secondary` / `--ghost` / `--glass`, `--lg`, `--block`), `.ab-card` / `.ab-glass`, `.ab-input` / `.ab-textarea` / `.ab-select` + `.ab-label`, `.ab-tag`, `.ab-eyebrow`, `.ab-hr`, `.ab-container`.
 - **A11y baked in** — visible focus rings, 44px touch targets, `prefers-reduced-motion`.
 
@@ -48,7 +48,7 @@ function toggleTheme() {
 ## Rules of thumb (the polish bar)
 
 1. Prata for display headings only; DM Sans everywhere else.
-2. One accent. Let the pink earn attention — don't flood the page with it.
+2. One accent. Let the periwinkle earn attention — don't flood the page with it.
 3. Glass surfaces over hard borders; no heavy drop-shadows or glows.
 4. 8pt spacing rhythm; generous whitespace.
 5. Mobile-first (`100dvh`, `env(safe-area-inset-*)`, works at 375px) and keyboard-accessible.

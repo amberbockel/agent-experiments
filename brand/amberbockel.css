@@ -36,11 +36,12 @@
   --ab-ease: cubic-bezier(.2, .8, .2, 1);
   --ab-dur: 200ms;
 
-  /* brand accent (same in both themes) */
-  --ab-accent: #e01a8a;
-  --ab-accent-hover: #f03a9e;
-  --ab-accent-soft: rgba(224, 26, 138, .15);
-  --ab-accent-ring: rgba(224, 26, 138, .45);
+  /* brand accent — amberbockel periwinkle */
+  --ab-accent: #b5a4ff;
+  --ab-accent-hover: #c8bbff;
+  --ab-accent-soft: rgba(181, 164, 255, .16);
+  --ab-accent-ring: rgba(181, 164, 255, .5);
+  --ab-on-accent: #16111f;          /* readable text on light-periwinkle fills */
 
   /* ambient shape palette (from amberbockel-ui) */
   --ab-lavender: #c67fff;
@@ -52,7 +53,7 @@
   --ab-bg: #08040e;                 /* deep plum-black, never dead flat */
   --ab-mesh:
     radial-gradient(55% 48% at 14% 6%, rgba(198,127,255,.26), transparent 62%),
-    radial-gradient(52% 44% at 88% 4%, rgba(224,26,138,.22), transparent 62%),
+    radial-gradient(52% 44% at 88% 4%, rgba(181,164,255,.26), transparent 62%),
     radial-gradient(48% 46% at 82% 88%, rgba(93,58,155,.36), transparent 64%),
     radial-gradient(44% 42% at 8% 92%, rgba(113,212,92,.12), transparent 62%);
   --ab-surface: #0f0a18;
@@ -69,9 +70,14 @@
 
 :root[data-theme="light"] {
   --ab-bg: #f7f4fb;
+  --ab-accent: #6e5cd6;             /* deeper periwinkle for contrast on light */
+  --ab-accent-hover: #5b49c4;
+  --ab-accent-soft: rgba(110, 92, 214, .12);
+  --ab-accent-ring: rgba(110, 92, 214, .5);
+  --ab-on-accent: #ffffff;
   --ab-mesh:
     radial-gradient(58% 50% at 12% 4%, rgba(198,127,255,.55), transparent 62%),
-    radial-gradient(55% 46% at 88% 2%, rgba(255,184,217,.58), transparent 62%),
+    radial-gradient(55% 46% at 88% 2%, rgba(181,164,255,.5), transparent 62%),
     radial-gradient(60% 55% at 50% 110%, rgba(255,255,255,.70), transparent 60%),
     radial-gradient(42% 42% at 92% 82%, rgba(113,212,92,.22), transparent 62%);
   --ab-surface: #f5f5f7;
@@ -182,7 +188,7 @@ code, kbd, pre { font-family: var(--ab-font-mono); font-size: .92em; }
 .ab-btn:active { transform: scale(.96); }
 .ab-btn:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
 
-.ab-btn--primary { background: var(--ab-accent); border-color: var(--ab-accent); color: #fff; }
+.ab-btn--primary { background: var(--ab-accent); border-color: var(--ab-accent); color: var(--ab-on-accent); }
 .ab-btn--primary:hover { background: var(--ab-accent-hover); border-color: var(--ab-accent-hover); transform: scale(1.02); }
 
 .ab-btn--secondary { border-color: var(--ab-glass-border); color: var(--ab-text); }
