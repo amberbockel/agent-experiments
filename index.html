@@ -40,8 +40,8 @@
   .bar .nav a:hover{color:var(--pink)}
 
   /* hero stage: centered text with physics chips layered in front (xhulia-style) */
-  .herostage{position:relative;min-height:clamp(560px,90vh,820px);display:flex;align-items:center;overflow:hidden;margin-top:-6px}
-  #world{position:absolute;inset:0;z-index:2}
+  .herostage{position:relative;min-height:clamp(560px,80vh,720px);display:flex;align-items:center;overflow:hidden;margin-top:-6px}
+  #world{position:absolute;inset:0;z-index:2;touch-action:pan-y}
   .hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;font-family:var(--sans);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);pointer-events:none}
 
   /* hero phrase */
@@ -97,7 +97,7 @@
   @media (max-width:600px){
     .bar{padding:18px 20px}
     .bar .nav{display:none}
-    .herostage{min-height:clamp(540px,86vh,700px);margin-top:0}
+    .herostage{min-height:clamp(540px,86vh,740px);margin-top:0}
     .hero{padding-block:clamp(16px,6vw,36px)}
     .hero h1{font-size:clamp(36px,11vw,52px);line-height:1.15}
     .hero .eyebrow{font-size:12px;letter-spacing:.1em;margin-bottom:16px}
@@ -240,22 +240,23 @@
     var engine=M.Engine.create(); engine.gravity.y=0.9;
     var render=M.Render.create({canvas:canvas,engine:engine,options:{width:W,height:H,background:'transparent',wireframes:false,pixelRatio:Math.min(2,window.devicePixelRatio||1)}});
     function wall(x,y,w,h){return M.Bodies.rectangle(x,y,w,h,{isStatic:true,render:{visible:false}});}
-    // invisible ceiling just under the subtext: chips can never rise into the headline
-    function ceilingY(){ var p=document.querySelector('.hero p:not(.eyebrow)'); if(!p) return H*0.52; var sr=stage.getBoundingClientRect(), pr=p.getBoundingClientRect(); return Math.max(H*0.34,Math.min(H-90,pr.top-sr.top)); }
-    var CY=ceilingY();
-    var walls=[wall(W/2,H+30,W*2,60),wall(-30,H/2,60,H*2),wall(W+30,H/2,60,H*2),wall(W/2,CY,W*2.5,30)];
-    M.World.add(engine.world,walls);
     // chip sizing scales down on small screens so they don't swamp the stage
     var SM=(window.innerWidth||W)<600;
     var FS=SM?13:15.5, PADX=SM?13:17, CH=SM?34:46, CR=SM?17:23;
+    var PILEBAND=SM?118:150;
+    // an invisible floor just below the headline: chips fall from the top of the page and
+    // come to rest in a band right under the header text (over the subtext), never on it.
+    function floorY(){ var h1=document.querySelector('.hero h1'); if(!h1) return H*0.6; var sr=stage.getBoundingClientRect(), hr=h1.getBoundingClientRect(); return Math.max(H*0.3,Math.min(H-20,(hr.bottom-sr.top)+PILEBAND)); }
+    var FY=floorY();
+    var walls=[wall(W/2,FY+16,W*2.5,32),wall(-30,H/2,60,H*2),wall(W+30,H/2,60,H*2)];
+    M.World.add(engine.world,walls);
     var CHIPFONT='600 '+FS+'px Inter,sans-serif';
     // measure text to size chips
     var ctx=canvas.getContext('2d'); ctx.font=CHIPFONT;
     function addChip(label,color,i){
       var w=Math.ceil(ctx.measureText(label).width)+PADX*2, h=CH, r=CR;
-      // spawn below the ceiling (never over the headline) and inside the frame, so chips are
-      // in-frame and correctly placed on the first paint even if the viewer throttles the loop.
-      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=CY+h/2+12+Math.random()*Math.max(30,(H-CY-h-24));
+      // drop in from above the top of the page; gravity carries them down to the floor band
+      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=-60-i*48-Math.random()*70;
       var body=M.Bodies.rectangle(x,y,w,h,{chamfer:{radius:r},restitution:.45,friction:.35,frictionAir:.012,
         render:{fillStyle:color}});
       body.label=label; body.chipW=w; body.chipH=h;
@@ -273,14 +274,21 @@
     var mouse=M.Mouse.create(render.canvas), mc=M.MouseConstraint.create(engine,{mouse:mouse,constraint:{stiffness:.2,render:{visible:false}}});
     M.World.add(engine.world,mc);
     render.mouse=mouse;
+    // let touch gestures scroll the page: Matter blocks them by default, which froze scrolling.
+    // Desktop mouse-drag of chips still works; on touch the page just scrolls.
+    try{
+      mouse.element.removeEventListener('touchstart', mouse.mousedown);
+      mouse.element.removeEventListener('touchmove', mouse.mousemove);
+      mouse.element.removeEventListener('touchend', mouse.mouseup);
+    }catch(e){}
     M.Render.run(render); var runner=M.Runner.create(); M.Runner.run(runner,engine);
     // resize
     var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){
       W=stage.clientWidth; H=stage.clientHeight; render.canvas.width=W; render.canvas.height=H; render.options.width=W; render.options.height=H;
-      CY=ceilingY(); M.Body.setPosition(walls[0],{x:W/2,y:H+30}); M.Body.setPosition(walls[2],{x:W+30,y:H/2}); M.Body.setPosition(walls[3],{x:W/2,y:CY});
+      FY=floorY(); M.Body.setPosition(walls[0],{x:W/2,y:FY+16}); M.Body.setPosition(walls[2],{x:W+30,y:H/2});
     },200); });
-    // recompute the ceiling once layout/fonts have fully settled
-    setTimeout(function(){ CY=ceilingY(); M.Body.setPosition(walls[3],{x:W/2,y:CY}); }, 450);
+    // recompute the floor once fonts/layout settle (chips re-drop onto the corrected line)
+    setTimeout(function(){ FY=floorY(); M.Body.setPosition(walls[0],{x:W/2,y:FY+16}); }, 450);
   }
 })();
 </script>
