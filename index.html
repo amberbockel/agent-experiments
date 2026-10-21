@@ -39,13 +39,13 @@
   .bar .nav a{text-decoration:none}
   .bar .nav a:hover{color:var(--pink)}
 
-  /* physics chips stage */
-  .stage{position:relative;height:clamp(300px,42vh,440px);margin-top:-10px}
+  /* hero stage: centered text with physics chips layered in front (xhulia-style) */
+  .herostage{position:relative;min-height:clamp(560px,90vh,820px);display:flex;align-items:center;overflow:hidden;margin-top:-6px}
   #world{position:absolute;inset:0;z-index:2}
-  .hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:1;font-family:var(--sans);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);pointer-events:none}
+  .hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;font-family:var(--sans);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);pointer-events:none}
 
   /* hero phrase */
-  .hero{position:relative;z-index:3;text-align:center;padding-bottom:clamp(40px,7vw,80px)}
+  .hero{position:relative;z-index:1;width:100%;text-align:center;padding-block:clamp(16px,5vw,40px)}
   .hero .eyebrow{font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);margin-bottom:22px}
   .hero h1{font-size:clamp(40px,8vw,88px);line-height:1.12;max-width:15ch;margin:0 auto}
   .hero h1 em{font-style:italic;color:var(--pink)}
@@ -85,6 +85,7 @@
   .lcard:hover{transform:translateY(-3px);border-color:rgba(224,26,138,.4);box-shadow:0 16px 36px -24px rgba(40,20,60,.3)}
   .lcard .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .lcard h3{font-family:var(--sans);font-weight:700;font-size:17px}
+  .lcard .ldate{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0}
   .lcard .one{color:var(--muted);font-size:13.5px;margin:0;line-height:1.5}
   .lcard .go{font-family:var(--sans);font-size:11.5px;color:var(--pink);font-weight:600;margin-top:2px}
 
@@ -92,12 +93,12 @@
   footer .row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
   footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--pink);padding-bottom:2px}
   footer .by{margin-left:auto;color:var(--faint)}
-  @media (prefers-reduced-motion:reduce){.stage{display:none}}
+  @media (prefers-reduced-motion:reduce){#world{display:none}.herostage{min-height:auto;padding-block:clamp(40px,10vw,90px)}}
   @media (max-width:600px){
     .bar{padding:18px 20px}
     .bar .nav{display:none}
-    .stage{height:clamp(280px,46vh,360px);margin-top:4px}
-    .hero{padding-bottom:clamp(30px,8vw,50px)}
+    .herostage{min-height:clamp(540px,86vh,700px);margin-top:0}
+    .hero{padding-block:clamp(16px,6vw,36px)}
     .hero h1{font-size:clamp(36px,11vw,52px);line-height:1.15}
     .hero .eyebrow{font-size:12px;letter-spacing:.1em;margin-bottom:16px}
     .sechead h2{font-size:clamp(26px,8vw,34px)}
@@ -115,20 +116,21 @@
     <div class="nav"><a href="#featured">Featured</a><a href="#all">All builds</a><a href="https://github.com/amberbockel/agent-experiments" target="_blank" rel="noopener">GitHub</a></div>
   </div>
 
-  <!-- falling chips -->
-  <div class="stage"><canvas id="world"></canvas><div class="hint">Grab the chips ✦ they're real</div></div>
-
-  <!-- hero phrase -->
-  <header class="hero wrap">
-    <p class="eyebrow">A living experiment in building with AI</p>
-    <h1>Every night, my agents ship a real, new <em>product</em>.</h1>
-    <p>This is my lab. I use it to test new product ideas fast, and to train AI agents the way I grow a design team, coaching them to work at higher and higher levels. Every morning there's something new and real to open.</p>
-    <div class="stats">
-      <div class="stat"><div class="n" id="statCount">46</div><div class="l">Apps shipped</div></div>
-      <div class="stat"><div class="n">1 / night</div><div class="l">Built while I sleep</div></div>
-      <div class="stat"><div class="n">5</div><div class="l">Categories</div></div>
-    </div>
-  </header>
+  <!-- hero: centered text with physics chips falling across it (xhulia-style) -->
+  <section class="herostage">
+    <canvas id="world"></canvas>
+    <header class="hero wrap">
+      <p class="eyebrow">A living experiment in building with AI</p>
+      <h1>Every night, my agents ship a real, new <em>product</em>.</h1>
+      <p>This is my lab. I use it to test new product ideas fast, and to train AI agents the way I grow a design team, coaching them to work at higher and higher levels. Every morning there's something new and real to open.</p>
+      <div class="stats">
+        <div class="stat"><div class="n" id="statCount">46</div><div class="l">Apps shipped</div></div>
+        <div class="stat"><div class="n">1 / night</div><div class="l">Built while I sleep</div></div>
+        <div class="stat"><div class="n">5</div><div class="l">Categories</div></div>
+      </div>
+    </header>
+    <div class="hint">Grab the chips ✦ they're real</div>
+  </section>
 
   <!-- featured case studies -->
   <section id="featured" class="wrap">
@@ -144,7 +146,7 @@
     <div class="wrap">
       <div class="sechead">
         <h2>Every night's build</h2>
-        <span class="k">The full archive, live</span>
+        <span class="k">The full archive</span>
       </div>
       <div class="grid" id="allGrid"></div>
     </div>
@@ -193,9 +195,19 @@
       +'<h3>'+esc(a.t)+'</h3><p class="one">'+esc(a.o)+'</p>'
       +'<span class="go">Open it live →</span></a>';
   }
+  function fmtDate(s){ if(!s)return''; var p=String(s).split('-'); if(p.length!==3)return''; var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+p[1])-1]; return m?m+' '+(+p[2])+', '+p[0]:''; }
+  // pick an emoji that nods to what the app does (keyword match), with a category fallback
+  var EMOJI_KW=[['jeopardy|trivia|quiz','🎉'],['chess','♟️'],['tripwire|inject|exploit|malware|phish','🪤'],['bomb|defuse|mine','💣'],['race|racer|driving|outrun|speedway','🏎️'],['music|song|melody|synth','🎵'],['breath|calm|relax|meditat','🫧'],['gratitude|thankful','🫙'],['fortune|cookie','🥠'],['spinner|roulette|wheel','🎡'],['dinner|recipe|meal|food','🍽️'],['revenue|sponsor|pricing|invoice|budget|money','💰'],['calculator|arithmetic','🧮'],['decision|decide|choose','🤔'],['prompt','✨'],['token|streaming','🌊'],['photo|camera|snapshot','📸'],['checklist|todo|task','✅'],['critter|creature|monster|animal|pet','🐾'],['rocket|launch','🚀'],['card|deck','🃏'],['timer|countdown|stopwatch','⏱️'],['journal|writing|notes','📝'],['weather|forecast','⛅'],['map|location|travel','🗺️'],['paint|drawing|canvas|palette','🎨'],['switch|swap|toggle','🔀'],['predict|habit|forecast','🔮'],['name','🏷️'],['arcade|platformer','🎮'],['model|llm|agent','🤖']];
+  function emojiFor(a){
+    var s=((a.t||'')+' '+(a.o||'')).toLowerCase();
+    for(var i=0;i<EMOJI_KW.length;i++){ if(new RegExp('\\b('+EMOJI_KW[i][0]+')','i').test(s)) return EMOJI_KW[i][1]; }
+    return {delightful:'✨',productivity:'🗂️',trend:'🧪',business:'📈',games:'🎮'}[a.c]||'✦';
+  }
   function lcardHTML(a){
+    var dt=fmtDate(a.d);
     return '<a class="lcard" href="'+BASE+a.p+'" target="_blank" rel="noopener">'
-      +'<div class="top"><h3>'+(a.e||'✦')+' '+esc(a.t)+'</h3><span class="tag" data-c="'+a.c+'">'+a.c+'</span></div>'
+      +'<div class="top"><h3>'+(a.e||emojiFor(a))+' '+esc(a.t)+'</h3><span class="tag" data-c="'+a.c+'">'+a.c+'</span></div>'
+      +(dt?'<p class="ldate">'+dt+'</p>':'')
       +'<p class="one">'+esc(a.o)+'</p><span class="go">Open live →</span></a>';
   }
   function renderFeatured(){ document.getElementById('featGrid').innerHTML=APPS.filter(function(a){return a.f;}).map(fcardHTML).join(''); }
@@ -206,11 +218,11 @@
 
   // live manifest: keep the full archive current (same-origin fetch works on the live site)
   try{
-    fetch(BASE+"manifest.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    fetch("manifest.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
       if(!d||!d.apps||!d.apps.length)return;
       document.getElementById('statCount').textContent=d.apps.length;
       var featPaths={}; APPS.filter(function(a){return a.f;}).forEach(function(a){featPaths[a.p]=1;});
-      var list=d.apps.map(function(a){return {t:a.title,c:a.category||'trend',p:a.path||('apps/'+a.date+'/'),o:a.oneLiner||a.description||'',e:a.emoji||'✦'};}).filter(function(a){return !featPaths[a.p];});
+      var list=d.apps.map(function(a){return {t:a.title,c:a.category||'trend',p:a.path||('apps/'+a.date+'/'),o:a.oneLiner||a.description||'',e:a.emoji||'',d:a.date};}).filter(function(a){return !featPaths[a.p];});
       if(list.length) renderList(list);
     }).catch(function(){});
   }catch(e){}
@@ -223,24 +235,27 @@
       ["Gratitude Jar","#8b9cff"],["Bomb Squad","#6f9bff"],["Pocket AI","#19c3a8"],
       ["Token Visualizer","#c084fc"],["Delightful","#f0a307"],["Games","#8b9cff"],["Productivity","#19c3a8"]
     ];
-    var M=Matter, stage=document.querySelector('.stage'), canvas=document.getElementById('world');
+    var M=Matter, stage=document.querySelector('.herostage'), canvas=document.getElementById('world');
     var W=stage.clientWidth, H=stage.clientHeight;
     var engine=M.Engine.create(); engine.gravity.y=0.9;
     var render=M.Render.create({canvas:canvas,engine:engine,options:{width:W,height:H,background:'transparent',wireframes:false,pixelRatio:Math.min(2,window.devicePixelRatio||1)}});
     function wall(x,y,w,h){return M.Bodies.rectangle(x,y,w,h,{isStatic:true,render:{visible:false}});}
-    var walls=[wall(W/2,H+30,W*2,60),wall(-30,H/2,60,H*2),wall(W+30,H/2,60,H*2)];
+    // invisible ceiling just under the subtext: chips can never rise into the headline
+    function ceilingY(){ var p=document.querySelector('.hero p:not(.eyebrow)'); if(!p) return H*0.52; var sr=stage.getBoundingClientRect(), pr=p.getBoundingClientRect(); return Math.max(H*0.34,Math.min(H-90,pr.top-sr.top)); }
+    var CY=ceilingY();
+    var walls=[wall(W/2,H+30,W*2,60),wall(-30,H/2,60,H*2),wall(W+30,H/2,60,H*2),wall(W/2,CY,W*2.5,30)];
     M.World.add(engine.world,walls);
     // chip sizing scales down on small screens so they don't swamp the stage
     var SM=(window.innerWidth||W)<600;
-    var FS=SM?10.5:15, PADX=SM?9:20, CH=SM?24:40, CR=SM?12:20;
+    var FS=SM?13:15.5, PADX=SM?13:17, CH=SM?34:46, CR=SM?17:23;
     var CHIPFONT='600 '+FS+'px Inter,sans-serif';
     // measure text to size chips
     var ctx=canvas.getContext('2d'); ctx.font=CHIPFONT;
     function addChip(label,color,i){
       var w=Math.ceil(ctx.measureText(label).width)+PADX*2, h=CH, r=CR;
-      // spawn already inside the stage (not above it) so chips are in-frame on the very first paint,
-      // even if the viewer throttles the animation loop. Gravity then gently settles them.
-      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=h/2+8+Math.random()*Math.max(20,(H-h-16));
+      // spawn below the ceiling (never over the headline) and inside the frame, so chips are
+      // in-frame and correctly placed on the first paint even if the viewer throttles the loop.
+      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=CY+h/2+12+Math.random()*Math.max(30,(H-CY-h-24));
       var body=M.Bodies.rectangle(x,y,w,h,{chamfer:{radius:r},restitution:.45,friction:.35,frictionAir:.012,
         render:{fillStyle:color}});
       body.label=label; body.chipW=w; body.chipH=h;
@@ -262,8 +277,10 @@
     // resize
     var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){
       W=stage.clientWidth; H=stage.clientHeight; render.canvas.width=W; render.canvas.height=H; render.options.width=W; render.options.height=H;
-      M.Body.setPosition(walls[0],{x:W/2,y:H+30}); M.Body.setPosition(walls[2],{x:W+30,y:H/2});
+      CY=ceilingY(); M.Body.setPosition(walls[0],{x:W/2,y:H+30}); M.Body.setPosition(walls[2],{x:W+30,y:H/2}); M.Body.setPosition(walls[3],{x:W/2,y:CY});
     },200); });
+    // recompute the ceiling once layout/fonts have fully settled
+    setTimeout(function(){ CY=ceilingY(); M.Body.setPosition(walls[3],{x:W/2,y:CY}); }, 450);
   }
 })();
 </script>
