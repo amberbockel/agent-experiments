@@ -50,6 +50,10 @@
   .hero h1{font-size:clamp(40px,8vw,88px);line-height:1.12;max-width:15ch;margin:0 auto}
   .hero h1 em{font-style:italic;color:var(--pink)}
   .hero p{font-size:clamp(17px,2.2vw,21px);color:var(--muted);max-width:46ch;margin:26px auto 0}
+  .hero .lead{font-family:var(--display);font-size:clamp(21px,3.4vw,34px);line-height:1.18;color:var(--ink);max-width:24ch;margin:16px auto 0}
+  .hero .chipspace{height:clamp(150px,22vh,210px)}
+  .hero .herobody{max-width:52ch;margin:20px auto 0;display:flex;flex-direction:column;gap:13px}
+  .hero .herobody p{font-size:clamp(15px,1.9vw,17.5px);color:var(--muted);line-height:1.6;margin:0;max-width:none}
   .stats{display:flex;justify-content:center;gap:clamp(28px,6vw,64px);margin-top:clamp(34px,5vw,52px);flex-wrap:wrap}
   .stat .n{font-family:var(--display);font-size:clamp(30px,5vw,44px);line-height:1}
   .stat .l{font-family:var(--sans);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:8px}
@@ -121,12 +125,16 @@
     <canvas id="world"></canvas>
     <header class="hero wrap">
       <p class="eyebrow">A living experiment in building with AI</p>
-      <h1>Every night, my agents ship a real, new <em>product</em>.</h1>
-      <p>This is my lab. I use it to test new product ideas fast, and to train AI agents the way I grow a design team, coaching them to work at higher and higher levels. Every morning there's something new and real to open.</p>
+      <h1>I go to sleep. My agents go to work.</h1>
+      <p class="lead">One new product. Every single night.</p>
+      <div class="chipspace" aria-hidden="true"></div>
+      <div class="herobody">
+        <p>Part playground, part product lab. I help my agents get better, they help me think bigger, and every morning there's something new to play with.</p>
+      </div>
       <div class="stats">
-        <div class="stat"><div class="n" id="statCount">46</div><div class="l">Apps shipped</div></div>
-        <div class="stat"><div class="n">1 / night</div><div class="l">Built while I sleep</div></div>
-        <div class="stat"><div class="n">5</div><div class="l">Categories</div></div>
+        <div class="stat"><div class="n" id="statCount">46</div><div class="l">Experiments shipped</div></div>
+        <div class="stat"><div class="n">1 / night</div><div class="l">The overnight shift</div></div>
+        <div class="stat"><div class="n">5</div><div class="l">Creative rabbit holes</div></div>
       </div>
     </header>
     <div class="hint">Grab the chips ✦ they're real</div>
@@ -243,10 +251,9 @@
     // chip sizing scales down on small screens so they don't swamp the stage
     var SM=(window.innerWidth||W)<600;
     var FS=SM?13:15.5, PADX=SM?13:17, CH=SM?34:46, CR=SM?17:23;
-    var PILEBAND=SM?118:150;
-    // an invisible floor just below the headline: chips fall from the top of the page and
-    // come to rest in a band right under the header text (over the subtext), never on it.
-    function floorY(){ var h1=document.querySelector('.hero h1'); if(!h1) return H*0.6; var sr=stage.getBoundingClientRect(), hr=h1.getBoundingClientRect(); return Math.max(H*0.3,Math.min(H-20,(hr.bottom-sr.top)+PILEBAND)); }
+    // chips rest on an invisible floor at the bottom of the reserved whitespace band (.chipspace),
+    // so they settle right under the headline WITHOUT covering the body copy below.
+    function floorY(){ var b=document.querySelector('.hero .herobody'); if(!b) return H*0.55; var sr=stage.getBoundingClientRect(); return Math.max(H*0.25,Math.min(H-20,(b.getBoundingClientRect().top-sr.top)-8)); }
     var FY=floorY();
     var walls=[wall(W/2,FY+16,W*2.5,32),wall(-30,H/2,60,H*2),wall(W+30,H/2,60,H*2)];
     M.World.add(engine.world,walls);
@@ -257,7 +264,7 @@
       var w=Math.ceil(ctx.measureText(label).width)+PADX*2, h=CH, r=CR;
       // drop in from above the top of the page; gravity carries them down to the floor band
       var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=-60-i*48-Math.random()*70;
-      var body=M.Bodies.rectangle(x,y,w,h,{chamfer:{radius:r},restitution:.45,friction:.35,frictionAir:.012,
+      var body=M.Bodies.rectangle(x,y,w,h,{chamfer:{radius:r},restitution:.26,friction:.4,frictionAir:.015,
         render:{fillStyle:color}});
       body.label=label; body.chipW=w; body.chipH=h;
       M.World.add(engine.world,body);
