@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Name Critters</title>
+<meta name="description" content="Type any name and meet the one-of-a-kind critter it hatches. Generated offline, every time the same.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+:root{--hue:var(--ab-green);--hue-soft:color-mix(in srgb,var(--ab-green) 22%,transparent)}
+html,body{min-height:100dvh}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+main{max-width:640px;margin:0 auto;padding:24px 16px 48px;display:flex;flex-direction:column;gap:24px;min-height:100dvh}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px}
+h1{font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-display-md);line-height:1.05;margin:8px 0 0}
+h1 em{font-style:normal;color:var(--ab-accent)}
+.lede{color:var(--ab-muted);margin:8px 0 0;max-width:42ch}
+.stage{position:relative;aspect-ratio:1;border-radius:32px;overflow:hidden;background:var(--bg,var(--hue-soft));border:1px solid var(--ab-glass-border);transition:background .5s var(--ab-ease)}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.stage.pop svg #crit{animation:pop .6s var(--ab-ease)}
+@keyframes pop{0%{transform:scale(.7) translateY(20px);opacity:0}100%{transform:none;opacity:1}}
+#crit{transform-origin:50% 80%;animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) scaleY(1.015)}}
+.blink{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.row{display:flex;gap:8px}
+.row .ab-input{flex:1;min-width:0}
+.card{display:grid;gap:16px}
+.card h2{font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-display-sm);margin:0}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;font-size:var(--ab-text-sm);color:var(--ab-muted)}
+.bar i{display:block;height:8px;border-radius:99px;background:var(--ab-line);overflow:hidden}
+.bar i b{display:block;height:100%;width:0;background:var(--ab-accent);border-radius:99px;transition:width .7s var(--ab-ease)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.quote{font-family:var(--ab-font-display);font-size:var(--ab-text-xl);line-height:1.35;margin:0;color:var(--ab-text)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{min-height:44px}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <span class="ab-eyebrow">Agent Experiments · Day 21</span>
+      <h1>Name <em>Critters</em></h1>
+      <p class="lede">Every name hatches exactly one creature. Same letters, same critter — forever.</p>
+    </div>
+    <button class="ab-btn ab-btn--glass" id="theme" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <div class="stage pop" id="stage" role="img" aria-label="Your critter">
+    <svg viewBox="0 0 400 400" id="svg"></svg>
+  </div>
+
+  <form class="row" id="f" autocomplete="off">
+    <label class="sr" for="name">Name</label>
+    <input class="ab-input" id="name" maxlength="24" placeholder="Type a name…" value="Amber">
+    <button class="ab-btn ab-btn--primary" type="submit">Hatch</button>
+  </form>
+  <div class="chips" id="chips"></div>
+
+  <section class="ab-card card" aria-live="polite">
+    <div class="tags" id="tags"></div>
+    <h2 id="cname"></h2>
+    <p class="quote" id="quote"></p>
+    <div class="bars" id="bars"></div>
+    <div class="row">
+      <button class="ab-btn ab-btn--secondary" id="save">Save PNG</button>
+      <button class="ab-btn ab-btn--ghost" id="rand">Surprise me</button>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const root=document.documentElement;
+$('theme').onclick=()=>{root.dataset.theme=root.dataset.theme==='light'?'dark':'light'};
+
+// seeded rng: xmur3 hash -> mulberry32
+function hash(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}
+  return ()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0}}
+function rng(s){let a=hash(s)();return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+const SPECIES=['Puddlefox','Moss Wobbler','Gloop Owl','Tuft Dragon','Bean Ghost','Pebble Newt','Cloud Mole','Mango Imp'];
+const MOODS=['Sleepy','Scheming','Radiant','Nosy','Dramatic','Gentle','Chaotic','Dignified'];
+const QUOTES=['"I have a plan. It involves snacks."','"Do not wake me before noon."','"I found this stick and I will not be taking questions."','"Everything is fine. Probably."','"I was told there would be puddles."','"Be brave. Or at least be fluffy."','"I am small but my opinions are large."','"Tell no one about the hat."'];
+const TRAITS=['Curiosity','Mischief','Cuddles','Courage','Snack drive'];
+const HUES=[[150,55],[265,60],[330,70],[45,80],[195,60],[20,75]];
+
+let cur=null;
+function make(name){
+  const r=rng(name.trim().toLowerCase()||'?');
+  const [h,s]=HUES[Math.floor(r()*HUES.length)];
+  const body=`hsl(${h},${s}%,${62+r()*14}%)`,belly=`hsl(${h},${s}%,${84+r()*8}%)`,dark=`hsl(${h},${s}%,28%)`;
+  const bg=`hsl(${(h+30)%360},${s-15}%,${90+r()*4}%)`;
+  const w=120+r()*50,ht=110+r()*50,eyes=1+Math.floor(r()*3),ears=Math.floor(r()*4),spots=Math.floor(r()*6);
+  const species=SPECIES[Math.floor(r()*SPECIES.length)],mood=MOODS[Math.floor(r()*MOODS.length)];
+  const quote=QUOTES[Math.floor(r()*QUOTES.length)];
+  const traits=TRAITS.map(t=>[t,20+Math.floor(r()*80)]);
+  const mouth=Math.floor(r()*3),hat=r()<.3;
+  let g='';
+  const cx=200,cy=250;
+  if(ears===1||ears===3) g+=`<ellipse cx="${cx-w*.7}" cy="${cy-ht*.7}" rx="26" ry="46" fill="${body}" transform="rotate(-20 ${cx-w*.7} ${cy-ht*.7})"/><ellipse cx="${cx+w*.7}" cy="${cy-ht*.7}" rx="26" ry="46" fill="${body}" transform="rotate(20 ${cx+w*.7} ${cy-ht*.7})"/>`;
+  if(ears===2||ears===3) g+=`<path d="M${cx-30} ${cy-ht} L${cx-10} ${cy-ht-60} L${cx+10} ${cy-ht} M${cx+10} ${cy-ht} L${cx+30} ${cy-ht-50} L${cx+50} ${cy-ht}" fill="${dark}"/>`;
+  g+=`<ellipse cx="${cx-w*.5}" cy="${cy+ht*.95}" rx="30" ry="16" fill="${dark}"/><ellipse cx="${cx+w*.5}" cy="${cy+ht*.95}" rx="30" ry="16" fill="${dark}"/>`;
+  g+=`<ellipse cx="${cx}" cy="${cy}" rx="${w}" ry="${ht}" fill="${body}"/><ellipse cx="${cx}" cy="${cy+ht*.3}" rx="${w*.6}" ry="${ht*.55}" fill="${belly}"/>`;
+  for(let i=0;i<spots;i++){const a=r()*6.28,d=r()*.6;g+=`<circle cx="${cx+Math.cos(a)*w*d}" cy="${cy-ht*.2+Math.sin(a)*ht*d*.6-20}" r="${5+r()*9}" fill="${dark}" opacity=".18"/>`}
+  const ey=cy-ht*.25,gap=eyes===1?0:(eyes===2?44:34);
+  for(let i=0;i<eyes;i++){const x=cx+(i-(eyes-1)/2)*gap*(eyes===3?1:1),rr=eyes===1?26:18;
+    g+=`<g class="blink"><circle cx="${x}" cy="${ey}" r="${rr}" fill="#fff"/><circle cx="${x+3}" cy="${ey+2}" r="${rr*.5}" fill="${dark}"/><circle cx="${x+7}" cy="${ey-3}" r="${rr*.16}" fill="#fff"/></g>`}
+  const my=cy+ht*.12;
+  g+=[`<path d="M${cx-22} ${my} Q${cx} ${my+24} ${cx+22} ${my}" stroke="${dark}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+      `<ellipse cx="${cx}" cy="${my+8}" rx="12" ry="14" fill="${dark}"/>`,
+      `<path d="M${cx-16} ${my+6} L${cx} ${my+2} L${cx+16} ${my+6}" stroke="${dark}" stroke-width="5" fill="none" stroke-linecap="round"/>`][mouth];
+  g+=`<circle cx="${cx-w*.55}" cy="${my-4}" r="13" fill="#ff8fb8" opacity=".45"/><circle cx="${cx+w*.55}" cy="${my-4}" r="13" fill="#ff8fb8" opacity=".45"/>`;
+  if(hat) g+=`<path d="M${cx-34} ${cy-ht+8} L${cx} ${cy-ht-64} L${cx+34} ${cy-ht+8} Z" fill="#b5a4ff"/><circle cx="${cx}" cy="${cy-ht-66}" r="8" fill="#fff"/>`;
+  return {name:name.trim(),bg,svg:`<g id="crit">${g}</g><ellipse cx="200" cy="${cy+ht+22}" rx="${w*.8}" ry="10" fill="#000" opacity=".08"/>`,species,mood,quote,traits,hat};
+}
+function show(name){
+  name=name.trim()||'Mystery';
+  cur=make(name);
+  $('svg').innerHTML=cur.svg;
+  $('stage').style.setProperty('--bg',cur.bg);
+  const st=$('stage');st.classList.remove('pop');void st.offsetWidth;st.classList.add('pop');
+  $('cname').textContent=cur.name+' the '+cur.mood;
+  $('quote').textContent=cur.quote;
+  $('tags').innerHTML=`<span class="ab-tag">${cur.species}</span><span class="ab-tag">${cur.mood}</span>${cur.hat?'<span class="ab-tag">Hat enjoyer</span>':''}`;
+  $('bars').innerHTML=cur.traits.map(([t])=>`<div class="bar"><span>${t}</span><i><b></b></i></div>`).join('');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.bar b').forEach((b,i)=>b.style.width=cur.traits[i][1]+'%')));
+  $('stage').setAttribute('aria-label',`${cur.name}, a ${cur.mood.toLowerCase()} ${cur.species}`);
+}
+$('f').onsubmit=e=>{e.preventDefault();show($('name').value)};
+const SAMPLE=['Mochi','Captain Biscuit','Nova','Grandpa Joe','Pixel','Luna'];
+$('chips').innerHTML=SAMPLE.map(n=>`<button type="button" class="ab-btn ab-btn--glass">${n}</button>`).join('');
+$('chips').onclick=e=>{if(e.target.tagName==='BUTTON'){$('name').value=e.target.textContent;show(e.target.textContent)}};
+$('rand').onclick=()=>{const n=Math.random().toString(36).slice(2,7);$('name').value=n;show(n)};
+$('save').onclick=()=>{
+  const x=new XMLSerializer().serializeToString($('svg')).replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');
+  const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=800;const k=c.getContext('2d');
+    k.fillStyle=cur.bg;k.fillRect(0,0,800,800);k.drawImage(img,0,0,800,800);
+    const a=document.createElement('a');a.download=cur.name.replace(/\W+/g,'-')+'-critter.png';a.href=c.toDataURL();a.click()};
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(x);
+};
+show($('name').value);
+</script>
+</body>
+</html>
