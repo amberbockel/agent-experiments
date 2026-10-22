@@ -36,8 +36,9 @@
   /* hero stage: centered text with physics chips layered in front (xhulia-style) */
   .herostage{position:relative;overflow:hidden;margin-top:-6px;padding-top:clamp(14px,4vh,56px);padding-bottom:clamp(14px,3vh,40px)}
   .chipcloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:11px 9px;max-width:600px;margin:clamp(26px,4vh,44px) auto}
-  .chip{font-family:var(--sans);font-weight:600;font-size:clamp(13px,1.5vw,15px);color:#fff;background:var(--cc,#e01a8a);padding:9px 17px;border-radius:999px;white-space:nowrap;transform:rotate(var(--rot,0deg));box-shadow:0 10px 22px -12px rgba(40,20,60,.45);transition:transform .2s cubic-bezier(.2,.7,.2,1)}
+  .chip{font-family:var(--sans);font-weight:600;font-size:clamp(13px,1.5vw,15px);color:#fff;background:var(--cc,#e01a8a);padding:9px 17px;border-radius:999px;white-space:nowrap;transform:rotate(var(--rot,0deg));box-shadow:0 10px 22px -12px rgba(40,20,60,.45);transition:transform .2s cubic-bezier(.2,.7,.2,1);animation:chipdrop .68s cubic-bezier(.3,1.25,.5,1) var(--d,0s) backwards}
   .chip:hover{transform:rotate(0deg) scale(1.06)}
+  @keyframes chipdrop{from{transform:translateY(-78vh) rotate(calc(var(--rot,0deg) * 2))}to{transform:translateY(0) rotate(var(--rot,0deg))}}
 
   /* hero phrase */
   .hero{position:relative;z-index:1;width:100%;text-align:center;padding-block:clamp(16px,5vw,40px)}
@@ -90,7 +91,7 @@
   footer .row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
   footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--pink);padding-bottom:2px}
   footer .by{margin-left:auto;color:var(--faint)}
-  @media (prefers-reduced-motion:reduce){.chip{transition:none}}
+  @media (prefers-reduced-motion:reduce){.chip{transition:none;animation:none}}
   @media (max-width:600px){
     .bar{padding:18px 20px}
     .bar .nav{display:none}
@@ -238,7 +239,7 @@
     ];
     var rots=[-5,4,-2,6,-3,2,-6,3,-2,5,-4,2,-3];
     var set=(window.innerWidth||800)<600?LABELS.slice(0,9):LABELS;
-    cloud.innerHTML=set.map(function(l,i){ return '<span class="chip" style="--cc:'+l[1]+';--rot:'+rots[i%rots.length]+'deg">'+esc(l[0])+'</span>'; }).join('');
+    cloud.innerHTML=set.map(function(l,i){ return '<span class="chip" style="--cc:'+l[1]+';--rot:'+rots[i%rots.length]+'deg;--d:'+(i*0.06).toFixed(2)+'s">'+esc(l[0])+'</span>'; }).join('');
   })();
 })();
 </script>
