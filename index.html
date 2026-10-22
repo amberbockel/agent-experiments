@@ -41,7 +41,7 @@
 
   /* hero stage: centered text with physics chips layered in front (xhulia-style) */
   .herostage{position:relative;overflow:hidden;margin-top:-6px;padding-top:clamp(14px,4vh,56px);padding-bottom:clamp(14px,3vh,40px)}
-  .chipstage{position:relative;height:clamp(190px,26vh,240px);max-width:620px;margin:clamp(20px,3vh,34px) auto 0}
+  .chipstage{position:relative;height:clamp(148px,20vh,184px);max-width:600px;margin:clamp(18px,3vh,30px) auto 0}
   #world{position:absolute;inset:0;touch-action:none}
 
   /* hero phrase */
@@ -254,18 +254,18 @@
     var walls=[wall(W/2,H+24,W*2,48),wall(-24,H/2,48,H*3),wall(W+24,H/2,48,H*3)];
     M.World.add(engine.world,walls);
     var SM=(window.innerWidth||W)<600;
-    var FS=SM?13:14.5, PADX=SM?13:16, CH=SM?33:40, CR=SM?16:20;
+    var FS=SM?11.5:13, PADX=SM?11:14, CH=SM?27:32, CR=SM?14:16;
     var CHIPFONT='600 '+FS+'px Inter,sans-serif';
     var ctx=canvas.getContext('2d'); ctx.font=CHIPFONT;
     function addChip(label,color,i){
       var w=Math.ceil(ctx.measureText(label).width)+PADX*2;
       // start scattered in the upper part of the band so chips are visible on the first frame,
       // then gravity drops them to the floor (a short fall + settle) and they're draggable.
-      var x=w/2+6+Math.random()*Math.max(30,(W-w-12)), y=8+Math.random()*Math.max(20,H*0.45);
+      var x=w/2+6+Math.random()*Math.max(30,(W-w-12)), y=H*0.12+Math.random()*Math.max(16,H*0.32);
       var b=M.Bodies.rectangle(x,y,w,CH,{chamfer:{radius:CR},restitution:.32,friction:.4,frictionAir:.02,render:{fillStyle:color}});
       b.label=label; b.chipW=w; M.World.add(engine.world,b);
     }
-    var DROP=SM?LABELS.slice(0,9):LABELS;
+    var DROP=SM?LABELS.slice(0,6):LABELS.slice(0,9);
     DROP.forEach(function(l,i){ addChip(l[0],l[1],i); });
     function paintLabels(){ var c=render.context; c.save(); c.font=CHIPFONT; c.textAlign='center'; c.textBaseline='middle'; engine.world.bodies.forEach(function(b){ if(b.label&&b.chipW){ c.save(); c.translate(b.position.x,b.position.y); c.rotate(b.angle); c.fillStyle='#fff'; c.fillText(b.label,0,1); c.restore(); } }); c.restore(); }
     M.Events.on(render,'afterRender',paintLabels);
