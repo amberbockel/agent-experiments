@@ -84,6 +84,14 @@
 
   /* the rest: nightly list */
   .listsec{background:#faf7f2;border-top:1px solid var(--line)}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:clamp(-18px,-2vw,-10px) 0 clamp(22px,3.5vw,30px)}
+  .filt{appearance:none;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:transform .14s,border-color .18s,background .18s,color .18s}
+  .filt .dot{width:8px;height:8px;border-radius:999px;background:var(--dc,#bbb)}
+  .filt .n{font-size:11px;color:var(--faint);font-weight:700}
+  .filt:hover{transform:translateY(-1px);border-color:rgba(25,22,34,.3)}
+  .filt[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .filt[aria-pressed="true"] .n{color:rgba(255,255,255,.72)}
+  .noapps{color:var(--muted);font-size:14px;padding:6px 2px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
   .lcard{display:flex;flex-direction:column;gap:9px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s,box-shadow .2s}
   .lcard:hover{transform:translateY(-3px);border-color:rgba(224,26,138,.4);box-shadow:0 16px 36px -24px rgba(40,20,60,.3)}
@@ -153,6 +161,7 @@
         <h2>Every night's build</h2>
         <span class="k">The full archive</span>
       </div>
+      <div class="filters" id="filters"></div>
       <div class="grid" id="allGrid"></div>
     </div>
   </section>
@@ -219,9 +228,38 @@
       +'<p class="one">'+esc(a.o)+'</p><span class="go">Open live →</span></a>';
   }
   function renderFeatured(){ document.getElementById('featGrid').innerHTML=APPS.filter(function(a){return a.f;}).map(fcardHTML).join(''); }
-  function renderList(list){ document.getElementById('allGrid').innerHTML=list.map(function(a,i){ return lcardHTML(a, i===0); }).join(''); }
+
+  // ---- archive list with a category filter ----
+  var ALL_LIST=[], curFilter='all', latestKey='';
+  var CATLABEL={delightful:'Delightful',games:'Games',productivity:'Productivity',trend:'Trend',business:'Business'};
+  var CATDOT={delightful:'#c084fc',games:'#6f9bff',productivity:'#19c3a8',trend:'#e01a8a',business:'#f0a307'};
+  function paintList(){
+    var items = curFilter==='all' ? ALL_LIST : ALL_LIST.filter(function(a){return a.c===curFilter;});
+    document.getElementById('allGrid').innerHTML = items.length
+      ? items.map(function(a){ return lcardHTML(a, !!a.d && a.p===latestKey); }).join('')
+      : '<div class="noapps">No builds in this category yet.</div>';
+  }
+  function renderFilters(){
+    var counts={}; ALL_LIST.forEach(function(a){ counts[a.c]=(counts[a.c]||0)+1; });
+    var cats=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+    document.getElementById('filters').innerHTML=
+      '<button class="filt" type="button" data-c="all" aria-pressed="'+(curFilter==='all')+'">All <span class="n">'+ALL_LIST.length+'</span></button>'
+      + cats.map(function(c){ return '<button class="filt" type="button" data-c="'+c+'" aria-pressed="'+(curFilter===c)+'"><span class="dot" style="--dc:'+(CATDOT[c]||'#bbb')+'"></span>'+(CATLABEL[c]||c)+' <span class="n">'+counts[c]+'</span></button>'; }).join('');
+  }
+  function setList(list){
+    ALL_LIST=list; latestKey=list.length?list[0].p:'';
+    if(curFilter!=='all' && !list.some(function(a){return a.c===curFilter;})) curFilter='all';
+    renderFilters(); paintList();
+  }
+  document.getElementById('filters').addEventListener('click',function(e){
+    var b=e.target.closest('.filt'); if(!b) return;
+    curFilter=b.getAttribute('data-c');
+    [].forEach.call(this.children,function(c){ c.setAttribute('aria-pressed', c.getAttribute('data-c')===curFilter); });
+    paintList();
+  });
+
   renderFeatured();
-  renderList(APPS.filter(function(a){return !a.f;}));
+  setList(APPS.filter(function(a){return !a.f;}));
   document.getElementById('statCount').textContent=APPS.length;
 
   // live manifest: keep the full archive current (same-origin fetch works on the live site)
@@ -232,7 +270,7 @@
       var featPaths={}; APPS.filter(function(a){return a.f;}).forEach(function(a){featPaths[a.p]=1;});
       var list=d.apps.map(function(a){return {t:a.title,c:a.category||'trend',p:a.path||('apps/'+a.date+'/'),o:a.oneLiner||a.description||'',e:a.emoji||'',d:a.date};}).filter(function(a){return !featPaths[a.p];});
       list.sort(function(a,b){ return String(b.d||'').localeCompare(String(a.d||'')); }); // newest first
-      if(list.length) renderList(list);
+      if(list.length) setList(list);
     }).catch(function(){});
   }catch(e){}
 
