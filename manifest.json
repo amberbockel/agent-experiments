@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-22",
+      "slug": "2026-10-22",
+      "title": "Four Alike",
+      "category": "games",
+      "oneLiner": "A pass-and-play connect-four where every tile is a fraction, decimal or percent — match the target picture and get four in a row.",
+      "path": "apps/2026-10-22/"
+    },
+    {
       "date": "2026-10-21",
       "slug": "2026-10-21",
       "title": "Name Critters",

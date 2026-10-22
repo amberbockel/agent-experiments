@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Four Alike — the fraction, decimal &amp; percent connect game</title>
+<meta name="description" content="A pass-and-play board game: a target appears, claim any tile worth the same, and connect four in a row. Fractions, decimals and percents for grades 5–7.">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('ab-theme')||'light'}catch(e){}</script>
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  :root{
+    --hue: var(--ab-green);            /* today's secondary feature hue */
+    --hue-ink: #2f7a20;
+    --p0:#6e5cd6; --p0f:rgba(110,92,214,.16);
+    --p1:#2f7a20; --p1f:rgba(113,212,92,.30);
+    --p2:#b8316f; --p2f:rgba(255,184,217,.55);
+    --p3:#8a3fc4; --p3f:rgba(198,127,255,.28);
+  }
+  :root[data-theme="dark"]{ --hue-ink:#8ee27a; --p0:#b5a4ff; --p1:#8ee27a; --p2:#ffb8d9; --p3:#d9a6ff;
+    --p0f:rgba(181,164,255,.20); --p1f:rgba(113,212,92,.22); --p2f:rgba(255,184,217,.20); --p3f:rgba(198,127,255,.22); }
+  body{ padding:max(var(--ab-4),env(safe-area-inset-top)) 0 max(var(--ab-5),env(safe-area-inset-bottom)); }
+  .app{ min-height:calc(100dvh - 40px); display:flex; flex-direction:column; }
+  .screen[hidden]{display:none}
+  .topbar{ display:flex; align-items:center; gap:var(--ab-3); padding-right:48px; margin-bottom:var(--ab-4); }
+  .brand{ font-family:var(--ab-font-display); font-size:var(--ab-text-xl); line-height:1; }
+  .topbar .grow{flex:1}
+
+  /* ----- setup: editorial column ----- */
+  .hero h1{ font-size:var(--ab-display-lg); line-height:1; margin:var(--ab-3) 0 var(--ab-4); font-weight:400; letter-spacing:-.01em; }
+  .hero h1 em{ font-style:normal; color:var(--ab-accent); }
+  .hero p{ max-width:34ch; margin:0 0 var(--ab-5); color:var(--ab-muted); font-size:var(--ab-text-lg); }
+  .steps{ list-style:none; margin:0 0 var(--ab-6); padding:0; display:grid; gap:var(--ab-3); counter-reset:s; }
+  .steps li{ counter-increment:s; display:flex; gap:var(--ab-3); align-items:baseline; color:var(--ab-muted); font-size:var(--ab-text-sm); }
+  .steps li::before{ content:counter(s); font-family:var(--ab-font-display); color:var(--hue-ink); font-size:var(--ab-text-lg); width:20px; flex:none; }
+  .steps b{ color:var(--ab-text); font-weight:600; }
+  .plist{ display:grid; gap:var(--ab-2); margin-bottom:var(--ab-3); }
+  .prow{ display:flex; gap:var(--ab-2); align-items:center; }
+  .chip{ flex:none; width:44px; height:44px; border-radius:var(--ab-r-pill); display:grid; place-items:center; font-size:18px; border:1.5px solid currentColor; }
+  .prow .ab-input{ flex:1; min-width:0; }
+  .seg{ display:grid; grid-template-columns:1fr 1fr; gap:var(--ab-2); margin:var(--ab-2) 0 var(--ab-5); }
+  .seg button{ min-height:56px; text-align:left; padding:var(--ab-2) var(--ab-4); line-height:1.3; flex-direction:column; align-items:flex-start; justify-content:center; gap:0; }
+  .seg button small{ font-weight:400; color:var(--ab-faint); font-size:var(--ab-text-xs); }
+  .seg button[aria-pressed="true"]{ border-color:var(--hue-ink); background:var(--p1f); }
+  .row{ display:flex; gap:var(--ab-2); flex-wrap:wrap; align-items:center; }
+
+  /* ----- play: single-focus board ----- */
+  .turn{ display:flex; align-items:center; gap:var(--ab-3); margin-bottom:var(--ab-3); }
+  .turn .chip{ width:40px; height:40px; }
+  .turn h2{ margin:0; font-size:var(--ab-display-sm); font-weight:400; line-height:1.1; flex:1; min-width:0; overflow-wrap:anywhere; }
+  .target{ display:flex; align-items:center; gap:var(--ab-4); padding:var(--ab-3) var(--ab-4); margin-bottom:var(--ab-4); border-radius:var(--ab-r-md); }
+  .target .viz{ flex:none; width:min(52%,220px); }
+  .target .viz svg{ width:100%; height:auto; display:block; }
+  .target .ask{ font-size:var(--ab-text-sm); color:var(--ab-muted); line-height:1.4; }
+  .target .ask b{ display:block; color:var(--ab-text); font-family:var(--ab-font-display); font-weight:400; font-size:var(--ab-text-lg); margin-bottom:2px; }
+  .board{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; width:100%; max-width:480px; margin:0 auto; }
+  .cell{ -webkit-appearance:none; appearance:none; position:relative; aspect-ratio:1; min-height:44px; padding:0; cursor:pointer;
+    border-radius:var(--ab-r-sm); border:1px solid var(--ab-glass-border); background:var(--ab-glass-bg); color:var(--ab-text);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    font-family:var(--ab-font-sans); font-weight:600; font-size:clamp(.8rem,3.9vw,1.05rem); font-variant-numeric:tabular-nums;
+    display:grid; place-items:center; transition:transform var(--ab-dur) var(--ab-ease), background var(--ab-dur), border-color var(--ab-dur); }
+  .cell:hover:not(:disabled){ background:var(--ab-glass-hover); border-color:var(--ab-glass-highlight); transform:translateY(-2px); }
+  .cell:active:not(:disabled){ transform:scale(.95); }
+  .cell:focus-visible{ outline:2px solid var(--ab-accent); outline-offset:2px; }
+  .cell:disabled{ cursor:default; }
+  .cell.owned{ background:var(--f); border-color:var(--c); color:var(--c); animation:pop .35s var(--ab-ease); }
+  .cell .mark{ position:absolute; top:3px; right:5px; font-size:10px; line-height:1; }
+  .cell.win{ outline:2.5px solid var(--c); outline-offset:1px; }
+  .cell.wrong{ animation:shake .4s; border-color:#c0392b; }
+  .fr{ display:inline-grid; text-align:center; line-height:1.15; }
+  .fr i{ font-style:normal; padding:0 2px; }
+  .fr i + i{ border-top:1.5px solid currentColor; }
+  @keyframes pop{ 0%{transform:scale(.8)} 60%{transform:scale(1.07)} 100%{transform:scale(1)} }
+  @keyframes shake{ 20%,60%{transform:translateX(-4px)} 40%,80%{transform:translateX(4px)} }
+  .msg{ min-height:48px; margin:var(--ab-3) auto 0; max-width:480px; text-align:center; color:var(--ab-muted); font-size:var(--ab-text-sm); }
+  .score{ display:flex; gap:var(--ab-2); justify-content:center; flex-wrap:wrap; margin-top:var(--ab-2); }
+  .score .ab-tag{ gap:6px; color:var(--c); border-color:var(--c); }
+  .score .ab-tag.on{ background:var(--f); }
+  .foot{ margin-top:auto; padding-top:var(--ab-5); display:flex; gap:var(--ab-2); justify-content:center; }
+
+  /* ----- result ----- */
+  .result{ text-align:center; padding:var(--ab-6) var(--ab-4); margin-top:var(--ab-4); }
+  .result h2{ font-size:var(--ab-display-md); font-weight:400; line-height:1.05; margin:var(--ab-2) 0; overflow-wrap:anywhere; }
+  .result p{ color:var(--ab-muted); margin:0 0 var(--ab-5); }
+  @media (min-width:600px){ .cell{ font-size:1.15rem; } }
+  @media (prefers-reduced-motion:reduce){ .cell,.cell.owned,.cell.wrong{ animation:none; transition:none; } }
+</style>
+</head>
+<body>
+<button class="ab-btn ab-btn--glass ab-theme-toggle" id="theme" aria-label="Toggle light and dark theme">◐</button>
+<main class="ab-container app">
+
+  <!-- SETUP -->
+  <section class="screen" id="setup">
+    <div class="topbar"><span class="brand">Four Alike</span></div>
+    <div class="hero">
+      <span class="ab-eyebrow">Pass-and-play · Grades 5–7 math</span>
+      <h1>Same amount, <em>different</em> clothes.</h1>
+      <p>Three quarters. 0.75. Seventy-five percent. Spot who's really the same — and connect four.</p>
+    </div>
+    <ol class="steps">
+      <li><span><b>A target appears</b> as a picture — a bar or a pie.</span></li>
+      <li><span><b>Tap any tile</b> on the board worth exactly the same.</span></li>
+      <li><span><b>Connect four</b> in a row, column or diagonal to win.</span></li>
+    </ol>
+    <label class="ab-label">Players (tap to rename)</label>
+    <div class="plist" id="plist"></div>
+    <div class="row" style="margin-bottom:var(--ab-5)">
+      <button class="ab-btn ab-btn--glass" id="addP">+ Add player</button>
+      <button class="ab-btn ab-btn--ghost" id="delP">− Remove</button>
+    </div>
+    <label class="ab-label">Difficulty</label>
+    <div class="seg" id="lvl">
+      <button class="ab-btn ab-btn--glass" data-l="0" aria-pressed="true">Friendly<small>halves, fifths, tenths</small></button>
+      <button class="ab-btn ab-btn--glass" data-l="1" aria-pressed="false">Stretch<small>adds eighths &amp; twentieths</small></button>
+    </div>
+    <button class="ab-btn ab-btn--primary ab-btn--lg ab-btn--block" id="start">Deal the board</button>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="play" hidden>
+    <div class="topbar"><span class="brand">Four Alike</span><span class="grow"></span></div>
+    <div class="turn"><span class="chip" id="tchip" aria-hidden="true"></span><h2 id="tname"></h2></div>
+    <div class="ab-glass target" id="target" aria-live="polite">
+      <div class="viz" id="viz"></div>
+      <div class="ask"><b>Find a match</b><span id="ask">Claim any tile worth the same as this picture.</span></div>
+    </div>
+    <div class="board" id="board" role="grid" aria-label="Game board"></div>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    <div class="score" id="score"></div>
+    <div class="foot">
+      <button class="ab-btn ab-btn--ghost" id="again">New board</button>
+      <button class="ab-btn ab-btn--ghost" id="menu">Players</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="end" hidden>
+    <div class="ab-card result" id="endCard">
+      <span class="ab-eyebrow">Game over</span>
+      <h2 id="endH"></h2>
+      <p id="endP"></p>
+      <button class="ab-btn ab-btn--primary ab-btn--lg" id="rematch">Play again</button>
+      <button class="ab-btn ab-btn--ghost" id="toMenu">Change players</button>
+    </div>
+    <div class="board" id="endBoard" aria-hidden="true" style="pointer-events:none;margin-top:var(--ab-5)"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SHAPES = ['●','■','▲','◆'];
+  let players = [{name:'Player 1'},{name:'Player 2'}];
+  let level = 0, board = [], fams = [], target = null, cur = 0, over = false, busy = false, lastTarget = -1;
+  const SIZE = 5, NEED = 4;
+
+  // theme
+  $('theme').onclick = () => {
+    const r = document.documentElement;
+    r.dataset.theme = r.dataset.theme === 'light' ? 'dark' : 'light';
+    try{ localStorage.setItem('ab-theme', r.dataset.theme) }catch(e){}
+  };
+
+  const show = id => ['setup','play','end'].forEach(s => $(s).hidden = s !== id);
+  const pv = i => `style="--c:var(--p${i});--f:var(--p${i}f)"`;
+
+  // ---------- setup ----------
+  function renderPlayers(){
+    $('plist').innerHTML = players.map((p,i) => `
+      <div class="prow">
+        <span class="chip" style="color:var(--p${i})" aria-hidden="true">${SHAPES[i]}</span>
+        <input class="ab-input" data-i="${i}" value="${p.name.replace(/"/g,'&quot;')}" maxlength="16" aria-label="Player ${i+1} name" autocomplete="off">
+      </div>`).join('');
+    $('plist').querySelectorAll('input').forEach(inp => inp.oninput = () => players[+inp.dataset.i].name = inp.value);
+    $('addP').disabled = players.length >= 4;
+    $('delP').disabled = players.length <= 2;
+  }
+  $('addP').onclick = () => { players.push({name:'Player '+(players.length+1)}); renderPlayers(); };
+  $('delP').onclick = () => { players.pop(); renderPlayers(); };
+  $('lvl').onclick = e => {
+    const b = e.target.closest('button'); if(!b) return;
+    level = +b.dataset.l;
+    $('lvl').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  };
+  const nm = i => (players[i].name.trim() || 'Player '+(i+1));
+
+  // ---------- number families ----------
+  const POOL = [
+    [1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,10],[3,10],[7,10],[9,10]
+  ];
+  const EXTRA = [[1,8],[3,8],[5,8],[7,8],[1,20],[3,20],[7,20],[9,20],[11,20],[13,20]];
+  const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const frac = (n,d) => `<span class="fr"><i>${n}</i><i>${d}</i></span>`;
+  const pct = (n,d) => (+(n/d*100).toFixed(1)) + '%';
+  const dec = (n,d) => String(+(n/d).toFixed(3));
+  function family(n,d){
+    const ks = shuffle([2,3,4,5,6].filter(k => d*k <= 100)).slice(0,2);
+    const forms = [frac(n,d), frac(n*ks[0],d*ks[0]), frac(n*ks[1],d*ks[1]), dec(n,d), pct(n,d)];
+    return {n,d,forms,spoken:`${n}/${d}`};
+  }
+  function deal(){
+    const pool = POOL.concat(level ? EXTRA : []);
+    fams = shuffle(pool.slice()).slice(0,5).map(([n,d]) => family(n,d));
+    board = shuffle(fams.flatMap((f,fi) => f.forms.map(h => ({fam:fi, html:h, owner:-1}))));
+    board.forEach((c,i) => c.i = i);
+    over = false; busy = false; cur = 0; lastTarget = -1;
+    newTarget();
+  }
+
+  // ---------- target picture ----------
+  function bar(n,d){
+    const w = 300, h = 56, g = d > 12 ? 1 : 2, sw = (w-g*(d-1))/d;
+    let s = '';
+    for(let i=0;i<d;i++) s += `<rect x="${i*(sw+g)}" y="0" width="${sw}" height="${h}" rx="${d>12?2:6}" fill="${i<n?'var(--ab-accent)':'none'}" stroke="var(--ab-accent)" stroke-width="1.5" opacity="${i<n?1:.55}"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="A bar cut into ${d} equal parts with ${n} shaded">${s}</svg>`;
+  }
+  function pie(n,d){
+    const r = 48, c = 50; let s = '';
+    for(let i=0;i<d;i++){
+      const a0 = i/d*2*Math.PI - Math.PI/2, a1 = (i+1)/d*2*Math.PI - Math.PI/2;
+      const x0=c+r*Math.cos(a0), y0=c+r*Math.sin(a0), x1=c+r*Math.cos(a1), y1=c+r*Math.sin(a1);
+      s += d === 1 ? '' : `<path d="M${c} ${c}L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${i<n?'var(--ab-accent)':'none'}" stroke="var(--ab-accent)" stroke-width="1.5" opacity="${i<n?1:.55}"/>`;
+    }
+    return `<svg viewBox="0 0 100 100" style="max-width:130px;margin:auto" role="img" aria-label="A pie cut into ${d} equal slices with ${n} shaded">${s}</svg>`;
+  }
+  function newTarget(){
+    const open = fams.map((f,fi) => fi).filter(fi => board.some(c => c.owner < 0 && c.fam === fi));
+    const pickFrom = open.filter(fi => fi !== lastTarget);
+    target = (pickFrom.length ? pickFrom : open)[Math.floor(Math.random()*(pickFrom.length||open.length))];
+    lastTarget = target;
+    const f = fams[target];
+    $('viz').innerHTML = (f.d <= 10 && Math.random() < .5) ? pie(f.n,f.d) : bar(f.n,f.d);
+    $('ask').textContent = `${f.n} of ${f.d} equal parts are shaded. Claim any tile worth the same.`;
+  }
+
+  // ---------- render ----------
+  function renderBoard(el, interactive, winSet){
+    el.innerHTML = '';
+    board.forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'cell' + (c.owner >= 0 ? ' owned' : '') + (winSet && winSet.has(c.i) ? ' win' : '');
+      b.innerHTML = c.html + (c.owner >= 0 ? `<span class="mark" aria-hidden="true">${SHAPES[c.owner]}</span>` : '');
+      if(c.owner >= 0) b.setAttribute('style', `--c:var(--p${c.owner});--f:var(--p${c.owner}f)`);
+      b.disabled = !interactive || c.owner >= 0;
+      b.setAttribute('role','gridcell');
+      b.setAttribute('aria-label', (c.html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim() || '') + (c.owner >= 0 ? ', claimed by ' + nm(c.owner) : ''));
+      if(interactive) b.onclick = () => pick(c, b);
+      el.appendChild(b);
+    });
+  }
+  function renderHud(){
+    $('tchip').textContent = SHAPES[cur];
+    $('tchip').style.cssText = `color:var(--p${cur})`;
+    $('tname').textContent = `${nm(cur)}'s turn`;
+    $('score').innerHTML = players.map((p,i) => `<span class="ab-tag ab-tag--muted ${i===cur&&!over?'on':''}" ${pv(i)}>${SHAPES[i]} ${esc(nm(i))} · ${board.filter(c=>c.owner===i).length}</span>`).join('');
+  }
+  const esc = s => s.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+
+  // ---------- game ----------
+  const LINES = (() => {
+    const L = [];
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) for(const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+      const cells = []; for(let k=0;k<NEED;k++){ const rr=r+dr*k, cc=c+dc*k; if(rr<0||rr>=SIZE||cc<0||cc>=SIZE) break; cells.push(rr*SIZE+cc); }
+      if(cells.length === NEED) L.push(cells);
+    }
+    return L;
+  })();
+  const winLine = p => LINES.find(l => l.every(i => board[i].owner === p));
+
+  function pick(c, btn){
+    if(over || busy) return;
+    if(c.fam === target){
+      c.owner = cur;
+      const w = winLine(cur);
+      if(w){ finish(cur, new Set(w)); return; }
+      if(board.every(x => x.owner >= 0)){ finish(-1); return; }
+      const who = nm(cur);
+      cur = (cur + 1) % players.length;
+      newTarget(); renderBoard($('board'), true); renderHud();
+      $('msg').textContent = `Nice one, ${who}! ${nm(cur)}, you're up.`;
+    } else {
+      busy = true;
+      btn.classList.add('wrong');
+      const f = fams[c.fam];
+      $('msg').innerHTML = `Not quite — that tile is worth ${f.spoken}, a different amount. Turn passes.`;
+      setTimeout(() => {
+        cur = (cur + 1) % players.length;
+        newTarget(); busy = false;
+        renderBoard($('board'), true); renderHud();
+      }, 1400);
+    }
+  }
+  function finish(winner, winSet){
+    over = true;
+    renderBoard($('board'), false, winSet); renderHud();
+    let w = winner, text;
+    if(w < 0){
+      const counts = players.map((p,i) => board.filter(c=>c.owner===i).length), max = Math.max(...counts);
+      const tops = counts.map((n,i)=>n===max?i:-1).filter(i=>i>=0);
+      if(tops.length === 1){ w = tops[0]; text = `Board full — ${nm(w)} holds the most tiles (${max}).`; }
+      else { text = 'Board full and tied on tiles. Nobody blinked.'; }
+    } else text = `Four alike! ${nm(w)} connected four in a row.`;
+    setTimeout(() => {
+      $('endH').textContent = w >= 0 ? `${nm(w)} wins` : 'A perfect tie';
+      $('endP').textContent = text;
+      show('end');
+      renderBoard($('endBoard'), false, winSet);
+    }, winSet ? 1400 : 300);
+  }
+
+  function start(){
+    deal(); show('play');
+    renderBoard($('board'), true); renderHud();
+    $('msg').textContent = `${nm(0)} goes first. Match the picture to a tile.`;
+  }
+  $('start').onclick = start;
+  $('again').onclick = start;
+  $('rematch').onclick = start;
+  $('menu').onclick = $('toMenu').onclick = () => { show('setup'); renderPlayers(); };
+
+  renderPlayers(); show('setup');
+})();
+</script>
+</body>
+</html>
