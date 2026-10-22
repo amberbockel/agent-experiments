@@ -296,13 +296,25 @@
         .filter(function(x){return /image\/(jpeg|png)/.test(x.mime)&&x.thumb;}).slice(0,3);
     });
   }
+  // Paste a free Unsplash Access Key here (unsplash.com/developers) for crisp photography.
+  // Leave blank to fall back to Wikimedia Commons.
+  var UNSPLASH_KEY="wDOA6ydQOfmHWgRdnUAew7DS5E-UgCDFHNrLwpTkKkI";
+  function unsplashSearch(q){
+    return fetch("https://api.unsplash.com/search/photos?per_page=3&orientation=squarish&content_filter=high&query="+encodeURIComponent(q),{headers:{Authorization:"Client-ID "+UNSPLASH_KEY}})
+      .then(function(r){ if(!r.ok) throw new Error('unsplash '+r.status); return r.json(); })
+      .then(function(d){ return (d.results||[]).slice(0,3)
+        .map(function(p){ return {thumb:(p.urls&&(p.urls.small||p.urls.thumb||p.urls.regular)), page:(p.links&&p.links.html)}; })
+        .filter(function(x){return x.thumb;}); });
+  }
+  function refSearch(q){ return UNSPLASH_KEY ? unsplashSearch(q).catch(function(){return wikiSearch(q);}) : wikiSearch(q); }
+  function refSource(){ return UNSPLASH_KEY ? 'Unsplash' : 'Wikimedia Commons'; }
   function showRef(){
     if(!state.prompt) return;
     refEl.hidden=false; refNote.innerHTML='';
     refBody.innerHTML='<div class="refloading"><span class="sp"></span>Finding references…</div>';
     var subs=extractSubjects(state.prompt);
     if(!subs.length){ refBody.innerHTML='<div class="refloading">Nothing to look up here. Draw it from your head!</div>'; return; }
-    Promise.all(subs.map(function(q){ return wikiSearch(q).then(function(i){return {q:q,imgs:i};},function(){return {q:q,imgs:[]};}); }))
+    Promise.all(subs.map(function(q){ return refSearch(q).then(function(i){return {q:q,imgs:i};},function(){return {q:q,imgs:[]};}); }))
       .then(function(groups){
         if(!groups.some(function(g){return g.imgs.length;})){ refBody.innerHTML='<div class="refloading">No luck finding a reference. Perfect excuse to make it up.</div>'; return; }
         refBody.innerHTML=groups.filter(function(g){return g.imgs.length;}).map(function(g){
@@ -310,7 +322,7 @@
             return '<a href="'+im.page+'" target="_blank" rel="noopener"><img src="'+im.thumb+'" alt="'+esc(g.q)+'" loading="lazy"></a>';
           }).join('')+'</div>';
         }).join('');
-        refNote.innerHTML='Reference photos via Wikimedia Commons. Use them loosely, your version is better.';
+        refNote.innerHTML='Reference photos via '+refSource()+'. Use them loosely, your version is better.';
       },function(){ refBody.innerHTML='<div class="refloading">Couldn’t load references (needs an internet connection).</div>'; });
   }
   refcue.addEventListener('click', showRef);
