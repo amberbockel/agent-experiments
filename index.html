@@ -261,21 +261,24 @@
     var ctx=canvas.getContext('2d'); ctx.font=CHIPFONT;
     function addChip(label,color,i){
       var w=Math.ceil(ctx.measureText(label).width)+PADX*2, h=CH, r=CR;
-      // drop in from above the top of the page; gravity carries them down to the floor band
-      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=-60-i*48-Math.random()*70;
+      // spawn INSIDE the band (not above the page) so chips show on the first painted frame,
+      // even in file viewers that freeze an early frame; gravity just settles them a little.
+      var x=w/2+8+Math.random()*Math.max(40,(W-w-16)), y=FY-h/2-8-Math.random()*130;
       var body=M.Bodies.rectangle(x,y,w,h,{chamfer:{radius:r},restitution:.26,friction:.4,frictionAir:.015,
         render:{fillStyle:color}});
       body.label=label; body.chipW=w; body.chipH=h;
       M.World.add(engine.world,body);
     }
     var DROP=SM?LABELS.slice(0,9):LABELS;
-    DROP.forEach(function(l,i){ setTimeout(function(){ addChip(l[0],l[1],i); }, 45*i+80); });
+    // spawn all at once so every chip exists before the first paint (reliable in file viewers)
+    DROP.forEach(function(l,i){ addChip(l[0],l[1],i); });
     // draw labels on top of chips
-    M.Events.on(render,'afterRender',function(){
+    function paintLabels(){
       var c=render.context; c.save(); c.font=CHIPFONT; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#fff';
       engine.world.bodies.forEach(function(b){ if(b.label && b.chipW){ c.save(); c.translate(b.position.x,b.position.y); c.rotate(b.angle); c.fillStyle='#fff'; c.fillText(b.label,0,1); c.restore(); } });
       c.restore();
-    });
+    }
+    M.Events.on(render,'afterRender',paintLabels);
     // mouse drag
     var mouse=M.Mouse.create(render.canvas), mc=M.MouseConstraint.create(engine,{mouse:mouse,constraint:{stiffness:.2,render:{visible:false}}});
     M.World.add(engine.world,mc);
@@ -288,6 +291,9 @@
       mouse.element.removeEventListener('touchend', mouse.mouseup);
     }catch(e){}
     M.Render.run(render); var runner=M.Runner.create(); M.Runner.run(runner,engine);
+    // settle a little synchronously and force one paint now, so chips are visible on the very
+    // first frame even if the viewer defers/suspends requestAnimationFrame.
+    for(var s=0;s<40;s++){ M.Engine.update(engine,16); } M.Render.world(render); paintLabels();
     // resize
     var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){
       W=stage.clientWidth; H=stage.clientHeight; render.canvas.width=W; render.canvas.height=H; render.options.width=W; render.options.height=H;
