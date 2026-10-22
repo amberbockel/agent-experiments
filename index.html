@@ -83,6 +83,8 @@
   .lcard:hover{transform:translateY(-3px);border-color:rgba(224,26,138,.4);box-shadow:0 16px 36px -24px rgba(40,20,60,.3)}
   .lcard .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .lcard h3{font-family:var(--sans);font-weight:700;font-size:17px}
+  .lcard.latest{border-color:rgba(224,26,138,.45);box-shadow:0 0 0 1.5px rgba(224,26,138,.3),0 18px 44px -26px rgba(224,26,138,.55);background:linear-gradient(180deg,#fff,#fff6fb)}
+  .lcard .freshtag{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:var(--pink);padding:4px 11px;border-radius:999px}
   .lcard .ldate{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0}
   .lcard .one{color:var(--muted);font-size:13.5px;margin:0;line-height:1.5}
   .lcard .go{font-family:var(--sans);font-size:11.5px;color:var(--pink);font-weight:600;margin-top:2px}
@@ -204,15 +206,16 @@
     for(var i=0;i<EMOJI_KW.length;i++){ if(new RegExp('\\b('+EMOJI_KW[i][0]+')','i').test(s)) return EMOJI_KW[i][1]; }
     return {delightful:'✨',productivity:'🗂️',trend:'🧪',business:'📈',games:'🎮'}[a.c]||'✦';
   }
-  function lcardHTML(a){
+  function lcardHTML(a, latest){
     var dt=fmtDate(a.d);
-    return '<a class="lcard" href="'+hrefFor(a)+'" target="_blank" rel="noopener">'
+    return '<a class="lcard'+(latest?' latest':'')+'" href="'+hrefFor(a)+'" target="_blank" rel="noopener">'
+      +(latest?'<span class="freshtag">🌙 Last night’s build</span>':'')
       +'<div class="top"><h3>'+(a.e||emojiFor(a))+' '+esc(a.t)+'</h3><span class="tag" data-c="'+a.c+'">'+a.c+'</span></div>'
       +(dt?'<p class="ldate">'+dt+'</p>':'')
       +'<p class="one">'+esc(a.o)+'</p><span class="go">Open live →</span></a>';
   }
   function renderFeatured(){ document.getElementById('featGrid').innerHTML=APPS.filter(function(a){return a.f;}).map(fcardHTML).join(''); }
-  function renderList(list){ document.getElementById('allGrid').innerHTML=list.map(lcardHTML).join(''); }
+  function renderList(list){ document.getElementById('allGrid').innerHTML=list.map(function(a,i){ return lcardHTML(a, i===0); }).join(''); }
   renderFeatured();
   renderList(APPS.filter(function(a){return !a.f;}));
   document.getElementById('statCount').textContent=APPS.length;
@@ -224,6 +227,7 @@
       document.getElementById('statCount').textContent=d.apps.length;
       var featPaths={}; APPS.filter(function(a){return a.f;}).forEach(function(a){featPaths[a.p]=1;});
       var list=d.apps.map(function(a){return {t:a.title,c:a.category||'trend',p:a.path||('apps/'+a.date+'/'),o:a.oneLiner||a.description||'',e:a.emoji||'',d:a.date};}).filter(function(a){return !featPaths[a.p];});
+      list.sort(function(a,b){ return String(b.d||'').localeCompare(String(a.d||'')); }); // newest first
       if(list.length) renderList(list);
     }).catch(function(){});
   }catch(e){}
