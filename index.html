@@ -41,7 +41,7 @@
 
   /* hero stage: centered text with physics chips layered in front (xhulia-style) */
   .herostage{position:relative;overflow:hidden;margin-top:-6px;padding-top:clamp(14px,4vh,56px);padding-bottom:clamp(14px,3vh,40px)}
-  .chipstage{position:relative;height:clamp(148px,20vh,184px);max-width:600px;margin:clamp(18px,3vh,30px) auto 0}
+  .chipstage{position:relative;height:clamp(148px,20vh,184px);max-width:600px;margin:clamp(18px,3vh,30px) auto 0;overflow:hidden}
   #world{position:absolute;inset:0;touch-action:none}
 
   /* hero phrase */
@@ -275,8 +275,15 @@
     M.Render.run(render); var runner=M.Runner.create(); M.Runner.run(runner,engine);
     // force one paint now so chips show on the very first frame even if rAF is deferred
     M.Render.world(render); paintLabels();
+    // If the fixed band height settles to a slightly different value after fonts/layout load,
+    // just move the floor wall to match the current bottom — never resize the canvas here (that
+    // would reset the device-pixel-ratio scaling and shove the chips sideways).
+    function placeFloor(){ var nh=stage.clientHeight; if(nh>0){ H=nh; M.Body.setPosition(walls[0],{x:W/2,y:H+24}); M.Body.setPosition(walls[2],{x:W+24,y:H/2}); } M.Render.world(render); paintLabels(); }
+    window.addEventListener('load', function(){ setTimeout(placeFloor,100); setTimeout(placeFloor,500); });
     var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){
-      W=stage.clientWidth; H=stage.clientHeight; render.canvas.width=W; render.canvas.height=H; render.options.width=W; render.options.height=H;
+      W=stage.clientWidth; H=stage.clientHeight;
+      render.options.width=W; render.options.height=H; render.bounds.max.x=W; render.bounds.max.y=H;
+      M.Render.setPixelRatio(render, Math.min(2,window.devicePixelRatio||1));
       M.Body.setPosition(walls[0],{x:W/2,y:H+24}); M.Body.setPosition(walls[2],{x:W+24,y:H/2});
     },200); });
   })();
