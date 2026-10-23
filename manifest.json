@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-23",
+      "slug": "2026-10-23",
+      "title": "Day Orbit",
+      "category": "productivity",
+      "oneLiner": "Sketch your whole day as a 24-hour ring — drag to block time and get an honest verdict on whether the plan is realistic.",
+      "path": "apps/2026-10-23/"
+    },
+    {
       "date": "2026-10-22",
       "slug": "2026-10-22",
       "title": "Four Alike",
