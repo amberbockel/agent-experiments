@@ -32,7 +32,9 @@
   .wrap{max-width:640px;margin:0 auto;padding:0 clamp(18px,5vw,28px)}
 
   /* header / logo */
-  header{text-align:center;padding:clamp(28px,7vw,52px) 0 clamp(14px,3vw,22px)}
+  header{text-align:center}
+  header.wrap{padding-top:clamp(44px,9vw,72px);padding-bottom:clamp(14px,3vw,22px)}
+  header.wrap{padding-top:calc(clamp(44px,9vw,72px) + env(safe-area-inset-top,0px))}
   .logo{font-family:var(--display);font-weight:800;letter-spacing:-.02em;line-height:.9;
     font-size:clamp(44px,13vw,76px);display:inline-block}
   .logo span{display:inline-block;transform:rotate(var(--r,0deg))}
