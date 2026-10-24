@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-24",
+      "slug": "2026-10-24",
+      "title": "Shrink to Fit",
+      "category": "trend",
+      "oneLiner": "An interactive explainer of how quantization squeezes a model onto your phone — squeeze a picture's precision, then see which devices a model fits on.",
+      "path": "apps/2026-10-24/"
+    },
+    {
       "date": "2026-10-23",
       "slug": "2026-10-23",
       "title": "Day Orbit",

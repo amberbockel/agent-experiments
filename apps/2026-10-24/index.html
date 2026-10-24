@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shrink to Fit — how quantization squeezes a model onto your phone</title>
+<meta name="description" content="An interactive explainer: drop a number's precision and watch a picture degrade, then see which devices a model fits on.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  :root{ --hue:#71d45c; --hue-ink:#2c7a1c; --hue-soft:rgba(113,212,92,.18); }
+  :root[data-theme="dark"]{ --hue-ink:#8fe07c; --hue-soft:rgba(113,212,92,.16); }
+  html{scroll-behavior:smooth}
+  body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+  .col{max-width:680px;margin:0 auto;padding:0 max(var(--ab-4),env(safe-area-inset-left)) 0 max(var(--ab-4),env(safe-area-inset-right))}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:calc(var(--ab-4) + env(safe-area-inset-top)) 0 var(--ab-4)}
+  .top a{color:inherit;text-decoration:none}
+  .hero{padding:var(--ab-8) 0 var(--ab-7)}
+  .hero h1{font-size:clamp(3.5rem,17vw,7rem);line-height:.92;letter-spacing:-.02em;margin:var(--ab-4) 0 var(--ab-5)}
+  .hero h1 em{font-style:normal;color:var(--ab-accent)}
+  .lede{font-size:var(--ab-text-xl);color:var(--ab-muted);line-height:1.5;max-width:30ch}
+  .chap{padding:var(--ab-8) 0;border-top:1px solid var(--ab-line)}
+  .num{font-family:var(--ab-font-display);font-size:var(--ab-text-sm);color:var(--hue-ink);letter-spacing:.12em}
+  h2{font-size:var(--ab-display-md);line-height:1.05;margin:var(--ab-2) 0 var(--ab-4)}
+  p{line-height:1.65;color:var(--ab-muted);margin:0 0 var(--ab-4)}
+  p b{color:var(--ab-text);font-weight:600}
+  .panel{padding:var(--ab-4);border-radius:var(--ab-r-lg);margin:var(--ab-5) 0}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--ab-2)}
+  figure{margin:0}
+  figcaption{font-size:var(--ab-text-xs);color:var(--ab-faint);margin-top:var(--ab-2);letter-spacing:.06em;text-transform:uppercase}
+  canvas{width:100%;height:auto;aspect-ratio:3/2;border-radius:var(--ab-r-md);display:block;background:var(--ab-surface)}
+  .readout{display:flex;justify-content:space-between;align-items:baseline;margin:var(--ab-4) 0 var(--ab-2);gap:var(--ab-3)}
+  .big{font-family:var(--ab-font-display);font-size:2.5rem;line-height:1}
+  .big small{font-family:var(--ab-font-sans);font-size:var(--ab-text-sm);color:var(--ab-faint);margin-left:6px}
+  .stat{font-size:var(--ab-text-sm);color:var(--ab-muted);text-align:right}
+  .stat b{color:var(--ab-text)}
+  input[type=range]{width:100%;height:44px;accent-color:var(--ab-accent);cursor:pointer;background:transparent}
+  input[type=range]:focus-visible{outline:2px solid var(--ab-accent-ring);outline-offset:2px;border-radius:8px}
+  .ticks{display:flex;justify-content:space-between;font-size:var(--ab-text-xs);color:var(--ab-faint);padding:0 6px}
+  .verdict{min-height:3.2em;margin:var(--ab-3) 0 0;font-size:var(--ab-text-sm)}
+  .seg{display:flex;flex-wrap:wrap;gap:var(--ab-2);margin:var(--ab-3) 0}
+  .seg button{min-height:44px;min-width:56px;padding:0 var(--ab-4);border-radius:var(--ab-r-pill);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);color:var(--ab-text);font:inherit;font-weight:500;cursor:pointer;transition:all var(--ab-dur) var(--ab-ease)}
+  .seg button:hover{background:var(--ab-glass-hover)}
+  .seg button:focus-visible{outline:2px solid var(--ab-accent-ring);outline-offset:2px}
+  .seg button[aria-pressed=true]{background:var(--ab-accent);color:var(--ab-on-accent);border-color:transparent}
+  .lbl{font-size:var(--ab-text-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--ab-faint);margin-top:var(--ab-4)}
+  .dev{display:grid;grid-template-columns:96px 1fr auto;gap:var(--ab-3);align-items:center;min-height:44px}
+  .dev .n{font-size:var(--ab-text-sm);font-weight:500}
+  .dev .n span{display:block;font-size:var(--ab-text-xs);color:var(--ab-faint);font-weight:400}
+  .bar{position:relative;height:12px;border-radius:99px;background:var(--ab-line);overflow:hidden}
+  .bar i{position:absolute;inset:0 auto 0 0;width:0;border-radius:99px;background:var(--hue);transition:width .5s var(--ab-ease),background .3s}
+  .bar i.over{background:var(--ab-pink-soft)}
+  .tag{font-size:var(--ab-text-xs);font-weight:600;min-width:64px;text-align:right}
+  .tag.ok{color:var(--hue-ink)} .tag.no{color:var(--ab-faint)}
+  .gb{font-family:var(--ab-font-display);font-size:3rem;line-height:1}
+  .takes{display:grid;gap:var(--ab-3);margin-top:var(--ab-5)}
+  .takes .ab-card{padding:var(--ab-5)}
+  .takes h3{font-family:var(--ab-font-display);font-weight:400;margin:0 0 var(--ab-2);font-size:var(--ab-text-xl)}
+  .takes p{margin:0}
+  footer{padding:var(--ab-7) 0 var(--ab-8);font-size:var(--ab-text-sm);color:var(--ab-faint);border-top:1px solid var(--ab-line)}
+  footer a{color:var(--ab-accent)}
+  .theme{min-height:44px;min-width:44px}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .7s var(--ab-ease),transform .7s var(--ab-ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="col">
+  <div class="top">
+    <a class="ab-eyebrow" href="../../">← Agent Experiments</a>
+    <button class="ab-btn ab-btn--glass theme" id="theme" aria-label="Toggle light/dark theme">◐</button>
+  </div>
+
+  <header class="hero">
+    <span class="ab-tag">An interactive explainer</span>
+    <h1>Shrink to <em>fit.</em></h1>
+    <p class="lede">How a model that needs a data center learns to live in your pocket — by getting a little less precise.</p>
+    <a class="ab-btn ab-btn--primary" href="#c1">Start squeezing ↓</a>
+  </header>
+
+  <section class="chap reveal" id="c1" aria-labelledby="h1a">
+    <div class="num">I</div>
+    <h2 id="h1a">Every weight is just a number.</h2>
+    <p>A language model is billions of numbers. Normally each is stored in <b>16 bits</b> — about 65,000 possible values. <b>Quantization</b> rounds each one onto a coarser grid. Fewer bits, fewer shades, smaller file.</p>
+    <p>Try it on a picture. The same idea, just easier to see.</p>
+    <div class="ab-card panel">
+      <div class="pair">
+        <figure><canvas id="orig" width="240" height="160" role="img" aria-label="Original sunset picture"></canvas><figcaption>Full precision</figcaption></figure>
+        <figure><canvas id="quant" width="240" height="160" role="img" aria-label="Quantized sunset picture"></canvas><figcaption id="qcap">Squeezed</figcaption></figure>
+      </div>
+      <div class="readout">
+        <div class="big"><span id="bits">4</span><small>bits per value</small></div>
+        <div class="stat"><b id="lv">16</b> shades per channel<br>drift from original: <b id="err">0%</b></div>
+      </div>
+      <input id="bitsIn" type="range" min="1" max="8" step="1" value="4" aria-label="Bits per value" aria-describedby="verdict">
+      <div class="ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+      <p class="verdict" id="verdict" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="chap reveal" aria-labelledby="h2a">
+    <div class="num">II</div>
+    <h2 id="h2a">Now do the arithmetic.</h2>
+    <p>A model's size is simply <b>parameters × bits ÷ 8</b>. Pick a model and a precision, then see which devices have room — leaving about 40% of memory for the OS, apps and the model's working notes.</p>
+    <div class="ab-card panel">
+      <div class="lbl" style="margin-top:0">Model size (billions of parameters)</div>
+      <div class="seg" id="params" role="group" aria-label="Model parameters"></div>
+      <div class="lbl">Precision</div>
+      <div class="seg" id="prec" role="group" aria-label="Precision"></div>
+      <div class="readout" style="margin-top:var(--ab-5)">
+        <div class="gb"><span id="gb">0</span><small style="font-family:var(--ab-font-sans);font-size:var(--ab-text-sm);color:var(--ab-faint)"> GB on disk</small></div>
+        <div class="stat" id="vs"></div>
+      </div>
+      <div id="devs"></div>
+    </div>
+  </section>
+
+  <section class="chap reveal" aria-labelledby="h3a">
+    <div class="num">III</div>
+    <h2 id="h3a">What to remember.</h2>
+    <div class="takes">
+      <div class="ab-card"><h3>4-bit is the sweet spot.</h3><p>Four times smaller than 16-bit, and for most tasks the answers barely change.</p></div>
+      <div class="ab-card"><h3>Below that, things fray.</h3><p>At 2 bits the grid is so coarse that fine detail collapses — in pictures and in language.</p></div>
+      <div class="ab-card"><h3>Smarter rounding beats harsher rounding.</h3><p>Quantization-aware training and calibration let models adapt to the coarse grid, which is how a billion-parameter model now runs offline on a phone.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Sizes are weights only and illustrative; real runtimes add memory for context. Trend context: Google's Gemma 4 QAT checkpoints and on-device LiteRT-LM tooling (<a href="https://developers.googleblog.com/google-ai-edge-small-language-models-multimodality-rag-function-calling/" rel="noopener">Google AI Edge</a>; <a href="https://developer.arm.com/community/arm-community-blogs/b/ai-blog/posts/llm-quantization-for-mobile-deployment" rel="noopener">Arm on INT8 vs INT4</a>). Runs entirely offline.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,KEY='ab-theme';
+  try{var t=localStorage.getItem(KEY);if(t)root.dataset.theme=t}catch(e){}
+  document.getElementById('theme').onclick=function(){
+    root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
+    try{localStorage.setItem(KEY,root.dataset.theme)}catch(e){}
+  };
+
+  /* ---- Chapter I: procedural scene, float RGB in 0..1 ---- */
+  var W=240,H=160,src=new Float32Array(W*H*3);
+  function mix(a,b,t){return a+(b-a)*t}
+  for(var y=0;y<H;y++)for(var x=0;x<W;x++){
+    var i=(y*W+x)*3,v=y/H,r,g,b;
+    r=mix(.99,.45,v);g=mix(.72,.30,v);b=mix(.55,.78,v);       /* dusk sky */
+    var dx=x-150,dy=y-70,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<34){var s=1-d/34;r=mix(r,1,.5+.5*s);g=mix(g,.93,.5+.5*s);b=mix(b,.7,.4*s+.2)}
+    else if(d<70){var h=1-(d-34)/36;r+=.18*h*h;g+=.1*h*h}     /* soft halo */
+    var h1=100+14*Math.sin(x/26)+8*Math.sin(x/9+1);
+    var h2=122+10*Math.sin(x/19+2)+5*Math.sin(x/7);
+    if(y>h1){r=.30-(y-h1)*.0012;g=.20;b=.45+(y-h1)*.0008}
+    if(y>h2){r=.12;g=.10;b=.24+(y-h2)*.001}
+    src[i]=Math.min(1,r);src[i+1]=Math.min(1,g);src[i+2]=Math.min(1,b);
+  }
+  function draw(cv,bits){
+    var c=cv.getContext('2d'),im=c.createImageData(W,H),L=bits?Math.pow(2,bits)-1:0,e=0;
+    for(var p=0,q=0;p<src.length;p+=3,q+=4){
+      for(var k=0;k<3;k++){
+        var v=src[p+k],o=bits?Math.round(v*L)/L:v;
+        e+=Math.abs(o-v);im.data[q+k]=Math.round(o*255);
+      }
+      im.data[q+3]=255;
+    }
+    c.putImageData(im,0,0);
+    return e/(src.length);
+  }
+  draw(document.getElementById('orig'),0);
+  var notes=['1 bit: every channel is on or off. A poster of eight colors.','2 bits: four shades. Bands stack up like topographic lines.','3 bits: the sky is striped, but the scene still reads.','4 bits: the sweet spot. Faint banding, nothing you would miss.','5 bits: you would have to squint to find the difference.','6 bits: practically identical.','7 bits: identical to the eye.','8 bits: what your screen shows. Lossless for display.'];
+  var bi=document.getElementById('bitsIn');
+  function upd(){
+    var b=+bi.value,e=draw(document.getElementById('quant'),b);
+    document.getElementById('bits').textContent=b;
+    document.getElementById('lv').textContent=Math.pow(2,b);
+    document.getElementById('err').textContent=(e*100).toFixed(e<.01?2:1)+'%';
+    document.getElementById('qcap').textContent=b+'-bit · '+Math.round(b/16*100)+'% of 16-bit size';
+    document.getElementById('verdict').textContent=notes[b-1];
+  }
+  bi.addEventListener('input',upd);upd();
+
+  /* ---- Chapter II: size calculator ---- */
+  var P=[1,2,4,8,27],B=[16,8,4,2],pv=4,bv=16;
+  var D=[{n:'Smartwatch',s:'2 GB RAM',r:2},{n:'Phone',s:'8 GB RAM',r:8},{n:'Raspberry Pi 5',s:'8 GB RAM',r:8},{n:'Laptop',s:'16 GB RAM',r:16},{n:'Gaming PC',s:'64 GB RAM',r:64}];
+  function seg(id,arr,get,set,fmt){
+    var el=document.getElementById(id);
+    arr.forEach(function(v){
+      var b=document.createElement('button');b.type='button';b.textContent=fmt(v);
+      b.onclick=function(){set(v);sync();calc()};b.dataset.v=v;el.appendChild(b);
+    });
+  }
+  function sync(){
+    [['params',pv],['prec',bv]].forEach(function(a){
+      document.querySelectorAll('#'+a[0]+' button').forEach(function(b){b.setAttribute('aria-pressed',(+b.dataset.v===a[1]))});
+    });
+  }
+  seg('params',P,0,function(v){pv=v},function(v){return v+'B'});
+  seg('prec',B,0,function(v){bv=v},function(v){return v+'-bit'});
+  var devs=document.getElementById('devs');
+  D.forEach(function(d){
+    var r=document.createElement('div');r.className='dev';
+    r.innerHTML='<div class="n">'+d.n+'<span>'+d.s+'</span></div><div class="bar"><i></i></div><div class="tag"></div>';
+    d.el=r;devs.appendChild(r);
+  });
+  function calc(){
+    var gb=pv*bv/8;
+    document.getElementById('gb').textContent=gb<10?gb.toFixed(1):Math.round(gb);
+    document.getElementById('vs').innerHTML=bv===16?'baseline':'<b>'+(16/bv)+'×</b> smaller than 16-bit';
+    D.forEach(function(d){
+      var budget=d.r*.6,fits=gb<=budget,pct=Math.min(100,gb/budget*100);
+      var i=d.el.querySelector('i'),t=d.el.querySelector('.tag');
+      i.style.width=pct+'%';i.className=fits?'':'over';
+      t.textContent=fits?'Fits':'Too big';t.className='tag '+(fits?'ok':'no');
+    });
+  }
+  sync();calc();
+
+  /* ---- reveal on scroll ---- */
+  var rv=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.1});
+    rv.forEach(function(n){io.observe(n)});
+  }else rv.forEach(function(n){n.classList.add('in')});
+})();
+</script>
+</body>
+</html>
