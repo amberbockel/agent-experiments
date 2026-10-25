@@ -79,10 +79,18 @@
   /* shop-worthy sticker spec */
   .sticker{margin-top:clamp(14px,3vw,20px);background:#fff;border:1.5px dashed var(--line);border-radius:14px;padding:13px 16px;text-align:left}
   .sticker[hidden]{display:none}
-  .sticker b{display:block;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--terra);margin-bottom:6px}
-  .sticker .srow{font-size:13.5px;color:var(--ink);line-height:1.5}
-  .sticker .cap{font-size:13px;color:var(--muted);margin-top:7px}
-  .sticker .cap span{color:var(--ink);font-weight:600}
+  .sticker b{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--terra)}
+  .sticker .sktop{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .skcopy{appearance:none;cursor:pointer;border:1.5px solid var(--line);background:#fff;border-radius:999px;font-family:var(--display);font-weight:600;font-size:11.5px;padding:5px 12px;color:var(--ink);transition:border-color .18s,background .18s}
+  .skcopy:hover{border-color:rgba(27,27,27,.3)}
+  .skcopy.done{background:var(--sage);border-color:var(--sage);color:#11341f}
+  .skgrid{display:grid;gap:6px}
+  .skf{display:flex;gap:8px;font-size:13px;line-height:1.45}
+  .skk{flex:0 0 64px;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+  .skv{color:var(--ink);flex:1}
+  .skv .sksw{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.12);vertical-align:-2px;margin-right:3px}
+  .sktags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .sktags span{font-size:11px;background:#f4f1ea;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted)}
   .shopbtn.on{background:var(--sage);border-color:var(--sage);color:#11341f}
 
   .gobar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:clamp(22px,5vw,32px)}
@@ -162,9 +170,15 @@
       <button class="refcue" id="refcue" type="button" hidden>🔍 Show me what these look like</button>
       <div class="twist" id="twist"></div>
       <div class="sticker" id="sticker" hidden>
-        <b>🛍️ Sticker-ready</b>
-        <div class="srow">Bold die-cut · one subject · thick outline · flat color · thin white border.</div>
-        <div class="cap">Caption idea: <span id="stickercap"></span></div>
+        <div class="sktop"><b>🛍️ Sticker brief</b><button class="skcopy" id="skcopy" type="button">Copy</button></div>
+        <div class="skgrid">
+          <div class="skf"><span class="skk">Subject</span><span class="skv" id="sk-subj"></span></div>
+          <div class="skf"><span class="skk">Palette</span><span class="skv" id="sk-pal"></span></div>
+          <div class="skf"><span class="skk">Size</span><span class="skv" id="sk-size"></span></div>
+          <div class="skf"><span class="skk">Cut</span><span class="skv" id="sk-cut"></span></div>
+          <div class="skf"><span class="skk">Caption</span><span class="skv" id="sk-cap"></span></div>
+        </div>
+        <div class="sktags" id="sk-tags"></div>
       </div>
       <div class="gobar" id="gobar">
         <button class="go" id="go" type="button"><span class="dice">🎲</span> Generate</button>
@@ -529,6 +543,44 @@
     if(m) return m[1];
     return pick(CAPTIONS);
   }
+  /* ---- product brief: turn a Shop-worthy prompt into a listing-ready spec ---- */
+  var BASE_TAGS=["die cut sticker","vinyl sticker","laptop sticker","water bottle sticker","waterproof sticker","hand drawn sticker","cute sticker"];
+  var MODE_TAGS={foraged:["mushroom sticker","cottagecore sticker","botanical sticker"],moods:["funny sticker","mental health sticker","self care sticker"],coastal:["new england sticker","coastal sticker","nautical sticker"],celestial:["celestial sticker","moon sticker","mystical sticker"],cafe:["coffee sticker","tea lover sticker"],bookish:["book lover sticker","bookish sticker","reading sticker"],plants:["plant lady sticker","houseplant sticker"],pets:["pet sticker","dog lover sticker","cat lover sticker"],flowers:["floral sticker","botanical sticker"],animals:["animal sticker","woodland sticker"],puns:["pun sticker","funny sticker"],people:["portrait sticker","figure sticker"],scenic:["landscape sticker","travel sticker"],cozy:["cozy sticker","cottagecore sticker"]};
+  var PALETTES={
+    _default:{name:"Warm cream",fills:["#E86F52","#E8B84B","#F3E7D2"],ink:"#233140"},
+    foraged:{name:"Forest floor",fills:["#C64434","#F3E9D6","#B98A7A"],ink:"#2E3D30"},
+    moods:{name:"Soft dusk",fills:["#3A3A3A","#D9A7A0","#FAF3E8"],ink:"#2A2A2A"},
+    coastal:{name:"Harbor",fills:["#D1552E","#E8B84B","#F3E7D2"],ink:"#233140"},
+    celestial:{name:"Midnight",fills:["#3B3A6B","#E8C95B","#EDE7F5"],ink:"#20203A"},
+    cafe:{name:"Roast",fills:["#6B4226","#D8A15A","#F2E7D5"],ink:"#2A1C10"},
+    bookish:{name:"Library",fills:["#7A4B2B","#9FB08A","#F0E7D5"],ink:"#2A2118"},
+    plants:{name:"Greenhouse",fills:["#4E7A4A","#A7C4A0","#F3EFE2"],ink:"#23331F"},
+    pets:{name:"Companion",fills:["#D79A5B","#8A6A4F","#F5EBDD"],ink:"#2A2118"},
+    flowers:{name:"Posy",fills:["#E89CB0","#9FB08A","#F6EFE8"],ink:"#3A2A30"},
+    animals:{name:"Woodland",fills:["#C87D4B","#E9C88A","#F3E7D2"],ink:"#2A2118"},
+    puns:{name:"Pop",fills:["#E86F52","#4E9FB0","#F6E7A8"],ink:"#23272A"}
+  };
+  function palOf(mode){ return PALETTES[mode]||PALETTES._default; }
+  function subjectOf(p){ return p.replace(/\s*\(.*?\)\s*/g," ").replace(/\s+(that says|holding a little sign:).*$/i,"").replace(/[“”"].*?[“”"]/g,"").replace(/\s+/g," ").trim(); }
+  function bareSubject(p){ return subjectOf(p).replace(/^(an?|the)\s+/i,"").trim(); }
+  function cutOf(mode){ return mode==="moods" ? "kiss-cut on a rounded square" : "die-cut"; }
+  function themeOf(mode){ var m=MODES.filter(function(x){return x.k===mode;})[0]; return m?m.label:mode; }
+  function buildTags(mode,p){
+    var t=[], subj=extractSubjects(p);
+    subj.forEach(function(w){ if(w.length>2) t.push(w+" sticker"); });
+    (MODE_TAGS[mode]||[]).forEach(function(x){ t.push(x); });
+    BASE_TAGS.forEach(function(x){ t.push(x); });
+    t.push("new england artist");
+    var seen={}, out=[]; t.forEach(function(x){ x=x.toLowerCase().trim(); if(!seen[x]&&x.length<=20){ seen[x]=1; out.push(x); } });
+    return out.slice(0,13);
+  }
+  function buildBrief(mode,p){
+    var subj=subjectOf(p), bare=bareSubject(p), pal=palOf(mode), cut=cutOf(mode), capn=captionFor(p), tags=buildTags(mode,p), theme=themeOf(mode);
+    var title=cap(bare)+" Vinyl Sticker | "+theme+" | Water-Resistant Die-Cut | Laptop & Water Bottle";
+    var desc="A little "+bare.toLowerCase()+" to carry around with you. "+cap(capn)+". Printed on durable water-resistant vinyl with a matte finish, so it holds up on water bottles, laptops, notebooks, and anywhere else that could use a little more charm. Size: 3 in. Finish: matte vinyl, weatherproof, dishwasher-safe on the top rack. Cut: "+cut+". Drawn by hand in New England.";
+    return {subj:subj, theme:theme, pal:pal, cut:cut, caption:capn, tags:tags, title:title, desc:desc};
+  }
+  var lastBrief=null;
 
   var state={mode:"chaos", prompt:"", twist:"", holiday:null, shop:false};
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
@@ -572,12 +624,27 @@
   }
 
   var promptEl=document.getElementById('prompt'), twistEl=document.getElementById('twist'), go=document.getElementById('go'), gobar=document.getElementById('gobar');
-  var stickerEl=document.getElementById('sticker'), stickercapEl=document.getElementById('stickercap'), shopbtn=document.getElementById('shopbtn');
+  var stickerEl=document.getElementById('sticker'), shopbtn=document.getElementById('shopbtn');
   function showSticker(){
     var on = state.shop && state.prompt && !(state.mode==='holiday' && !state.holiday);
     stickerEl.hidden=!on;
-    if(on){ stickercapEl.textContent='“'+captionFor(state.prompt)+'”'; }
+    if(!on){ lastBrief=null; return; }
+    var b=buildBrief(state.mode, state.prompt); lastBrief=b;
+    document.getElementById('sk-subj').textContent=b.subj;
+    document.getElementById('sk-pal').innerHTML=b.pal.fills.concat([b.pal.ink]).map(function(h){return '<span class="sksw" style="background:'+h+'"></span>';}).join('')+' '+esc(b.pal.name);
+    document.getElementById('sk-size').textContent='3 in recommended (also 2 in, 4 in)';
+    document.getElementById('sk-cut').textContent=b.cut;
+    document.getElementById('sk-cap').innerHTML='“'+esc(b.caption)+'”';
+    document.getElementById('sk-tags').innerHTML=b.tags.map(function(t){return '<span>'+esc(t)+'</span>';}).join('');
   }
+  document.getElementById('skcopy').addEventListener('click',function(){
+    if(!lastBrief) return;
+    var b=lastBrief, btn=this;
+    var txt="DOODILIDOO STICKER BRIEF\nSubject: "+b.subj+"\nTheme: "+b.theme+"\nSize: 3 in (also offer 2 in, 4 in)\nCut: "+b.cut+"\nPalette: "+b.pal.name+" — "+b.pal.fills.join(", ")+" + ink "+b.pal.ink+"\nCaption: “"+b.caption+"”\nTags: "+b.tags.join(", ")+"\n\nListing title:\n"+b.title+"\n\nListing description:\n"+b.desc+"\n";
+    function done(){ btn.textContent="Copied"; btn.classList.add("done"); setTimeout(function(){ btn.textContent="Copy"; btn.classList.remove("done"); },1500); }
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(fallback); } else { fallback(); }
+    function fallback(){ try{ var ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} done(); }
+  });
   var refcue=document.getElementById('refcue'), refEl=document.getElementById('ref'), refBody=document.getElementById('refbody'), refNote=document.getElementById('refnote');
   function showTwist(){ twistEl.innerHTML = state.twist ? '<b>The catch</b><span class="tw">'+esc(state.twist)+'</span>' : ''; }
   function generate(keepTwist){
@@ -615,7 +682,7 @@
   });
 
   /* ---- reference images (Wikimedia Commons: keyless + CORS, real photos) ---- */
-  var STOP=("a an the of in on at to and or that who whose its it is are am was as from into onto for by but nor not no this these those they them their there here so if then than like just still over under up down out off one all some any each every best most day night life own now your you make made let get got be been being do does did half across through about around after before what when where why how very red blue green yellow pink purple orange black white brown grey gray gold tiny big little small huge giant old young new grumpy polite sleepy fluffy chubby single bunch cluster sprig branch pair row kind sort").split(/\s+/);
+  var STOP=("a an the of in on at to and or that who whose its it is are am was as from into onto for by but nor not no this these those they them their there here so if then than like just still over under up down out off one all some any each every best most day night life own now your you make made let get got be been being do does did half across through about around after before what when where why how very red blue green yellow pink purple orange black white brown grey gray gold tiny big little small huge giant old young new grumpy polite sleepy fluffy chubby single bunch cluster sprig branch pair row kind sort with full intent glory convinced really wants says sign says mid dressed reimagined celebrating").split(/\s+/);
   function extractSubjects(s){
     var words=String(s).toLowerCase().replace(/[^a-z\s'-]/g,' ').split(/\s+/)
       .filter(function(w){ return w.length>2 && STOP.indexOf(w)<0 && !/ing$/.test(w); });
