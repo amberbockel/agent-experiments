@@ -52,6 +52,15 @@
   .mode:hover{transform:translateY(-2px);border-color:rgba(27,27,27,.28)}
   .mode[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
+  /* holiday sub-picker (inside the card) */
+  .holidaygrid{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:0 0 clamp(18px,4vw,26px)}
+  .hcard{appearance:none;cursor:pointer;font-family:var(--display);font-weight:600;font-size:13.5px;
+    display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:14px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:transform .14s,border-color .18s,background .18s,color .18s}
+  .hcard .he{font-size:16px}
+  .hcard:hover{transform:translateY(-2px);border-color:rgba(27,27,27,.28)}
+  .hcard[aria-pressed="true"]{background:var(--rasp);color:#fff;border-color:var(--rasp)}
+
   /* prompt card */
   .card{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:22px;
     margin-top:clamp(22px,4vw,34px);padding:clamp(28px,6vw,44px) clamp(22px,5vw,38px) clamp(26px,5vw,36px);
@@ -137,11 +146,12 @@
 
     <section class="card">
       <span class="tab">the assignment</span>
-      <div class="starthere">Start here ↓</div>
+      <div class="starthere" id="starthere">Start here ↓</div>
+      <div class="holidaygrid" id="holidaygrid" hidden></div>
       <div class="prompt" id="prompt">Pick a vibe and hit <span class="em">generate</span>.</div>
       <button class="refcue" id="refcue" type="button" hidden>🔍 Show me what these look like</button>
       <div class="twist" id="twist"></div>
-      <div class="gobar">
+      <div class="gobar" id="gobar">
         <button class="go" id="go" type="button"><span class="dice">🎲</span> Generate</button>
         <button class="ghost" id="twistbtn" type="button" title="Add a sketchbook challenge">✨ Add a twist</button>
       </div>
@@ -182,7 +192,8 @@
     {k:"flowers",e:"🌸", label:"Flowers"},
     {k:"weird",  e:"👽", label:"Weird"},
     {k:"pattern",e:"🌀", label:"Pattern"},
-    {k:"character",e:"🐾",label:"Character"}
+    {k:"character",e:"🐾",label:"Character"},
+    {k:"holiday",e:"🎁", label:"Holiday"}
   ];
   var PROMPTS={
     warmup:[
@@ -248,7 +259,126 @@
     "from a worm's-eye view, looking up","in the style of a kid's crayon drawing"
   ];
 
-  var state={mode:"chaos", prompt:"", twist:""};
+  /* ---- Holiday jumble: pick a holiday, then mash a random noun with a holiday icon ---- */
+  var HOLIDAYS=[
+    {k:"christmas", e:"🎄", label:"Christmas", name:"Christmas",
+      icons:["Santa Claus","a reindeer","an elf","a snowman","a gingerbread man","a candy cane","a Christmas tree","a sack of presents","a nutcracker","a string of fairy lights"]},
+    {k:"halloween", e:"🎃", label:"Halloween", name:"Halloween",
+      icons:["a ghost","a jack-o'-lantern","a witch","a skeleton","a black cat","a vampire","a mummy","a friendly bat","a bubbling cauldron","a pile of candy"]},
+    {k:"thanksgiving", e:"🦃", label:"Thanksgiving", name:"Thanksgiving",
+      icons:["a turkey","a pumpkin pie","a cornucopia","a pilgrim hat","a mountain of mashed potatoes","an ear of corn","a wobbly cranberry mold"]},
+    {k:"valentines", e:"💘", label:"Valentine's", name:"Valentine's Day",
+      icons:["Cupid","a giant heart","a box of chocolates","a love letter","a bouquet of roses","a blushing teddy bear"]},
+    {k:"easter", e:"🐰", label:"Easter", name:"Easter",
+      icons:["the Easter Bunny","a painted egg","a basket of eggs","a baby chick","a spring bonnet","a chocolate bunny"]},
+    {k:"newyears", e:"🎆", label:"New Year's", name:"New Year's Eve",
+      icons:["a firework","a party hat","a champagne flute","a disco ball","Father Time","a countdown clock","a noisemaker"]},
+    {k:"stpatricks", e:"🍀", label:"St. Patrick's", name:"St. Patrick's Day",
+      icons:["a leprechaun","a four-leaf clover","a pot of gold","a rainbow","a green top hat"]},
+    {k:"hanukkah", e:"🕎", label:"Hanukkah", name:"Hanukkah",
+      icons:["a menorah","a spinning dreidel","a jelly donut","a stack of gelt","a blue-and-white candle"]},
+    {k:"diwali", e:"🪔", label:"Diwali", name:"Diwali",
+      icons:["a diya lamp","a rangoli pattern","a firework","a string of marigolds","a box of sweets"]},
+    {k:"lunar", e:"🧧", label:"Lunar New Year", name:"Lunar New Year",
+      icons:["a dancing dragon","a red lantern","a lucky red envelope","a lion dancer","a gold ingot"]}
+  ];
+  var HMAP={}; HOLIDAYS.forEach(function(h){ HMAP[h.k]=h; });
+  var NOUNS=[
+    "cat","dog","raccoon","pigeon","goldfish","llama","sloth","octopus","hamster","hedgehog","T. rex","pug","capybara","duck","frog","snail","owl","possum","walrus",
+    "spatula","toaster","rubber duck","traffic cone","houseplant","garden gnome","teapot","vacuum cleaner","lone sock","mushroom","cactus","disco ball","bowling ball","umbrella","office chair","banana","alarm clock","mailbox","fire hydrant"
+  ];
+  var ADJS=["very serious","slightly confused","extremely proud","deeply tired","overly caffeinated","suspiciously cheerful","mildly dramatic","wildly overdressed"];
+  function aan(w){ return (/^[aeiou]/i.test(w)?"an ":"a ")+w; }
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  function jumble(h, prev){
+    var noun=pick(NOUNS), icon=pick(h.icons), adj=pick(ADJS);
+    var sn=aan(noun), san=aan(adj+" "+noun);
+    var forms=[
+      cap(sn)+" dressed as "+icon,
+      cap(sn)+" celebrating "+h.name,
+      cap(sn)+" that really wants to be "+icon,
+      cap(sn)+" and "+icon+", up to no good",
+      cap(icon)+", reimagined as "+sn,
+      cap(san)+" on "+h.name,
+      cap(sn)+" who's convinced it's "+icon
+    ];
+    return pick(forms, prev);
+  }
+
+  /* ---- variety engine: build prompts combinatorially + remember recent ones ----
+     Word banks get mashed into templates at runtime, so each mode has thousands of
+     possible prompts instead of a dozen. Curated lines stay in the mix for flavor. */
+  var POOLS={
+    biz:["bakery","bookshop","laundromat","detective agency","tea shop","record store","flower stall","noodle cart","barbershop","travel agency","ice-cream truck","repair shop","post office","tiny cinema"],
+    crew:["snails","pigeons","lost socks","houseplants","garden gnomes","raindrops","paper cranes","stray cats","beetles","teacups","umbrellas","dust bunnies"],
+    skill:["knit","tap-dance","play jazz","do taxes","parallel park","bake bread","juggle","speak to bees","fold maps","grow tomatoes","ride a unicycle","whistle"],
+    place:["a donut moon","the ocean floor","a rooftop garden","a cereal bowl","a rush-hour street","a cloud bank","a dusty attic","a tide pool","a subway platform","a greenhouse","a drive-in movie","a snow globe"],
+    stuff:["stained glass","origami paper","bubble wrap","marzipan","neon tubes","soft moss","folded maps","tangled yarn","sea glass","old newspaper","copper wire","dripping wax","pressed flowers","cracked porcelain"],
+    goods:["umbrellas","hand-drawn maps","balloons","secondhand clocks","jars of fireflies","mismatched buttons","bottled messages","paper stars","single mittens"],
+    thing:["fairy lights","spaghetti","kite string","ribbon","ivy","telephone cords","bunting","streamers","loose thread"],
+    animal:["fox","owl","otter","snail","sloth","hummingbird","highland cow","cat","frog","hedgehog","heron","bumblebee","red panda","capybara","raccoon","duck","swan","deer","rabbit","field mouse","crow","robin","harbor seal","pelican","tortoise","gecko","luna moth","stag beetle","octopus","seahorse","narwhal","badger","hare","lynx","puffin","axolotl","pangolin","quokka"],
+    beat:["asleep in a patch of sun","mid-yawn","grooming one paw","stretched out long","peeking from a burrow","curled into a comma","caught mid-leap","drinking from a stream","shaking off water","nosing a flower","perched on a bare branch","caught mid-sneeze","loafing like a little bread","wading in the shallows","sniffing a mushroom","blinking slowly"],
+    scene:["snow-capped mountains over a still lake","a lighthouse on a stormy cliff","a forest path deep in autumn","a desert at golden hour","a row of pastel beach huts","rolling hills under a huge sky","a misty waterfall","a harbor full of little boats","a city skyline at dusk","a country lane lined with trees","a rugged coastline","a field of sunflowers at noon","a frozen pond at first light","terraced rice fields","a canal lined with crooked houses","a mountain village lost in fog","a wheat field before a storm","a cove with turquoise water"],
+    light:["at golden hour","at blue dusk","under a full moon","in flat morning fog","backlit by sunset","under heavy storm light","in the first snow of the year","under faint northern lights","by lantern light","in soft overcast"],
+    flower:["peony","garden rose","cosmos","ranunculus","sweet pea","sunflower","poppy","dahlia","foxglove","anemone","hellebore","tulip","snapdragon","protea","zinnia","hydrangea","daffodil","iris","marigold","lily of the valley"],
+    fstate:["fully open","just budding","a little past its best","heavy with dew","bent in the wind","pressed flat in a book","wrapped in brown paper","in a chipped jam jar","tangled with weeds","catching the last light"],
+    trait:["grumpy","overly polite","anxious","retired","self-important","gentle","sleep-deprived","wildly optimistic","very tiny","ancient","dramatic","entirely unbothered"],
+    role:["wizard","sea monster","detective","librarian","knight","tailor","lighthouse keeper","fortune teller","beekeeper","night-shift baker","ghost","inventor","map-maker","tax collector","opera singer","clockmaker"],
+    quirk:["collects buttons","is afraid of the dark","talks only to plants","keeps losing their hat","runs a secret tea club","is brand new to the job","can't stop humming","is in love with the moon","files everything by smell","is quietly plotting something","adopts every stray","never finishes a sentence"],
+    cozy:["an unmade bed on a slow morning","a leaning stack of favorite books","rain on the window from the inside","a bowl of soup with the steam still rising","a pet curled into a comma","fairy lights tangled in a jar","a knitted blanket pooled on a chair","a candle burned down low","a chipped mug you love anyway","socks drying by a radiator","a window seat with a cushion","a kitchen at the end of a good dinner","a half-finished jigsaw puzzle","a teapot under a knitted cozy","a cat asleep on warm laundry"],
+    small:["your own hand holding something small","a cup of coffee seen from above","three leaves off the same plant","your shoes exactly as they're sitting","your keys and the whole keyring","a half-eaten piece of fruit","the view out the nearest window","a houseplant that's a little wilted","a pair of glasses and its shadow","whatever is in your pocket right now","the last thing you ate, plated nicely","a crumpled receipt, flattened out"],
+    weird:["a staircase that leads straight into the ocean","a door standing open in the middle of a field","your shadow doing something you're not","a fish that forgot how to be a fish","a room where the floor is the ceiling","a tree growing lightbulbs instead of fruit","hands with tiny snakes for fingers","a moon with a face that's clearly up to something","a melting clock that's yours, not Dalí's","a gentle creature made entirely of eyes","a whole city folded up like origami","the inside of a half-remembered dream","a hallway that just keeps going","a window that looks out onto yesterday"],
+    patternbase:["overlapping leaves","30 tiny, different doors","waves repeated to the edge of the page","scales: fish, dragon, or invented","eyes, every one of them different","concentric circles that never quite line up","a forest of tiny mushrooms","a honeycomb where each cell holds something","the same hand in different gestures","stars, no two of them alike","knots and tangled string","rows of little houses, each slightly odd","fish all swimming one way, one the other","interlocking keys"]
+  };
+  var TEMPLATES={
+    chaos:[
+      "A {animal} running a tiny {biz}","A {animal} that's also a {role}","A teapot that's secretly {place}",
+      "A {animal} throwing a party for {crew}","A {animal} learning to {skill}","A {animal} made entirely of {stuff}",
+      "A {animal} on its commute across {place}","A {animal} hopelessly tangled in {thing}","A {role} and a {animal} sharing {place}",
+      "A {animal} selling {goods} on {place}","A tiny city of {crew} at rush hour","A {animal} planting a flag on {place}",
+      "A {animal} that grew legs and bolted","A grand {biz} run entirely by {crew}","A {animal} hosting a talk show from {place}"
+    ],
+    weird:[
+      "{weird}","A {animal} somewhere it clearly shouldn't be","A {role} melting slowly into {stuff}",
+      "A {animal} made of {stuff}, {light}","{place}, but entirely upside down","A silent room full of {thing}"
+    ],
+    character:[
+      "A {trait} {role} who {quirk}","A {trait} {role} and their {animal} familiar","The tiny god of lost socks",
+      "A {role} who {quirk}","A {trait} {animal} convinced it's a {role}","A {role} whose familiar is a {animal}"
+    ],
+    animals:[
+      "A {animal} {beat}","A {animal} {beat}, {light}","A {animal} and a {animal}, both {beat}",
+      "A {animal} {beat} in {scene}","A close-up of a {animal}, {beat}"
+    ],
+    scenic:["{scene}","{scene}, {light}","{scene}, with a tiny figure for scale"],
+    flowers:["A {flower}, {fstate}","A handful of {flower} stems, {fstate}","A single {flower} {fstate}","A {flower} beside another {flower}, {fstate}"],
+    cozy:["{cozy}","{cozy}, {light}"],
+    warmup:["{small}"],
+    pattern:["Fill the page with {patternbase}","A whole page of {patternbase}","{patternbase}, edge to edge"]
+  };
+  var recent=[];
+  function remember(p){ recent.push(p); if(recent.length>14) recent.shift(); }
+  function fresh(fn){ var p,i=0; do{ p=fn(); i++; } while(recent.indexOf(p)>=0 && i<40); return p; }
+  function fill(t){
+    // fix a/an when an article sits right before a filled word
+    t=t.replace(/\b([Aa]) \{(\w+)\}/g,function(m,a,k){
+      if(!POOLS[k]) return m;
+      var v=pick(POOLS[k]);
+      return (/^[aeiou]/i.test(v)?(a==='A'?'An':'an'):a)+' '+v;
+    });
+    t=t.replace(/\{(\w+)\}/g,function(m,k){ return POOLS[k]?pick(POOLS[k]):m; });
+    return cap(t);
+  }
+  function nextPrompt(mode){
+    var tpl=TEMPLATES[mode], curated=PROMPTS[mode]||[];
+    var p=fresh(function(){
+      var useCurated = curated.length && (!tpl || Math.random()<0.3);
+      return useCurated ? pick(curated) : (tpl ? fill(pick(tpl)) : pick(curated));
+    });
+    remember(p); return p;
+  }
+
+  var state={mode:"chaos", prompt:"", twist:"", holiday:null};
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
   function pick(a,not){ var v; do{ v=a[Math.floor(Math.random()*a.length)]; }while(a.length>1 && v===not); return v; }
 
@@ -261,14 +391,46 @@
     var b=e.target.closest('.mode'); if(!b) return;
     state.mode=b.getAttribute('data-k');
     [].forEach.call(modesEl.children,function(c){ c.setAttribute('aria-pressed', c.getAttribute('data-k')===state.mode); });
-    generate(true);
+    if(state.mode==='holiday'){ enterHoliday(); } else { exitHoliday(); generate(true); }
   });
 
-  var promptEl=document.getElementById('prompt'), twistEl=document.getElementById('twist'), go=document.getElementById('go');
+  // holiday sub-picker: pick a holiday, then Generate jumbles within it
+  var hgridEl=document.getElementById('holidaygrid'), starthereEl=document.getElementById('starthere');
+  hgridEl.innerHTML=HOLIDAYS.map(function(h){
+    return '<button class="hcard" type="button" data-h="'+h.k+'" aria-pressed="false"><span class="he">'+h.e+'</span>'+esc(h.label)+'</button>';
+  }).join('');
+  hgridEl.addEventListener('click',function(e){
+    var b=e.target.closest('.hcard'); if(!b) return;
+    state.holiday=b.getAttribute('data-h');
+    [].forEach.call(hgridEl.children,function(c){ c.setAttribute('aria-pressed', c.getAttribute('data-h')===state.holiday); });
+    starthereEl.textContent='Start here ↓';
+    gobar.hidden=false;
+    generate(true);
+  });
+  function enterHoliday(){
+    state.holiday=null; state.prompt=''; state.twist='';
+    [].forEach.call(hgridEl.children,function(c){ c.setAttribute('aria-pressed','false'); });
+    hgridEl.hidden=false; gobar.hidden=true;
+    starthereEl.textContent='Pick a holiday ↓';
+    promptEl.innerHTML='Pick a holiday to <span class="em">jumble</span> up an idea.';
+    twistEl.innerHTML=''; refcue.hidden=true; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
+  }
+  function exitHoliday(){
+    hgridEl.hidden=true; gobar.hidden=false; starthereEl.textContent='Start here ↓';
+  }
+
+  var promptEl=document.getElementById('prompt'), twistEl=document.getElementById('twist'), go=document.getElementById('go'), gobar=document.getElementById('gobar');
   var refcue=document.getElementById('refcue'), refEl=document.getElementById('ref'), refBody=document.getElementById('refbody'), refNote=document.getElementById('refnote');
   function showTwist(){ twistEl.innerHTML = state.twist ? '<b>The catch</b><span class="tw">'+esc(state.twist)+'</span>' : ''; }
   function generate(keepTwist){
-    state.prompt=pick(PROMPTS[state.mode], state.prompt);
+    if(state.mode==='holiday'){
+      if(!state.holiday) return;
+      var h=HMAP[state.holiday];
+      state.prompt=fresh(function(){ return jumble(h, state.prompt); });
+      remember(state.prompt);
+    } else {
+      state.prompt=nextPrompt(state.mode);
+    }
     promptEl.innerHTML=esc(state.prompt);
     if(!keepTwist && state.twist){ state.twist=pick(TWISTS, state.twist); }
     showTwist();
@@ -277,6 +439,7 @@
   }
   go.addEventListener('click',function(){ generate(false); });
   document.getElementById('twistbtn').addEventListener('click',function(){
+    if(state.mode==='holiday' && !state.holiday) return;
     state.twist = state.twist ? "" : pick(TWISTS, state.twist); // toggle off, or add a fresh one
     if(!state.prompt){ generate(true); } else { showTwist(); }
   });
