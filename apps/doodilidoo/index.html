@@ -210,6 +210,8 @@
     {k:"pattern",e:"🌀", label:"Pattern"},
     {k:"character",e:"🐾",label:"Character"},
     {k:"people", e:"🧍", label:"People"},
+    {k:"foraged",e:"🍄", label:"Foraged"},
+    {k:"moods",  e:"🫠", label:"Moods"},
     {k:"puns",   e:"🤪", label:"Puns"},
     {k:"coastal",e:"🦞", label:"New England"},
     {k:"holiday",e:"🎁", label:"Holiday"}
@@ -303,6 +305,20 @@
       "A climber reaching for the next hold","Two people deep in conversation over coffee","A seated figure, weight on one hand (gesture study)",
       "A standing figure in easy contrapposto","A back view of someone looking out a window","A face in three-quarter view, soft expression",
       "A pair of hands wrapped around a warm mug","A profile portrait, chin lifted just slightly"
+    ],
+    foraged:[
+      "A chubby red toadstool with white spots","A little cluster of three honey mushrooms","A snail resting under a mushroom cap like an umbrella",
+      "A tiny door carved into the base of a toadstool","A mushroom with a face, blinking slowly","A fly agaric in its full polka-dot glory",
+      "A basket of foraged chanterelles","A stack of pancake mushrooms, tallest on the bottom","A fairy ring of small white caps",
+      "A mushroom wearing a knitted hat for the cold","A morel standing proud, all honeycomb and texture","A toadstool house with a smoking chimney",
+      "A beetle using a mushroom as a parasol","A moss-covered log sprouting a whole mushroom family","A single fern frond unfurling in spring"
+    ],
+    moods:[
+      "A tired little ghost that says \"running on fumes and vibes\"","A cozy cat that says \"no thoughts, just naps\"","A wilting plant that says \"surviving, not thriving, but here\"",
+      "A coffee cup that says \"but first, everything else\"","A snail that says \"slow is still moving\"","A storm cloud with a small smile that says \"feelings are fine\"",
+      "A sleepy moon that says \"rest is productive too\"","A sloth that says \"I'll get to it eventually\"","A warm mug that says \"one thing at a time\"",
+      "A little frog that says \"it's okay to just sit here\"","A candle burned low that says \"still glowing, barely\"","A soft cat that says \"touch grass? I am grass\"",
+      "A tiny plant that says \"growth is not linear\"","A cozy blob under a blanket that says \"out of office, in my head\"","A round bird that says \"doing my best, it's a lot\""
     ]
   };
   var TWISTS=[
@@ -334,14 +350,25 @@
     {k:"diwali", e:"🪔", label:"Diwali", name:"Diwali",
       icons:["a diya lamp","a rangoli pattern","a firework","a string of marigolds","a box of sweets"]},
     {k:"lunar", e:"🧧", label:"Lunar New Year", name:"Lunar New Year",
-      icons:["a dancing dragon","a red lantern","a lucky red envelope","a lion dancer","a gold ingot"]}
+      icons:["a dancing dragon","a red lantern","a lucky red envelope","a lion dancer","a gold ingot"]},
+    {k:"fall", e:"🍁", label:"Leaf Season", name:"Leaf Season",
+      icons:["a maple leaf","a wax-dipped caramel apple","a jug of cider","a wool sweater","a pumpkin","a bale of hay","a steaming mug","a friendly scarecrow"]},
+    {k:"july4", e:"🎇", label:"Fourth of July", name:"the Fourth of July",
+      icons:["a sparkler","a slice of watermelon","a small flag","a firework","a blueberry pie","a lone star","an ear of corn"]},
+    {k:"summer", e:"🏖️", label:"Summer", name:"summer",
+      icons:["a popsicle","a beach ball","a sandcastle","a pair of flip-flops","an ice-cream cone","a striped beach umbrella"]},
+    {k:"birthday", e:"🎂", label:"Birthday", name:"a birthday",
+      icons:["a layer cake","a party hat","a wrapped gift","a bunch of balloons","a single lit candle","a slice of confetti cake"]},
+    {k:"mothers", e:"💐", label:"Mother's Day", name:"Mother's Day",
+      icons:["a bouquet","a teacup","a handwritten card","a brunch plate","a potted plant"]}
   ];
   var HMAP={}; HOLIDAYS.forEach(function(h){ HMAP[h.k]=h; });
   var NOUNS=[
     "cat","dog","raccoon","pigeon","goldfish","llama","sloth","octopus","hamster","hedgehog","T. rex","pug","capybara","duck","frog","snail","owl","possum","walrus",
-    "spatula","toaster","rubber duck","traffic cone","houseplant","garden gnome","teapot","vacuum cleaner","lone sock","mushroom","cactus","disco ball","bowling ball","umbrella","office chair","banana","alarm clock","mailbox","fire hydrant"
+    "spatula","toaster","rubber duck","traffic cone","houseplant","garden gnome","teapot","vacuum cleaner","lone sock","mushroom","cactus","disco ball","bowling ball","umbrella","office chair","banana","alarm clock","mailbox","fire hydrant",
+    "corgi","axolotl","narwhal","jellyfish","lobster","harbor seal","loon","chickadee","moose","acorn","pinecone","lighthouse","sailboat","canoe","snowshoe","maple leaf","buoy"
   ];
-  var ADJS=["very serious","slightly confused","extremely proud","deeply tired","overly caffeinated","suspiciously cheerful","mildly dramatic","wildly overdressed"];
+  var ADJS=["very serious","slightly confused","extremely proud","deeply tired","overly caffeinated","suspiciously cheerful","mildly dramatic","wildly overdressed","deeply content","a bit nostalgic","running late","freshly caffeinated","unexpectedly emotional","quietly thrilled","bundled up","sun-warmed"];
   function aan(w){ return (/^[aeiou]/i.test(w)?"an ":"a ")+w; }
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   function jumble(h, prev){
@@ -363,34 +390,36 @@
      Word banks get mashed into templates at runtime, so each mode has thousands of
      possible prompts instead of a dozen. Curated lines stay in the mix for flavor. */
   var POOLS={
-    biz:["bakery","bookshop","laundromat","detective agency","tea shop","record store","flower stall","noodle cart","barbershop","travel agency","ice-cream truck","repair shop","post office","tiny cinema"],
-    crew:["snails","pigeons","lost socks","houseplants","garden gnomes","raindrops","paper cranes","stray cats","beetles","teacups","umbrellas","dust bunnies"],
+    biz:["bakery","bookshop","laundromat","detective agency","tea shop","record store","flower stall","noodle cart","barbershop","travel agency","ice-cream truck","repair shop","post office","tiny cinema","map shop","clock repair","seed library","candle works","pie window","lending library","hat shop","button shop","honey stand","kite shop","pickle cart","umbrella stand"],
+    crew:["snails","pigeons","lost socks","houseplants","garden gnomes","raindrops","paper cranes","stray cats","beetles","teacups","umbrellas","dust bunnies","fireflies","acorns","little ghosts","origami boats","wind-up toys","candle stubs","field mice","tea lights","mismatched mittens"],
     skill:["knit","tap-dance","play jazz","do taxes","parallel park","bake bread","juggle","speak to bees","fold maps","grow tomatoes","ride a unicycle","whistle"],
     place:["a donut moon","the ocean floor","a rooftop garden","a cereal bowl","a rush-hour street","a cloud bank","a dusty attic","a tide pool","a subway platform","a greenhouse","a drive-in movie","a snow globe"],
     stuff:["stained glass","origami paper","bubble wrap","marzipan","neon tubes","soft moss","folded maps","tangled yarn","sea glass","old newspaper","copper wire","dripping wax","pressed flowers","cracked porcelain"],
     goods:["umbrellas","hand-drawn maps","balloons","secondhand clocks","jars of fireflies","mismatched buttons","bottled messages","paper stars","single mittens"],
     thing:["fairy lights","spaghetti","kite string","ribbon","ivy","telephone cords","bunting","streamers","loose thread"],
-    animal:["fox","owl","otter","snail","sloth","hummingbird","highland cow","cat","frog","hedgehog","heron","bumblebee","red panda","capybara","raccoon","duck","swan","deer","rabbit","field mouse","crow","robin","harbor seal","pelican","tortoise","gecko","luna moth","stag beetle","octopus","seahorse","narwhal","badger","hare","lynx","puffin","axolotl","pangolin","quokka"],
-    beat:["asleep in a patch of sun","mid-yawn","grooming one paw","stretched out long","peeking from a burrow","curled into a comma","caught mid-leap","drinking from a stream","shaking off water","nosing a flower","perched on a bare branch","caught mid-sneeze","loafing like a little bread","wading in the shallows","sniffing a mushroom","blinking slowly"],
-    scene:["snow-capped mountains over a still lake","a lighthouse on a stormy cliff","a forest path deep in autumn","a desert at golden hour","a row of pastel beach huts","rolling hills under a huge sky","a misty waterfall","a harbor full of little boats","a city skyline at dusk","a country lane lined with trees","a rugged coastline","a field of sunflowers at noon","a frozen pond at first light","terraced rice fields","a canal lined with crooked houses","a mountain village lost in fog","a wheat field before a storm","a cove with turquoise water"],
+    animal:["fox","owl","otter","snail","sloth","hummingbird","highland cow","cat","frog","hedgehog","heron","bumblebee","red panda","capybara","raccoon","duck","swan","deer","rabbit","field mouse","crow","robin","harbor seal","pelican","tortoise","gecko","luna moth","stag beetle","octopus","seahorse","narwhal","badger","hare","lynx","puffin","axolotl","pangolin","quokka","wombat","koala","arctic fox","meerkat","platypus","flamingo","toucan","chameleon","cuttlefish","manatee","red squirrel","barn owl","kingfisher","wren","nuthatch","mallard duckling","piglet","lamb","baby goat","fawn","dormouse","chipmunk","hummingbird moth"],
+    beat:["asleep in a patch of sun","mid-yawn","grooming one paw","stretched out long","peeking from a burrow","curled into a comma","caught mid-leap","drinking from a stream","shaking off water","nosing a flower","perched on a bare branch","caught mid-sneeze","loafing like a little bread","wading in the shallows","sniffing a mushroom","blinking slowly","mid-stretch with toes splayed","tucked nose to tail","ears perked at a sound","balancing on a fence post","shaking off rain in a spray","holding a single acorn","peeking over a log","yawning so wide it's comical","paw raised mid-step","snoozing with one eye half open","wrapped around a warm mug","sitting tall and proud"],
+    scene:["snow-capped mountains over a still lake","a lighthouse on a stormy cliff","a forest path deep in autumn","a desert at golden hour","a row of pastel beach huts","rolling hills under a huge sky","a misty waterfall","a harbor full of little boats","a city skyline at dusk","a country lane lined with trees","a rugged coastline","a field of sunflowers at noon","a frozen pond at first light","terraced rice fields","a canal lined with crooked houses","a mountain village lost in fog","a wheat field before a storm","a cove with turquoise water","a covered bridge over a slow river","a salt marsh at low tide","a birch forest in early snow","a stone wall running through a meadow","a harbor under a pink sunrise","an orchard heavy with apples","a cranberry bog flooded for harvest","a white church steeple above fall trees","a quiet pond ringed with cattails","a fire tower above the clouds"],
     light:["at golden hour","at blue dusk","under a full moon","in flat morning fog","backlit by sunset","under heavy storm light","in the first snow of the year","under faint northern lights","by lantern light","in soft overcast"],
-    flower:["peony","garden rose","cosmos","ranunculus","sweet pea","sunflower","poppy","dahlia","foxglove","anemone","hellebore","tulip","snapdragon","protea","zinnia","hydrangea","daffodil","iris","marigold","lily of the valley"],
-    fstate:["fully open","just budding","a little past its best","heavy with dew","bent in the wind","pressed flat in a book","wrapped in brown paper","in a chipped jam jar","tangled with weeds","catching the last light"],
-    trait:["grumpy","overly polite","anxious","retired","self-important","gentle","sleep-deprived","wildly optimistic","very tiny","ancient","dramatic","entirely unbothered"],
-    role:["wizard","sea monster","detective","librarian","knight","tailor","lighthouse keeper","fortune teller","beekeeper","night-shift baker","ghost","inventor","map-maker","tax collector","opera singer","clockmaker"],
-    quirk:["collects buttons","is afraid of the dark","talks only to plants","keeps losing their hat","runs a secret tea club","is brand new to the job","can't stop humming","is in love with the moon","files everything by smell","is quietly plotting something","adopts every stray","never finishes a sentence"],
+    flower:["peony","garden rose","cosmos","ranunculus","sweet pea","sunflower","poppy","dahlia","foxglove","anemone","hellebore","tulip","snapdragon","protea","zinnia","hydrangea","daffodil","iris","marigold","lily of the valley","camellia","gardenia","lilac","wisteria","forget-me-not","bleeding heart","cornflower","black-eyed susan","lavender","chamomile","buttercup","columbine","delphinium","scabiosa","nigella","nasturtium","pansy","dogwood blossom","cherry blossom","magnolia"],
+    fstate:["fully open","just budding","a little past its best","heavy with dew","bent in the wind","pressed flat in a book","wrapped in brown paper","in a chipped jam jar","tangled with weeds","catching the last light","tied with twine","still beaded with morning rain","petals just starting to drop","reaching toward the light","in a milk-glass vase","sketched loose and quick","one petal falling","crowded in a mason jar","single stem in a bud vase","gone slightly to seed"],
+    trait:["grumpy","overly polite","anxious","retired","self-important","gentle","sleep-deprived","wildly optimistic","very tiny","ancient","dramatic","entirely unbothered","endlessly patient","a little smug","freshly heartbroken","suspiciously calm","perpetually early","easily delighted","half asleep","quietly brave","hopelessly nostalgic","mildly enchanted"],
+    role:["wizard","sea monster","detective","librarian","knight","tailor","lighthouse keeper","fortune teller","beekeeper","night-shift baker","ghost","inventor","map-maker","tax collector","opera singer","clockmaker","cartographer","apothecary","puppeteer","bell ringer","stargazer","mushroom forager","candle maker","sign painter","piano tuner","ferryman","seed keeper","storm watcher"],
+    quirk:["collects buttons","is afraid of the dark","talks only to plants","keeps losing their hat","runs a secret tea club","is brand new to the job","can't stop humming","is in love with the moon","files everything by smell","is quietly plotting something","adopts every stray","never finishes a sentence","writes letters to the sea","keeps a diary for the cat","names every houseplant","is convinced the moon waves back","hoards interesting rocks","gives directions to lost bees","talks to the bread while it rises","maps the cracks in the ceiling","saves the good stamps","still believes in the tooth fairy"],
     cozy:["an unmade bed on a slow morning","a leaning stack of favorite books","rain on the window from the inside","a bowl of soup with the steam still rising","a pet curled into a comma","fairy lights tangled in a jar","a knitted blanket pooled on a chair","a candle burned down low","a chipped mug you love anyway","socks drying by a radiator","a window seat with a cushion","a kitchen at the end of a good dinner","a half-finished jigsaw puzzle","a teapot under a knitted cozy","a cat asleep on warm laundry"],
     small:["your own hand holding something small","a cup of coffee seen from above","three leaves off the same plant","your shoes exactly as they're sitting","your keys and the whole keyring","a half-eaten piece of fruit","the view out the nearest window","a houseplant that's a little wilted","a pair of glasses and its shadow","whatever is in your pocket right now","the last thing you ate, plated nicely","a crumpled receipt, flattened out"],
     weird:["a staircase that leads straight into the ocean","a door standing open in the middle of a field","your shadow doing something you're not","a fish that forgot how to be a fish","a room where the floor is the ceiling","a tree growing lightbulbs instead of fruit","hands with tiny snakes for fingers","a moon with a face that's clearly up to something","a melting clock that's yours, not Dalí's","a gentle creature made entirely of eyes","a whole city folded up like origami","the inside of a half-remembered dream","a hallway that just keeps going","a window that looks out onto yesterday"],
     patternbase:["overlapping leaves","30 tiny, different doors","waves repeated to the edge of the page","scales: fish, dragon, or invented","eyes, every one of them different","concentric circles that never quite line up","a forest of tiny mushrooms","a honeycomb where each cell holds something","the same hand in different gestures","stars, no two of them alike","knots and tangled string","rows of little houses, each slightly odd","fish all swimming one way, one the other","interlocking keys"],
-    necreature:["lobster","crab","harbor seal","seagull","humpback whale","pufferfish","sea turtle","horseshoe crab","great blue heron","puffin","common loon","moose","red fox","river otter","chickadee","cardinal","osprey","striped bass","hermit crab","starfish"],
-    neprop:["holding a tiny heart","in a yellow rain slicker","wearing a captain's hat","with a 'gone sailing' sign","balancing a lobster roll","holding an ice-cream cone","in a cozy cable-knit sweater","in little round sunglasses","holding a cup of clam chowder","waving a small flag","wrapped in string lights","clutching a single maple leaf"],
-    nescene:["a little sailboat at sunset","a candy-striped lighthouse on the rocks","a weathered lobster buoy on a post","a harbor full of bobbing boats","a dock with one lonely rocking chair","a tidy stack of lobster traps","a foggy cove at low tide","a rocky tidepool full of life","autumn maples behind a white church","a snowy covered bridge","a shingled cottage with blue shutters","a pier stretching into the mist"],
+    necreature:["lobster","crab","harbor seal","seagull","humpback whale","pufferfish","sea turtle","horseshoe crab","great blue heron","puffin","common loon","moose","red fox","river otter","chickadee","cardinal","osprey","striped bass","hermit crab","starfish","quahog clam","bay scallop","blue crab","cod","bluefish","piping plover","sandpiper","tern","oyster","mussel","eider duck","snowy owl","fiddler crab","moon snail","periwinkle","wild turkey"],
+    neprop:["holding a tiny heart","in a yellow rain slicker","wearing a captain's hat","with a 'gone sailing' sign","balancing a lobster roll","holding an ice-cream cone","in a cozy cable-knit sweater","in little round sunglasses","holding a cup of clam chowder","waving a small flag","wrapped in string lights","clutching a single maple leaf","holding a maple sugar candy","with a lighthouse keychain","wearing duck boots","balancing a whoopie pie","holding a paper cup of chowder","in a Fair Isle sweater","with a lobster-claw mitten","holding a jar of wild blueberries","wearing a fisherman's beanie","with a little 'the beach is that way' sign"],
+    nescene:["a little sailboat at sunset","a candy-striped lighthouse on the rocks","a weathered lobster buoy on a post","a harbor full of bobbing boats","a dock with one lonely rocking chair","a tidy stack of lobster traps","a foggy cove at low tide","a rocky tidepool full of life","autumn maples behind a white church","a snowy covered bridge","a shingled cottage with blue shutters","a pier stretching into the mist","a weathered boathouse at dawn","a float covered in resting gulls","a clam shack with a neon sign","a stack of split firewood by a cabin","a red barn in the first snow","a farm stand selling corn and tomatoes","a ferry crossing a calm sound","a dune fence half-buried in sand","a town green with a white gazebo","a pile of nautical rope and buoys"],
     being:["barista","gardener","violinist","ballet dancer","grandmother","old fisherman","toddler","librarian","street musician","night baker","potted fern","cactus","fiddle-leaf fig","sunflower","bonsai tree","mushroom","toaster","teapot","typewriter","disco ball","garden gnome","paper boat","fox","owl","snail","octopus","house cat","traffic cone"],
-    person:["barista","gardener","violinist","ballet dancer","grandmother","old fisherman","painter","chef","runner","toddler","street musician","librarian","tailor","baker","swimmer","cyclist","potter","waiter","nurse","shopkeeper"],
+    person:["barista","gardener","violinist","ballet dancer","grandmother","old fisherman","painter","chef","runner","toddler","street musician","librarian","tailor","baker","swimmer","cyclist","potter","waiter","nurse","shopkeeper","welder","florist","lighthouse keeper","farmer","cellist","skater","surfer","grandfather","new mother","mail carrier","lobsterman","apple picker","ferry captain"],
     doing:["mid-pour","mid-laugh","lost in thought","catching their breath","stretching awake","deep in focus","tying a shoe","reading a letter","sketching fast","waving hello","carrying far too much","humming to themselves"],
     where:["at a sunny window","on a park bench","in a tiny kitchen","at a crowded market","on a quiet train","at the shoreline","in a cluttered studio","on a rooftop at dusk","in an overgrown garden","under warm string lights"],
-    pose:["mid-stride","seated and leaning back","reaching overhead","curled up small","hands on hips","twisting to look back","crouched low","balanced on one foot","arms crossed, thinking","head tipped back laughing"]
+    pose:["mid-stride","seated and leaning back","reaching overhead","curled up small","hands on hips","twisting to look back","crouched low","balanced on one foot","arms crossed, thinking","head tipped back laughing","mid-spin, skirt flaring","reaching up to a high shelf","kneeling to tie a boot","leaning on a railing watching the water","carrying a sleeping child","shielding eyes from the sun","mid-wave from a dock","hunched over a sketchbook","stretching at dawn"],
+    moodsubj:["ghost","cat","snail","sleepy moon","warm mug","little cloud","sleepy frog","round bird","wilting plant","candle burned low","blob under a blanket","sloth","bumblebee","teacup","potted cactus"],
+    moodcap:["running on fumes and vibes","no thoughts, just naps","surviving, not thriving, but here","but first, everything else","slow is still moving","feelings are fine","rest is productive too","I'll get to it eventually","one thing at a time","it's okay to just sit here","still glowing, barely","growth is not linear","out of office, in my head","doing my best, it's a lot","let it be easy","rest is not a reward","be where your feet are","soft but still here","small and brave","the slow kind of happy"]
   };
   var TEMPLATES={
     chaos:[
@@ -421,7 +450,8 @@
     cozy:["{cozy}","{cozy}, {light}"],
     warmup:["{small}"],
     pattern:["Fill the page with {patternbase}","A whole page of {patternbase}","{patternbase}, edge to edge"],
-    coastal:["A {necreature} {neprop}","A cheerful {necreature} {neprop}","A {necreature} and a {necreature}, best mates","{nescene}","{nescene}, in soft morning light","A {necreature} captain steering a little sailboat"]
+    coastal:["A {necreature} {neprop}","A cheerful {necreature} {neprop}","A {necreature} and a {necreature}, best mates","{nescene}","{nescene}, in soft morning light","A {necreature} captain steering a little sailboat"],
+    moods:["A {moodsubj} that says \"{moodcap}\"","A {moodsubj} holding a little sign: \"{moodcap}\""]
   };
   var recent=[];
   function remember(p){ recent.push(p); if(recent.length>14) recent.shift(); }
@@ -450,7 +480,7 @@
     remember(p); return p;
   }
   /* Shop-worthy lens: bias toward single, bold, die-cut-friendly subjects */
-  var CAPTIONS=["good vibes only","stay cozy","hello sunshine","take it slow","wild at heart","be here now","local legend","sweet thing","keep it weird","you've got this","happy little thing","salty and sweet","shore thing","go with the flow","made with love","catch of the day"];
+  var CAPTIONS=["good vibes only","stay cozy","hello sunshine","take it slow","wild at heart","be here now","local legend","sweet thing","keep it weird","you've got this","happy little thing","salty and sweet","shore thing","go with the flow","made with love","catch of the day","good things are slow","soft but still here","rooted and reaching","one more chapter","salt in my hair","low tide, slow day","mostly kind, occasionally feral","here for the quiet parts","grow at your own pace","a little wild, a little tired","tea first, then the world","small and brave","the slow kind of happy","still my favorite season","let it be easy","room for one more plant","warm hands, full heart","out of office, in the garden","running on coffee and good intentions","local and lucky","gentle is a strength","sea you later","nap like it's your job","soft heart, sharp eyeliner","made slowly, on purpose","the woods are calling again","rest is not a reward","moon's out, worries gone","collect moments and mushrooms","be where your feet are","cozy is a personality","wander often, worry less","the good kind of quiet","salty, sweet, a little feral"];
   function stickerFriendly(p){ return !/ and |, both |edge to edge|fill the page|whole page|for scale|rush hour|a tiny city/i.test(p); }
   function captionFor(p){
     var m=p.match(/[“”"]([^"“”]{2,42})["“”]/); // double / curly-double quotes (apostrophes safe inside)
