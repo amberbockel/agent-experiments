@@ -76,6 +76,15 @@
   .twist b{font-family:var(--display);font-weight:700;color:var(--rasp);font-size:11px;letter-spacing:.09em;text-transform:uppercase;display:inline-block;margin-right:6px}
   .twist .tw{color:var(--ink);font-weight:500}
 
+  /* shop-worthy sticker spec */
+  .sticker{margin-top:clamp(14px,3vw,20px);background:#fff;border:1.5px dashed var(--line);border-radius:14px;padding:13px 16px;text-align:left}
+  .sticker[hidden]{display:none}
+  .sticker b{display:block;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--terra);margin-bottom:6px}
+  .sticker .srow{font-size:13.5px;color:var(--ink);line-height:1.5}
+  .sticker .cap{font-size:13px;color:var(--muted);margin-top:7px}
+  .sticker .cap span{color:var(--ink);font-weight:600}
+  .shopbtn.on{background:var(--sage);border-color:var(--sage);color:#11341f}
+
   .gobar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:clamp(22px,5vw,32px)}
   .go{appearance:none;cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;
     display:inline-flex;align-items:center;gap:9px;padding:14px 24px;border-radius:14px;border:0;
@@ -152,9 +161,15 @@
       <div class="prompt" id="prompt">Pick a vibe and hit <span class="em">generate</span>.</div>
       <button class="refcue" id="refcue" type="button" hidden>🔍 Show me what these look like</button>
       <div class="twist" id="twist"></div>
+      <div class="sticker" id="sticker" hidden>
+        <b>🛍️ Sticker-ready</b>
+        <div class="srow">Bold die-cut · one subject · thick outline · flat color · thin white border.</div>
+        <div class="cap">Caption idea: <span id="stickercap"></span></div>
+      </div>
       <div class="gobar" id="gobar">
         <button class="go" id="go" type="button"><span class="dice">🎲</span> Generate</button>
         <button class="ghost" id="twistbtn" type="button" title="Add a sketchbook challenge">✨ Add a twist</button>
+        <button class="ghost shopbtn" id="shopbtn" type="button" aria-pressed="false" title="Bias toward sticker-ready, die-cut subjects">🛍️ Shop-worthy</button>
       </div>
       <div class="ref" id="ref" hidden>
         <div class="refbody" id="refbody"></div>
@@ -194,6 +209,7 @@
     {k:"weird",  e:"👽", label:"Weird"},
     {k:"pattern",e:"🌀", label:"Pattern"},
     {k:"character",e:"🐾",label:"Character"},
+    {k:"people", e:"🧍", label:"People"},
     {k:"puns",   e:"🤪", label:"Puns"},
     {k:"coastal",e:"🦞", label:"New England"},
     {k:"holiday",e:"🎁", label:"Holiday"}
@@ -270,12 +286,23 @@
       "A fairy godmother... fairy good (a chubby fairy giving a thumbs up)","A sea-nior citizen (an old seahorse with a cane and glasses)","A paw-sitive puppy holding an 'A+' report card"
     ],
     coastal:[
-      "A chubby lobster holding a tiny heart ('you're my butter half')","A crab in sunglasses, feeling beachy","A happy clam grinning at the beach",
+      "A chubby lobster holding a tiny heart (\"you're my butter half\")","A crab in sunglasses, feeling beachy","A happy clam grinning at the beach",
       "A seagull proudly guarding one stolen french fry","A harbor seal pup waving a flipper","A candy-striped lighthouse with rosy cheeks and a scarf",
       "A little sailboat under a smiling sun","A moose paddling a canoe, perfectly calm","A puffin holding an ice-cream cone",
       "A humpback whale spouting a small rainbow","A cup of clam chowder with a cozy face","A lobster in a captain's hat steering a dinghy",
       "A row of weathered lobster buoys on a shingle wall","A pile of lobster traps on a foggy dock","A chickadee puffed up on a snowy branch",
       "A cardinal bright against fresh snow","A fox trotting past a white clapboard church in autumn","A loon gliding on a glassy lake at dawn"
+    ],
+    people:[
+      "A barista mid-pour, laughing at something off-frame","An old man feeding pigeons on a park bench","A dancer frozen at the top of a leap",
+      "Someone reading in a big armchair, feet tucked up","A street musician lost in the song","Two friends sharing one pair of headphones",
+      "A grandmother kneading bread, flour on her apron","A kid mid-jump into a puddle","A tired commuter asleep against a train window",
+      "A painter stepping back to study their canvas","A chef plating a dish with total focus","A couple dancing in a tiny kitchen",
+      "A runner catching their breath, hands on knees","Someone laughing so hard they're doubled over","A gardener kneeling in the dirt, clearly happy",
+      "A person stretching awake in morning light","A fisherman casting a line at dawn","A waiter balancing a very full tray",
+      "A climber reaching for the next hold","Two people deep in conversation over coffee","A seated figure, weight on one hand (gesture study)",
+      "A standing figure in easy contrapposto","A back view of someone looking out a window","A face in three-quarter view, soft expression",
+      "A pair of hands wrapped around a warm mug","A profile portrait, chin lifted just slightly"
     ]
   };
   var TWISTS=[
@@ -358,23 +385,32 @@
     patternbase:["overlapping leaves","30 tiny, different doors","waves repeated to the edge of the page","scales: fish, dragon, or invented","eyes, every one of them different","concentric circles that never quite line up","a forest of tiny mushrooms","a honeycomb where each cell holds something","the same hand in different gestures","stars, no two of them alike","knots and tangled string","rows of little houses, each slightly odd","fish all swimming one way, one the other","interlocking keys"],
     necreature:["lobster","crab","harbor seal","seagull","humpback whale","pufferfish","sea turtle","horseshoe crab","great blue heron","puffin","common loon","moose","red fox","river otter","chickadee","cardinal","osprey","striped bass","hermit crab","starfish"],
     neprop:["holding a tiny heart","in a yellow rain slicker","wearing a captain's hat","with a 'gone sailing' sign","balancing a lobster roll","holding an ice-cream cone","in a cozy cable-knit sweater","in little round sunglasses","holding a cup of clam chowder","waving a small flag","wrapped in string lights","clutching a single maple leaf"],
-    nescene:["a little sailboat at sunset","a candy-striped lighthouse on the rocks","a weathered lobster buoy on a post","a harbor full of bobbing boats","a dock with one lonely rocking chair","a tidy stack of lobster traps","a foggy cove at low tide","a rocky tidepool full of life","autumn maples behind a white church","a snowy covered bridge","a shingled cottage with blue shutters","a pier stretching into the mist"]
+    nescene:["a little sailboat at sunset","a candy-striped lighthouse on the rocks","a weathered lobster buoy on a post","a harbor full of bobbing boats","a dock with one lonely rocking chair","a tidy stack of lobster traps","a foggy cove at low tide","a rocky tidepool full of life","autumn maples behind a white church","a snowy covered bridge","a shingled cottage with blue shutters","a pier stretching into the mist"],
+    being:["barista","gardener","violinist","ballet dancer","grandmother","old fisherman","toddler","librarian","street musician","night baker","potted fern","cactus","fiddle-leaf fig","sunflower","bonsai tree","mushroom","toaster","teapot","typewriter","disco ball","garden gnome","paper boat","fox","owl","snail","octopus","house cat","traffic cone"],
+    person:["barista","gardener","violinist","ballet dancer","grandmother","old fisherman","painter","chef","runner","toddler","street musician","librarian","tailor","baker","swimmer","cyclist","potter","waiter","nurse","shopkeeper"],
+    doing:["mid-pour","mid-laugh","lost in thought","catching their breath","stretching awake","deep in focus","tying a shoe","reading a letter","sketching fast","waving hello","carrying far too much","humming to themselves"],
+    where:["at a sunny window","on a park bench","in a tiny kitchen","at a crowded market","on a quiet train","at the shoreline","in a cluttered studio","on a rooftop at dusk","in an overgrown garden","under warm string lights"],
+    pose:["mid-stride","seated and leaning back","reaching overhead","curled up small","hands on hips","twisting to look back","crouched low","balanced on one foot","arms crossed, thinking","head tipped back laughing"]
   };
   var TEMPLATES={
     chaos:[
-      "A {animal} running a tiny {biz}","A {animal} that's also a {role}","A teapot that's secretly {place}",
-      "A {animal} throwing a party for {crew}","A {animal} learning to {skill}","A {animal} made entirely of {stuff}",
-      "A {animal} on its commute across {place}","A {animal} hopelessly tangled in {thing}","A {role} and a {animal} sharing {place}",
-      "A {animal} selling {goods} on {place}","A tiny city of {crew} at rush hour","A {animal} planting a flag on {place}",
-      "A {animal} that grew legs and bolted","A grand {biz} run entirely by {crew}","A {animal} hosting a talk show from {place}"
+      "A {being} running a tiny {biz}","A {being} that's secretly a {role}","A teapot that's secretly {place}",
+      "A {being} throwing a party for {crew}","A {being} learning to {skill}","A {being} made entirely of {stuff}",
+      "A {being} on a commute across {place}","A {being} hopelessly tangled in {thing}","A {role} and a {being} sharing {place}",
+      "A {being} selling {goods} on {place}","A tiny city of {crew} at rush hour","A {being} planting a flag on {place}",
+      "A {being} that sprouted legs and bolted","A grand {biz} run entirely by {crew}","A {being} hosting a talk show from {place}"
     ],
     weird:[
-      "{weird}","A {animal} somewhere it clearly shouldn't be","A {role} melting slowly into {stuff}",
-      "A {animal} made of {stuff}, {light}","{place}, but entirely upside down","A silent room full of {thing}"
+      "{weird}","A {being} somewhere it clearly shouldn't be","A {role} melting slowly into {stuff}",
+      "A {being} made of {stuff}, {light}","{place}, but entirely upside down","A silent room full of {thing}"
     ],
     character:[
-      "A {trait} {role} who {quirk}","A {trait} {role} and their {animal} familiar","The tiny god of lost socks",
-      "A {role} who {quirk}","A {trait} {animal} convinced it's a {role}","A {role} whose familiar is a {animal}"
+      "A {trait} {role} who {quirk}","A {trait} {role} and their {being} familiar","The tiny god of lost socks",
+      "A {role} who {quirk}","A {trait} {being} convinced it's a {role}","A {role} whose familiar is a {being}"
+    ],
+    people:[
+      "A {person} {doing}","A {person} {doing}, {where}","A {person} and a {person}, both {doing}",
+      "A quick gesture study: a figure, {pose}","A portrait of a {person}, {doing}","A figure, {pose}, {where}"
     ],
     animals:[
       "A {animal} {beat}","A {animal} {beat}, {light}","A {animal} and a {animal}, both {beat}",
@@ -400,16 +436,31 @@
     t=t.replace(/\{(\w+)\}/g,function(m,k){ return POOLS[k]?pick(POOLS[k]):m; });
     return cap(t);
   }
-  function nextPrompt(mode){
+  function genOne(mode){
     var tpl=TEMPLATES[mode], curated=PROMPTS[mode]||[];
+    var useCurated = curated.length && (!tpl || Math.random()<0.3);
+    return useCurated ? pick(curated) : (tpl ? fill(pick(tpl)) : pick(curated));
+  }
+  function nextPrompt(mode){
     var p=fresh(function(){
-      var useCurated = curated.length && (!tpl || Math.random()<0.3);
-      return useCurated ? pick(curated) : (tpl ? fill(pick(tpl)) : pick(curated));
+      var c=genOne(mode), t=0;
+      while(state.shop && !stickerFriendly(c) && t<12){ c=genOne(mode); t++; }
+      return c;
     });
     remember(p); return p;
   }
+  /* Shop-worthy lens: bias toward single, bold, die-cut-friendly subjects */
+  var CAPTIONS=["good vibes only","stay cozy","hello sunshine","take it slow","wild at heart","be here now","local legend","sweet thing","keep it weird","you've got this","happy little thing","salty and sweet","shore thing","go with the flow","made with love","catch of the day"];
+  function stickerFriendly(p){ return !/ and |, both |edge to edge|fill the page|whole page|for scale|rush hour|a tiny city/i.test(p); }
+  function captionFor(p){
+    var m=p.match(/[“”"]([^"“”]{2,42})["“”]/); // double / curly-double quotes (apostrophes safe inside)
+    if(m) return m[1];
+    m=p.match(/'([^']{2,42})'/); // straight single quotes with no inner apostrophe
+    if(m) return m[1];
+    return pick(CAPTIONS);
+  }
 
-  var state={mode:"chaos", prompt:"", twist:"", holiday:null};
+  var state={mode:"chaos", prompt:"", twist:"", holiday:null, shop:false};
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
   function pick(a,not){ var v; do{ v=a[Math.floor(Math.random()*a.length)]; }while(a.length>1 && v===not); return v; }
 
@@ -444,20 +495,30 @@
     hgridEl.hidden=false; gobar.hidden=true;
     starthereEl.textContent='Pick a holiday ↓';
     promptEl.innerHTML='Pick a holiday to <span class="em">jumble</span> up an idea.';
-    twistEl.innerHTML=''; refcue.hidden=true; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
+    twistEl.innerHTML=''; stickerEl.hidden=true; refcue.hidden=true; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
   }
   function exitHoliday(){
     hgridEl.hidden=true; gobar.hidden=false; starthereEl.textContent='Start here ↓';
   }
 
   var promptEl=document.getElementById('prompt'), twistEl=document.getElementById('twist'), go=document.getElementById('go'), gobar=document.getElementById('gobar');
+  var stickerEl=document.getElementById('sticker'), stickercapEl=document.getElementById('stickercap'), shopbtn=document.getElementById('shopbtn');
+  function showSticker(){
+    var on = state.shop && state.prompt && !(state.mode==='holiday' && !state.holiday);
+    stickerEl.hidden=!on;
+    if(on){ stickercapEl.textContent='“'+captionFor(state.prompt)+'”'; }
+  }
   var refcue=document.getElementById('refcue'), refEl=document.getElementById('ref'), refBody=document.getElementById('refbody'), refNote=document.getElementById('refnote');
   function showTwist(){ twistEl.innerHTML = state.twist ? '<b>The catch</b><span class="tw">'+esc(state.twist)+'</span>' : ''; }
   function generate(keepTwist){
     if(state.mode==='holiday'){
       if(!state.holiday) return;
       var h=HMAP[state.holiday];
-      state.prompt=fresh(function(){ return jumble(h, state.prompt); });
+      state.prompt=fresh(function(){
+        var c=jumble(h, state.prompt), t=0;
+        while(state.shop && !stickerFriendly(c) && t<12){ c=jumble(h, c); t++; }
+        return c;
+      });
       remember(state.prompt);
     } else {
       state.prompt=nextPrompt(state.mode);
@@ -465,6 +526,7 @@
     promptEl.innerHTML=esc(state.prompt);
     if(!keepTwist && state.twist){ state.twist=pick(TWISTS, state.twist); }
     showTwist();
+    showSticker();
     refcue.hidden=false; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
     go.classList.add('spin'); setTimeout(function(){ go.classList.remove('spin'); },500);
   }
@@ -473,6 +535,13 @@
     if(state.mode==='holiday' && !state.holiday) return;
     state.twist = state.twist ? "" : pick(TWISTS, state.twist); // toggle off, or add a fresh one
     if(!state.prompt){ generate(true); } else { showTwist(); }
+  });
+  shopbtn.addEventListener('click',function(){
+    state.shop=!state.shop;
+    shopbtn.classList.toggle('on', state.shop);
+    shopbtn.setAttribute('aria-pressed', state.shop);
+    if(state.mode==='holiday' && !state.holiday) return;
+    if(state.prompt){ generate(true); } else { showSticker(); }
   });
 
   /* ---- reference images (Wikimedia Commons: keyless + CORS, real photos) ---- */
