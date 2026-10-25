@@ -54,6 +54,7 @@
 
   /* holiday sub-picker (inside the card) */
   .holidaygrid{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:0 0 clamp(18px,4vw,26px)}
+  .holidaygrid[hidden]{display:none}
   .hcard{appearance:none;cursor:pointer;font-family:var(--display);font-weight:600;font-size:13.5px;
     display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:14px;
     border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:transform .14s,border-color .18s,background .18s,color .18s}
@@ -193,6 +194,8 @@
     {k:"weird",  e:"👽", label:"Weird"},
     {k:"pattern",e:"🌀", label:"Pattern"},
     {k:"character",e:"🐾",label:"Character"},
+    {k:"puns",   e:"🤪", label:"Puns"},
+    {k:"coastal",e:"🦞", label:"New England"},
     {k:"holiday",e:"🎁", label:"Holiday"}
   ];
   var PROMPTS={
@@ -249,6 +252,30 @@
       "A sprig of lavender","A tangle of sweet peas","A sunflower, up close",
       "A cluster of poppies","A branch of cherry blossom","A potted succulent",
       "A rose just past its best","A daisy chain","A protea, bold and strange"
+    ],
+    puns:[
+      "Holy cow (a cow with a halo and tiny wings)","A cat-erpillar (a caterpillar with a cat's face)","A purr-maid (a cat with a mermaid tail)",
+      "A ninja-bread man (a gingerbread man in a ninja outfit)","A spelling bee (a bee holding alphabet blocks)","A bookworm (a worm curled up reading a book)",
+      "A copycat (two identical cats, one tracing the other)","A hot dog (a dachshund tucked into a bun)","A hare-dresser (a rabbit snipping hair with scissors)",
+      "A bear-ista (a bear pulling a shot of espresso)","A pug-kin (a pug in a pumpkin costume)","Let's avo-cuddle (two avocados hugging)",
+      "A fun-gi (a mushroom in party shades at a party)","Olive you (an olive holding a little heart)","Whale hello there (a whale waving a fin)",
+      "A toad-ally rad toad (a toad in sunglasses on a skateboard)","A narwhal, the unicorn of the sea","A guinea pig in a tiny wig",
+      "A pea-fect pair (two peas in a pod holding hands)","An egg-cellent egg (an egg giving a thumbs up)","A plant parent (a houseplant pushing a tiny plant in a stroller)",
+      "A hop-timist frog (a frog holding a 'good vibes' sign)","A pup-peroni pizza (a puppy peeking out of a pizza slice)","A llama drama (a llama being wildly theatrical)",
+      "A sloth with a 'be right there... eventually' sign","A meow-ntain (a mountain shaped like a sleeping cat)","A branch manager (a little bird in a tie on a branch)",
+      "An owl-ways tired owl (an owl clutching a coffee mug)","A beachin' crab (a crab in sunglasses with a surfboard)","A whisk-taker (a whisk wearing a daredevil cape)",
+      "Holy guacamole (an avocado with a halo)","A succ-er for you (a succulent holding a heart)","A brew-tiful morning (a smiling coffee cup with sun rays)",
+      "A deer dressed in a cozy sweater, feeling deer-ly loved","A self-rising loaf of bread flexing tiny muscles","A cereal entrepreneur (a cereal box in a tiny business suit)",
+      "A holy mackerel (a fish with a halo)","A current event (a fish reading a newspaper in a river)","A nap-kin (a napkin taking a nap)",
+      "A fairy godmother... fairy good (a chubby fairy giving a thumbs up)","A sea-nior citizen (an old seahorse with a cane and glasses)","A paw-sitive puppy holding an 'A+' report card"
+    ],
+    coastal:[
+      "A chubby lobster holding a tiny heart ('you're my butter half')","A crab in sunglasses, feeling beachy","A happy clam grinning at the beach",
+      "A seagull proudly guarding one stolen french fry","A harbor seal pup waving a flipper","A candy-striped lighthouse with rosy cheeks and a scarf",
+      "A little sailboat under a smiling sun","A moose paddling a canoe, perfectly calm","A puffin holding an ice-cream cone",
+      "A humpback whale spouting a small rainbow","A cup of clam chowder with a cozy face","A lobster in a captain's hat steering a dinghy",
+      "A row of weathered lobster buoys on a shingle wall","A pile of lobster traps on a foggy dock","A chickadee puffed up on a snowy branch",
+      "A cardinal bright against fresh snow","A fox trotting past a white clapboard church in autumn","A loon gliding on a glassy lake at dawn"
     ]
   };
   var TWISTS=[
@@ -328,7 +355,10 @@
     cozy:["an unmade bed on a slow morning","a leaning stack of favorite books","rain on the window from the inside","a bowl of soup with the steam still rising","a pet curled into a comma","fairy lights tangled in a jar","a knitted blanket pooled on a chair","a candle burned down low","a chipped mug you love anyway","socks drying by a radiator","a window seat with a cushion","a kitchen at the end of a good dinner","a half-finished jigsaw puzzle","a teapot under a knitted cozy","a cat asleep on warm laundry"],
     small:["your own hand holding something small","a cup of coffee seen from above","three leaves off the same plant","your shoes exactly as they're sitting","your keys and the whole keyring","a half-eaten piece of fruit","the view out the nearest window","a houseplant that's a little wilted","a pair of glasses and its shadow","whatever is in your pocket right now","the last thing you ate, plated nicely","a crumpled receipt, flattened out"],
     weird:["a staircase that leads straight into the ocean","a door standing open in the middle of a field","your shadow doing something you're not","a fish that forgot how to be a fish","a room where the floor is the ceiling","a tree growing lightbulbs instead of fruit","hands with tiny snakes for fingers","a moon with a face that's clearly up to something","a melting clock that's yours, not Dalí's","a gentle creature made entirely of eyes","a whole city folded up like origami","the inside of a half-remembered dream","a hallway that just keeps going","a window that looks out onto yesterday"],
-    patternbase:["overlapping leaves","30 tiny, different doors","waves repeated to the edge of the page","scales: fish, dragon, or invented","eyes, every one of them different","concentric circles that never quite line up","a forest of tiny mushrooms","a honeycomb where each cell holds something","the same hand in different gestures","stars, no two of them alike","knots and tangled string","rows of little houses, each slightly odd","fish all swimming one way, one the other","interlocking keys"]
+    patternbase:["overlapping leaves","30 tiny, different doors","waves repeated to the edge of the page","scales: fish, dragon, or invented","eyes, every one of them different","concentric circles that never quite line up","a forest of tiny mushrooms","a honeycomb where each cell holds something","the same hand in different gestures","stars, no two of them alike","knots and tangled string","rows of little houses, each slightly odd","fish all swimming one way, one the other","interlocking keys"],
+    necreature:["lobster","crab","harbor seal","seagull","humpback whale","pufferfish","sea turtle","horseshoe crab","great blue heron","puffin","common loon","moose","red fox","river otter","chickadee","cardinal","osprey","striped bass","hermit crab","starfish"],
+    neprop:["holding a tiny heart","in a yellow rain slicker","wearing a captain's hat","with a 'gone sailing' sign","balancing a lobster roll","holding an ice-cream cone","in a cozy cable-knit sweater","in little round sunglasses","holding a cup of clam chowder","waving a small flag","wrapped in string lights","clutching a single maple leaf"],
+    nescene:["a little sailboat at sunset","a candy-striped lighthouse on the rocks","a weathered lobster buoy on a post","a harbor full of bobbing boats","a dock with one lonely rocking chair","a tidy stack of lobster traps","a foggy cove at low tide","a rocky tidepool full of life","autumn maples behind a white church","a snowy covered bridge","a shingled cottage with blue shutters","a pier stretching into the mist"]
   };
   var TEMPLATES={
     chaos:[
@@ -354,7 +384,8 @@
     flowers:["A {flower}, {fstate}","A handful of {flower} stems, {fstate}","A single {flower} {fstate}","A {flower} beside another {flower}, {fstate}"],
     cozy:["{cozy}","{cozy}, {light}"],
     warmup:["{small}"],
-    pattern:["Fill the page with {patternbase}","A whole page of {patternbase}","{patternbase}, edge to edge"]
+    pattern:["Fill the page with {patternbase}","A whole page of {patternbase}","{patternbase}, edge to edge"],
+    coastal:["A {necreature} {neprop}","A cheerful {necreature} {neprop}","A {necreature} and a {necreature}, best mates","{nescene}","{nescene}, in soft morning light","A {necreature} captain steering a little sailboat"]
   };
   var recent=[];
   function remember(p){ recent.push(p); if(recent.length>14) recent.shift(); }
