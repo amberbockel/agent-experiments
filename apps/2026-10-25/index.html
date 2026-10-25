@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meeting Receipt — what your meeting actually costs</title>
+<meta name="description" content="Add who's in the room and how long it runs. Get an itemized receipt for the meeting — or start the clock and watch the bill tick up live.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  :root{ --hue:#ffb8d9; --hue-soft:rgba(255,184,217,.14); --paper:#f4efe6; --ink:#25202b; --ink-2:#6d6573; }
+  html,body{margin:0}
+  body{min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:1040px;margin:0 auto;padding:var(--ab-6) var(--ab-4) var(--ab-8);display:grid;gap:var(--ab-6)}
+  #theme{flex:none;min-width:44px;padding:0}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--ab-4)}
+  h1{font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-display-md);line-height:1.05;margin:var(--ab-2) 0 var(--ab-3)}
+  h1 em{font-style:normal;color:var(--hue)}
+  .lede{color:var(--ab-muted);max-width:44ch;margin:0}
+  .grid{display:grid;gap:var(--ab-6);grid-template-columns:1fr}
+  @media(min-width:860px){.grid{grid-template-columns:1.05fr .95fr;align-items:start}.receipt-col{position:sticky;top:var(--ab-5)}}
+  .panel{padding:var(--ab-5);border-radius:var(--ab-r-lg);display:grid;gap:var(--ab-4)}
+  .panel h2{font-size:var(--ab-text-sm);letter-spacing:.14em;text-transform:uppercase;color:var(--ab-faint);margin:0;font-family:var(--ab-font-sans);font-weight:600}
+  .presets{display:flex;flex-wrap:wrap;gap:var(--ab-2)}
+  .chip{min-height:44px;padding:0 var(--ab-4);border-radius:var(--ab-r-pill);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);color:var(--ab-text);font:inherit;font-size:var(--ab-text-sm);cursor:pointer;transition:all var(--ab-dur) var(--ab-ease)}
+  .chip:hover{background:var(--ab-glass-hover)}
+  .chip[aria-pressed=true]{border-color:var(--hue);background:var(--hue-soft)}
+  .row{display:grid;grid-template-columns:1fr 92px 44px;gap:var(--ab-2);align-items:center}
+  .row .ab-input{min-width:0}
+  .rate{position:relative}
+  .rate span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ab-faint);pointer-events:none}
+  .rate .ab-input{padding-left:24px}
+  .icon{width:44px;height:44px;border-radius:50%;border:1px solid var(--ab-glass-border);background:transparent;color:var(--ab-muted);font-size:1.25rem;cursor:pointer;transition:all var(--ab-dur) var(--ab-ease)}
+  .icon:hover{color:var(--ab-text);background:var(--ab-glass-hover)}
+  .cols{display:grid;grid-template-columns:1fr 92px 44px;gap:var(--ab-2);font-size:var(--ab-text-xs);color:var(--ab-faint);margin-bottom:calc(var(--ab-2) * -1)}
+  .dur{display:grid;gap:var(--ab-2)}
+  .dur-top{display:flex;justify-content:space-between;align-items:baseline}
+  .dur-top output{font-family:var(--ab-font-display);font-size:var(--ab-text-xl)}
+  input[type=range]{width:100%;accent-color:var(--hue);min-height:44px;margin:0}
+  .empty{color:var(--ab-faint);text-align:center;padding:var(--ab-4);border:1px dashed var(--ab-line);border-radius:var(--ab-r-md)}
+  .clock{display:flex;gap:var(--ab-2);flex-wrap:wrap}
+
+  /* receipt */
+  .receipt{background:var(--paper);color:var(--ink);font-family:var(--ab-font-mono);font-size:.8125rem;line-height:1.55;padding:var(--ab-5) var(--ab-5) var(--ab-6);
+    -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;
+    -webkit-mask-size:16px 100%;border-radius:4px 4px 0 0;animation:feed .6s var(--ab-ease) both}
+  @keyframes feed{from{transform:translateY(-12px);opacity:0}}
+  .receipt h3{font-family:var(--ab-font-display);font-weight:400;font-size:1.5rem;text-align:center;margin:0}
+  .receipt .sub{text-align:center;color:var(--ink-2);margin:0 0 var(--ab-3)}
+  .receipt hr{border:0;border-top:1px dashed var(--ink-2);margin:var(--ab-3) 0;opacity:.6}
+  .line{display:flex;justify-content:space-between;gap:var(--ab-3)}
+  .line span:first-child{overflow-wrap:anywhere}
+  .line.total{font-size:1.25rem;font-weight:700}
+  .big{font-family:var(--ab-font-display);font-size:2.5rem;text-align:center;line-height:1.1;margin:var(--ab-2) 0;font-variant-numeric:tabular-nums}
+  .eq{color:var(--ink-2)}
+  .stamp{display:block;margin:var(--ab-3) auto 0;width:max-content;max-width:100%;text-align:center;border:2px solid #b8346f;color:#b8346f;padding:4px 12px;transform:rotate(-3deg);font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px}
+  .barcode{height:36px;margin-top:var(--ab-4);background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 9px,var(--ink) 9px 12px,transparent 12px 14px)}
+  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#d8345f;margin-right:6px;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.25}}
+  .note{font-size:var(--ab-text-xs);color:var(--ab-faint);text-align:center;margin:var(--ab-3) 0 0}
+  @media(prefers-reduced-motion:reduce){.receipt,.live-dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="ab-container wrap" style="max-width:1040px">
+  <header>
+    <div>
+      <span class="ab-eyebrow">Agent Experiments · Business</span>
+      <h1>Meeting <em>Receipt</em></h1>
+      <p class="lede">Every meeting has a price. Add the room, set the length — or start the clock and watch the bill tick.</p>
+    </div>
+    <button class="ab-btn ab-btn--glass" id="theme" aria-label="Toggle light and dark theme">◐</button>
+  </header>
+
+  <div class="grid">
+    <section class="ab-glass panel" aria-label="Meeting setup">
+      <h2>Start from a template</h2>
+      <div class="presets" id="presets" role="group" aria-label="Templates"></div>
+
+      <h2>Who's in the room</h2>
+      <div class="cols" aria-hidden="true"><span>Role or name</span><span>$ / hour</span><span></span></div>
+      <div id="people" style="display:grid;gap:8px"></div>
+      <button class="ab-btn ab-btn--secondary" id="add">+ Add attendee</button>
+
+      <div class="dur">
+        <div class="dur-top"><label for="mins" class="ab-label" style="margin:0">Length</label><output id="minsOut" for="mins"></output></div>
+        <input type="range" id="mins" min="5" max="180" step="5" value="30">
+      </div>
+
+      <h2>Live mode</h2>
+      <div class="clock">
+        <button class="ab-btn ab-btn--primary" id="go">Start the clock</button>
+        <button class="ab-btn ab-btn--ghost" id="reset" hidden>Reset</button>
+      </div>
+    </section>
+
+    <section class="receipt-col" aria-label="Receipt" aria-live="polite">
+      <div class="receipt" id="receipt"></div>
+      <p class="note">Rates are hourly, fully-loaded estimates. Nothing leaves your device.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const root=document.documentElement,KEY='ab-theme';
+try{root.dataset.theme=localStorage.getItem(KEY)||'dark'}catch(e){}
+document.getElementById('theme').onclick=()=>{root.dataset.theme=root.dataset.theme==='light'?'dark':'light';try{localStorage.setItem(KEY,root.dataset.theme)}catch(e){}};
+
+const PRESETS={
+  'Daily standup':{mins:15,people:[['Engineer',70],['Engineer',70],['Engineer',70],['Designer',65],['Team lead',95]]},
+  'Planning':{mins:60,people:[['Product manager',90],['Engineer',70],['Engineer',70],['Designer',65],['Director',140]]},
+  'All-hands':{mins:60,people:Array.from({length:30},()=>['Team member',65]).concat([[ 'Executive',200]])},
+  'One-on-one':{mins:30,people:[['Manager',95],['Report',65]]}
+};
+let people=[],mins=30,running=false,elapsed=0,t0=0,raf=0,activePreset='';
+const $=id=>document.getElementById(id);
+const money=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0=n=>'$'+Math.round(n).toLocaleString('en-US');
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function load(name){const p=PRESETS[name];activePreset=name;people=p.people.map(([n,r])=>({n,r}));mins=p.mins;$('mins').value=mins;renderPeople();renderPresets();draw()}
+function renderPresets(){$('presets').innerHTML=Object.keys(PRESETS).map(k=>`<button class="chip" aria-pressed="${k===activePreset}" data-k="${k}">${k}</button>`).join('')}
+$('presets').onclick=e=>{const k=e.target.dataset.k;if(k)load(k)};
+function renderPeople(focusLast){
+  $('people').innerHTML=people.length?people.map((p,i)=>`<div class="row">
+    <input class="ab-input" aria-label="Attendee ${i+1} role" data-i="${i}" data-f="n" value="${esc(p.n)}" maxlength="28">
+    <div class="rate"><span>$</span><input class="ab-input" type="number" inputmode="decimal" min="0" max="2000" aria-label="Attendee ${i+1} hourly rate" data-i="${i}" data-f="r" value="${p.r}"></div>
+    <button class="icon" aria-label="Remove attendee ${i+1}" data-rm="${i}">×</button></div>`).join(''):'<div class="empty">Nobody here yet — a meeting of zero costs nothing.</div>';
+  if(focusLast){const el=$('people').querySelector('.row:last-child input');el&&el.focus()}
+}
+$('people').addEventListener('input',e=>{const t=e.target,i=t.dataset.i;if(i==null)return;people[i][t.dataset.f]=t.dataset.f==='r'?Math.max(0,+t.value||0):t.value;activePreset='';renderPresets();draw()});
+$('people').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;people.splice(+b.dataset.rm,1);activePreset='';renderPeople();renderPresets();draw()});
+$('add').onclick=()=>{if(people.length>=60)return;people.push({n:'Attendee',r:70});activePreset='';renderPeople(true);renderPresets();draw()};
+$('mins').oninput=e=>{mins=+e.target.value;if(!running)elapsed=0;draw()};
+
+const perSec=()=>people.reduce((a,p)=>a+p.r,0)/3600;
+function equivalents(c){
+  const items=[[6,'oat-milk lattes'],[15,'burrito lunches'],[250,'nights at a so-so hotel'],[1200,'laptops (refurbished)']];
+  let best=items[0];for(const it of items)if(c/it[0]>=2)best=it;
+  const n=c/best[0];return n<1?'less than a latte':`≈ ${n>=10?Math.round(n):n.toFixed(1)} ${best[1]}`}
+function verdict(c,m,n){
+  if(!n)return'';
+  if(m<=15&&n<=6)return'Money well spent';
+  if(c>1500)return'Could have been a memo';
+  if(n>=8&&m>=45)return'Needs fewer people';
+  if(m>=90)return'Add a break';
+  return'Fair price'}
+
+function draw(){
+  const secs=running?elapsed:mins*60;
+  const cost=perSec()*secs,n=people.length;
+  const rows=people.map(p=>({n:p.n||'Attendee',c:p.r*secs/3600}));
+  const groups={};rows.forEach(r=>{(groups[r.n]=groups[r.n]||{n:r.n,k:0,c:0});groups[r.n].k++;groups[r.n].c+=r.c});
+  const lines=Object.values(groups).map(g=>`<div class="line"><span>${g.k>1?g.k+'× ':''}${esc(g.n)}</span><span>${money(g.c)}</span></div>`).join('')||'<div class="line"><span>(no attendees)</span><span>$0.00</span></div>';
+  const m=Math.floor(secs/60),s=Math.floor(secs%60);
+  const time=running?`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${mins} min`;
+  const perMin=perSec()*60;
+  $('receipt').innerHTML=`<h3>Meeting Receipt</h3>
+   <p class="sub">${running?'<span class="live-dot"></span>LIVE · ':''}${n} ${n===1?'person':'people'} · ${time}</p><hr>
+   ${lines}<hr>
+   <div class="line"><span>Burn rate</span><span>${money(perMin)}/min</span></div>
+   <div class="line"><span>Person-hours</span><span>${(n*secs/3600).toFixed(1)} h</span></div><hr>
+   <div class="line total"><span>TOTAL</span><span></span></div>
+   <div class="big">${money(cost)}</div>
+   <div class="eq" style="text-align:center">${equivalents(cost)}</div>
+   ${running?'':`<span class="stamp">${verdict(cost,mins,n)}</span>`}
+   <div class="barcode" aria-hidden="true"></div>`;
+  $('minsOut').textContent=`${mins} min`;
+  $('receipt').style.animation='none';
+}
+function tick(now){if(!running)return;elapsed=(now-t0)/1000;draw();raf=requestAnimationFrame(tick)}
+$('go').onclick=()=>{
+  if(running){running=false;cancelAnimationFrame(raf);$('go').textContent='Resume the clock';draw();return}
+  t0=performance.now()-elapsed*1000;running=true;$('go').textContent='Stop the clock';$('reset').hidden=false;raf=requestAnimationFrame(tick)};
+$('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);elapsed=0;$('go').textContent='Start the clock';$('reset').hidden=true;draw()};
+load('Planning');
+</script>
+</body>
+</html>
