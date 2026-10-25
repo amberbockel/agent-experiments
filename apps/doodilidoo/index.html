@@ -92,6 +92,41 @@
   .sktags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
   .sktags span{font-size:11px;background:#f4f1ea;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted)}
   .shopbtn.on{background:var(--sage);border-color:var(--sage);color:#11341f}
+  .retro{text-align:center;margin-top:clamp(12px,3vw,18px);font-size:14px;color:var(--muted);line-height:1.5;max-width:40ch;margin-left:auto;margin-right:auto}
+  .retro[hidden]{display:none}
+  .retro b{font-family:var(--display);font-weight:700;color:var(--plum);font-size:11px;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:4px}
+  .retrobtn.on{background:var(--plum);border-color:var(--plum);color:#fff}
+
+  /* daily prompt banner */
+  .daily{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;appearance:none;cursor:pointer;text-align:left;
+    background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;margin:0 0 clamp(14px,3vw,22px);
+    box-shadow:0 14px 30px -24px rgba(27,27,27,.5);transition:transform .14s,border-color .18s}
+  .daily[hidden]{display:none}
+  .daily:hover{transform:translateY(-2px);border-color:rgba(27,27,27,.26)}
+  .daily .dk{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--terra);background:rgba(232,111,82,.12);padding:4px 9px;border-radius:999px;flex:0 0 auto}
+  .daily .dp{font-family:var(--display);font-weight:600;font-size:14.5px;color:var(--ink);flex:1 1 60%}
+  .daily .dgo{font-family:var(--display);font-weight:700;font-size:13px;color:var(--terra);flex:0 0 auto}
+
+  /* prompt actions */
+  .pactions{display:flex;justify-content:center;gap:16px;margin-top:clamp(12px,3vw,18px)}
+  .pactions[hidden]{display:none}
+  .pact{appearance:none;cursor:pointer;border:0;background:none;font-family:var(--display);font-weight:600;font-size:13px;color:var(--muted);padding:5px 8px;border-radius:999px;transition:color .18s,background .18s}
+  .pact:hover{background:rgba(27,27,27,.05);color:var(--ink)}
+  .pact.saved{color:var(--rasp)}
+
+  /* saved prompts */
+  .savedwrap{margin:clamp(26px,5vw,40px) 0 0}
+  .savedwrap[hidden]{display:none}
+  .savedhead{width:100%;appearance:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+    background:none;border:0;border-bottom:1.5px dashed var(--line);padding:0 2px 10px;font-family:var(--display);font-weight:800;font-size:clamp(18px,4vw,22px);color:var(--ink)}
+  .savedn{font-family:var(--body);font-size:13px;font-weight:600;color:#fff;background:var(--rasp);border-radius:999px;padding:2px 10px;min-width:22px;text-align:center}
+  .savedlist{margin-top:14px;display:grid;gap:8px}
+  .savedlist[hidden]{display:none}
+  .saveditem{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}
+  .saveditem .st{flex:1;font-size:13.5px;color:var(--ink);line-height:1.4}
+  .saveditem .sm{font-family:var(--display);font-weight:700;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);flex:0 0 auto}
+  .saveditem button{appearance:none;cursor:pointer;border:0;background:none;color:var(--muted);font-size:17px;line-height:1;padding:2px 4px}
+  .saveditem button:hover{color:var(--rasp)}
 
   .gobar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:clamp(22px,5vw,32px)}
   .go{appearance:none;cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;
@@ -159,6 +194,11 @@
   </header>
 
   <main class="wrap">
+    <button class="daily" id="daily" type="button" hidden>
+      <span class="dk">Today's doodle</span>
+      <span class="dp" id="dailyprompt"></span>
+      <span class="dgo">Draw it →</span>
+    </button>
     <div class="modehead">Pick a vibe</div>
     <div class="modes" id="modes"></div>
 
@@ -168,7 +208,12 @@
       <div class="holidaygrid" id="holidaygrid" hidden></div>
       <div class="prompt" id="prompt">Pick a vibe and hit <span class="em">generate</span>.</div>
       <button class="refcue" id="refcue" type="button" hidden>🔍 Show me what these look like</button>
+      <div class="pactions" id="pactions" hidden>
+        <button class="pact" id="favbtn" type="button">♡ Save</button>
+        <button class="pact" id="sharebtn" type="button">🔗 Share</button>
+      </div>
       <div class="twist" id="twist"></div>
+      <div class="retro" id="retro" hidden></div>
       <div class="sticker" id="sticker" hidden>
         <div class="sktop"><b>🛍️ Sticker brief</b><button class="skcopy" id="skcopy" type="button">Copy</button></div>
         <div class="skgrid">
@@ -184,11 +229,17 @@
         <button class="go" id="go" type="button"><span class="dice">🎲</span> Generate</button>
         <button class="ghost" id="twistbtn" type="button" title="Add a sketchbook challenge">✨ Add a twist</button>
         <button class="ghost shopbtn" id="shopbtn" type="button" aria-pressed="false" title="Bias toward sticker-ready, die-cut subjects">🛍️ Shop-worthy</button>
+        <button class="ghost retrobtn" id="retrobtn" type="button" aria-pressed="false" title="Add a retro / vintage styling note">🕶️ Retro</button>
       </div>
       <div class="ref" id="ref" hidden>
         <div class="refbody" id="refbody"></div>
         <p class="refnote" id="refnote"></p>
       </div>
+    </section>
+
+    <section class="savedwrap" id="savedwrap" hidden>
+      <button class="savedhead" id="savedhead" type="button"><span>⭐ Saved prompts</span><span class="savedn" id="savedn">0</span></button>
+      <div class="savedlist" id="savedlist" hidden></div>
     </section>
 
     <section class="sketchwall">
@@ -569,20 +620,31 @@
     var t=[], subj=extractSubjects(p);
     subj.forEach(function(w){ if(w.length>2) t.push(w+" sticker"); });
     (MODE_TAGS[mode]||[]).forEach(function(x){ t.push(x); });
+    if(state.retro){ t.push("retro sticker"); t.push("vintage sticker"); }
     BASE_TAGS.forEach(function(x){ t.push(x); });
     t.push("new england artist");
     var seen={}, out=[]; t.forEach(function(x){ x=x.toLowerCase().trim(); if(!seen[x]&&x.length<=20){ seen[x]=1; out.push(x); } });
     return out.slice(0,13);
   }
   function buildBrief(mode,p){
-    var subj=subjectOf(p), bare=bareSubject(p), pal=palOf(mode), cut=cutOf(mode), capn=captionFor(p), tags=buildTags(mode,p), theme=themeOf(mode);
+    var subj=subjectOf(p), bare=bareSubject(p), pal=state.retro?RETRO_PAL:palOf(mode), cut=cutOf(mode), capn=captionFor(p), tags=buildTags(mode,p), theme=themeOf(mode);
     var title=cap(bare)+" Vinyl Sticker | "+theme+" | Water-Resistant Die-Cut | Laptop & Water Bottle";
     var desc="A little "+bare.toLowerCase()+" to carry around with you. "+cap(capn)+". Printed on durable water-resistant vinyl with a matte finish, so it holds up on water bottles, laptops, notebooks, and anywhere else that could use a little more charm. Size: 3 in. Finish: matte vinyl, weatherproof, dishwasher-safe on the top rack. Cut: "+cut+". Drawn by hand in New England.";
     return {subj:subj, theme:theme, pal:pal, cut:cut, caption:capn, tags:tags, title:title, desc:desc};
   }
   var lastBrief=null;
+  /* ---- retro / vintage styling lens ---- */
+  var RETRO=[
+    "Give it a '70s treatment: thick outlines, a mustard-rust-cream palette, and a warm sunburst behind it.",
+    "Go full retro: chunky rounded shapes, a faded sunset gradient, and a little rainbow arc.",
+    "Vintage camp-patch look: bold line art, three flat colors, and a scalloped border.",
+    "'80s flavor: soft neon, a grid horizon line, and a chrome-y sun.",
+    "Groovy styling: wavy lettering, earthy tones, and a smiling sun or mushroom tucked in a corner.",
+    "Faded-poster look: halftone dots, warm ochre and teal, and a thick keyline border."
+  ];
+  var RETRO_PAL={name:"Retro sunset",fills:["#D9772E","#E7B23E","#EFD9A6"],ink:"#5A3524"};
 
-  var state={mode:"chaos", prompt:"", twist:"", holiday:null, shop:false};
+  var state={mode:"chaos", prompt:"", twist:"", holiday:null, shop:false, retro:false, retroNote:""};
   function esc(s){return String(s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
   function pick(a,not){ var v; do{ v=a[Math.floor(Math.random()*a.length)]; }while(a.length>1 && v===not); return v; }
 
@@ -617,7 +679,7 @@
     hgridEl.hidden=false; gobar.hidden=true;
     starthereEl.textContent='Pick a holiday ↓';
     promptEl.innerHTML='Pick a holiday to <span class="em">jumble</span> up an idea.';
-    twistEl.innerHTML=''; stickerEl.hidden=true; refcue.hidden=true; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
+    twistEl.innerHTML=''; stickerEl.hidden=true; retroEl.hidden=true; pactions.hidden=true; refcue.hidden=true; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
   }
   function exitHoliday(){
     hgridEl.hidden=true; gobar.hidden=false; starthereEl.textContent='Start here ↓';
@@ -625,6 +687,12 @@
 
   var promptEl=document.getElementById('prompt'), twistEl=document.getElementById('twist'), go=document.getElementById('go'), gobar=document.getElementById('gobar');
   var stickerEl=document.getElementById('sticker'), shopbtn=document.getElementById('shopbtn');
+  var retroEl=document.getElementById('retro'), retrobtn=document.getElementById('retrobtn');
+  function showRetro(){
+    var on = state.retro && state.prompt && !(state.mode==='holiday' && !state.holiday);
+    retroEl.hidden=!on;
+    if(on){ if(!state.retroNote) state.retroNote=pick(RETRO); retroEl.innerHTML='<b>🕶️ Retro styling</b>'+esc(state.retroNote); }
+  }
   function showSticker(){
     var on = state.shop && state.prompt && !(state.mode==='holiday' && !state.holiday);
     stickerEl.hidden=!on;
@@ -662,9 +730,12 @@
     }
     promptEl.innerHTML=esc(state.prompt);
     if(!keepTwist && state.twist){ state.twist=pick(TWISTS, state.twist); }
+    if(state.retro){ state.retroNote=pick(RETRO, state.retroNote); }
     showTwist();
     showSticker();
+    showRetro();
     refcue.hidden=false; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
+    pactions.hidden=false; updateFavBtn();
     go.classList.add('spin'); setTimeout(function(){ go.classList.remove('spin'); },500);
   }
   go.addEventListener('click',function(){ generate(false); });
@@ -680,6 +751,87 @@
     if(state.mode==='holiday' && !state.holiday) return;
     if(state.prompt){ generate(true); } else { showSticker(); }
   });
+  retrobtn.addEventListener('click',function(){
+    state.retro=!state.retro;
+    retrobtn.classList.toggle('on', state.retro);
+    retrobtn.setAttribute('aria-pressed', state.retro);
+    if(state.mode==='holiday' && !state.holiday) return;
+    if(state.retro){ state.retroNote=pick(RETRO, state.retroNote); } else { state.retroNote=''; }
+    showRetro();
+    if(state.shop) showSticker();
+  });
+
+  /* ---- Phase 5: daily prompt, saved favorites, share / challenge link ---- */
+  var dailyEl=document.getElementById('daily'), dailypromptEl=document.getElementById('dailyprompt');
+  var pactions=document.getElementById('pactions'), favbtn=document.getElementById('favbtn'), sharebtn=document.getElementById('sharebtn');
+  var savedwrap=document.getElementById('savedwrap'), savedhead=document.getElementById('savedhead'), savedlist=document.getElementById('savedlist'), savedn=document.getElementById('savedn');
+
+  function loadPrompt(mode, prompt){
+    state.mode = (mode && (PROMPTS[mode]||mode==='holiday')) ? mode : 'chaos';
+    [].forEach.call(modesEl.children,function(c){ c.setAttribute('aria-pressed', c.getAttribute('data-k')===state.mode); });
+    if(state.mode!=='holiday') exitHoliday();
+    state.prompt=prompt;
+    promptEl.innerHTML=esc(prompt);
+    if(state.retro){ state.retroNote=pick(RETRO, state.retroNote); }
+    showTwist(); showSticker(); showRetro();
+    refcue.hidden=false; refEl.hidden=true; refBody.innerHTML=''; refNote.innerHTML='';
+    pactions.hidden=false; updateFavBtn();
+    var card=document.querySelector('.card'); if(card) card.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  var FAVKEY="doodilidoo.favs.v1";
+  function favLoad(){ try{ return JSON.parse(localStorage.getItem(FAVKEY)||"[]"); }catch(e){ return []; } }
+  function favStore(a){ try{ localStorage.setItem(FAVKEY, JSON.stringify(a)); }catch(e){} }
+  function isSaved(p){ return favLoad().some(function(f){ return f.prompt===p; }); }
+  function updateFavBtn(){ var on=state.prompt&&isSaved(state.prompt); favbtn.textContent=on?'♥ Saved':'♡ Save'; favbtn.classList.toggle('saved', !!on); }
+  function renderSaved(){
+    var a=favLoad();
+    savedwrap.hidden = a.length===0;
+    savedn.textContent=a.length;
+    savedlist.innerHTML=a.map(function(f){
+      return '<div class="saveditem"><span class="sm">'+esc(themeOf(f.mode))+'</span><span class="st">'+esc(f.prompt)+'</span><button type="button" title="Remove">×</button></div>';
+    }).join('');
+  }
+  favbtn.addEventListener('click',function(){
+    if(!state.prompt) return;
+    var a=favLoad(), i=-1; a.forEach(function(f,ix){ if(f.prompt===state.prompt) i=ix; });
+    if(i>=0){ a.splice(i,1); } else { a.unshift({mode:state.mode, prompt:state.prompt}); a=a.slice(0,60); }
+    favStore(a); updateFavBtn(); renderSaved();
+  });
+  savedhead.addEventListener('click',function(){ savedlist.hidden=!savedlist.hidden; });
+  savedlist.addEventListener('click',function(e){
+    var item=e.target.closest('.saveditem'); if(!item) return;
+    var idx=[].indexOf.call(savedlist.children, item), a=favLoad();
+    if(e.target.closest('button')){ a.splice(idx,1); favStore(a); renderSaved(); updateFavBtn(); return; }
+    var f=a[idx]; if(f) loadPrompt(f.mode, f.prompt);
+  });
+
+  sharebtn.addEventListener('click',function(){
+    if(!state.prompt) return;
+    var url=location.origin+location.pathname+'?m='+encodeURIComponent(state.mode)+'&p='+encodeURIComponent(state.prompt);
+    var btn=this, orig='🔗 Share';
+    if(navigator.share){ navigator.share({title:'Doodilidoo', text:'Draw this: '+state.prompt, url:url}).catch(function(){}); return; }
+    var done=function(){ btn.textContent='Link copied'; setTimeout(function(){ btn.textContent=orig; },1500); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(done); } else { done(); }
+  });
+
+  function daySeed(){ var d=new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+  function dailyPrompt(){
+    var s=daySeed(), modes=MODES.filter(function(m){ return m.k!=='holiday'; });
+    var m=modes[s % modes.length], arr=PROMPTS[m.k]||[];
+    if(!arr.length){ m=modes[(s+1)%modes.length]; arr=PROMPTS[m.k]||[]; }
+    return {mode:m.k, prompt:arr[Math.floor(s/7) % arr.length]};
+  }
+  var today=dailyPrompt();
+  dailyEl.hidden=false; dailypromptEl.textContent=today.prompt;
+  dailyEl.addEventListener('click',function(){ loadPrompt(today.mode, today.prompt); });
+
+  renderSaved();
+  var startedFromLink=false;
+  (function(){
+    var q; try{ q=new URLSearchParams(location.search); }catch(e){ return; }
+    var p=q&&q.get('p'); if(p){ startedFromLink=true; loadPrompt(q.get('m'), p); }
+  })();
 
   /* ---- reference images (Wikimedia Commons: keyless + CORS, real photos) ---- */
   var STOP=("a an the of in on at to and or that who whose its it is are am was as from into onto for by but nor not no this these those they them their there here so if then than like just still over under up down out off one all some any each every best most day night life own now your you make made let get got be been being do does did half across through about around after before what when where why how very red blue green yellow pink purple orange black white brown grey gray gold tiny big little small huge giant old young new grumpy polite sleepy fluffy chubby single bunch cluster sprig branch pair row kind sort with full intent glory convinced really wants says sign says mid dressed reimagined celebrating").split(/\s+/);
@@ -778,7 +930,7 @@
   });
 
   // boot
-  generate(true);
+  if(!startedFromLink){ generate(true); }
   renderWall();
 </script>
 </body>
