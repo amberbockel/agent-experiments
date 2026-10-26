@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agent Jam Band — four little agents, one loop</title>
+<meta name="description" content="Four tiny AI characters play a looping tune. Tap steps to teach each one a riff — all synthesized offline in your browser.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  :root{ --hue:#2f9e1f; --hue-fill:#71d45c; --hue-soft:rgba(113,212,92,.22); }
+  :root[data-theme="dark"]{ --hue:#71d45c; }
+  html,body{margin:0}
+  body{min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:760px;margin:0 auto;padding:var(--ab-5) var(--ab-4) var(--ab-8);display:grid;gap:var(--ab-5)}
+  header{display:flex;justify-content:space-between;gap:var(--ab-4);align-items:flex-start}
+  h1{font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-display-md);line-height:1.05;margin:var(--ab-2) 0 var(--ab-2)}
+  h1 em{font-style:normal;color:var(--hue)}
+  .lede{margin:0;max-width:46ch}
+  #theme{min-width:44px;padding:0;flex:none}
+  .stage{padding:var(--ab-4);border-radius:var(--ab-r-lg);display:grid;gap:var(--ab-3)}
+  .track{display:grid;grid-template-columns:56px 1fr;gap:var(--ab-3);align-items:center}
+  .who{display:grid;justify-items:center;gap:4px;min-width:0}
+  .face{width:44px;height:44px;border-radius:50%;background:var(--c);position:relative;transition:transform 120ms var(--ab-ease)}
+  .face::before,.face::after{content:"";position:absolute;top:16px;width:6px;height:6px;border-radius:50%;background:#1d1d1f}
+  .face::before{left:12px}.face::after{right:12px}
+  .face i{position:absolute;left:15px;bottom:10px;width:14px;height:5px;border-radius:0 0 10px 10px;border-bottom:2px solid #1d1d1f;transition:all 120ms}
+  .face.hit{transform:scale(1.18) translateY(-4px)}
+  .face.hit i{height:10px;width:12px;left:16px;border:2px solid #1d1d1f;border-radius:50%}
+  .name{width:56px;font:inherit;font-size:var(--ab-text-xs);text-align:center;background:none;border:0;border-bottom:1px dashed var(--ab-glass-border);color:var(--ab-text);padding:2px 0;border-radius:0}
+  .name:focus-visible{outline:2px solid var(--ab-accent);outline-offset:2px}
+  .steps{display:grid;grid-template-columns:repeat(16,1fr);gap:3px}
+  .step{aspect-ratio:1;min-height:0;padding:0;border-radius:8px;border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);cursor:pointer;transition:background var(--ab-dur) var(--ab-ease),transform 100ms}
+  .step:nth-child(4n+1){border-color:var(--ab-glass-highlight)}
+  .step:hover{background:var(--ab-glass-hover)}
+  .step[aria-pressed=true]{background:var(--c);border-color:transparent}
+  .step.now{transform:scale(.82);outline:2px solid var(--ab-accent);outline-offset:1px}
+  .step:focus-visible{outline:2px solid var(--ab-accent);outline-offset:2px;z-index:1}
+  /* 44px target on narrow screens: use a two-row 8-col grid */
+  @media(max-width:560px){
+    .track{grid-template-columns:1fr;gap:var(--ab-2)}
+    .who{grid-auto-flow:column;justify-content:start;justify-items:start;align-items:center;gap:var(--ab-3)}
+    .name{width:auto;text-align:left;font-size:var(--ab-text-sm)}
+    .steps{grid-template-columns:repeat(8,1fr);gap:4px}
+    .step{min-height:36px;aspect-ratio:auto;height:40px}
+  }
+  .controls{display:flex;flex-wrap:wrap;gap:var(--ab-3);align-items:center}
+  .tempo{display:flex;align-items:center;gap:var(--ab-3);flex:1;min-width:200px}
+  .tempo label{font-size:var(--ab-text-sm);color:var(--ab-muted);white-space:nowrap}
+  input[type=range]{flex:1;min-height:44px;accent-color:var(--ab-accent)}
+  .ab-btn.on{background:var(--hue-fill);color:#16111f;border-color:transparent}
+  .hint{font-size:var(--ab-text-sm);color:var(--ab-faint);margin:0}
+  kbd{font-family:var(--ab-font-mono);font-size:.8em;padding:1px 6px;border-radius:6px;border:1px solid var(--ab-glass-border)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <span class="ab-eyebrow">Agent Experiments · 26 Oct</span>
+      <h1>Agent <em>Jam</em> Band</h1>
+      <p class="lede">Four tiny agents, one looping tune. Tap steps to teach each of them a riff — they'll play it back forever. Everything is synthesized on your device.</p>
+    </div>
+    <button id="theme" class="ab-btn ab-btn--glass" aria-label="Toggle light and dark theme">◐</button>
+  </header>
+
+  <section class="ab-card stage" aria-label="Band">
+    <div id="tracks"></div>
+  </section>
+
+  <div class="controls">
+    <button id="play" class="ab-btn ab-btn--primary">▶ Play</button>
+    <button id="shuffle" class="ab-btn ab-btn--glass">Surprise me</button>
+    <button id="clear" class="ab-btn ab-btn--ghost">Clear</button>
+    <div class="tempo"><label for="bpm">Tempo <span id="bpmv">108</span></label><input id="bpm" type="range" min="70" max="170" value="108"></div>
+  </div>
+  <p class="hint">Press <kbd>Space</kbd> to play or pause. Rename your agents — the names are yours. Notes sit on a pentatonic scale, so nothing can sound wrong.</p>
+</div>
+
+<script>
+const root=document.documentElement,KEY='ab-theme';
+try{root.dataset.theme=localStorage.getItem(KEY)||'light'}catch(e){}
+document.getElementById('theme').onclick=()=>{
+  root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
+  try{localStorage.setItem(KEY,root.dataset.theme)}catch(e){}
+};
+
+const N=16;
+// pentatonic C major frequencies
+const P=[261.63,293.66,329.63,392,440,523.25,587.33,659.25,784,880];
+const AGENTS=[
+  {name:'Bass',c:'#5d3a9b',type:'triangle',oct:.5,pick:[0,1,2,4],dur:.28,vol:.5,kind:'tone'},
+  {name:'Pluck',c:'#c67fff',type:'triangle',oct:1,pick:[2,3,4,5,6],dur:.22,vol:.35,kind:'tone'},
+  {name:'Bell',c:'#71d45c',type:'sine',oct:2,pick:[4,5,6,7,8,9],dur:.5,vol:.22,kind:'tone'},
+  {name:'Tick',c:'#ffb8d9',type:'noise',oct:1,pick:[0],dur:.05,vol:.25,kind:'noise'}
+];
+const grid=AGENTS.map(()=>Array(N).fill(false));
+const pitch=AGENTS.map((a,i)=>Array.from({length:N},(_,s)=>a.pick[(s*3+i)%a.pick.length]));
+const tracks=document.getElementById('tracks');
+const stepEls=[],faces=[];
+AGENTS.forEach((a,i)=>{
+  const t=document.createElement('div');t.className='track';t.style.setProperty('--c',a.c);t.style.marginBottom='12px';
+  t.innerHTML='<div class="who"><div class="face"><i></i></div><input class="name" maxlength="10" aria-label="Agent '+(i+1)+' name" value="'+a.name+'"></div><div class="steps" role="group" aria-label="Steps for agent '+(i+1)+'"></div>';
+  const st=t.querySelector('.steps');stepEls[i]=[];faces[i]=t.querySelector('.face');
+  for(let s=0;s<N;s++){
+    const b=document.createElement('button');b.className='step';b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Step '+(s+1));
+    b.onclick=()=>{grid[i][s]=!grid[i][s];b.setAttribute('aria-pressed',grid[i][s]);if(grid[i][s])audition(i,s)};
+    st.appendChild(b);stepEls[i][s]=b;
+  }
+  tracks.appendChild(t);
+});
+
+let ctx,playing=false,cur=0,next=0,timer=null;
+function ac(){if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)()}if(ctx.state==='suspended')ctx.resume();return ctx}
+function voice(i,s,when){
+  const a=AGENTS[i],c=ac(),g=c.createGain();g.connect(c.destination);
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(a.vol,when+.01);g.gain.exponentialRampToValueAtTime(.0008,when+a.dur);
+  if(a.kind==='noise'){
+    const buf=c.createBuffer(1,c.sampleRate*.08,c.sampleRate),d=buf.getChannelData(0);
+    for(let k=0;k<d.length;k++)d[k]=Math.random()*2-1;
+    const src=c.createBufferSource();src.buffer=buf;const f=c.createBiquadFilter();f.type='highpass';f.frequency.value=6000;
+    src.connect(f);f.connect(g);src.start(when);return;
+  }
+  const o=c.createOscillator();o.type=a.type;o.frequency.value=P[pitch[i][s]]*a.oct;
+  o.connect(g);o.start(when);o.stop(when+a.dur+.05);
+}
+function audition(i,s){voice(i,s,ac().currentTime+.01);bounce(i)}
+function bounce(i){const f=faces[i];f.classList.add('hit');setTimeout(()=>f.classList.remove('hit'),130)}
+function tick(){
+  const c=ac(),spb=60/+bpm.value/4;
+  while(next<c.currentTime+.15){
+    const s=cur;
+    AGENTS.forEach((_,i)=>{if(grid[i][s])voice(i,s,next)});
+    const delay=Math.max(0,(next-c.currentTime)*1000);
+    setTimeout(()=>{
+      stepEls.forEach((r,i)=>{r.forEach((e,k)=>e.classList.toggle('now',k===s));if(grid[i][s])bounce(i)});
+    },delay);
+    next+=spb;cur=(cur+1)%N;
+  }
+}
+function setPlay(on){
+  playing=on;const b=document.getElementById('play');
+  b.textContent=on?'❚❚ Pause':'▶ Play';b.classList.toggle('on',on);
+  if(on){ac();cur=0;next=ctx.currentTime+.05;timer=setInterval(tick,25)}
+  else{clearInterval(timer);stepEls.forEach(r=>r.forEach(e=>e.classList.remove('now')))}
+}
+function render(){grid.forEach((r,i)=>r.forEach((v,s)=>stepEls[i][s].setAttribute('aria-pressed',v)))}
+const bpm=document.getElementById('bpm');
+bpm.oninput=()=>document.getElementById('bpmv').textContent=bpm.value;
+document.getElementById('play').onclick=()=>setPlay(!playing);
+document.getElementById('clear').onclick=()=>{grid.forEach(r=>r.fill(false));render()};
+document.getElementById('shuffle').onclick=()=>{
+  const dens=[.3,.35,.25,.55];
+  grid.forEach((r,i)=>{for(let s=0;s<N;s++){r[s]=(i===3?s%2===1:Math.random()<dens[i])&&Math.random()<(i===3?.8:1);
+    pitch[i][s]=AGENTS[i].pick[Math.floor(Math.random()*AGENTS[i].pick.length)]}});
+  render();if(!playing)setPlay(true);
+};
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!/INPUT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();setPlay(!playing)}
+});
+// starter groove
+[[0,4,8,12],[2,6,10,14],[3,7,11,15],[1,5,9,13]].forEach((a,i)=>a.forEach(s=>grid[i][s]=true));
+render();
+</script>
+</body>
+</html>
