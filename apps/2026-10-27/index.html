@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Switch Tax</title>
+<meta name="description" content="Measure what an interruption really costs you: one focused round, one pinged round, and your own numbers.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+:root{--hue:#2f8f3a;--hue-bg:rgba(113,212,92,.18);--hue-fill:#71d45c}
+:root[data-theme="dark"]{--hue:#8fe27d}
+body{min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.col{max-width:620px;margin:0 auto;padding:var(--ab-6) var(--ab-4) var(--ab-8)}
+header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--ab-7)}
+.top a{color:var(--ab-muted);font-size:var(--ab-text-sm);text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+.top a:hover{color:var(--ab-text)}
+h1{font-size:var(--ab-display-lg);line-height:1.02;margin:var(--ab-3) 0 var(--ab-5)}
+h1 em{font-style:normal;color:var(--ab-accent)}
+.lede{font-size:var(--ab-text-lg);color:var(--ab-muted);max-width:34ch;margin-bottom:var(--ab-6)}
+.steps{list-style:none;padding:0;margin:0 0 var(--ab-6);display:grid;gap:var(--ab-3)}
+.steps li{display:grid;grid-template-columns:32px 1fr;gap:var(--ab-3);align-items:baseline;color:var(--ab-muted)}
+.steps b{font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-text-xl);color:var(--ab-accent)}
+.screen[hidden]{display:none}
+.hud{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--ab-4)}
+.hud .t{font-family:var(--ab-font-display);font-size:var(--ab-display-md);font-variant-numeric:tabular-nums;line-height:1}
+.hud .r{font-size:var(--ab-text-sm);color:var(--ab-muted)}
+.next{font-size:var(--ab-text-sm);color:var(--ab-muted);margin-bottom:var(--ab-3)}
+.next strong{color:var(--ab-text);font-family:var(--ab-font-display);font-weight:400;font-size:var(--ab-text-xl)}
+.grid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--ab-2);transition:filter .3s var(--ab-ease),opacity .3s}
+.grid.away{filter:blur(6px);opacity:.35;pointer-events:none}
+.cell{min-height:72px;border-radius:var(--ab-r-md);border:1px solid var(--ab-glass-border);background:var(--ab-glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--ab-text);font:inherit;font-family:var(--ab-font-display);font-size:1.5rem;cursor:pointer;transition:transform .15s var(--ab-ease),background .2s}
+.cell:hover{background:var(--ab-glass-hover)}
+.cell:active{transform:scale(.96)}
+.cell:focus-visible{outline:2px solid var(--ab-accent);outline-offset:2px}
+.cell.done{background:var(--hue-bg);color:var(--hue);border-color:transparent;pointer-events:none}
+.cell.miss{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.ping{position:fixed;left:var(--ab-4);right:var(--ab-4);top:calc(var(--ab-5) + env(safe-area-inset-top));max-width:420px;margin:0 auto;z-index:10;padding:var(--ab-5);border-radius:var(--ab-r-lg);background:var(--ab-glass-hover);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--ab-glass-highlight);animation:drop .35s var(--ab-ease)}
+.ping[hidden]{display:none}
+@keyframes drop{from{transform:translateY(-24px);opacity:0}}
+.ping .who{font-size:var(--ab-text-sm);color:var(--ab-muted);margin-bottom:var(--ab-2)}
+.ping .q{font-family:var(--ab-font-display);font-size:var(--ab-display-sm);margin-bottom:var(--ab-4)}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ab-2)}
+.card-s{padding:var(--ab-5);margin-bottom:var(--ab-4)}
+.big{font-family:var(--ab-font-display);font-size:var(--ab-display-lg);line-height:1;color:var(--ab-accent)}
+.big small{font-size:var(--ab-text-base);font-family:var(--ab-font-sans);color:var(--ab-muted);margin-left:var(--ab-2)}
+.cap{color:var(--ab-muted);margin-top:var(--ab-3)}
+.tl{margin:var(--ab-5) 0}
+.tl .row{display:grid;grid-template-columns:72px 1fr;gap:var(--ab-3);align-items:center;margin-bottom:var(--ab-3);font-size:var(--ab-text-sm);color:var(--ab-muted)}
+.bar{position:relative;height:24px;border-radius:var(--ab-r-pill);background:var(--ab-glass-bg);border:1px solid var(--ab-glass-border);overflow:hidden}
+.seg{position:absolute;top:0;bottom:0}
+.seg.work{background:var(--hue-fill);opacity:.7}
+.seg.int{background:var(--ab-accent)}
+.legend{display:flex;gap:var(--ab-4);font-size:var(--ab-text-xs);color:var(--ab-muted);margin-left:84px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.cost{display:flex;align-items:center;gap:var(--ab-4);margin-top:var(--ab-4)}
+.cost input{flex:1;accent-color:var(--ab-accent);min-height:44px}
+.cost output{min-width:3ch;font-variant-numeric:tabular-nums;font-weight:600}
+.note{font-size:var(--ab-text-sm);color:var(--ab-faint);margin-top:var(--ab-5)}
+.actions{display:flex;gap:var(--ab-3);flex-wrap:wrap;margin-top:var(--ab-5)}
+.hist{font-size:var(--ab-text-sm);color:var(--ab-muted);margin-top:var(--ab-4)}
+@media (prefers-reduced-motion:reduce){.ping,.cell{animation:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="col">
+<header class="top"><a href="../../">&larr; agent-experiments</a><span class="ab-tag">Productivity</span></header>
+
+<section class="screen" id="s-intro">
+  <span class="ab-eyebrow">A two-minute experiment</span>
+  <h1>The <em>switch</em> tax</h1>
+  <p class="lede">Everyone says interruptions are expensive. Find out what they cost <i>you</i>.</p>
+  <ol class="steps">
+    <li><b>1</b><span>Two short rounds: tap 1 to 16 in order, as fast as you can.</span></li>
+    <li><b>2</b><span>One round is clean. In the other, pings arrive with a tiny question to answer.</span></li>
+    <li><b>3</b><span>We time the work you did, not the pings, and show the difference.</span></li>
+  </ol>
+  <button class="ab-btn ab-btn--primary ab-btn--lg" id="start">Start round one</button>
+  <div class="hist" id="hist"></div>
+</section>
+
+<section class="screen" id="s-play" hidden>
+  <div class="hud"><div class="t" id="clock">0.0s</div><div class="r" id="rlabel">Round 1 of 2</div></div>
+  <div class="next">Find <strong id="nxt">1</strong></div>
+  <div class="grid" id="grid" role="group" aria-label="Number grid"></div>
+  <p class="note" id="hint"></p>
+</section>
+
+<div class="ping ab-glass" id="ping" role="alertdialog" aria-labelledby="pq" hidden>
+  <div class="who" id="pwho"></div>
+  <div class="q" id="pq"></div>
+  <div class="opts" id="opts"></div>
+</div>
+
+<section class="screen" id="s-res" hidden>
+  <span class="ab-eyebrow">Your result</span>
+  <h1 id="rh" style="font-size:var(--ab-display-md)"></h1>
+  <div class="ab-card card-s">
+    <div class="big" id="pen">0<small>sec per ping</small></div>
+    <p class="cap" id="pencap"></p>
+  </div>
+  <div class="tl">
+    <div class="row"><span>Clean</span><div class="bar" id="bA"></div></div>
+    <div class="row"><span>Pinged</span><div class="bar" id="bB"></div></div>
+    <div class="legend"><span><i style="background:var(--hue-fill)"></i>your work</span><span><i style="background:var(--ab-accent)"></i>answering pings</span></div>
+  </div>
+  <div class="ab-card card-s">
+    <label class="ab-label" for="n">Pings in your real workday</label>
+    <div class="cost"><input type="range" id="n" min="5" max="120" value="30" step="5"><output id="nout">30</output></div>
+    <p class="cap" id="day"></p>
+  </div>
+  <p class="note">One honest sample, not a study. Practice helps whichever round comes second, so the order is random each run. Play a few times for a steadier number.</p>
+  <div class="actions"><button class="ab-btn ab-btn--primary" id="again">Run it again</button></div>
+  <div class="hist" id="hist2"></div>
+</section>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const N=16,PINGS=[4,8,12],KEY='switch-tax-runs';
+const WHO=['Priya in #design','Build agent','Calendar','Standup bot','Your agent'];
+let st=null,raf=0;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function show(id){['s-intro','s-play','s-res'].forEach(s=>$(s).hidden=s!==id)}
+const runs=()=>{try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}};
+function hist(){const r=runs();const t=r.length?`Past runs on this device: ${r.slice(-5).map(x=>(x>=0?'+':'')+x.toFixed(1)+'s').join(', ')} per ping.`:'';$('hist').textContent=t;$('hist2').textContent=t}
+
+function startRound(){
+  const r=st.order[st.round];
+  st.cur={ping:r==='B',taps:[],ints:[],next:1,t0:performance.now(),lastEvt:performance.now(),resumeAt:null};
+  $('rlabel').textContent=`Round ${st.round+1} of 2`;
+  $('hint').textContent=st.round===0?'Go go go.':'Same task again, new layout.';
+  $('nxt').textContent=1;
+  const g=$('grid');g.innerHTML='';g.classList.remove('away');
+  shuffle([...Array(N)].map((_,i)=>i+1)).forEach(n=>{
+    const b=document.createElement('button');b.className='cell';b.textContent=n;b.dataset.n=n;g.appendChild(b)});
+  show('s-play');tick();
+}
+function tick(){$('clock').textContent=((performance.now()-st.cur.t0-st.cur.ints.reduce((a,i)=>a+i.d,0)-(st.cur.pingStart?performance.now()-st.cur.pingStart:0))/1000).toFixed(1)+'s';raf=requestAnimationFrame(tick)}
+
+$('grid').addEventListener('click',e=>{
+  const b=e.target.closest('.cell');if(!b||!st||st.cur.pingStart)return;
+  const c=st.cur,n=+b.dataset.n;
+  if(n!==c.next){b.classList.remove('miss');void b.offsetWidth;b.classList.add('miss');return}
+  const now=performance.now();
+  const rec={t:now,gap:now-c.lastEvt,resume:c.resumeAt!==null};
+  c.taps.push(rec);c.resumeAt=null;c.lastEvt=now;b.classList.add('done');c.next++;
+  if(c.next>N){finishRound();return}
+  $('nxt').textContent=c.next;
+  if(c.ping&&PINGS.includes(c.next-1))ping();
+});
+
+function ping(){
+  const c=st.cur,a=2+(Math.random()*8|0),b=2+(Math.random()*8|0),ans=a+b;
+  c.pingStart=performance.now();
+  $('grid').classList.add('away');
+  $('pwho').textContent=WHO[Math.random()*WHO.length|0]+' needs a quick answer';
+  $('pq').textContent=`${a} + ${b} = ?`;
+  const o=shuffle([ans,ans+1+(Math.random()*2|0),ans-1-(Math.random()*2|0)]);
+  const box=$('opts');box.innerHTML='';
+  o.forEach(v=>{const x=document.createElement('button');x.className='ab-btn ab-btn--glass';x.textContent=v;
+    x.onclick=()=>{if(v!==ans){x.disabled=true;return}
+      const now=performance.now();c.ints.push({d:now-c.pingStart,at:c.pingStart});c.pingStart=null;c.resumeAt=now;c.lastEvt=now;
+      $('ping').hidden=true;$('grid').classList.remove('away')};
+    box.appendChild(x)});
+  $('ping').hidden=false;box.firstChild.focus();
+}
+
+function finishRound(){
+  cancelAnimationFrame(raf);
+  const c=st.cur,end=performance.now(),intTot=c.ints.reduce((a,i)=>a+i.d,0);
+  const res={work:end-c.t0-intTot,total:end-c.t0,ints:c.ints.map(i=>({s:i.at-c.t0,d:i.d})),ping:c.ping};
+  st.res[c.ping?'B':'A']=res;
+  if(++st.round<2){startRound();return}
+  results();
+}
+
+function bar(el,r,max){
+  el.innerHTML='';let pos=0;
+  const add=(w,cls)=>{const s=document.createElement('div');s.className='seg '+cls;s.style.left=pos/max*100+'%';s.style.width=Math.max(w/max*100,.5)+'%';el.appendChild(s);pos+=w};
+  let cursor=0;
+  r.ints.forEach(i=>{add(i.s-cursor,'work');cursor=i.s+i.d;add(i.d,'int')});
+  const rest=r.total-cursor;if(rest>0)add(rest,'work');
+}
+
+function results(){
+  show('s-res');
+  const A=st.res.A,B=st.res.B,per=(B.work-A.work)/PINGS.length/1000;
+  st.per=per;
+  try{const r=runs();r.push(per);localStorage.setItem(KEY,JSON.stringify(r.slice(-20)))}catch(e){}
+  const f=ms=>(ms/1000).toFixed(1)+'s';
+  $('rh').textContent=per>0.4?`Each ping cost you about ${per.toFixed(1)} seconds.`:per>-0.4?'Barely a ripple this time.':'No tax this time. Practice beat the pings.';
+  $('pen').innerHTML=`${per>=0?'+':''}${per.toFixed(1)}<small>sec per ping</small>`;
+  $('pencap').textContent=`Clean round: ${f(A.work)} of work. Pinged round: ${f(B.work)} of work, not counting the ${f(B.total-B.work)} you spent answering. The extra time went to finding your place again.`;
+  const max=Math.max(A.total,B.total);bar($('bA'),A,max);bar($('bB'),B,max);
+  day();hist();
+}
+function day(){
+  const n=+$('n').value,m=Math.max(st.per,0)*n/60;
+  $('nout').textContent=n;
+  $('day').textContent=st.per>0?`At ${n} pings a day, that is about ${m.toFixed(1)} minutes spent just finding your place again, before counting the pings themselves.`:'No measurable re-entry cost in this sample. Run it again; one round is noisy.';
+}
+$('n').addEventListener('input',day);
+$('start').onclick=()=>{st={round:0,res:{},order:Math.random()<.5?['A','B']:['B','A']};startRound()};
+$('again').onclick=$('start').onclick;
+hist();
+})();
+</script>
+</body>
+</html>

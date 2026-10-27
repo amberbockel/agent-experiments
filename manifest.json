@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-27",
+      "slug": "2026-10-27",
+      "title": "Switch Tax",
+      "category": "productivity",
+      "oneLiner": "Two quick rounds, one clean and one pinged, reveal what an interruption really costs you.",
+      "path": "apps/2026-10-27/"
+    },
+    {
       "date": "2026-10-26",
       "slug": "2026-10-26",
       "title": "Agent Jam Band",
