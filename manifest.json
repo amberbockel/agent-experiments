@@ -4,6 +4,14 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-28",
+      "slug": "2026-10-28",
+      "title": "Spin & Solve",
+      "category": "games",
+      "oneLiner": "A pass-and-play wheel-and-puzzle word game for the family — spin, guess letters, and solve phrases from science, math and Massachusetts history.",
+      "path": "apps/2026-10-28/"
+    },
+    {
       "date": "2026-10-27",
       "slug": "2026-10-27",
       "title": "Switch Tax",
