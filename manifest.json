@@ -5,6 +5,15 @@
   "apps": [
     {
       "date": "2026-10-29",
+      "slug": "2026-10-29-runway",
+      "title": "Runway",
+      "category": "business",
+      "design": "risograph-textured",
+      "oneLiner": "Pull the levers on cash, growth and headcount — including AI agent seats — and watch a two-ink printed cash line show how many months you have left.",
+      "path": "apps/2026-10-29-runway/"
+    },
+    {
+      "date": "2026-10-29",
       "slug": "2026-10-29-spectrum",
       "title": "Spectrum",
       "category": "delightful",
