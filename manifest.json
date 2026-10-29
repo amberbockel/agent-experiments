@@ -5,6 +5,15 @@
   "apps": [
     {
       "date": "2026-10-29",
+      "slug": "2026-10-29-spectrum",
+      "title": "Spectrum",
+      "category": "delightful",
+      "design": "neo-brutalist",
+      "oneLiner": "A pass-and-play party game: one person gives a clue, everyone else drags the needle to find the hidden spot on a spectrum. Family game night on one phone.",
+      "path": "apps/2026-10-29-spectrum/"
+    },
+    {
+      "date": "2026-10-29",
       "slug": "2026-10-29",
       "title": "Swarm Math",
       "category": "trend",
