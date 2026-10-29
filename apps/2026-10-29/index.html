@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Swarm Math — how many agents is too many?</title>
+<meta name="description" content="Scrub the number of parallel agents and watch a task's trace redraw: speedup, idle time, and the point where coordination eats the gain.">
+<link rel="stylesheet" href="../../brand/amberbockel.css">
+<style>
+  :root { --hue: var(--ab-green); --hue-ink: #2f7d22; --hue-soft: rgba(113,212,92,.22); }
+  :root[data-theme="dark"] { --hue-ink: #8fe07c; --hue-soft: rgba(113,212,92,.18); }
+  body { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--ab-6); }
+  header.top { display: flex; justify-content: space-between; align-items: center; gap: var(--ab-3); padding-top: var(--ab-2); }
+  .back { font-size: var(--ab-text-sm); color: var(--ab-muted); min-height: 44px; display: inline-flex; align-items: center; }
+  .iconbtn { min-width: 44px; min-height: 44px; }
+
+  /* masthead: one huge number */
+  .mast { display: grid; gap: var(--ab-4); }
+  .mast h1 { font-size: var(--ab-display-md); max-width: 14ch; margin: 0; }
+  .big { display: flex; align-items: baseline; gap: var(--ab-3); flex-wrap: wrap; }
+  .big output { font-family: var(--ab-font-display); font-size: clamp(5rem, 24vw, 10.5rem); line-height: .9; letter-spacing: -.03em; color: var(--ab-text); font-variant-numeric: tabular-nums; }
+  .big small { font-size: var(--ab-text-sm); color: var(--ab-muted); max-width: 22ch; line-height: 1.4; }
+  .verdict { display: inline-flex; align-items: center; gap: 8px; font-size: var(--ab-text-sm); font-weight: 600; padding: 6px 12px; border-radius: var(--ab-r-pill); background: var(--hue-soft); color: var(--hue-ink); width: fit-content; transition: background var(--ab-dur) var(--ab-ease), color var(--ab-dur); }
+  .verdict.bad { background: rgba(255,184,217,.4); color: #a3205f; }
+  :root[data-theme="dark"] .verdict.bad { color: var(--ab-pink-soft); background: rgba(255,184,217,.14); }
+  .verdict i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--ab-3); }
+  .stat { padding: var(--ab-4); }
+  .stat span { display: block; font-size: var(--ab-text-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--ab-faint); }
+  .stat b { font-family: var(--ab-font-display); font-weight: 400; font-size: var(--ab-display-sm); font-variant-numeric: tabular-nums; }
+
+  /* controls */
+  .controls { display: grid; gap: var(--ab-5); padding: var(--ab-5); }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button { min-height: 44px; padding: 0 16px; border-radius: var(--ab-r-pill); border: 1px solid var(--ab-glass-border); background: var(--ab-glass-bg); color: var(--ab-text); font: inherit; font-size: var(--ab-text-sm); cursor: pointer; transition: background var(--ab-dur) var(--ab-ease); }
+  .seg button:hover { background: var(--ab-glass-hover); }
+  .seg button[aria-pressed="true"] { background: var(--ab-accent); color: var(--ab-on-accent); border-color: transparent; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--ab-3); }
+  .lbl { font-size: var(--ab-text-sm); font-weight: 600; }
+  .val { font-family: var(--ab-font-display); font-size: var(--ab-text-xl); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; min-height: 44px; accent-color: var(--ab-accent); margin: 0; }
+  .hint { font-size: var(--ab-text-xs); color: var(--ab-faint); margin: 0; }
+
+  /* trace */
+  .trace { padding: var(--ab-5); display: grid; gap: var(--ab-4); }
+  .trace-head { display: flex; justify-content: space-between; align-items: center; gap: var(--ab-3); flex-wrap: wrap; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: var(--ab-text-xs); color: var(--ab-muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .lanes { display: grid; gap: 6px; position: relative; }
+  .lane { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; }
+  .lane > em { font-style: normal; font-size: var(--ab-text-xs); color: var(--ab-faint); font-variant-numeric: tabular-nums; }
+  .track { position: relative; height: 36px; border-radius: 8px; background: repeating-linear-gradient(135deg, transparent 0 6px, var(--ab-line) 6px 7px); }
+  .span { position: absolute; top: 2px; bottom: 2px; border-radius: 6px; border: 0; padding: 0; cursor: pointer; color: var(--ab-on-accent); font: 600 10px var(--ab-font-sans); overflow: hidden; transition: left 420ms var(--ab-ease), width 420ms var(--ab-ease), opacity 200ms; }
+  .span.plan, .span.test, .span.review, .span.merge { background: var(--ab-accent); }
+  .span.test { background: var(--ab-lavender); }
+  .span.review { background: var(--ab-indigo); color: #fff; }
+  .span.merge { background: var(--ab-pink-soft); color: #4a1030; }
+  .span.edit { background: var(--hue); color: #123308; }
+  .span.tax { background: repeating-linear-gradient(45deg, var(--ab-pink-soft) 0 4px, transparent 4px 8px); color: #4a1030; }
+  .span:hover, .span[aria-pressed="true"] { outline: 2px solid var(--ab-text); outline-offset: 1px; z-index: 2; }
+  .span.dim { opacity: .35; }
+  .axis { display: grid; grid-template-columns: 28px 1fr; gap: 8px; }
+  .axis div { position: relative; height: 18px; font-size: 10px; color: var(--ab-faint); font-variant-numeric: tabular-nums; }
+  .axis div span { position: absolute; transform: translateX(-50%); }
+  .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ab-text); opacity: 0; pointer-events: none; border-radius: 1px; }
+  .detail { min-height: 56px; padding: var(--ab-3) var(--ab-4); border-radius: var(--ab-r-md); background: var(--ab-glass-bg); border: 1px solid var(--ab-glass-border); font-size: var(--ab-text-sm); color: var(--ab-muted); }
+  .detail b { color: var(--ab-text); }
+
+  /* curve */
+  .curve { padding: var(--ab-5); display: grid; gap: var(--ab-3); }
+  .curve svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+  .bar { flex: 1; min-width: 0; border: 0; border-radius: 8px 8px 4px 4px; background: var(--ab-accent-soft); cursor: pointer; position: relative; transition: height 420ms var(--ab-ease), background var(--ab-dur); padding: 0; min-height: 4px; }
+  .bar:hover { background: var(--ab-accent-ring); }
+  .bar[aria-pressed="true"] { background: var(--ab-accent); }
+  .bar.best::after { content: "best"; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--hue-ink); font-weight: 700; }
+  .barlbl { display: flex; gap: 6px; font-size: 10px; color: var(--ab-faint); }
+  .barlbl span { flex: 1; text-align: center; }
+
+  .why { font-size: var(--ab-text-sm); max-width: 62ch; }
+  footer { font-size: var(--ab-text-xs); color: var(--ab-faint); text-align: center; }
+
+  @media (min-width: 860px) {
+    .top-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--ab-6); align-items: end; }
+    .stats { grid-template-columns: repeat(4, 1fr); }
+    .controls { grid-template-columns: 1.2fr 1fr 1fr; align-items: start; }
+    .trace, .controls, .curve { padding: var(--ab-6); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="back" href="../../">← Agent Experiments</a>
+    <button class="ab-btn ab-btn--glass iconbtn" id="theme" aria-label="Toggle dark mode">◐</button>
+  </header>
+
+  <section class="mast">
+    <div class="top-grid">
+      <div>
+        <span class="ab-eyebrow">Swarm Math</span>
+        <h1>How many agents is too many?</h1>
+        <p class="why">Parallel coding agents are the launch of the season. But a task has a serial spine — planning, tests, review, merge — and every extra agent adds coordination. Slide the swarm size and watch the trace.</p>
+      </div>
+      <div>
+        <div class="big"><output id="speed" aria-live="polite">1.0×</output><small>faster than one agent working alone</small></div>
+        <div class="verdict" id="verdict"><i></i><span>—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats" aria-label="Run summary">
+    <div class="ab-card stat"><span>Wall clock</span><b id="sWall">—</b></div>
+    <div class="ab-card stat"><span>Solo time</span><b id="sSolo">—</b></div>
+    <div class="ab-card stat"><span>Agent-seconds paid</span><b id="sCost">—</b></div>
+    <div class="ab-card stat"><span>Idle share</span><b id="sIdle">—</b></div>
+  </section>
+
+  <section class="ab-card controls" aria-label="Controls">
+    <div>
+      <div class="lbl" style="margin-bottom:8px">Task</div>
+      <div class="seg" id="tasks" role="group" aria-label="Choose a task"></div>
+    </div>
+    <div>
+      <div class="row"><label class="lbl" for="n">Agents in the swarm</label><span class="val" id="nv">4</span></div>
+      <input id="n" type="range" min="1" max="10" value="4">
+      <p class="hint">Arrow keys step one agent at a time.</p>
+    </div>
+    <div>
+      <div class="row"><label class="lbl" for="tax">Coordination tax</label><span class="val" id="taxv">3s</span></div>
+      <input id="tax" type="range" min="0" max="8" value="3">
+      <p class="hint">Seconds of dispatch + merge-conflict work added per extra agent.</p>
+    </div>
+  </section>
+
+  <section class="ab-card trace" aria-label="Run trace">
+    <div class="trace-head">
+      <div class="legend" id="legend"></div>
+      <button class="ab-btn ab-btn--glass" id="play">▶ Replay run</button>
+    </div>
+    <div class="lanes" id="lanes"></div>
+    <div class="axis"><i></i><div id="axis"></div></div>
+    <div class="detail" id="detail" aria-live="polite">Tap any bar to see what that agent was doing.</div>
+  </section>
+
+  <section class="ab-card curve" aria-label="Speedup by swarm size">
+    <div class="row"><h3 style="margin:0">Same task, every swarm size</h3><span class="hint">tap a bar to jump</span></div>
+    <div class="bars" id="bars"></div>
+    <div class="barlbl" id="barlbl"></div>
+    <p class="hint">Bar height = speedup versus one agent. The tallest bar is the sweet spot — past it you pay more and finish later.</p>
+  </section>
+
+  <footer>Simulated, deterministic schedule (longest-job-first). No network, no model calls — just the arithmetic of parallel work.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  // Each task: serial plan, parallel work items, serial test/review/merge.
+  const TASKS = {
+    auth: { name: 'Migrate auth module', plan: 5, work: [22,18,15,14,12,9,8,7,6,5,4,4], test: 12, review: 7, merge: 3,
+            names: ['session.ts','tokens.ts','login route','refresh flow','middleware','oauth glue','cookies','csrf','types','fixtures','docs','changelog'] },
+    docs: { name: 'Rewrite 40 docs pages', plan: 3, work: [6,6,6,6,6,6,6,6,6,6,6,6], test: 4, review: 5, merge: 2,
+            names: Array.from({length:12}, (_, i) => 'pages ' + (i*3+1) + '–' + (i*3+3)) },
+    bug:  { name: 'Chase one flaky bug', plan: 6, work: [30,6,5,4], test: 14, review: 4, merge: 2,
+            names: ['root-cause hunt','repro script','log dive','patch idea'] }
+  };
+  const KIND = { plan:['Plan','accent'], edit:['Work','green'], tax:['Coordination','pink'], test:['Test','lav'], review:['Review','indigo'], merge:['Merge','pinkS'] };
+  let task = 'auth', N = 4, tax = 3, sel = null, timer = null;
+
+  function schedule(t, n, c) {
+    const T = TASKS[t];
+    const spans = [];
+    const dispatch = Math.round(c * (n - 1) * 0.5);
+    let t0 = 0;
+    spans.push({ lane:0, s:0, d:T.plan, kind:'plan', label:'Plan the work', note:'Orchestrator reads the repo and splits the task. Nothing else can start yet.' });
+    t0 = T.plan;
+    if (dispatch) { spans.push({ lane:0, s:t0, d:dispatch, kind:'tax', label:'Dispatch', note:'Briefing ' + (n-1) + ' extra agent' + (n>2?'s':'') + ' with context. Grows with swarm size.' }); t0 += dispatch; }
+    const loads = Array.from({length:n}, () => t0);
+    const items = T.work.map((d, i) => ({ d, name: T.names[i] })).sort((a, b) => b.d - a.d);
+    items.forEach(it => {
+      let l = 0; for (let i = 1; i < n; i++) if (loads[i] < loads[l]) l = i;
+      spans.push({ lane:l, s:loads[l], d:it.d, kind:'edit', label:it.name, note:'Agent ' + (l+1) + ' works on ' + it.name + '.' });
+      loads[l] += it.d;
+    });
+    let end = Math.max(...loads);
+    const conflict = Math.round(c * (n - 1));
+    const tail = [['test',T.test,'Run the full test suite','Single serial step: one suite, one result.'],
+                  ['review',T.review,'Review the combined diff','A reviewer must read everything once, however many wrote it.']];
+    tail.forEach(([k,d,l,note]) => { spans.push({ lane:0, s:end, d, kind:k, label:l, note }); end += d; });
+    if (conflict) { spans.push({ lane:0, s:end, d:conflict, kind:'tax', label:'Resolve conflicts', note:'Stitching ' + n + ' agents’ edits together. Grows with swarm size.' }); end += conflict; }
+    spans.push({ lane:0, s:end, d:T.merge, kind:'merge', label:'Merge', note:'Land it.' }); end += T.merge;
+    const work = spans.reduce((a, s) => a + s.d, 0);
+    return { spans, wall: end, work, n };
+  }
+  const solo = () => schedule(task, 1, 0).wall;
+  const fmt = s => s >= 60 ? Math.floor(s/60) + 'm ' + String(Math.round(s%60)).padStart(2,'0') + 's' : Math.round(s) + 's';
+
+  function render() {
+    const r = schedule(task, N, tax), base = solo(), sp = base / r.wall;
+    $('speed').textContent = sp.toFixed(1) + '×';
+    $('sWall').textContent = fmt(r.wall); $('sSolo').textContent = fmt(base);
+    const paid = r.wall * N; $('sCost').textContent = Math.round(paid) + 's';
+    const idle = 1 - r.work / paid; $('sIdle').textContent = Math.round(idle * 100) + '%';
+    $('nv').textContent = N; $('taxv').textContent = tax + 's';
+
+    // curve across n
+    const all = Array.from({length:10}, (_, i) => base / schedule(task, i+1, tax).wall);
+    const best = all.indexOf(Math.max(...all)) + 1;
+    const v = $('verdict'), vt = v.querySelector('span');
+    if (N === 1) { v.className = 'verdict'; vt.textContent = 'Baseline — one agent, no overhead'; }
+    else if (all[N-1] < Math.max(...all) - 0.05) {
+      v.className = 'verdict bad';
+      vt.textContent = N > best ? 'Past the sweet spot — ' + best + ' agent' + (best>1?'s':'') + ' finishes sooner' : 'Room to grow — try ' + best;
+    } else { v.className = 'verdict'; vt.textContent = 'Sweet spot — more agents won’t help'; }
+
+    const mx = Math.max(...all, 1.2);
+    $('bars').innerHTML = all.map((s, i) => '<button class="bar' + (i+1===best?' best':'') + '" style="height:' + (s/mx*100) + '%" aria-pressed="' + (i+1===N) + '" aria-label="' + (i+1) + ' agents: ' + s.toFixed(1) + ' times faster" data-n="' + (i+1) + '"></button>').join('');
+    $('barlbl').innerHTML = all.map((_, i) => '<span>' + (i+1) + '</span>').join('');
+
+    // lanes
+    const maxWall = Math.max(...Array.from({length:10}, (_, i) => schedule(task, i+1, tax).wall), r.wall);
+    const pct = x => (x / maxWall * 100) + '%';
+    let h = '';
+    for (let l = 0; l < N; l++) {
+      h += '<div class="lane"><em>A' + (l+1) + '</em><div class="track">';
+      r.spans.forEach((s, i) => { if (s.lane === l) h += '<button class="span ' + s.kind + (sel!==null && sel!==i ? ' dim':'') + '" data-i="' + i + '" aria-pressed="' + (sel===i) + '" style="left:' + pct(s.s) + ';width:' + pct(s.d) + '" title="' + s.label + ' · ' + s.d + 's">' + (s.d / maxWall > .08 ? s.label.split(' ')[0] : '') + '</button>'; });
+      h += '</div></div>';
+    }
+    $('lanes').innerHTML = h + '<div class="playhead" id="ph"></div>';
+    const ticks = 5; $('axis').innerHTML = Array.from({length:ticks+1}, (_, i) => '<span style="left:' + (i/ticks*100) + '%">' + fmt(maxWall*i/ticks) + '</span>').join('');
+    $('lanes').dataset.max = maxWall; window._r = r;
+    const phWrap = $('ph'); phWrap.style.left = '36px'; phWrap.style.right = '0';
+    if (sel !== null && r.spans[sel]) { const s = r.spans[sel]; $('detail').innerHTML = '<b>' + s.label + '</b> · ' + s.d + 's (' + fmt(s.s) + ' → ' + fmt(s.s+s.d) + ')<br>' + s.note; }
+    else $('detail').textContent = 'Tap any bar to see what that agent was doing.';
+  }
+
+  $('tasks').innerHTML = Object.entries(TASKS).map(([k, v]) => '<button data-k="' + k + '" aria-pressed="' + (k===task) + '">' + v.name + '</button>').join('');
+  $('legend').innerHTML = Object.values(KIND).map(([n, c]) => '<span><i style="background:' + ({accent:'var(--ab-accent)',green:'var(--ab-green)',pink:'var(--ab-pink-soft)',lav:'var(--ab-lavender)',indigo:'var(--ab-indigo)',pinkS:'var(--ab-pink-soft)'}[c]) + '"></i>' + n + '</span>').join('');
+
+  $('tasks').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; task = b.dataset.k; sel = null; [...$('tasks').children].forEach(x => x.setAttribute('aria-pressed', x === b)); render(); });
+  $('n').addEventListener('input', e => { N = +e.target.value; sel = null; render(); });
+  $('tax').addEventListener('input', e => { tax = +e.target.value; sel = null; render(); });
+  $('lanes').addEventListener('click', e => { const b = e.target.closest('.span'); if (!b) return; sel = sel === +b.dataset.i ? null : +b.dataset.i; render(); });
+  $('bars').addEventListener('click', e => { const b = e.target.closest('.bar'); if (!b) return; N = +b.dataset.n; $('n').value = N; sel = null; render(); });
+
+  $('play').addEventListener('click', () => {
+    clearInterval(timer);
+    const r = window._r, max = +$('lanes').dataset.max, ph = $('ph');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    const dur = 4000, t0 = performance.now(); ph.style.opacity = 1;
+    const lanesW = () => $('lanes').clientWidth - 36;
+    timer = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / dur), time = k * r.wall;
+      ph.style.left = (36 + lanesW() * (time / max)) + 'px';
+      const live = r.spans.find(s => time >= s.s && time < s.s + s.d);
+      if (live) $('detail').innerHTML = '<b>' + fmt(time) + '</b> · ' + live.label + ' — ' + live.note;
+      if (k >= 1) { clearInterval(timer); setTimeout(() => ph.style.opacity = 0, 600); }
+    }, 30);
+  });
+
+  const root = document.documentElement;
+  try { root.dataset.theme = localStorage.getItem('ab-theme') || 'light'; } catch (e) {}
+  $('theme').addEventListener('click', () => { root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; try { localStorage.setItem('ab-theme', root.dataset.theme); } catch (e) {} });
+  render();
+})();
+</script>
+</body>
+</html>
