@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fudge Factor</title>
+<meta name="description" content="Log how long tasks really take and learn your personal planning multiplier.">
+<style>
+:root{
+  --bg:#a9d3c8; --bg2:#8fc2b6; --ink:#27264a; --soft:#4d4c72;
+  --tang:#ff8a4c; --butter:#ffd36e; --lilac:#b9a6f2; --cream:#fff7e8; --rose:#ff9fb0;
+  --r-lg:36px; --r-md:24px; --r-sm:16px;
+  --font:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito","Varela Round",system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  /* clay: light top-left, dark bottom-right inner shading + coloured drop */
+  --clay:inset 6px 8px 14px rgba(255,255,255,.55), inset -8px -10px 16px rgba(39,38,74,.16);
+}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg)}
+body{
+  font-family:var(--font);color:var(--ink);min-height:100dvh;
+  padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  background:
+    radial-gradient(900px 500px at 15% -10%,#c9e8de 0,transparent 60%),
+    radial-gradient(700px 500px at 100% 100%,var(--bg2) 0,transparent 60%),var(--bg);
+  line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+body::after{ /* faint grain */
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .15 0 0 0 0 .15 0 0 0 0 .3 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+main{max-width:640px;margin:0 auto;display:grid;gap:24px;position:relative;z-index:1}
+h1{font-size:clamp(2rem,8vw,3rem);line-height:1.05;font-weight:900;letter-spacing:-.02em}
+.sub{color:var(--soft);font-size:1.0625rem;max-width:44ch;margin-top:8px}
+.clay{background:var(--cream);border-radius:var(--r-lg);box-shadow:var(--clay),0 18px 30px -10px rgba(39,38,74,.35)}
+
+/* dial */
+.dial{padding:32px 24px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;background:var(--tang);color:var(--ink);
+  box-shadow:var(--clay),0 22px 36px -10px rgba(214,86,22,.55)}
+.num{font-size:clamp(4rem,19vw,6.5rem);font-weight:900;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums;
+  text-shadow:0 3px 0 rgba(255,255,255,.35),0 -2px 0 rgba(150,50,0,.25)}
+.num small{font-size:.4em;margin-right:2px}
+.dial p{font-size:1.125rem;line-height:1.4;font-weight:700}
+.dial p span{display:block;font-weight:600;font-size:.9375rem;opacity:.8;margin-top:4px}
+
+/* form */
+form{padding:24px;display:grid;gap:16px;background:var(--butter);box-shadow:var(--clay),0 18px 30px -10px rgba(170,120,0,.45)}
+label{font-weight:800;font-size:1rem;display:grid;gap:8px}
+input[type=text]{
+  font:inherit;font-weight:700;color:var(--ink);min-height:52px;padding:0 20px;border:0;border-radius:var(--r-sm);background:#fffbe9;
+  box-shadow:inset 4px 5px 10px rgba(39,38,74,.18),inset -3px -3px 6px rgba(255,255,255,.7)}
+input::placeholder{color:#8a8aa6}
+.row{display:flex;gap:16px;align-items:end;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper output{min-width:76px;text-align:center;font-weight:900;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.btn{
+  font:inherit;font-weight:900;color:var(--ink);min-height:48px;min-width:48px;padding:0 24px;border:0;border-radius:999px;cursor:pointer;
+  background:var(--lilac);box-shadow:var(--clay),0 8px 0 -2px rgba(39,38,74,.28),0 14px 18px -6px rgba(80,60,160,.5);
+  transition:transform .25s var(--spring),box-shadow .25s var(--spring);touch-action:manipulation}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(6px) scale(.97);box-shadow:var(--clay),0 2px 0 -2px rgba(39,38,74,.28),0 4px 8px -4px rgba(80,60,160,.5)}
+.btn.round{padding:0;width:48px;font-size:1.5rem}
+.btn.go{background:var(--tang)} .btn.ok{background:var(--rose)}
+.btn.ghost{background:var(--cream)}
+:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+
+/* tasks */
+h2{font-size:1.375rem;font-weight:900;line-height:1.2}
+.list{display:grid;gap:16px;list-style:none;padding:0}
+.task{padding:20px 24px;display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;animation:pop .5s var(--spring) backwards}
+.task:nth-child(3n+2){background:#efe7ff}.task:nth-child(3n+3){background:#ffe9ef}
+.task h3{font-size:1.1875rem;line-height:1.25;font-weight:800;overflow-wrap:anywhere}
+.task .meta{grid-column:1;color:var(--soft);font-weight:700;font-size:.9375rem}
+.task .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+.task .act{grid-column:2;grid-row:1 / span 2;display:flex;gap:8px;align-items:center}
+.timer{font-weight:900;font-size:1.375rem;font-variant-numeric:tabular-nums}
+.task.running{background:#ffe0c9}
+.empty{padding:32px 24px;text-align:center;background:#ffffffaa;border-radius:var(--r-lg);box-shadow:inset 5px 6px 12px rgba(39,38,74,.15),inset -4px -4px 8px rgba(255,255,255,.6)}
+.empty p{color:var(--soft);max-width:36ch;margin:8px auto 16px}
+
+/* history */
+.hist{padding:24px;display:grid;gap:16px}
+.bars{display:flex;align-items:flex-end;gap:12px;height:160px;overflow-x:auto;padding-bottom:4px}
+.pair{display:flex;gap:4px;align-items:flex-end;height:100%;flex:0 0 auto}
+.bar{width:20px;border-radius:12px 12px 6px 6px;min-height:12px;transform-origin:bottom;animation:grow .7s var(--spring) backwards;
+  box-shadow:inset 3px 4px 6px rgba(255,255,255,.55),inset -3px -4px 6px rgba(39,38,74,.18)}
+.bar.e{background:var(--butter)}.bar.a{background:var(--tang)}
+.legend{display:flex;gap:16px;font-weight:700;font-size:.9375rem;color:var(--soft);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:-2px}
+.tools{display:flex;gap:16px;flex-wrap:wrap}
+
+/* dialog */
+dialog{border:0;border-radius:var(--r-lg);padding:32px 24px;max-width:min(92vw,420px);width:100%;background:var(--cream);color:var(--ink);
+  box-shadow:var(--clay),0 30px 60px -10px rgba(39,38,74,.6);margin:auto}
+dialog::backdrop{background:rgba(39,38,74,.45);backdrop-filter:blur(3px)}
+dialog[open]{animation:pop .45s var(--spring)}
+dialog .stepper{justify-content:center;margin:16px 0}
+dialog menu{display:flex;gap:16px;justify-content:center;padding:0}
+.verdict{font-weight:800;text-align:center;min-height:3em}
+
+.confetti{position:fixed;width:12px;height:12px;border-radius:50%;pointer-events:none;z-index:9;animation:fall 1.3s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes fall{to{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+@keyframes pop{from{opacity:0;transform:scale(.88) translateY(12px)}}
+@keyframes grow{from{transform:scaleY(0)}}
+@keyframes pulse{50%{transform:scale(1.015)}}
+@media (max-width:420px){.dial{grid-template-columns:1fr;text-align:center}.task{grid-template-columns:1fr}.task .act{grid-column:1;grid-row:auto}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Fudge Factor</h1>
+    <p class="sub">Guess how long a task will take, then time it. Your misses add up to a personal multiplier for every future guess.</p>
+  </header>
+
+  <section class="clay dial" aria-live="polite">
+    <div class="num" id="factor"><small>×</small>1.00</div>
+    <p id="dialMsg">No history yet.<span>Finish a few tasks and I'll start correcting your guesses.</span></p>
+  </section>
+
+  <form class="clay" id="add" autocomplete="off">
+    <label>What are you about to do?
+      <input type="text" id="name" placeholder="Write the Friday update" maxlength="60" required>
+    </label>
+    <div class="row">
+      <label>Your gut says
+        <span class="stepper">
+          <button type="button" class="btn round" data-step="-5" aria-label="5 minutes less">−</button>
+          <output id="est" aria-live="polite">20 min</output>
+          <button type="button" class="btn round" data-step="5" aria-label="5 minutes more">+</button>
+        </span>
+      </label>
+      <button class="btn" type="submit">Add task</button>
+    </div>
+  </form>
+
+  <section aria-labelledby="th">
+    <h2 id="th" style="margin-bottom:16px">Up next</h2>
+    <ul class="list" id="tasks"></ul>
+  </section>
+
+  <section class="clay hist" id="histSec" hidden>
+    <h2>Guess vs. reality</h2>
+    <div class="bars" id="bars" role="img" aria-label="Bar chart of estimated and actual minutes for finished tasks"></div>
+    <div class="legend"><span><i style="background:var(--butter)"></i>Your guess</span><span><i style="background:var(--tang)"></i>What happened</span></div>
+    <div class="tools">
+      <button class="btn ghost" id="clear" type="button">Clear history</button>
+    </div>
+  </section>
+  <div class="tools"><button class="btn ghost" id="sample" type="button">Load a sample week</button></div>
+</main>
+
+<dialog id="dlg" aria-labelledby="dt">
+  <h2 id="dt" style="text-align:center">How long did it take?</h2>
+  <div class="stepper">
+    <button type="button" class="btn round" data-dstep="-1" aria-label="1 minute less">−</button>
+    <output id="act" style="min-width:96px;text-align:center;font-weight:900;font-size:2rem" aria-live="polite">10 min</output>
+    <button type="button" class="btn round" data-dstep="1" aria-label="1 minute more">+</button>
+  </div>
+  <p class="verdict" id="verdict"></p>
+  <menu><button class="btn ghost" id="cancel" type="button">Keep going</button><button class="btn go" id="save" type="button">Save result</button></menu>
+</dialog>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const KEY='fudge-factor-v1';
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let S={tasks:[],done:[]};
+try{S=Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let est=20, pendingId=null, shown=1;
+
+/* shrunk geometric mean of the last 12 ratios (prior = two "perfect" guesses) */
+function stats(){
+  const r=S.done.slice(-12).map(d=>Math.log(d.actual/d.est));
+  const n=r.length, f=Math.exp(r.reduce((a,b)=>a+b,0)/(n+2));
+  const m=r.reduce((a,b)=>a+b,0)/Math.max(n,1);
+  const sd=n>1?Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/(n-1)):0.25;
+  return {n,f,sd};
+}
+const fmt=m=>m<60?`${Math.round(m)} min`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
+const ease=t=>1-Math.pow(1-t,3);
+function tween(from,to,cb){
+  if(reduce){cb(to);return}
+  const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/800);cb(from+(to-from)*ease(k));if(k<1)requestAnimationFrame(f)})(t0);
+}
+function renderDial(){
+  const {n,f}=stats();
+  tween(shown,f,v=>{$('#factor').innerHTML='<small>×</small>'+v.toFixed(2)});
+  shown=f;
+  const m=$('#dialMsg');
+  if(!n) m.innerHTML='No history yet.<span>Finish a few tasks and I\'ll start correcting your guesses.</span>';
+  else if(f>1.05) m.innerHTML=`Tasks take you about ${Math.round((f-1)*100)}% longer than you think.<span>Based on your last ${n} finished task${n>1?'s':''}. Multiply your gut by ${f.toFixed(2)}.</span>`;
+  else if(f<.95) m.innerHTML=`You overestimate by about ${Math.round((1-f)*100)}%.<span>Based on ${n} task${n>1?'s':''}. You can promise less padding.</span>`;
+  else m.innerHTML=`Your gut is well calibrated.<span>Based on ${n} task${n>1?'s':''}. Keep guessing as you do.</span>`;
+}
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderTasks(){
+  const ul=$('#tasks');ul.innerHTML='';
+  const {n,f,sd}=stats();
+  if(!S.tasks.length){
+    const li=el('li','empty','<h3>Nothing queued</h3><p>Add something you plan to do today. Guess first, so the comparison is honest.</p>');
+    ul.append(li);return;
+  }
+  S.tasks.forEach((t,i)=>{
+    const li=el('li','clay task'+(t.start?' running':''));
+    li.style.animationDelay=(reduce?0:i*60)+'ms';
+    const lo=Math.round(t.est*f*Math.exp(-sd*.7)),hi=Math.round(t.est*f*Math.exp(sd*.7));
+    const pred=n?`likely <b>${fmt(Math.max(1,lo))} to ${fmt(Math.max(lo+1,hi))}</b>`:'<b>no prediction yet</b>';
+    li.innerHTML=`<h3>${esc(t.name)}</h3><div class="meta">You said <b>${fmt(t.est)}</b>, ${pred}</div><div class="act"></div>`;
+    const act=li.querySelector('.act');
+    if(t.start){
+      const tm=el('span','timer','0:00');tm.dataset.start=t.start;act.append(tm);
+      const d=el('button','btn ok','Done');d.onclick=()=>finish(t);act.append(d);
+    }else{
+      const g=el('button','btn go','Start');g.onclick=()=>{t.start=Date.now();save();renderTasks()};act.append(g);
+    }
+    const x=el('button','btn round ghost','×');x.setAttribute('aria-label','Remove '+t.name);
+    x.onclick=()=>{S.tasks=S.tasks.filter(q=>q!==t);save();renderTasks()};act.append(x);
+    ul.append(li);
+  });
+}
+function renderHist(){
+  const sec=$('#histSec'),has=S.done.length>0;
+  sec.hidden=!has;$('#sample').hidden=has||S.tasks.some(t=>t.start);
+  if(!has)return;
+  const b=$('#bars');b.innerHTML='';
+  const last=S.done.slice(-10),mx=Math.max(...last.flatMap(d=>[d.est,d.actual]));
+  last.forEach((d,i)=>{
+    const p=el('div','pair');p.title=`${d.name}: guessed ${fmt(d.est)}, took ${fmt(d.actual)}`;
+    ['e','a'].forEach(k=>{const v=k==='e'?d.est:d.actual;const bar=el('div','bar '+k);
+      bar.style.height=Math.max(8,v/mx*100)+'%';bar.style.animationDelay=(reduce?0:i*50)+'ms';p.append(bar)});
+    b.append(p);
+  });
+  b.scrollLeft=b.scrollWidth;
+  b.setAttribute('aria-label','Guess versus actual minutes. '+last.map(d=>`${d.name}: guessed ${d.est}, took ${d.actual}`).join('; '));
+}
+function finish(t){
+  pendingId=t;const m=Math.max(1,Math.round((Date.now()-t.start)/60000));
+  $('#act').dataset.v=m;setAct(m);$('#dlg').showModal();
+}
+function setAct(v){
+  v=Math.max(1,Math.min(600,v));$('#act').dataset.v=v;$('#act').textContent=fmt(v);
+  const t=pendingId,r=v/t.est;
+  $('#verdict').textContent=Math.abs(r-1)<.1?'Right on your guess.':r>1?`${Math.round((r-1)*100)}% over your guess of ${fmt(t.est)}.`:`${Math.round((1-r)*100)}% under your guess of ${fmt(t.est)}.`;
+}
+function confetti(x,y){
+  if(reduce)return;
+  const cols=['--tang','--butter','--lilac','--rose'];
+  for(let i=0;i<22;i++){
+    const c=el('i','confetti');const a=Math.random()*Math.PI*2,d=80+Math.random()*140;
+    c.style.cssText=`left:${x}px;top:${y}px;background:var(${cols[i%4]});--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d+80}px`;
+    document.body.append(c);setTimeout(()=>c.remove(),1400);
+  }
+}
+$('#save').onclick=()=>{
+  const t=pendingId,v=+$('#act').dataset.v;
+  S.done.push({name:t.name,est:t.est,actual:v});S.tasks=S.tasks.filter(q=>q!==t);save();
+  $('#dlg').close();
+  if(v<=t.est)confetti(innerWidth/2,innerHeight/2);
+  renderAll();
+};
+$('#cancel').onclick=()=>$('#dlg').close();
+document.querySelectorAll('[data-dstep]').forEach(b=>b.onclick=()=>setAct(+$('#act').dataset.v+ +b.dataset.dstep));
+document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{est=Math.max(5,Math.min(480,est+ +b.dataset.step));$('#est').textContent=fmt(est)});
+$('#add').onsubmit=e=>{
+  e.preventDefault();const n=$('#name').value.trim();if(!n)return;
+  S.tasks.push({name:n,est});save();$('#name').value='';renderTasks();$('#name').focus();
+};
+$('#clear').onclick=()=>{if(confirm('Clear all finished-task history?')){S.done=[];save();renderAll()}};
+$('#sample').onclick=()=>{
+  const s=[['Reply to inbox',15,28],['Draft slides',45,80],['Standup notes',10,12],['Fix login bug',30,75],['Review PR',20,34],['Plan sprint',40,52],['Write report',60,95]];
+  S.done=s.map(([name,est,actual])=>({name,est,actual}));save();renderAll();
+};
+function renderAll(){renderDial();renderTasks();renderHist()}
+setInterval(()=>document.querySelectorAll('.timer').forEach(t=>{
+  const s=Math.floor((Date.now()-t.dataset.start)/1000);t.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}),500);
+$('#est').textContent=fmt(est);
+renderAll();
+})();
+</script>
+</body>
+</html>

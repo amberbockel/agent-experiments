@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-30",
+      "slug": "2026-10-30",
+      "title": "Fudge Factor",
+      "category": "productivity",
+      "design": "tactile-3d-clay",
+      "oneLiner": "Guess how long a task takes, time it, and learn your personal planning multiplier.",
+      "path": "apps/2026-10-30/"
+    },
+    {
       "date": "2026-10-29",
       "slug": "2026-10-29-runway",
       "title": "Runway",
