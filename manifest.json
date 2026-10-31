@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-10-31",
+      "slug": "2026-10-31",
+      "title": "Leash",
+      "category": "trend",
+      "design": "retro-70s-80s",
+      "oneLiner": "Decide how much rope an AI agent gets, then watch it use every inch.",
+      "path": "apps/2026-10-31/"
+    },
+    {
       "date": "2026-10-30",
       "slug": "2026-10-30",
       "title": "Fudge Factor",

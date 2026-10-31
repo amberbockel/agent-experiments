@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leash</title>
+<meta name="description" content="Decide how much rope an AI agent gets, then watch it use every inch.">
+<style>
+:root{
+  --cream:#F3E5C3; --paper:#FAF1DB; --brown:#3A2012; --brown-2:#6B4630;
+  --orange:#E4531B; --mustard:#F0A730; --teal:#1E7568; --avocado:#7E8A2B; --rust:#B3361A;
+  --shadow:#3A2012;
+  --display:"Cooper Black","Rockwell Extra Bold","Bookman Old Style","Palatino Linotype",Georgia,serif;
+  --body:"Avenir Next","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  color-scheme:light;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100dvh;background:var(--cream);color:var(--brown);font:400 16px/1.5 var(--body);
+  padding:0 max(16px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  position:relative;overflow-x:hidden;
+}
+body::before{ /* grain */
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.22;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .23  0 0 0 0 .13  0 0 0 0 .07  0 0 0 .9 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1040px;margin:0 auto}
+
+/* masthead */
+header{padding:max(24px,env(safe-area-inset-top)) 0 24px;position:relative}
+.bands{position:absolute;left:-40px;right:-40px;top:0;height:100%;z-index:-1;overflow:hidden}
+.bands i{position:absolute;left:-10%;width:130%;height:22px;border-radius:50%/100% 100% 0 0;transform:rotate(-3deg)}
+.bands i:nth-child(1){top:12px;background:var(--orange)}
+.bands i:nth-child(2){top:34px;background:var(--mustard)}
+.bands i:nth-child(3){top:56px;background:var(--teal)}
+h1{
+  font:900 clamp(72px,19vw,144px)/.9 var(--display);letter-spacing:-.02em;margin-top:92px;color:var(--cream);
+  text-shadow:3px 3px 0 var(--orange),6px 6px 0 var(--mustard),9px 9px 0 var(--teal),12px 12px 0 var(--brown);
+}
+.lede{font:400 clamp(18px,2.4vw,22px)/1.45 var(--body);max-width:34ch;margin-top:28px}
+
+/* missions */
+.missions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 24px}
+.mission{
+  text-align:left;background:var(--paper);border:3px solid var(--brown);border-radius:16px;padding:12px 12px 14px;min-height:88px;
+  box-shadow:0 4px 0 var(--brown);transition:transform .18s var(--spring),box-shadow .18s,background .2s;position:relative;
+}
+.mission b{display:block;font:900 17px/1.15 var(--display)}
+.mission span{display:block;font-size:13px;line-height:1.35;margin-top:4px;color:var(--brown-2)}
+.mission .best{position:absolute;top:-10px;right:8px;background:var(--mustard);border:2px solid var(--brown);border-radius:99px;font:700 12px/1 var(--body);padding:4px 8px}
+.mission:active{transform:translateY(3px);box-shadow:0 1px 0 var(--brown)}
+.mission[aria-selected=true]{background:var(--mustard);transform:translateY(2px);box-shadow:0 2px 0 var(--brown)}
+.mission[aria-selected=true] span{color:var(--brown)}
+@media(max-width:600px){.missions{grid-template-columns:1fr}.mission{min-height:64px}}
+
+.grid{display:grid;gap:24px}
+@media(min-width:880px){.grid{grid-template-columns:420px 1fr;align-items:start}.console{position:sticky;top:16px}}
+
+/* console */
+.console{background:var(--brown);color:var(--cream);border-radius:28px;padding:20px;box-shadow:0 8px 0 var(--rust),0 20px 40px -12px rgba(58,32,18,.5);position:relative}
+.console h2,.ledger h2{font:900 24px/1.15 var(--display)}
+.console h3{font:700 16px/1.3 var(--body);margin:24px 0 8px}
+.hint{font-size:14px;line-height:1.45;color:#D9C29A}
+.ledger .hint{color:var(--brown-2)}
+.rope{display:block;width:100%;height:auto;margin:12px 0 0;background:var(--paper);border-radius:16px;border:3px solid var(--cream)}
+.tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.tool{
+  min-height:48px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:99px;border:3px solid var(--cream);
+  background:transparent;color:var(--cream);font-weight:600;font-size:15px;transition:transform .18s var(--spring),background .2s,color .2s;
+}
+.tool .g{font-size:18px;filter:grayscale(1);opacity:.7}
+.tool[aria-pressed=true]{background:var(--mustard);color:var(--brown);border-color:var(--mustard);box-shadow:0 3px 0 var(--orange)}
+.tool[aria-pressed=true] .g{filter:none;opacity:1}
+.tool:active{transform:scale(.94)}
+.cap{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cap output{font:900 40px/1 var(--display);color:var(--mustard)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:14px;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--mustard),var(--orange));border:2px solid var(--cream)}
+input[type=range]::-moz-range-track{height:10px;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--mustard),var(--orange));border:2px solid var(--cream)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;margin-top:-12px;border-radius:50%;background:var(--cream);border:4px solid var(--orange);box-shadow:0 3px 0 var(--brown)}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--cream);border:4px solid var(--orange)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#24130A;padding:4px;border-radius:99px}
+.seg button{min-height:48px;border-radius:99px;font-weight:700;font-size:14px;line-height:1.15;padding:4px 6px;transition:background .2s,color .2s,transform .18s var(--spring)}
+.seg button[aria-checked=true]{background:var(--cream);color:var(--brown);box-shadow:0 3px 0 var(--orange)}
+.seg button:active{transform:scale(.95)}
+.go{
+  display:block;width:100%;margin-top:24px;min-height:60px;border-radius:99px;background:var(--orange);color:var(--cream);
+  font:900 24px/1 var(--display);border:3px solid var(--cream);box-shadow:0 6px 0 var(--rust);transition:transform .15s var(--spring),box-shadow .15s,opacity .2s;
+}
+.go:active{transform:translateY(5px);box-shadow:0 1px 0 var(--rust)}
+.go:disabled{opacity:.55;cursor:default;box-shadow:0 2px 0 var(--rust);transform:translateY(3px)}
+
+/* ledger */
+.ledger{background:var(--paper);border:3px solid var(--brown);border-radius:28px;padding:20px;box-shadow:0 6px 0 var(--brown)}
+.ledger ol{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:0}
+.step{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:14px 0;border-top:2px dashed #C9AE82}
+.step:first-child{border-top:0}
+.chip{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:20px;border:3px solid var(--brown);background:var(--cream);transition:background .25s,transform .3s var(--spring)}
+.step .t{font-weight:700;line-height:1.3}
+.step .m{font-size:14px;line-height:1.45;color:var(--brown-2);margin-top:2px;max-width:60ch}
+.tag{display:inline-block;font-size:12px;font-weight:700;line-height:1;padding:4px 8px;border-radius:99px;background:var(--cream);border:2px solid var(--brown);margin-left:6px;vertical-align:2px}
+.step[data-s=working] .chip{background:var(--mustard);animation:pulse .7s ease-in-out infinite alternate}
+.step[data-s=ok] .chip{background:var(--teal);color:var(--cream);transform:rotate(-8deg)}
+.step[data-s=blocked] .chip{background:var(--cream);color:var(--brown-2)}
+.step[data-s=ask] .chip{background:var(--mustard)}
+.step[data-s=declined] .chip{background:var(--avocado);color:var(--cream)}
+.step[data-s=incident] .chip{background:var(--rust);color:var(--cream);animation:shake .4s}
+.step[data-s=blocked] .t{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--brown-2)}
+.step.in{animation:pop .45s var(--spring)}
+@keyframes pulse{to{transform:scale(1.12)}}
+@keyframes shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes pop{from{transform:scale(.97);opacity:.4}}
+.decide{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.decide button{min-height:48px;padding:0 20px;border-radius:99px;font-weight:800;border:3px solid var(--brown);transition:transform .15s var(--spring)}
+.decide button:active{transform:scale(.94)}
+.decide .yes{background:var(--teal);color:var(--cream);box-shadow:0 3px 0 var(--brown)}
+.decide .no{background:var(--cream);box-shadow:0 3px 0 var(--brown)}
+
+/* result */
+.result{margin-top:16px;border-top:3px solid var(--brown);padding-top:20px;display:none}
+.result.on{display:block}
+.stamp{
+  display:inline-block;font:900 clamp(26px,6vw,36px)/1.05 var(--display);padding:12px 18px;border:5px solid var(--rust);color:var(--rust);border-radius:14px;
+  transform:rotate(-4deg);animation:slam .55s var(--spring) both;max-width:100%;
+}
+.stamp.good{border-color:var(--teal);color:var(--teal)}
+@keyframes slam{from{transform:rotate(-4deg) scale(2.2);opacity:0}}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 12px}
+.num{background:var(--cream);border:3px solid var(--brown);border-radius:16px;padding:10px 12px}
+.num b{display:block;font:900 32px/1 var(--display)}
+.num span{font-size:13px;line-height:1.3;display:block;margin-top:4px}
+.tip{max-width:60ch;line-height:1.55}
+.again{margin-top:16px;min-height:48px;padding:0 24px;border-radius:99px;border:3px solid var(--brown);background:var(--mustard);font-weight:800;box-shadow:0 4px 0 var(--brown);transition:transform .15s var(--spring)}
+.again:active{transform:translateY(3px);box-shadow:0 1px 0 var(--brown)}
+.empty{margin-top:12px;color:var(--brown-2);max-width:48ch}
+footer{margin-top:32px;font-size:13px;line-height:1.5;color:var(--brown-2);max-width:60ch}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="bands" aria-hidden="true"><i></i><i></i><i></i></div>
+  <h1>Leash</h1>
+  <p class="lede">Set how much rope your AI agent gets. Then watch it use every inch.</p>
+</header>
+
+<div class="missions" role="tablist" aria-label="Missions" id="missions"></div>
+
+<div class="grid">
+  <section class="console" aria-label="Agent permissions">
+    <h2>Give it rope</h2>
+    <p class="hint">Longer rope finishes more on its own, and can hurt more.</p>
+    <svg class="rope" id="rope" viewBox="0 0 320 110" role="img" aria-label="A hand holding a rope tied to a small robot"></svg>
+
+    <h3 id="tl">What can it touch?</h3>
+    <div class="tools" id="tools" role="group" aria-labelledby="tl"></div>
+
+    <h3 id="cl">How much can it spend?</h3>
+    <div class="cap"><span class="hint">Per purchase</span><output id="capOut" for="cap">$100</output></div>
+    <input type="range" id="cap" min="0" max="300" step="10" value="100" aria-labelledby="cl">
+
+    <h3 id="al">When does it ask you first?</h3>
+    <div class="seg" role="radiogroup" aria-labelledby="al" id="auto"></div>
+
+    <button class="go" id="go">Send it out</button>
+  </section>
+
+  <section class="ledger" aria-label="Run log">
+    <h2 id="mt"></h2>
+    <p class="hint" id="mb"></p>
+    <ol id="steps" aria-live="polite"></ol>
+    <div class="result" id="result" aria-live="polite">
+      <div class="stamp" id="stamp"></div>
+      <div class="nums">
+        <div class="num"><b id="nDone">0</b><span>steps finished</span></div>
+        <div class="num"><b id="nAsk">0</b><span>times it asked you</span></div>
+        <div class="num"><b id="nInc">0</b><span>messes made</span></div>
+      </div>
+      <p class="tip" id="tip"></p>
+      <button class="again" id="again">Change the rope and rerun</button>
+    </div>
+    <p class="empty" id="empty">Nothing has run yet. Pick the tools, set a limit, and send the agent out.</p>
+  </section>
+</div>
+
+<footer>Inspired by the agent permission and identity layer YC's 2026 batches keep funding. Everything here is a simulation that runs in your browser.</footer>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TOOLS={cal:['Calendar','📅'],mail:['Email','✉️'],web:['Web','🌐'],pay:['Payments','💳'],files:['Files','📁']};
+const AUTO=[['all','Ask me about everything'],['risky','Ask only when risky'],['solo','Never ask']];
+// risk: 0 harmless, 1 small, 2 hard to undo
+const MISSIONS=[
+ {id:'dinner',name:'Team dinner',blurb:'Book a table for 14 people.',intro:'Your agent should find a night everyone is free, hold a table, and tell the team.',steps:[
+  {t:'Check 14 calendars for a free night',tool:'cal',cost:0,risk:0,req:1},
+  {t:'Shortlist restaurants nearby',tool:'web',cost:0,risk:0,req:1},
+  {t:'Hold a table with a $60 deposit',tool:'pay',cost:60,risk:1,req:1},
+  {t:'Email the invite to all 14 teammates',tool:'mail',cost:0,risk:2,req:1,why:'A sent email cannot be unsent.'},
+  {t:'Upgrade to the $240 chef’s tasting menu',tool:'pay',cost:240,risk:2,trap:1,why:'Nobody asked for this. The restaurant’s page nudged the agent.'},
+  {t:'Save the confirmation to your files',tool:'files',cost:0,risk:0,req:1}]},
+ {id:'inbox',name:'Inbox rescue',blurb:'Clear a month of email.',intro:'Your agent should sort the mail, answer what is urgent, and quiet the noise.',steps:[
+  {t:'Read the last 30 days of mail',tool:'mail',cost:0,risk:0,req:1},
+  {t:'Archive the newsletters',tool:'mail',cost:0,risk:1,req:1},
+  {t:'Draft three replies',tool:'mail',cost:0,risk:0,req:1},
+  {t:'Send the three replies',tool:'mail',cost:0,risk:2,req:1,why:'Replies go out under your name.'},
+  {t:'Permanently delete 2,400 old files to free space',tool:'files',cost:0,risk:2,trap:1,why:'Nothing asked for a cleanup. Deleted files stay deleted.'},
+  {t:'Unsubscribe from nine mailing lists',tool:'web',cost:0,risk:1,req:1}]},
+ {id:'refund',name:'Refund hunt',blurb:'Get $86 back from a vendor.',intro:'Your agent should find the order, file the claim, and keep proof. The vendor’s site will try an upsell.',steps:[
+  {t:'Find the order in your email',tool:'mail',cost:0,risk:0,req:1},
+  {t:'Open the vendor’s refund page',tool:'web',cost:0,risk:0,req:1},
+  {t:'File the refund request',tool:'web',cost:0,risk:1,req:1},
+  {t:'Pay a $49 “priority handling” fee',tool:'pay',cost:49,risk:2,trap:1,why:'A fee to get your own money back is a classic upsell.'},
+  {t:'Email the vendor your order number',tool:'mail',cost:0,risk:1,req:1},
+  {t:'Save the claim receipt to your files',tool:'files',cost:0,risk:0,req:1}]}
+];
+const S={m:0,tools:new Set(['cal','web','mail']),cap:100,auto:'risky',run:0,busy:false,best:{}};
+try{S.best=JSON.parse(localStorage.getItem('leash-best')||'{}')}catch(e){}
+const saveBest=()=>{try{localStorage.setItem('leash-best',JSON.stringify(S.best))}catch(e){}};
+const delay=ms=>new Promise(r=>setTimeout(r,reduce?ms*.15:ms));
+
+/* missions */
+function drawMissions(){
+  $('#missions').innerHTML=MISSIONS.map((m,i)=>`<button class="mission" role="tab" aria-selected="${i===S.m}" data-i="${i}"><b>${m.name}</b><span>${m.blurb}</span>${S.best[m.id]?`<i class="best">${S.best[m.id]}</i>`:''}</button>`).join('');
+}
+$('#missions').addEventListener('click',e=>{
+  const b=e.target.closest('.mission');if(!b)return;
+  S.m=+b.dataset.i;S.run++;S.busy=false;drawMissions();drawLedger();
+});
+/* controls */
+function drawTools(){
+  $('#tools').innerHTML=Object.entries(TOOLS).map(([k,[n,g]])=>`<button class="tool" data-k="${k}" aria-pressed="${S.tools.has(k)}"><span class="g" aria-hidden="true">${g}</span>${n}</button>`).join('');
+}
+$('#tools').addEventListener('click',e=>{
+  const b=e.target.closest('.tool');if(!b||S.busy)return;
+  const k=b.dataset.k;S.tools.has(k)?S.tools.delete(k):S.tools.add(k);
+  b.setAttribute('aria-pressed',S.tools.has(k));
+});
+$('#cap').addEventListener('input',e=>{S.cap=+e.target.value;$('#capOut').textContent='$'+S.cap});
+function drawAuto(){
+  $('#auto').innerHTML=AUTO.map(([k,l])=>`<button role="radio" aria-checked="${S.auto===k}" data-k="${k}">${l}</button>`).join('');
+}
+$('#auto').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||S.busy)return;
+  S.auto=b.dataset.k;drawAuto();rope.to(sagFor());
+});
+const sagFor=()=>S.auto==='all'?2:S.auto==='risky'?30:70;
+
+/* rope drawing, sprung */
+const rope={sag:30,v:0,target:30,raf:0,
+  el:$('#rope'),
+  init(){
+    this.el.innerHTML=`<defs><pattern id="st" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#FAF1DB"/><circle cx="2" cy="2" r="1" fill="#E8D7AE"/></pattern></defs>
+    <rect width="320" height="110" fill="url(#st)"/>
+    <path id="rp" fill="none" stroke="#B3361A" stroke-width="7" stroke-linecap="round"/>
+    <path id="rp2" fill="none" stroke="#F0A730" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+    <g transform="translate(14 28)"><rect x="0" y="12" width="40" height="34" rx="10" fill="#1E7568" stroke="#3A2012" stroke-width="3"/><circle cx="30" cy="22" r="9" fill="none" stroke="#3A2012" stroke-width="4"/></g>
+    <g id="bot"><line x1="0" y1="-30" x2="0" y2="-40" stroke="#3A2012" stroke-width="3"/><circle cx="0" cy="-42" r="4" fill="#E4531B" stroke="#3A2012" stroke-width="2"/><rect x="-24" y="-30" width="48" height="40" rx="12" fill="#F0A730" stroke="#3A2012" stroke-width="3"/><circle cx="-9" cy="-12" r="4.5" fill="#3A2012"/><circle cx="9" cy="-12" r="4.5" fill="#3A2012"/><path d="M-8 0q8 6 16 0" fill="none" stroke="#3A2012" stroke-width="3" stroke-linecap="round"/></g>`;
+    this.draw();
+  },
+  to(t){this.target=t;cancelAnimationFrame(this.raf);if(reduce){this.sag=t;this.draw();return}
+    const tick=()=>{const f=(this.target-this.sag)*.14;this.v=(this.v+f)*.78;this.sag+=this.v;this.draw();
+      if(Math.abs(this.v)>.05||Math.abs(this.target-this.sag)>.2)this.raf=requestAnimationFrame(tick);else{this.sag=this.target;this.draw()}};
+    tick();},
+  draw(){
+    // longer rope also lets the robot wander further
+    const len=this.sag,x2=300-(len>50?30:len>15?8:0),y2=70;
+    const d=`M58 70 Q ${(58+x2)/2} ${70+len} ${x2-22} ${y2}`;
+    this.el.querySelector('#rp').setAttribute('d',d);this.el.querySelector('#rp2').setAttribute('d',d);
+    this.el.querySelector('#bot').setAttribute('transform',`translate(${x2} ${y2+18}) rotate(${(len-30)/12})`);
+  }};
+
+/* ledger */
+const esc=s=>s;
+function drawLedger(){
+  const m=MISSIONS[S.m];
+  $('#mt').textContent=m.name;$('#mb').textContent=m.intro;
+  $('#steps').innerHTML=m.steps.map((s,i)=>`<li class="step" data-s="idle" id="s${i}"><div class="chip" aria-hidden="true">${TOOLS[s.tool][1]}</div><div><div class="t">${s.t}</div><div class="m">Needs ${TOOLS[s.tool][0].toLowerCase()}${s.cost?` and up to $${s.cost}`:''}.</div></div></li>`).join('');
+  $('#result').classList.remove('on');$('#empty').style.display='';
+  $('#go').disabled=false;$('#go').textContent='Send it out';
+}
+function setStep(i,state,icon,msg,extra){
+  const el=$('#s'+i);el.dataset.s=state;
+  el.querySelector('.chip').textContent=icon;
+  const m=el.querySelector('.m');m.textContent=msg;
+  el.querySelectorAll('.decide').forEach(n=>n.remove());
+  if(extra)m.after(extra);
+  el.classList.remove('in');void el.offsetWidth;el.classList.add('in');
+}
+function askUser(i,s,run){
+  return new Promise(res=>{
+    const box=document.createElement('div');box.className='decide';
+    box.innerHTML='<button class="yes">Approve</button><button class="no">Decline</button>';
+    box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;res(b.classList.contains('yes'))});
+    setStep(i,'ask','✋',`Asking you first. ${s.cost?`It wants to spend $${s.cost}. `:''}${s.why||'Your call.'}`,box);
+    box.querySelector('.yes').focus({preventScroll:false});
+    const stop=setInterval(()=>{if(run!==S.run){clearInterval(stop);res(null)}},300);
+  });
+}
+async function run(){
+  if(S.busy)return;
+  const my=++S.run,m=MISSIONS[S.m];S.busy=true;
+  drawLedger();$('#empty').style.display='none';$('#go').disabled=true;$('#go').textContent='Running…';
+  let done=0,asks=0,inc=0,reqDone=0,reqTotal=m.steps.filter(s=>s.req).length,caught=0;
+  for(let i=0;i<m.steps.length;i++){
+    const s=m.steps[i];
+    setStep(i,'working','…',`Working on it.`);
+    await delay(650);if(my!==S.run)return;
+    if(!S.tools.has(s.tool)){setStep(i,'blocked','🚫',`Blocked. You never gave it ${TOOLS[s.tool][0].toLowerCase()} access.${s.trap?' Good, it did not need this.':''}`);if(s.trap)caught++;continue}
+    if(s.cost>S.cap){setStep(i,'blocked','🚫',`Blocked. $${s.cost} is over your $${S.cap} limit.${s.trap?' Good, it did not need this.':''}`);if(s.trap)caught++;continue}
+    const needAsk=S.auto==='all'||(S.auto==='risky'&&s.risk===2);
+    if(needAsk){
+      asks++;
+      const ok=await askUser(i,s,my);if(my!==S.run)return;
+      if(!ok){
+        setStep(i,'declined','✋',s.trap?'You declined. That was an upsell.':'You declined. The mission is now missing a step.');
+        if(s.trap)caught++;await delay(400);continue}
+      if(s.trap){inc++;setStep(i,'incident','💥',`Approved and done. ${s.why}`);await delay(500);continue}
+      done++;if(s.req)reqDone++;setStep(i,'ok','✓',`Done, with your OK.`);await delay(350);continue;
+    }
+    if(s.risk===2){inc++;setStep(i,'incident','💥',s.trap?`Did it without asking. ${s.why}`:`Did it without asking. ${s.why} It was right this time.`);await delay(500);if(!s.trap){done++;reqDone++;}continue}
+    done++;if(s.req)reqDone++;setStep(i,'ok','✓','Done.');await delay(300);
+  }
+  if(my!==S.run)return;
+  S.busy=false;$('#go').disabled=false;$('#go').textContent='Run again';
+  finish(m,{done,asks,inc,reqDone,reqTotal,caught});
+}
+function finish(m,r){
+  const full=r.reqDone===r.reqTotal,clean=r.inc===0;
+  const label=full&&clean?'Well walked':full?'Done, but it bit':clean?'Leash too short':'Short leash, still bit';
+  const good=full&&clean;
+  const st=$('#stamp');st.textContent=label;st.className='stamp'+(good?' good':'');
+  st.style.animation='none';void st.offsetWidth;st.style.animation='';
+  countTo($('#nDone'),r.done);countTo($('#nAsk'),r.asks);countTo($('#nInc'),r.inc);
+  let tip;
+  if(good) tip=r.asks>m.steps.filter(s=>s.risk===2).length?'Everything finished and nothing broke, but you were pinged more than you needed to be. Asking only on risky steps would spare you the small stuff.':'Everything finished and nothing broke. The rope was long enough to work and short enough to stop the upsell.';
+  else if(!full&&clean) tip='Nothing went wrong, but the agent could not finish. Check which tools it was missing, or whether the spend limit was below a purchase it needed.';
+  else if(r.inc&&S.auto==='solo') tip='With no check-ins, every irreversible step ran unseen. Switch to asking when risky and you decide on the sends, deletes and fees.';
+  else tip='A step slipped through that you should have caught. Lower the spend limit, remove a tool the job does not need, or decline the upsell when it asks.';
+  $('#tip').textContent=tip;
+  $('#result').classList.add('on');
+  const rank={'Well walked':3,'Done, but it bit':2,'Leash too short':1,'Short leash, still bit':0};
+  const prev=S.best[m.id];if(!prev||rank[label]>rank[prev]){S.best[m.id]=label;saveBest();drawMissions()}
+  $('#result').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+}
+function countTo(el,n){
+  if(reduce||!n){el.textContent=n;return}
+  const t0=performance.now(),d=600;
+  (function f(t){const p=Math.min(1,(t-t0)/d);el.textContent=Math.round(n*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(t0);
+}
+$('#go').addEventListener('click',run);
+$('#again').addEventListener('click',()=>{S.run++;S.busy=false;drawLedger();document.querySelector('.console').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})});
+
+drawMissions();drawTools();drawAuto();drawLedger();rope.init();rope.to(sagFor());
+})();
+</script>
+</body>
+</html>
