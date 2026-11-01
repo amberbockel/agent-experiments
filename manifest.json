@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-01",
+      "slug": "2026-11-01",
+      "title": "Skill Proof",
+      "category": "productivity",
+      "design": "monochrome-type-led",
+      "oneLiner": "Paste a SKILL.md and get a proofreader's markup: spec errors, weak descriptions, and a test of whether your prompts would trigger it.",
+      "path": "apps/2026-11-01/"
+    },
+    {
       "date": "2026-10-31",
       "slug": "2026-10-31",
       "title": "Leash",

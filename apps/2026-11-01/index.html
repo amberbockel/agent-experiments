@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Skill Proof</title>
+<meta name="description" content="Paste a SKILL.md and get a proofreader's markup: spec errors, weak descriptions, and a test of whether your prompts would trigger it.">
+<style>
+:root{
+  --paper:#fafaf8; --ink:#151515; --ink2:#55554f; --ink3:#8c8c85; --rule:#d9d9d3; --wash:#f0f0ec;
+  --sig:#d4001a; --ok:#151515;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){--paper:#121211;--ink:#f1f1ec;--ink2:#a9a9a1;--ink3:#76766f;--rule:#2d2d2a;--wash:#1b1b19;--sig:#ff5a67;--ok:#f1f1ec}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans);min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:var(--s4) var(--s2) var(--s8)}
+header{display:grid;gap:var(--s2);padding-bottom:var(--s4);border-bottom:2px solid var(--ink);margin-bottom:var(--s4)}
+h1{font:400 clamp(56px,13vw,148px)/.88 var(--serif);letter-spacing:-.045em;margin:0}
+h1 i{font-style:italic;letter-spacing:-.06em}
+.lede{max-width:52ch;margin:0;color:var(--ink2);font:400 19px/1.55 var(--serif)}
+.grid{display:grid;gap:var(--s4);grid-template-columns:1fr}
+@media(min-width:900px){.grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:var(--s6);align-items:start}}
+h2{font:600 15px/1.3 var(--sans);margin:0 0 var(--s1)}
+.bar{display:flex;flex-wrap:wrap;gap:var(--s1);align-items:center;justify-content:space-between;margin-bottom:var(--s1)}
+.btns{display:flex;gap:var(--s1);flex-wrap:wrap}
+.btn{min-height:44px;padding:0 var(--s2);border:1.5px solid var(--ink);background:transparent;border-radius:999px;cursor:pointer;
+  font-size:14px;transition:transform .25s var(--spring),background .15s,color .15s}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn:active{transform:scale(.94)}
+.editor{position:relative;border:1.5px solid var(--ink);border-radius:4px;background:var(--wash);display:flex}
+.gutter{padding:var(--s2) 0 var(--s2) var(--s1);font:13px/1.65 var(--mono);color:var(--ink3);text-align:right;user-select:none;overflow:hidden;min-width:40px;white-space:pre}
+textarea#src{flex:1;min-height:440px;height:64dvh;max-height:760px;resize:vertical;border:0;background:transparent;padding:var(--s2);
+  font:13px/1.65 var(--mono);white-space:pre;overflow:auto;tab-size:2;outline:none}
+.editor:focus-within{outline:3px solid var(--ink);outline-offset:2px}
+.score{display:flex;align-items:flex-end;gap:var(--s2);border-bottom:1px solid var(--rule);padding-bottom:var(--s3);margin-bottom:var(--s3)}
+.num{font:400 clamp(96px,16vw,168px)/.8 var(--serif);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.verdict{padding-bottom:6px}
+.verdict b{display:block;font:italic 400 28px/1.15 var(--serif)}
+.verdict span{color:var(--ink2);font-size:14px}
+.issues{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.issues li{border-bottom:1px solid var(--rule)}
+.issue{display:grid;grid-template-columns:28px 1fr auto;gap:var(--s1);width:100%;text-align:left;background:none;border:0;padding:12px 4px;min-height:44px;cursor:pointer;
+  animation:in .35s var(--spring) backwards;animation-delay:calc(var(--i)*40ms)}
+.issue:hover{background:var(--wash)}
+.mark{font:700 18px/1.3 var(--serif);text-align:center}
+.mark.err{color:var(--sig)}
+.mark.warn{color:var(--ink)}
+.mark.tip{color:var(--ink3)}
+.issue strong{display:block;font-size:15px;font-weight:600}
+.issue p{margin:2px 0 0;color:var(--ink2);font-size:14px;max-width:60ch}
+.ln{font:12px var(--mono);color:var(--ink3);padding-top:3px}
+.fix{margin:0 0 12px 36px;min-height:44px;padding:0 14px;font-size:13px;border:1.5px solid var(--sig);color:var(--sig);background:transparent;border-radius:999px;cursor:pointer}
+.fix:hover{background:var(--sig);color:var(--paper)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.clean{font:italic 400 22px/1.4 var(--serif);padding:var(--s3) 0;color:var(--ink2)}
+.test{margin-top:var(--s6);padding-top:var(--s3);border-top:2px solid var(--ink)}
+.test p.sub{margin:0 0 var(--s2);color:var(--ink2);font-size:14px;max-width:56ch}
+.test input{width:100%;min-height:48px;border:1.5px solid var(--ink);background:var(--paper);border-radius:4px;padding:0 var(--s2);font-size:16px}
+.meter{height:10px;border-radius:5px;background:var(--wash);margin:var(--s2) 0 var(--s1);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--ink);transition:width .6s var(--spring)}
+.tres{font:italic 400 22px/1.3 var(--serif);min-height:30px}
+.hits{color:var(--ink2);font-size:14px;margin-top:6px}
+.hits mark{background:var(--ink);color:var(--paper);padding:0 4px;border-radius:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:var(--s2)}
+.chip{min-height:44px;padding:0 14px;border:1px solid var(--rule);background:transparent;border-radius:999px;cursor:pointer;font-size:13px;color:var(--ink2)}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+footer{margin-top:var(--s8);color:var(--ink3);font-size:13px;max-width:70ch}
+footer a{color:inherit}
+.pop{animation:pop .5s var(--spring)}
+@keyframes pop{from{transform:scale(.92);opacity:.4}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Skill <i>Proof</i></h1>
+  <p class="lede">Paste a SKILL.md. Get it marked up like a proof sheet: broken rules, vague wording, and whether an agent would ever pick it up.</p>
+</header>
+
+<main class="grid">
+  <section aria-labelledby="h-src">
+    <div class="bar">
+      <h2 id="h-src">Your SKILL.md</h2>
+      <div class="btns">
+        <button class="btn" id="ex-bad">Load a rough draft</button>
+        <button class="btn" id="ex-good">Load a clean one</button>
+      </div>
+    </div>
+    <div class="editor">
+      <div class="gutter" id="gut" aria-hidden="true"></div>
+      <textarea id="src" spellcheck="false" aria-label="SKILL.md contents" autocapitalize="off" autocomplete="off"></textarea>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-rep">
+    <h2 id="h-rep" class="sr" style="position:absolute;left:-9999px">Proof report</h2>
+    <div class="score" aria-live="polite">
+      <div class="num" id="num">0</div>
+      <div class="verdict"><b id="vd">&nbsp;</b><span id="vs"></span></div>
+    </div>
+    <ul class="issues" id="issues"></ul>
+
+    <div class="test">
+      <h2>Would it fire?</h2>
+      <p class="sub">Type something a person might ask an agent. Skill Proof compares it with your description the way a router would: by shared meaning words.</p>
+      <label for="q" style="position:absolute;left:-9999px">A sample request</label>
+      <input id="q" placeholder="e.g. turn this spreadsheet into a pdf report">
+      <div class="meter" role="presentation"><i id="mt"></i></div>
+      <div class="tres" id="tr" aria-live="polite">Waiting for a request.</div>
+      <div class="hits" id="th"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </section>
+</main>
+<footer>Runs entirely in your browser; nothing is sent anywhere. Rules follow the open Agent Skills spec: name up to 64 characters, lowercase and hyphens; description up to 1024 characters, written in third person, saying what the skill does and when to use it.</footer>
+</div>
+
+<script>
+const BAD=`---
+name: PDF Helper!
+description: I can help you with PDFs.
+---
+
+# PDF Helper
+
+TODO: write this
+
+You should always do everything with PDFs.
+`;
+const GOOD=`---
+name: pdf-report-builder
+description: Builds a formatted PDF report from spreadsheet or CSV data, including charts and a summary page. Use when the user asks to turn tabular data into a PDF, a printable report, or a one-page brief.
+---
+
+# PDF report builder
+
+## When to use
+Use this skill when someone hands over a CSV or spreadsheet and wants a document they can share.
+
+## Steps
+1. Read the file and confirm the column types.
+2. Pick one headline metric and chart it first.
+3. Export with the bundled script: \`scripts/render.py\`.
+
+## Notes
+Keep the summary under 120 words.
+`;
+const $=id=>document.getElementById(id);
+const src=$('src');
+const STOP=new Set('a an the and or of to for in on with this that is are be it as at by from use used when user asks can your you i we my me do does into out up about turn make get help'.split(' '));
+const words=t=>(t.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>2&&!STOP.has(w)).map(w=>w.replace(/(ing|ed|es|s)$/,''));
+let fm=null;
+
+function parse(t){
+  const lines=t.split('\n');
+  if(lines[0].trim()!=='---')return {has:false,lines};
+  let end=-1;for(let i=1;i<lines.length;i++)if(lines[i].trim()==='---'){end=i;break}
+  if(end<0)return {has:true,open:true,lines};
+  const f={};
+  for(let i=1;i<end;i++){const m=lines[i].match(/^([A-Za-z_-]+):\s*(.*)$/);if(m)f[m[1]]={v:m[2].replace(/^["']|["']$/g,''),line:i+1}}
+  return {has:true,end,f,lines};
+}
+function lint(t){
+  const out=[];const P=parse(t);
+  const add=(sev,title,msg,line,fix)=>out.push({sev,title,msg,line,fix});
+  if(!t.trim()){return {out:[],P}}
+  if(!P.has){add('err','No frontmatter','A skill starts with a --- block holding name and description.',1,{label:'Add frontmatter',run:s=>`---\nname: my-skill\ndescription: Describe what this skill does and when to use it.\n---\n\n`+s});return {out,P}}
+  if(P.open){add('err','Frontmatter never closes','Add a second --- line after description.',1);return {out,P}}
+  const n=P.f.name,d=P.f.description;
+  if(!n)add('err','Missing name','Every skill needs a name field.',2);
+  else{
+    const v=n.v;
+    if(!v.trim())add('err','Name is empty','Give it a short lowercase name.',n.line);
+    else{
+      if(v.length>64)add('err','Name is too long',`${v.length} characters; the limit is 64.`,n.line);
+      if(!/^[a-z0-9-]+$/.test(v)){const slug=v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+        add('err','Name breaks the format','Use lowercase letters, numbers and hyphens only.',n.line,{label:`Rename to ${slug}`,run:s=>s.replace(/^(name:).*$/m,`$1 ${slug}`)})}
+      if(/anthropic|claude/i.test(v))add('err','Reserved word in name','Names can’t contain “anthropic” or “claude”.',n.line);
+      if(/^(helper|utils?|tools?|skill)$/.test(v)||/helper|utils?$/.test(v))add('tip','Name is vague','“helper” and “utils” say nothing. Name the job: pdf-report-builder.',n.line);
+    }
+  }
+  if(!d)add('err','Missing description','The description is how an agent decides to load your skill.',2);
+  else{
+    const v=d.v;
+    if(!v.trim())add('err','Description is empty','Say what the skill does and when to use it.',d.line);
+    else{
+      if(v.length>1024)add('err','Description is too long',`${v.length} characters; the limit is 1024.`,d.line);
+      if(/<[^>]+>/.test(v))add('err','XML tags in description','Remove anything that looks like <tags>.',d.line);
+      if(/\b(I|my)\b|\byou (can|should)\b/i.test(v))add('warn','Not in third person','Write “Builds reports…” not “I can help you…”. The description is injected into a system prompt.',d.line);
+      if(v.length<80)add('warn','Description is thin',`${v.length} characters. Add what it produces and the situations that call for it.`,d.line);
+      if(!/\buse (this )?(skill )?(when|for)\b|\bwhen (the )?(user|someone|asked)\b|\btrigger/i.test(v))add('warn','No “use when” trigger','Add a sentence like “Use when the user asks for…” so the agent knows when to reach for it.',d.line);
+    }
+  }
+  const body=P.lines.slice(P.end+1).join('\n');const bl=P.end+2;
+  if(!body.trim())add('err','Body is empty','The instructions go below the frontmatter.',bl);
+  else{
+    if(!/^#{1,3} /m.test(body))add('warn','No headings','Section headings help an agent skim to the right step.',bl);
+    P.lines.forEach((l,i)=>{if(i>P.end&&/\b(TODO|FIXME|TBD)\b/.test(l))add('warn','Unfinished note',`“${l.trim().slice(0,50)}” would ship to the model as-is.`,i+1)});
+    if(/\b(always|never|everything|anything)\b/i.test(body)&&body.length<400)add('tip','Sweeping language','“Always” and “everything” without detail give the agent nothing to act on.',bl);
+    if(P.lines.length>500)add('warn','Body is over 500 lines','Move reference material into separate files and link to them.',501);
+    if(!/^\s*(\d+\.|-|\*) /m.test(body)&&body.length>0&&body.length<1500)add('tip','No steps or list','Concrete steps tend to be followed more reliably than prose.',bl);
+  }
+  return {out,P};
+}
+const W={err:22,warn:9,tip:3};
+let shown=0,raf;
+function tick(to){cancelAnimationFrame(raf);const from=shown,t0=performance.now();
+  const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(rm){shown=to;$('num').textContent=to;return}
+  (function f(now){const p=Math.min(1,(now-t0)/600),e=1-Math.pow(1-p,3);shown=Math.round(from+(to-from)*e);$('num').textContent=shown;if(p<1)raf=requestAnimationFrame(f)})(t0)}
+const MARK={err:'×',warn:'!',tip:'·'};
+let lastSig='';
+function render(){
+  const t=src.value;const {out,P}=lint(t);fm=P;
+  const score=t.trim()?Math.max(0,100-out.reduce((a,i)=>a+W[i.sev],0)):0;
+  tick(score);
+  const empty=!t.trim();
+  $('vd').textContent=empty?'Nothing yet':score>=95?'Ready to ship':score>=75?'Nearly there':score>=45?'Needs a pass':'Back to the desk';
+  $('vs').textContent=empty?'Paste or load a skill.':`${out.filter(i=>i.sev=='err').length} errors, ${out.filter(i=>i.sev=='warn').length} warnings, ${out.filter(i=>i.sev=='tip').length} notes`;
+  const ul=$('issues');const sig=out.map(i=>i.title+i.line).join('|');
+  if(sig!==lastSig){
+    lastSig=sig;ul.innerHTML='';
+    if(!out.length&&!empty){ul.innerHTML='<li class="clean">No marks. This one reads clean.</li>'}
+    out.sort((a,b)=>W[b.sev]-W[a.sev]).forEach((it,k)=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<button class="issue" style="--i:${k}"><span class="mark ${it.sev}" aria-label="${it.sev}">${MARK[it.sev]}</span><span><strong></strong><p></p></span><span class="ln">line ${it.line}</span></button>`;
+      li.querySelector('strong').textContent=it.title;li.querySelector('p').textContent=it.msg;
+      li.querySelector('.issue').onclick=()=>jump(it.line);
+      if(it.fix){const b=document.createElement('button');b.className='fix';b.textContent=it.fix.label;b.onclick=()=>{src.value=it.fix.run(src.value);update()};li.appendChild(b)}
+      ul.appendChild(li)});
+  }
+  gutter();test();
+}
+function jump(line){const ls=src.value.split('\n');let s=0;for(let i=0;i<line-1&&i<ls.length;i++)s+=ls[i].length+1;
+  src.focus();src.setSelectionRange(s,s+(ls[line-1]||'').length);
+  src.scrollTop=Math.max(0,(line-4)*13*1.65)}
+function gutter(){const n=src.value.split('\n').length;$('gut').textContent=Array.from({length:n},(_, i)=>i+1).join('\n');$('gut').scrollTop=src.scrollTop}
+function test(){
+  const q=$('q').value.trim();const mt=$('mt'),tr=$('tr'),th=$('th');
+  const d=fm&&fm.f&&fm.f.description?fm.f.description.v+' '+(fm.f.name?fm.f.name.v.replace(/-/g,' '):''):'';
+  if(!q){mt.style.width='0';tr.textContent='Waiting for a request.';th.textContent='';return}
+  const qw=[...new Set(words(q))],dw=new Set(words(d));
+  const hit=qw.filter(w=>dw.has(w));
+  const pct=qw.length&&dw.size?Math.round(100*hit.length/qw.length):0;
+  mt.style.width=Math.max(4,pct)+'%';
+  tr.textContent=!dw.size?'There is no description to match against.':pct>=60?'Yes, this would likely fire.':pct>=30?'Maybe. It could lose to a closer skill.':'Unlikely to fire on this request.';
+  th.innerHTML=qw.length?'Matched: '+(hit.length?hit.map(w=>`<mark>${w}</mark>`).join(' '):'nothing')+(qw.length-hit.length?' · Missing: '+qw.filter(w=>!dw.has(w)).join(', '):''):'';
+}
+function update(){render()}
+src.addEventListener('input',update);
+src.addEventListener('scroll',()=>$('gut').scrollTop=src.scrollTop);
+$('q').addEventListener('input',test);
+$('ex-bad').onclick=()=>{src.value=BAD;update();$('num').classList.remove('pop');void $('num').offsetWidth;$('num').classList.add('pop')};
+$('ex-good').onclick=()=>{src.value=GOOD;update();$('num').classList.remove('pop');void $('num').offsetWidth;$('num').classList.add('pop')};
+['turn this spreadsheet into a pdf report','book me a flight to Denver','make a printable one-page brief from my csv'].forEach(s=>{
+  const b=document.createElement('button');b.className='chip';b.textContent=s;b.onclick=()=>{$('q').value=s;test()};$('chips').appendChild(b)});
+src.value=BAD;render();
+</script>
+</body>
+</html>
