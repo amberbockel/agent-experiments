@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-02",
+      "slug": "2026-11-02",
+      "title": "Full Bloom",
+      "category": "games",
+      "design": "organic-nature",
+      "oneLiner": "Plant fraction seeds, fill the pot to exactly one whole, and don't overflow.",
+      "path": "apps/2026-11-02/"
+    },
+    {
       "date": "2026-11-01",
       "slug": "2026-11-01",
       "title": "Skill Proof",

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Full Bloom</title>
+<meta name="description" content="A pass-and-play fraction game. Plant seeds, fill the pot to exactly one whole, and don't overflow.">
+<style>
+:root{
+  --moss:#1c3a2b; --fern:#2f7d5b; --mist:#e6eee3; --leaf:#f4f8f1; --pollen:#f2b632; --bloom:#e27d8e; --ink:#14291f; --ink2:#4b6254;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-rounded,"SF Pro Rounded","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s5:48px;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);line-height:1.5;min-height:100dvh;
+  background:
+   radial-gradient(60vmax 40vmax at 90% -10%,#cfe3c9 0,transparent 60%),
+   radial-gradient(50vmax 40vmax at -10% 110%,#f5dfd0 0,transparent 55%),
+   linear-gradient(170deg,#eef5ea,#dfeadb);
+  background-attachment:fixed;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--fern);outline-offset:3px;border-radius:12px}
+.wrap{max-width:960px;margin:0 auto;padding:var(--s3) var(--s2) var(--s4);min-height:100dvh;display:flex;flex-direction:column}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.1;letter-spacing:-.01em}
+.panel{background:rgba(255,255,255,.7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);
+  border-radius:28px;box-shadow:0 1px 0 #fff inset,0 24px 48px -24px rgba(28,58,43,.35)}
+.btn{min-height:48px;padding:0 var(--s3);border-radius:999px;border:0;cursor:pointer;font-weight:700;font-size:1rem;
+  transition:transform .25s var(--spring),box-shadow .25s,opacity .2s;touch-action:manipulation}
+.btn:active{transform:scale(.95)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.go{background:var(--moss);color:#fff;box-shadow:0 10px 20px -8px rgba(28,58,43,.6)}
+.btn.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 24px -8px rgba(28,58,43,.6)}
+.btn.bank{background:var(--pollen);color:#3a2a00;box-shadow:0 10px 20px -8px rgba(190,130,0,.6)}
+.btn.bank:hover:not(:disabled){transform:translateY(-2px)}
+.btn.ghost{background:rgba(28,58,43,.08);color:var(--moss)}
+.btn.ghost:hover{background:rgba(28,58,43,.14)}
+.hidden{display:none!important}
+
+/* setup */
+#setup{margin:auto;width:100%;max-width:560px;padding:var(--s4) var(--s3);display:grid;gap:var(--s3)}
+#setup h1{font-size:clamp(2.6rem,10vw,4rem)}
+#setup p.lede{font-family:var(--serif);font-size:1.15rem;line-height:1.6;color:var(--ink2);max-width:46ch}
+.rules{display:grid;gap:var(--s1);padding:0;list-style:none;font-size:.95rem;color:var(--ink2)}
+.rules li{padding-left:var(--s3);position:relative;max-width:60ch}
+.rules li::before{content:"";position:absolute;left:4px;top:.55em;width:9px;height:9px;border-radius:50% 0 50% 50%;background:var(--fern);transform:rotate(-45deg)}
+.players{display:grid;gap:var(--s1)}
+.prow{display:flex;gap:var(--s1)}
+.prow input{flex:1;min-width:0;min-height:48px;border-radius:16px;border:1.5px solid #c5d6c4;background:#fff;padding:0 var(--s2)}
+.prow input:focus{outline:3px solid var(--fern);outline-offset:1px;border-color:var(--fern)}
+.prow button{width:48px;height:48px;border-radius:16px;border:0;background:rgba(28,58,43,.08);cursor:pointer;font-size:1.3rem}
+.opts{display:flex;gap:var(--s1);flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;background:rgba(28,58,43,.08);border-radius:999px;padding:4px}
+.seg button{min-height:44px;min-width:44px;border:0;background:none;border-radius:999px;cursor:pointer;font-weight:700;padding:0 14px;transition:background .2s,color .2s}
+.seg button[aria-pressed=true]{background:var(--moss);color:#fff}
+
+/* game */
+header.top{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+header.top h2{font-size:1.5rem}
+.round{font-size:.9rem;color:var(--ink2)}
+.board{display:flex;gap:var(--s1);overflow-x:auto;padding:4px 2px 12px;margin-bottom:var(--s1);scrollbar-width:none}
+.board::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;min-width:104px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,.55);border:1.5px solid transparent;transition:all .4s var(--spring)}
+.chip b{display:block;font-size:.85rem;font-weight:600;color:var(--ink2);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.chip span{font-family:var(--serif);font-size:1.6rem;font-weight:600;font-variant-numeric:tabular-nums}
+.chip.on{background:#fff;border-color:var(--fern);transform:translateY(-3px);box-shadow:0 14px 24px -14px rgba(47,125,91,.8)}
+.stage{display:grid;grid-template-columns:1fr;gap:var(--s3);flex:1}
+@media(min-width:760px){.stage{grid-template-columns:minmax(260px,340px) 1fr;align-items:start}}
+.potcol{padding:var(--s3);display:grid;justify-items:center;gap:var(--s2)}
+.turn{font-family:var(--serif);font-size:1.5rem;text-align:center}
+.potwrap{display:flex;gap:12px;align-items:stretch}
+.pot{position:relative;width:132px;height:min(46dvh,340px);min-height:240px;border-radius:14px 14px 44px 44px;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.45));border:2.5px solid var(--moss);overflow:hidden;
+  box-shadow:0 22px 30px -18px rgba(28,58,43,.7),inset 0 0 0 4px rgba(255,255,255,.5)}
+.pot .stack{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column-reverse}
+.seed{display:grid;place-items:center;font-family:var(--serif);font-weight:700;font-size:.95rem;border-top:2px solid rgba(255,255,255,.7);
+  animation:drop .7s var(--spring) both;min-height:0;overflow:hidden}
+.seed small{font-size:.7em;opacity:.8;display:block;line-height:1}
+@keyframes drop{from{transform:translateY(-320px);opacity:0}to{transform:none;opacity:1}}
+.line{position:absolute;left:0;right:0;border-top:1.5px dashed rgba(28,58,43,.35);pointer-events:none}
+.rule{position:relative;width:46px;font-size:.78rem;color:var(--ink2);font-variant-numeric:tabular-nums}
+.rule span{position:absolute;left:0;transform:translateY(50%)}
+.pot.bust{animation:shake .5s}
+.pot.bust .stack{filter:grayscale(.9) brightness(.9);transition:filter .6s}
+@keyframes shake{20%{transform:translateX(-10px) rotate(-2deg)}40%{transform:translateX(9px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.pot.full{animation:glow 1.2s}
+@keyframes glow{50%{box-shadow:0 0 0 14px rgba(242,182,50,.45),0 22px 30px -18px rgba(28,58,43,.7)}}
+.total{font-family:var(--serif);font-size:2.4rem;font-variant-numeric:tabular-nums;line-height:1}
+.total small{font-size:1rem;color:var(--ink2);font-family:var(--sans)}
+.meter{width:100%;text-align:center;font-size:.95rem;color:var(--ink2);min-height:3em}
+.meter b{color:var(--ink)}
+.actions{padding:var(--s3);display:grid;gap:var(--s2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s1)}
+.drawn{min-height:140px;display:grid;place-items:center;border-radius:22px;background:rgba(255,255,255,.55);border:2px dashed #b9cfb8;padding:var(--s2)}
+.card{width:112px;height:148px;border-radius:20px;display:grid;place-items:center;text-align:center;font-family:var(--serif);font-weight:700;
+  box-shadow:0 18px 26px -14px rgba(28,58,43,.7);animation:flip .6s var(--spring) both}
+@keyframes flip{from{transform:rotateY(90deg) scale(.7)}to{transform:none}}
+.card .fr{display:grid;gap:2px;font-size:2.4rem;line-height:1}
+.card .fr i{display:block;border-top:3px solid currentColor;margin:2px auto;width:48px}
+.card .pc{font-family:var(--sans);font-size:.85rem;font-weight:600;opacity:.8}
+.hint{font-size:.9rem;color:var(--ink2);max-width:52ch}
+.toast{text-align:center;font-family:var(--serif);font-size:1.3rem;min-height:1.6em}
+.toast.bad{color:#a23a4e}.toast.good{color:#1f6b46}
+
+dialog{margin:auto;border:0;border-radius:28px;padding:var(--s4) var(--s3);max-width:min(440px,92vw);width:100%;background:#fff;color:var(--ink);box-shadow:0 40px 80px -20px rgba(20,41,31,.6);text-align:center}
+dialog::backdrop{background:rgba(20,41,31,.45);backdrop-filter:blur(4px)}
+dialog[open]{animation:pop .5s var(--spring)}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+dialog h2{font-size:2rem;margin-bottom:var(--s1)}
+dialog .big{font-family:var(--serif);font-size:4rem;line-height:1;font-variant-numeric:tabular-nums;margin:var(--s2) 0}
+dialog p{color:var(--ink2);margin-bottom:var(--s2)}
+.rank{list-style:none;padding:0;display:grid;gap:6px;margin:var(--s2) 0;text-align:left}
+.rank li{display:flex;justify-content:space-between;padding:12px 16px;border-radius:16px;background:var(--mist);font-weight:600}
+.rank li:first-child{background:var(--pollen);color:#3a2a00}
+.petal{position:fixed;width:12px;height:16px;border-radius:50% 0 50% 50%;pointer-events:none;z-index:99;animation:fly 1.6s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<section id="setup" class="panel">
+  <h1>Full bloom</h1>
+  <p class="lede">Plant fraction seeds in the pot. Get as close to one whole as you dare. Go over, and everything wilts.</p>
+  <ul class="rules">
+    <li>On your turn, draw a seed as many times as you like.</li>
+    <li>Bank your pot whenever you want. You score its percent: ¾ full is 75 points.</li>
+    <li>Hit exactly one whole for 100 points plus a 50 point bloom bonus.</li>
+    <li>Go over one whole and the round scores nothing.</li>
+  </ul>
+  <div class="players" id="plist" aria-label="Players"></div>
+  <div class="opts">
+    <button class="btn ghost" id="addP">Add player</button>
+    <div class="seg" role="group" aria-label="Rounds">
+      <button data-r="2" aria-pressed="false">2 rounds</button><button data-r="3" aria-pressed="true">3 rounds</button><button data-r="5" aria-pressed="false">5 rounds</button>
+    </div>
+  </div>
+  <button class="btn go" id="start">Start planting</button>
+</section>
+
+<section id="game" class="hidden">
+  <header class="top">
+    <div><h2>Full bloom</h2><div class="round" id="roundLbl"></div></div>
+    <div class="opts"><div class="seg" role="group" aria-label="Show as"><button id="mFrac" aria-pressed="true">Fractions</button><button id="mPct" aria-pressed="false">Percents</button></div>
+    <button class="btn ghost" id="quit" aria-label="Quit to setup">Quit</button></div>
+  </header>
+  <div class="board" id="board" aria-live="polite"></div>
+  <div class="stage">
+    <div class="panel potcol">
+      <div class="turn" id="turn"></div>
+      <div class="potwrap">
+        <div class="pot" id="pot"><div class="stack" id="stack"></div></div>
+        <div class="rule" id="rule" aria-hidden="true"></div>
+      </div>
+      <div class="total" id="total">0</div>
+      <div class="meter" id="meter" aria-live="polite"></div>
+    </div>
+    <div class="panel actions">
+      <div class="drawn" id="drawn"><span class="hint">Draw a seed to begin. Each seed is a fraction of the pot.</span></div>
+      <div class="toast" id="toast" aria-live="assertive"></div>
+      <div class="row2">
+        <button class="btn go" id="draw">Draw seed</button>
+        <button class="btn bank" id="bank" disabled>Bank it</button>
+      </div>
+      <p class="hint" id="hint"></p>
+    </div>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg"></dialog>
+
+<script>
+"use strict";
+const D=60;
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const CARDS=[[30,4],[20,4],[40,2],[15,4],[45,2],[12,3],[24,3],[36,2],[10,3],[50,1],[6,3],[5,2]];
+const COLORS={2:["#2f7d5b","#fff"],3:["#4fa3a5","#08292b"],4:["#f2b632","#3a2a00"],5:["#e27d8e","#3d0d19"],6:["#9a82d1","#1d1040"],10:["#8cc152","#1d3300"],12:["#4a79b8","#fff"]};
+const $=id=>document.getElementById(id);
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+let players=["Player 1","Player 2"],rounds=3,mode="frac";
+let S=null;
+
+function fr(v){const g=gcd(v,D);return[v/g,D/g]}
+function fracHTML(v){const[n,d]=fr(v);return `<span class="fr"><span>${n}</span><i></i><span>${d}</span></span>`}
+function fracTxt(v){const[n,d]=fr(v);return d===1?String(n):`${n}/${d}`}
+function pct(v){return Math.round(v/D*100)}
+function lbl(v){return mode==="frac"?fracTxt(v):pct(v)+"%"}
+function colorOf(v){const[,d]=fr(v);return COLORS[d]||COLORS[12]}
+
+/* setup */
+function renderPlayers(){
+  const el=$("plist");el.innerHTML="";
+  players.forEach((p,i)=>{
+    const r=document.createElement("div");r.className="prow";
+    r.innerHTML=`<input value="${p.replace(/"/g,"&quot;")}" aria-label="Player ${i+1} name" maxlength="16"><button aria-label="Remove player ${i+1}" ${players.length<=2?"disabled style='opacity:.3'":""}>×</button>`;
+    r.firstChild.addEventListener("input",e=>players[i]=e.target.value);
+    r.lastChild.addEventListener("click",()=>{if(players.length>2){players.splice(i,1);renderPlayers()}});
+    el.appendChild(r);
+  });
+  $("addP").disabled=players.length>=6;
+}
+$("addP").onclick=()=>{players.push("Player "+(players.length+1));renderPlayers();const ins=$("plist").querySelectorAll("input");ins[ins.length-1].focus();ins[ins.length-1].select()};
+document.querySelectorAll(".seg [data-r]").forEach(b=>b.onclick=()=>{rounds=+b.dataset.r;document.querySelectorAll(".seg [data-r]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+$("start").onclick=()=>{
+  const names=players.map((p,i)=>p.trim()||"Player "+(i+1));
+  S={names,scores:names.map(()=>0),round:1,turn:0,pot:[],deck:[],over:false,total:rounds};
+  $("setup").classList.add("hidden");$("game").classList.remove("hidden");newDeck();beginTurn();
+};
+$("quit").onclick=()=>{$("game").classList.add("hidden");$("setup").classList.remove("hidden");renderPlayers()};
+function setMode(m){mode=m;$("mFrac").setAttribute("aria-pressed",m==="frac");$("mPct").setAttribute("aria-pressed",m==="pct");if(S)renderPot(false)}
+$("mFrac").onclick=()=>setMode("frac");$("mPct").onclick=()=>setMode("pct");
+
+/* game */
+function newDeck(){
+  const d=[];CARDS.forEach(([v,n])=>{for(let i=0;i<n;i++)d.push(v)});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
+  S.deck=d;
+}
+const sum=()=>S.pot.reduce((a,b)=>a+b,0);
+function renderBoard(){
+  $("board").innerHTML=S.names.map((n,i)=>`<div class="chip ${i===S.turn?"on":""}"><b></b><span data-i="${i}">${S.scores[i]}</span></div>`).join("");
+  [...$("board").querySelectorAll("b")].forEach((b,i)=>b.textContent=S.names[i]);
+}
+function countUp(el,to){
+  const from=+el.textContent;if(reduce||from===to){el.textContent=to;return}
+  const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/700);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0);
+}
+function beginTurn(){
+  S.pot=[];S.busy=false;
+  if(S.deck.length<12)newDeck();
+  $("roundLbl").textContent=`Round ${S.round} of ${S.total}`;
+  $("turn").textContent=`${S.names[S.turn]}, your pot`;
+  $("drawn").innerHTML=`<span class="hint">Draw a seed to begin. Each seed is a fraction of the pot.</span>`;
+  $("toast").textContent="";$("toast").className="toast";
+  $("pot").className="pot";$("draw").disabled=false;$("bank").disabled=true;
+  renderBoard();renderPot(false);
+}
+function renderPot(animate){
+  const st=$("stack");const t=sum();
+  st.innerHTML=S.pot.map((v,i)=>{const[bg,fg]=colorOf(v);const h=Math.min(v,D)/D*100;
+    return `<div class="seed" style="height:${h}%;background:${bg};color:${fg};${animate&&i===S.pot.length-1?"":"animation:none"}">${mode==="frac"?fracHTML(v).replace(/<span class="fr">/,'<span style="display:grid;line-height:1;text-align:center">').replace(/<i><\/i>/,'<i style="display:block;border-top:2px solid currentColor;margin:1px auto;width:1.1em"></i>'):pct(v)+"%"}</div>`}).join("");
+  const rule=$("rule");rule.innerHTML="";
+  [[60,"1"],[45,"¾"],[30,"½"],[15,"¼"]].forEach(([v,l])=>{
+    const s=document.createElement("span");s.style.bottom=(v/D*100)+"%";s.textContent=mode==="frac"?l:pct(v)+"%";rule.appendChild(s)});
+  if(!$("pot").querySelector(".line")){[15,30,45].forEach(v=>{const l=document.createElement("div");l.className="line";l.style.bottom=(v/D*100)+"%";$("pot").appendChild(l)})}
+  $("total").innerHTML=t===0?`0 <small>of 1 whole</small>`:`${lbl(t)} <small>of 1 whole</small>`;
+  const room=D-t;
+  if(t===0){$("meter").innerHTML=`Pot is empty. Room for <b>1 whole</b>.`}
+  else if(t<=D){
+    const fit=S.deck.filter(v=>v<=room).length,n=S.deck.length;
+    $("meter").innerHTML=`Room left: <b>${room===0?"none":lbl(room)}</b>. ${fit} of ${n} seeds in the bag still fit.`;
+  }
+  $("hint").textContent=mode==="frac"?"Tip: change fractions to a common denominator to add them. Sixtieths work for every seed here.":"Percents and fractions are two names for the same amount: 25% is ¼.";
+}
+function showCard(v){
+  const[bg,fg]=colorOf(v);
+  $("drawn").innerHTML=`<div class="card" style="background:${bg};color:${fg}">${mode==="frac"?`<div><div class="fr">${fracHTML(v)}</div><div class="pc">${pct(v)}%</div></div>`:`<div><div style="font-size:2.4rem">${pct(v)}%</div><div class="pc">${fracTxt(v)}</div></div>`}</div>`;
+}
+$("draw").onclick=()=>{
+  if(S.busy)return;
+  const v=S.deck.pop();S.pot.push(v);showCard(v);renderPot(true);
+  const t=sum();$("bank").disabled=false;
+  if(t>D){
+    S.busy=true;$("draw").disabled=true;$("bank").disabled=true;
+    $("pot").classList.add("bust");$("toast").className="toast bad";$("toast").textContent=`Overflow at ${lbl(t)}. This pot wilts.`;
+    setTimeout(()=>endTurn(0,"wilt"),1500);
+  }else if(t===D){
+    S.busy=true;$("draw").disabled=true;$("bank").disabled=true;
+    $("pot").classList.add("full");$("toast").className="toast good";$("toast").textContent="Exactly one whole. Full bloom!";
+    petals(innerWidth/2,innerHeight/2,40);
+    setTimeout(()=>endTurn(150,"bloom"),1500);
+  }
+};
+$("bank").onclick=()=>{if(S.busy||!S.pot.length)return;S.busy=true;endTurn(pct(sum()),"bank")};
+function endTurn(pts,kind){
+  S.scores[S.turn]+=pts;renderBoard();
+  const el=$("board").querySelector(`[data-i="${S.turn}"]`);if(el){el.textContent=S.scores[S.turn]-pts;countUp(el,S.scores[S.turn])}
+  const dlg=$("dlg"),name=S.names[S.turn];
+  const msg={wilt:["Wilted","Too much! The next pot is a fresh start."],bloom:["Full bloom","A perfect whole, plus the bonus."],bank:["Banked","Nice and steady."]}[kind];
+  const last=S.turn===S.names.length-1&&S.round===S.total;
+  dlg.innerHTML=`<h2></h2><p>${msg[1]}</p><div class="big">+${pts}</div><button class="btn go" id="next" style="width:100%">${last?"See results":"Pass to "+S.names[(S.turn+1)%S.names.length].replace(/</g,"")}</button>`;
+  dlg.querySelector("h2").textContent=`${name}: ${msg[0]}`;
+  const big=dlg.querySelector(".big");dlg.showModal();countUp(Object.assign(big,{textContent:"0"}),pts);
+  const orig=big;const tick=()=>{};setTimeout(()=>big.textContent="+"+pts,800);
+  if(!reduce&&kind==="bloom")petals(innerWidth/2,innerHeight/3,30);
+  $("next").onclick=()=>{dlg.close();advance()};$("next").focus();
+}
+function advance(){
+  S.turn++;
+  if(S.turn>=S.names.length){S.turn=0;S.round++}
+  if(S.round>S.total)return finish();
+  beginTurn();
+}
+function finish(){
+  const order=S.names.map((n,i)=>({n,s:S.scores[i]})).sort((a,b)=>b.s-a.s);
+  const tie=order.filter(o=>o.s===order[0].s).length>1;
+  const dlg=$("dlg");
+  dlg.innerHTML=`<h2></h2><p>${tie?"A tie at the top. Everybody blooms.":"The garden is yours."}</p><ol class="rank">${order.map(()=>`<li><span></span><span></span></li>`).join("")}</ol><button class="btn go" id="again" style="width:100%">Play again</button><button class="btn ghost" id="back" style="width:100%;margin-top:8px">Change players</button>`;
+  dlg.querySelector("h2").textContent=tie?"Shared harvest":order[0].n+" wins";
+  dlg.querySelectorAll(".rank li").forEach((li,i)=>{li.children[0].textContent=order[i].n;li.children[1].textContent=order[i].s});
+  dlg.showModal();petals(innerWidth/2,innerHeight/3,60);
+  $("again").onclick=()=>{dlg.close();$("start").click()};
+  $("back").onclick=()=>{dlg.close();$("quit").click()};
+}
+function petals(x,y,n){
+  if(reduce)return;
+  const cols=["#e27d8e","#f2b632","#8cc152","#fff","#9a82d1"];
+  for(let i=0;i<n;i++){const p=document.createElement("div");p.className="petal";p.style.left=x+"px";p.style.top=y+"px";
+    p.style.background=cols[i%cols.length];const a=Math.random()*Math.PI*2,r=120+Math.random()*260;
+    p.style.setProperty("--dx",Math.cos(a)*r+"px");p.style.setProperty("--dy",Math.sin(a)*r+160+"px");p.style.setProperty("--r",Math.random()*720-360+"deg");
+    document.body.appendChild(p);setTimeout(()=>p.remove(),1700)}
+}
+$("dlg").addEventListener("cancel",e=>e.preventDefault());
+renderPlayers();
+</script>
+</body>
+</html>
