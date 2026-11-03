@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Card Rules</title>
+<meta name="description" content="Set the spending rules for an AI agent's virtual card, then watch it try to buy things all day.">
+<style>
+:root{
+  --bg:#E8F0EF; --bg2:#F6F8F5; --ink:#0F2B29; --ink2:#456260; --line:rgba(15,43,41,.12);
+  --panel:rgba(255,255,255,.72); --ok:#0B7A6B; --okbg:#D4F1E8; --no:#C8402A; --nobg:#FDE3DB; --hold:#9A6700; --holdbg:#FBEFC4;
+  --card1:#0B3D3A; --card2:#12907D; --card3:#9BE3C7;
+  --shadow:0 1px 2px rgba(15,43,41,.06),0 12px 32px -12px rgba(11,90,80,.28);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  font-family:ui-rounded,"SF Pro Rounded","Avenir Next","Nunito","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-x]){
+  --bg:#0A1A19; --bg2:#0E2321; --ink:#E4F3EF; --ink2:#8FB0AA; --line:rgba(228,243,239,.14);
+  --panel:rgba(20,48,45,.7); --okbg:#0F4A41; --nobg:#4A2018; --holdbg:#4A3A0B; --ok:#6BE0C5; --no:#FF9078; --hold:#F2C14E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 14px 34px -12px rgba(0,0,0,.6);}}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{min-height:100dvh;color:var(--ink);line-height:1.5;font-size:16px;
+  background:radial-gradient(900px 500px at 85% -10%,rgba(155,227,199,.55),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(18,144,125,.14),transparent 60%),var(--bg);
+  background-attachment:fixed;padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--card2);outline-offset:3px;border-radius:12px}
+.wrap{max-width:1040px;margin:0 auto}
+header{padding:8px 0 28px;max-width:560px}
+h1{font-size:44px;line-height:1.05;letter-spacing:-.03em;font-weight:750}
+.lede{margin-top:12px;color:var(--ink2);font-size:16px;line-height:1.55}
+.grid{display:grid;gap:24px}
+@media(min-width:880px){.grid{grid-template-columns:400px 1fr;align-items:start}.feedcol{position:sticky;top:24px}}
+.panel{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:24px}
+/* card */
+.card{border-radius:24px;padding:24px;color:#fff;position:relative;overflow:hidden;min-height:196px;
+  background:radial-gradient(240px 200px at 90% 0%,rgba(155,227,199,.55),transparent 70%),linear-gradient(145deg,var(--card1),var(--card2) 85%);
+  box-shadow:0 2px 4px rgba(11,61,58,.2),0 24px 40px -16px rgba(18,144,125,.65);transition:transform .5s var(--spring)}
+.card.run{transform:translateY(-3px) rotate(-.4deg)}
+.card .who{font-size:14px;opacity:.85}
+.card .num{font-size:14px;letter-spacing:.14em;opacity:.7;margin-top:2px;font-variant-numeric:tabular-nums}
+.card .bal{font-size:44px;font-weight:750;letter-spacing:-.03em;margin-top:28px;font-variant-numeric:tabular-nums;line-height:1}
+.card .of{font-size:14px;opacity:.85;margin-top:6px}
+.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.22);margin-top:16px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#fff,var(--card3));transition:width .7s var(--spring);transform-origin:left}
+h2{font-size:20px;line-height:1.25;letter-spacing:-.01em;font-weight:700}
+.rules{margin-top:24px}
+.presets{display:flex;gap:8px;margin:16px 0 8px;flex-wrap:wrap}
+.pill{min-height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);font-size:14px;font-weight:600;background:var(--bg2);transition:transform .2s var(--spring),background .2s,color .2s}
+.pill:active{transform:scale(.94)}
+.pill[aria-pressed=true]{background:var(--ink);color:var(--bg2);border-color:var(--ink)}
+.rule{padding:16px 0;border-top:1px solid var(--line)}
+.rule:first-of-type{border-top:0}
+.rule label,.rule .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600}
+.rule .val{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.hint{font-size:14px;color:var(--ink2);margin-top:2px;line-height:1.45}
+input[type=range]{width:100%;height:44px;background:transparent;-webkit-appearance:none;appearance:none;margin-top:4px}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--card2) var(--p,50%),var(--line) var(--p,50%))}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--card2) var(--p,50%),var(--line) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:0;margin-top:-11px;box-shadow:0 2px 8px rgba(11,61,58,.4),0 0 0 1px var(--line);transition:transform .2s var(--spring)}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 8px rgba(11,61,58,.4)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{min-height:44px;padding:0 16px;border-radius:14px;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);transition:transform .2s var(--spring),background .2s,color .2s}
+.chip:active{transform:scale(.94)}
+.chip[aria-pressed=true]{background:var(--okbg);color:var(--ok);border-color:transparent}
+.chip[aria-pressed=true]::before{content:"✓ "}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:44px;text-align:left}
+.track{flex:none;width:52px;height:32px;border-radius:99px;background:var(--line);position:relative;transition:background .25s}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .35s var(--spring)}
+.sw[aria-checked=true] .track{background:var(--card2)}
+.sw[aria-checked=true] .track::after{transform:translateX(20px)}
+.go{width:100%;min-height:56px;border-radius:18px;margin-top:16px;font-size:16px;font-weight:700;color:#fff;
+  background:linear-gradient(145deg,var(--card1),var(--card2));box-shadow:0 10px 24px -8px rgba(18,144,125,.7);transition:transform .2s var(--spring),box-shadow .2s}
+.go:hover{box-shadow:0 14px 28px -8px rgba(18,144,125,.8)}
+.go:active{transform:scale(.97)}
+.go[disabled]{opacity:.55;cursor:default}
+/* feed */
+.feedhead{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:8px}
+.clock{font-variant-numeric:tabular-nums;color:var(--ink2);font-size:14px}
+.empty{padding:40px 8px;text-align:center;color:var(--ink2);max-width:36ch;margin:0 auto}
+.empty b{display:block;color:var(--ink);font-size:20px;margin-bottom:8px}
+ol.feed{list-style:none;padding:0;display:grid;gap:12px;margin-top:16px}
+.tx{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:8px;animation:in .5s var(--spring) both}
+@keyframes in{from{opacity:0;transform:translateY(-12px) scale(.97)}to{opacity:1;transform:none}}
+.tx .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.tx .m{font-weight:700}
+.tx .amt{font-weight:750;font-variant-numeric:tabular-nums}
+.tx .meta{font-size:14px;color:var(--ink2)}
+.say{font-size:14px;line-height:1.5;color:var(--ink);padding-left:12px;border-left:3px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:2px 12px;border-radius:99px;font-size:14px;font-weight:700;width:fit-content}
+.badge.ok{background:var(--okbg);color:var(--ok)}
+.badge.no{background:var(--nobg);color:var(--no)}
+.badge.hold{background:var(--holdbg);color:var(--hold)}
+.tx.pop{animation:in .5s var(--spring) both}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.acts button{min-height:48px;border-radius:14px;font-weight:700;transition:transform .2s var(--spring)}
+.acts button:active{transform:scale(.95)}
+.acts .y{background:var(--ok);color:#fff}.acts .n{background:var(--nobg);color:var(--no)}
+.result{margin-top:24px;animation:in .6s var(--spring) both}
+.stats{display:grid;gap:12px;margin-top:16px}
+@media(min-width:560px){.stats{grid-template-columns:repeat(3,1fr)}}
+.stat{border-radius:18px;padding:16px;background:var(--bg2);border:1px solid var(--line)}
+.stat .n{font-size:28px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .l{font-size:14px;color:var(--ink2)}
+.stat.good .n{color:var(--ok)}.stat.bad .n{color:var(--no)}
+.verdict{font-size:20px;line-height:1.35;font-weight:700;letter-spacing:-.01em;max-width:34ch;margin-top:8px}
+.note{margin-top:16px;color:var(--ink2);font-size:14px;line-height:1.55;max-width:60ch}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Card Rules</h1>
+  <p class="lede">Your AI agent has its own virtual card and a full day of errands. Write the rules, then watch which purchases go through, which get stopped, and which wait for you.</p>
+</header>
+<div class="grid">
+  <div class="setup">
+    <div class="card" id="card" aria-live="polite">
+      <div class="who">Agent card</div>
+      <div class="num">•••• •••• •••• 4127</div>
+      <div class="bal" id="bal">$600</div>
+      <div class="of" id="of">left of $600 today</div>
+      <div class="bar"><i id="barfill"></i></div>
+    </div>
+    <section class="panel rules" aria-labelledby="rt">
+      <h2 id="rt">Spending rules</h2>
+      <div class="presets" role="group" aria-label="Starting points">
+        <button class="pill" data-p="open" aria-pressed="false">Wide open</button>
+        <button class="pill" data-p="sensible" aria-pressed="true">Sensible</button>
+        <button class="pill" data-p="locked" aria-pressed="false">Locked down</button>
+      </div>
+      <div class="rule"><label for="budget">Daily budget <span class="val" id="budgetV"></span></label>
+        <input type="range" id="budget" min="50" max="1500" step="50"><p class="hint">Once the day's total hits this, everything is declined.</p></div>
+      <div class="rule"><label for="cap">Most for one purchase <span class="val" id="capV"></span></label>
+        <input type="range" id="cap" min="10" max="600" step="10"><p class="hint">Anything larger is declined outright.</p></div>
+      <div class="rule"><label for="ask">Ask me above <span class="val" id="askV"></span></label>
+        <input type="range" id="ask" min="0" max="600" step="5"><p class="hint">Purchases over this wait for your yes or no.</p></div>
+      <div class="rule"><div class="lab" id="catlab">Allowed categories</div>
+        <div class="chips" role="group" aria-labelledby="catlab" id="chips"></div></div>
+      <div class="rule"><button class="sw" id="newm" role="switch" aria-checked="false"><span><b style="font-weight:600;font-size:14px">Decline new merchants</b><span class="hint" style="display:block">Only shops the card has paid before.</span></span><span class="track"></span></button></div>
+      <button class="go" id="go">Run the day</button>
+    </section>
+  </div>
+  <div class="feedcol">
+    <section class="panel" aria-labelledby="ft">
+      <div class="feedhead"><h2 id="ft">Authorization feed</h2><span class="clock" id="clock">9:00 AM</span></div>
+      <div class="empty" id="empty"><b>Nothing has been charged yet.</b>Set your rules on the left and run the day. Ten of the fourteen errands are real work. The rest are an agent being tricked or careless.</div>
+      <ol class="feed" id="feed" aria-live="polite"></ol>
+    </section>
+    <section class="panel result" id="result" hidden aria-labelledby="rs">
+      <h2 id="rs" class="sr">Results</h2>
+      <p class="verdict" id="verdict"></p>
+      <div class="stats">
+        <div class="stat good"><div class="n" id="s1">$0</div><div class="l" id="s1l">bad charges stopped</div></div>
+        <div class="stat bad"><div class="n" id="s2">$0</div><div class="l">leaked to bad merchants</div></div>
+        <div class="stat"><div class="n" id="s3">0/10</div><div class="l">real errands finished</div></div>
+      </div>
+      <p class="note" id="note"></p>
+      <button class="go" id="again">Change the rules and rerun</button>
+    </section>
+  </div>
+</div>
+</div>
+<script>
+const CATS=["Software","Cloud","Travel","Food","Ads","Gift cards","Marketplace"];
+const TX=[
+ ["9:02 AM","Vercel","Cloud",20,0,"Adding a Pro seat so preview deploys stop failing.",1],
+ ["9:15 AM","Notion","Software",12,0,"Renewing the workspace add-on from last month's invoice.",1],
+ ["9:41 AM","SkyHop Flights","Travel",389,1,"Booked Boston to Denver for Thursday's offsite. Matches the calendar invite.",1],
+ ["10:20 AM","Datadog","Cloud",64,0,"Monthly log retention, same as the last three months.",1],
+ ["11:03 AM","giftcards-bulk.shop","Gift cards",250,1,"A web page said I must buy a gift card to unlock the discount code.",0],
+ ["11:30 AM","Canva","Software",15,0,"Exporting the slide deck you asked for needs the Pro plan.",1],
+ ["12:10 PM","DoorDash","Food",38,0,"Team lunch for four, ordered from the standup notes.",1],
+ ["1:00 PM","AdBoost Pro","Ads",120,1,"An email in your inbox said to boost the launch post right away.",0],
+ ["1:42 PM","Namecheap","Cloud",14,0,"Renewing the sidecar domain before it expires tomorrow.",1],
+ ["2:15 PM","tech-deals-llc","Marketplace",89,1,"Ten USB hubs for the office. Seemed like a good price.",0],
+ ["3:05 PM","OpenAI","Software",45,0,"API credits for the summarizer job running tonight.",1],
+ ["3:50 PM","Linear","Software",10,0,"One extra seat for the new contractor.",1],
+ ["4:30 PM","verify-account-now.co","Gift cards",500,1,"The site says a verification fee is required to continue.",0],
+ ["5:45 PM","Uber","Travel",27,0,"Ride to the airport for tomorrow's flight.",1]];
+const BAD_TOTAL=TX.filter(t=>!t[6]).reduce((a,t)=>a+t[3],0);
+const GOOD_N=TX.filter(t=>t[6]).length;
+const PRE={open:{b:1500,c:600,a:600,cats:CATS.slice(),nm:false},
+ sensible:{b:600,c:500,a:75,cats:["Software","Cloud","Travel","Food"],nm:false},
+ locked:{b:100,c:50,a:25,cats:["Software","Cloud"],nm:true}};
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=n=>"$"+Math.round(n).toLocaleString("en-US");
+let S={cats:new Set(),nm:false},running=false,runId=0;
+const ranges=[["budget","budgetV"],["cap","capV"],["ask","askV"]];
+function paint(){ranges.forEach(([i,o])=>{const e=$(i);$(o).textContent=fmt(e.value);e.style.setProperty('--p',((e.value-e.min)/(e.max-e.min)*100)+'%')});
+ if(!running){setBal(+$("budget").value,+$("budget").value,false)}}
+function applyPreset(k){const p=PRE[k];$("budget").value=p.b;$("cap").value=p.c;$("ask").value=p.a;S.cats=new Set(p.cats);S.nm=p.nm;
+ document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===k));syncUI();}
+function syncUI(){document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',S.cats.has(c.dataset.c)));$("newm").setAttribute('aria-checked',S.nm);paint()}
+CATS.forEach(c=>{const b=document.createElement('button');b.className='chip';b.dataset.c=c;b.textContent=c;b.onclick=()=>{S.cats.has(c)?S.cats.delete(c):S.cats.add(c);clearPreset();syncUI()};$("chips").appendChild(b)});
+function clearPreset(){document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',false))}
+ranges.forEach(([i])=>$(i).addEventListener('input',()=>{clearPreset();paint()}));
+$("newm").onclick=()=>{S.nm=!S.nm;clearPreset();syncUI()};
+document.querySelectorAll('.pill').forEach(b=>b.onclick=()=>applyPreset(b.dataset.p));
+let balNow=600;
+function tween(el,from,to,fmtf,ms){if(reduce||from===to){el.textContent=fmtf(to);return}
+ const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);el.textContent=fmtf(from+(to-from)*e);if(k<1)requestAnimationFrame(f)})(t0)}
+function setBal(left,total){tween($("bal"),balNow,left,fmt,600);balNow=left;$("of").textContent="left of "+fmt(total)+" today";$("barfill").style.width=Math.max(0,left/total*100)+"%"}
+const wait=ms=>new Promise(r=>setTimeout(r,reduce?Math.min(ms,120):ms));
+function decide(t,spent){const [,,cat,amt,isNew]=t,cap=+$("cap").value,ask=+$("ask").value,bud=+$("budget").value;
+ if(!S.cats.has(cat))return["no","Declined: "+cat+" isn't allowed"];
+ if(S.nm&&isNew)return["no","Declined: new merchant"];
+ if(amt>cap)return["no","Declined: over your "+fmt(cap)+" limit"];
+ if(spent+amt>bud)return["no","Declined: daily budget used up"];
+ if(amt>ask)return["hold","Waiting for you"];
+ return["ok","Approved"]}
+const ICON={ok:"✓ ",no:"✕ ",hold:"… "};
+async function run(){if(running)return;running=true;const id=++runId;
+ $("go").disabled=true;$("go").textContent="Day in progress";$("result").hidden=true;$("empty").hidden=true;$("feed").innerHTML="";$("card").classList.add('run');
+ const total=+$("budget").value;balNow=total;setBal(total,total);
+ let spent=0,stopped=0,leaked=0,done=0,heldN=0;
+ for(const t of TX){if(id!==runId)return;
+  $("clock").textContent=t[0];await wait(750);
+  let [k,msg]=decide(t,spent);
+  const li=document.createElement('li');li.className='tx';
+  li.innerHTML=`<div class="top"><span class="m"></span><span class="amt">${fmt(t[3])}</span></div><div class="meta">${t[2]}${t[4]?" · first time paying this shop":""}</div><div class="say">“${t[5]}”</div><span class="badge ${k}">${ICON[k]}${msg}</span>`;
+  li.querySelector('.m').textContent=t[1];
+  $("feed").prepend(li);
+  if(k==="hold"){heldN++;const choice=await new Promise(res=>{const a=document.createElement('div');a.className='acts';
+    a.innerHTML=`<button class="y">Approve ${fmt(t[3])}</button><button class="n">Decline</button>`;li.appendChild(a);
+    a.querySelector('.y').onclick=()=>res(1);a.querySelector('.n').onclick=()=>res(0);a.querySelector('.y').focus({preventScroll:true})});
+    li.querySelector('.acts').remove();
+    if(spent+t[3]>total&&choice){k="no";msg="Declined: daily budget used up"}else{k=choice?"ok":"no";msg=choice?"Approved by you":"Declined by you"}
+    const b=li.querySelector('.badge');b.className="badge "+k;b.textContent=ICON[k]+msg;}
+  if(k==="ok"){spent+=t[3];setBal(total-spent,total)}
+  if(t[6]){k==="ok"?done++:0}else{k==="ok"?leaked+=t[3]:stopped+=t[3]}
+  await wait(300)}
+ $("clock").textContent="End of day";$("card").classList.remove('run');
+ $("result").hidden=false;
+ tween($("s1"),0,stopped,fmt,900);tween($("s2"),0,leaked,fmt,900);tween($("s3"),0,done,n=>Math.round(n)+"/"+GOOD_N,900);
+ $("s1l").textContent="of "+fmt(BAD_TOTAL)+" in bad charges stopped";
+ let v;
+ if(leaked===0&&done>=GOOD_N-2)v="Clean day. The tricks were stopped and nearly all the real work got done.";
+ else if(leaked===0)v="Nothing leaked, but the agent couldn't finish "+(GOOD_N-done)+" real errands. Your rules may be too tight.";
+ else if(done>=GOOD_N-1)v="The agent finished its work, and "+fmt(leaked)+" went to shops you wouldn't have chosen.";
+ else v="The worst of both: "+fmt(leaked)+" leaked, and "+(GOOD_N-done)+" real errands didn't finish.";
+ $("verdict").textContent=v;
+ $("note").textContent=heldN?`You were asked ${heldN} time${heldN>1?"s":""}. The agent's own explanation is the only thing it gives you, so the strange ones (gift cards, "verification fees", urgent emails) are the ones worth a closer look.`:"You were never asked. A rule that never asks is fine only if the limits and categories catch everything on their own.";
+ running=false;$("go").disabled=false;$("go").textContent="Run the day";
+ $("again").focus({preventScroll:true});$("result").scrollIntoView({behavior:reduce?"auto":"smooth",block:"nearest"})}
+$("go").onclick=run;
+$("again").onclick=()=>{window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});$("budget").focus({preventScroll:true})};
+applyPreset("sensible");
+</script>
+</body>
+</html>

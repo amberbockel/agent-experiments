@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-03",
+      "slug": "2026-11-03",
+      "title": "Card Rules",
+      "category": "trend",
+      "design": "soft-gradient-depth",
+      "oneLiner": "Set the spending rules for an AI agent's virtual card, then watch it try to buy things all day.",
+      "path": "apps/2026-11-03/"
+    },
+    {
       "date": "2026-11-02",
       "slug": "2026-11-02",
       "title": "Full Bloom",
