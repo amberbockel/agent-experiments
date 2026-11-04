@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-04",
+      "slug": "2026-11-04",
+      "title": "Root Cause",
+      "category": "delightful",
+      "design": "clean-dashboard-dataviz",
+      "oneLiner": "Five broken AI agent runs: read the trace, spend few inspections, and name the span that actually caused the failure.",
+      "path": "apps/2026-11-04/"
+    },
+    {
       "date": "2026-11-03",
       "slug": "2026-11-03",
       "title": "Card Rules",
