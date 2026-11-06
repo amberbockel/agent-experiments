@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Short Memory</title>
+<meta name="description" content="Shrink a small model's context window and watch which parts of a conversation it forgets.">
+<style>
+:root{
+  --paper:#F7F8FA; --card:#FFFFFF; --ink:#12151F; --ink2:#4A5163; --ink3:#7C8397;
+  --line:#E1E4EC; --blue:#2438F0; --blue-soft:#E8EBFF; --teal:#0B8A78; --teal-soft:#DDF4EF;
+  --amber:#B4540A; --amber-soft:#FFEBD6; --gone:#C9CDD8;
+  --serif:"Iowan Old Style","Charter","Palatino Linotype",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --ease:cubic-bezier(.34,1.4,.5,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right))}
+header.hero{padding:48px 0 32px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.4rem,7vw,4.5rem);line-height:1.02;letter-spacing:-.02em;margin:0 0 24px;max-width:14ch}
+.lede{font-family:var(--serif);font-size:1.25rem;line-height:1.55;color:var(--ink2);max-width:56ch;margin:0}
+.lede b{color:var(--ink);font-weight:600}
+
+/* control bar */
+.bar{position:sticky;top:0;z-index:10;background:rgba(247,248,250,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 0 16px}
+.bar-grid{display:grid;grid-template-columns:1fr auto;gap:16px 32px;align-items:end}
+.slider-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:.9rem;color:var(--ink2)}
+.slider-label strong{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:44px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--blue);border:4px solid #fff;box-shadow:0 4px 12px rgba(36,56,240,.4);margin-top:-11px;transition:transform .2s var(--ease)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--blue);border:4px solid #fff;box-shadow:0 4px 12px rgba(36,56,240,.4)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.score{text-align:right}
+.score .n{font-family:var(--serif);font-size:2.5rem;line-height:1;font-variant-numeric:tabular-nums;transition:color .3s}
+.score .n small{font-size:1.25rem;color:var(--ink3)}
+.score .t{font-size:.85rem;color:var(--ink2)}
+.score.perfect .n{color:var(--teal)}
+.tape{display:flex;gap:2px;height:20px;margin-top:4px}
+.seg{flex:var(--w) 0 0;min-width:3px;border-radius:3px;background:var(--gone);transition:background .35s,transform .35s var(--ease),opacity .35s;transform-origin:bottom}
+.seg.in{background:var(--blue)}
+.seg.pin{background:var(--ink)}
+.seg.sum{background:var(--teal)}
+.seg.out{opacity:.6;transform:scaleY(.55)}
+.modes{display:flex;gap:4px;padding:4px;background:#ECEEF4;border-radius:12px;margin-top:12px;width:max-content;max-width:100%}
+.modes button{min-height:44px;padding:0 16px;border:0;background:transparent;border-radius:9px;cursor:pointer;font-weight:500;color:var(--ink2);transition:background .2s,color .2s,box-shadow .2s}
+.modes button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(18,21,31,.12)}
+.modes button:active{transform:scale(.97)}
+.hint{font-size:.9rem;color:var(--ink2);margin:8px 0 0;min-height:1.4em;max-width:70ch}
+
+/* main */
+main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:48px;padding:32px 0 64px;align-items:start}
+.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:16px}
+.tools h2,.ask h2{font-family:var(--serif);font-weight:500;font-size:1.5rem;margin:0}
+.switch{display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:.9rem;color:var(--ink2);background:none;border:0;padding:0 4px}
+.switch i{width:36px;height:22px;border-radius:11px;background:var(--gone);position:relative;transition:background .2s}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s var(--ease)}
+.switch[aria-pressed=true] i{background:var(--blue)}
+.switch[aria-pressed=true] i::after{transform:translateX(14px)}
+ol.chat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.msg{position:relative;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:14px;padding:12px 16px;max-width:62ch;transition:opacity .4s,filter .4s,border-color .3s,background .3s,box-shadow .3s}
+.msg.a{margin-left:32px;background:#FBFBFD}
+.msg .who{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;color:var(--ink3);margin-bottom:4px;font-variant-numeric:tabular-nums}
+.msg p{margin:0;line-height:1.6}
+.msg.out{opacity:.45;filter:grayscale(1);border-left-color:var(--gone);background:transparent}
+.msg.pin{border-left-color:var(--ink);box-shadow:0 8px 24px rgba(18,21,31,.1)}
+.msg.sum{opacity:1;filter:none;border-left-color:var(--teal);background:var(--teal-soft)}
+.msg.sum .who{color:var(--teal)}
+.msg.sum p{color:#0a5e52}
+.pinbtn{border:1px solid var(--line);background:#fff;border-radius:8px;min-height:44px;min-width:44px;margin:-10px -10px -10px 0;cursor:pointer;font-size:.8rem;padding:0 12px;display:none}
+.pin-mode .pinbtn{display:inline-block}
+.pinbtn[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tok{white-space:pre-wrap}
+.showtok .tok:nth-child(odd){background:var(--blue-soft);border-radius:3px}
+.showtok .tok:nth-child(even){background:#FFE9C7;border-radius:3px}
+.sumcard{max-width:62ch}
+
+/* ask panel */
+.ask{position:static}
+.ask>p{color:var(--ink2);margin:8px 0 16px;max-width:44ch}
+.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:8px;transition:border-color .3s,background .3s}
+.q .qq{font-size:.9rem;color:var(--ink2)}
+.q .aa{font-family:var(--serif);font-size:1.15rem;margin-top:2px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.q .tag{font-family:var(--sans);font-size:.75rem;padding:2px 8px;border-radius:99px}
+.q.ok{border-color:#B6E4DB}
+.q.ok .tag{background:var(--teal-soft);color:var(--teal)}
+.q.sumok .tag{background:var(--teal-soft);color:var(--teal)}
+.q.bad{background:#FAFAFC}
+.q.bad .aa{color:var(--ink3);text-decoration:line-through;text-decoration-color:var(--gone)}
+.q.bad .tag{background:var(--amber-soft);color:var(--amber);text-decoration:none;display:inline-block}
+.q.pop{animation:pop .5s var(--ease)}
+@keyframes pop{0%{transform:scale(.97)}100%{transform:scale(1)}}
+.verdict{margin-top:16px;font-family:var(--serif);font-size:1.15rem;line-height:1.55;color:var(--ink2);min-height:3.6em}
+footer{border-top:1px solid var(--line);padding:24px 0 48px;color:var(--ink3);font-size:.85rem;max-width:70ch}
+footer p{margin:0 0 8px}
+
+@media (max-width:860px){
+  main{grid-template-columns:1fr;gap:32px}
+  .bar{position:static}
+  .bar-grid{grid-template-columns:1fr auto}
+  header.hero{padding:32px 0 24px}
+  .modes{width:100%}.modes button{flex:1;padding:0 8px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <h1>Short memory</h1>
+  <p class="lede">Small models that run on your phone read through a narrow <b>context window</b>. Anything that scrolls out of it is gone. Shrink the window, then try three ways to cope.</p>
+</header>
+</div>
+
+<div class="bar"><div class="wrap">
+  <div class="bar-grid">
+    <div>
+      <div class="slider-label"><label for="win">Context window</label><span><strong id="winv">0</strong> of <span id="tot">0</span> tokens</span></div>
+      <input id="win" type="range" min="10" max="100" value="100" aria-describedby="hint">
+      <div class="tape" id="tape" aria-hidden="true"></div>
+    </div>
+    <div class="score" id="score" aria-live="polite"><div class="n"><span id="sn">0</span><small>/6</small></div><div class="t">questions answered</div></div>
+  </div>
+  <div class="modes" role="group" aria-label="Memory strategy">
+    <button type="button" data-mode="trunc" aria-pressed="true">Cut oldest</button>
+    <button type="button" data-mode="sum" aria-pressed="false">Summarize</button>
+    <button type="button" data-mode="pin" aria-pressed="false">Pin messages</button>
+  </div>
+  <p class="hint" id="hint"></p>
+</div></div>
+
+<div class="wrap">
+<main>
+  <section aria-labelledby="ch">
+    <div class="tools"><h2 id="ch">The conversation</h2>
+      <button class="switch" id="tokbtn" type="button" aria-pressed="false"><i></i>Show tokens</button></div>
+    <ol class="chat" id="chat"></ol>
+  </section>
+  <aside class="ask" aria-labelledby="ah">
+    <h2 id="ah">Then the assistant is asked</h2>
+    <p>It can only answer from what is still inside the window. Otherwise it guesses.</p>
+    <div id="qs"></div>
+    <div class="verdict" id="verdict"></div>
+  </aside>
+</main>
+<footer>
+  <p>The tokenizer here is a toy: words are cut into pieces of up to five letters. Real tokenizers differ, and real on-device models such as Gemma 3 1B have windows of thousands of tokens, but they fill up the same way.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DATA=[
+ {r:"u",t:"Hi! I'm planning a trip for my sister Noor's 30th birthday on March 14.",f:0},
+ {r:"a",t:"Lovely. Which city, and what's the budget?"},
+ {r:"u",t:"Lisbon. We have 1,800 euros in total, flights included.",f:1},
+ {r:"a",t:"Noted. Any food rules I should know?"},
+ {r:"u",t:"Noor is allergic to shellfish, which is awkward in Portugal.",f:2},
+ {r:"a",t:"I'll flag every menu. What about the hotel?"},
+ {r:"u",t:"Near Alfama with a rooftop. Noor loves the letter B, so a hotel starting with B would be funny.",f:3},
+ {r:"a",t:"Hotel Bairro Alto Rooftop fits nicely. Which flights?"},
+ {r:"u",t:"We fly out of Boston on March 12 and return on the 16th.",f:4},
+ {r:"a",t:"Drafted. Anything else before I book?"},
+ {r:"u",t:"Find a fado night on the 14th. No steep walks either, because Dad uses a cane.",f:5}
+];
+var QS=[
+ {q:"Whose birthday is it?",a:"Noor's",g:"Your mom's",major:true},
+ {q:"What is the total budget?",a:"1,800 euros",g:"About 3,000 euros",major:true},
+ {q:"Which food should be avoided?",a:"Shellfish",g:"Nothing in particular",major:true},
+ {q:"What was the hotel joke?",a:"The letter B",g:"No joke came up",major:false},
+ {q:"Where do the flights leave from?",a:"Boston",g:"New York",major:true},
+ {q:"What mobility need was mentioned?",a:"Dad uses a cane",g:"Wheelchair access",major:true}
+];
+var HINTS={
+ trunc:"The window keeps the newest messages that fit. Everything older is dropped, whether it mattered or not.",
+ sum:"Dropped messages are squeezed into a short summary that spends some tokens. It keeps the big facts and loses small details.",
+ pin:"Tap Pin on messages worth keeping forever. Pins use up window space before anything else."
+};
+var $=function(i){return document.getElementById(i)};
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function pieces(text){
+  var out=[],re=/([A-Za-z0-9']+)|(\s+)|([^\sA-Za-z0-9])/g,m;
+  while((m=re.exec(text))){
+    if(m[1]){for(var i=0;i<m[1].length;i+=5)out.push(m[1].slice(i,i+5));}
+    else if(m[3])out.push(m[3]);
+    else if(out.length)out[out.length-1]+=m[2];
+  }
+  return out;
+}
+DATA.forEach(function(m,i){m.i=i;m.p=pieces(m.t);m.n=m.p.length;});
+var TOTAL=DATA.reduce(function(s,m){return s+m.n},0);
+var state={mode:"trunc",win:TOTAL,pins:{},showTok:false};
+
+function sumCost(list){
+  if(!list.length)return 0;
+  var n=list.reduce(function(s,m){return s+m.n},0);
+  return Math.max(10,Math.round(n*.32)+6);
+}
+function compute(){
+  var cap=state.win,pinned=[],rest=[],keep={},sum=[];
+  var pinTok=0;
+  if(state.mode==="pin"){
+    DATA.forEach(function(m){if(state.pins[m.i]){pinTok+=m.n;}});
+    cap=Math.max(0,cap-pinTok);
+  }
+  // choose newest suffix
+  var used=0,start=DATA.length;
+  for(var i=DATA.length-1;i>=0;i--){
+    var m=DATA[i];
+    if(state.mode==="pin"&&state.pins[i]){start=i;continue;}
+    var dropped=DATA.slice(0,i).filter(function(x){return !(state.mode==="pin"&&state.pins[x.i])});
+    var extra=state.mode==="sum"?sumCost(dropped):0;
+    if(used+m.n+extra<=cap){used+=m.n;start=i;}else break;
+  }
+  var status=[];
+  DATA.forEach(function(m){
+    if(m.i>=start)status.push("in");
+    else if(state.mode==="pin"&&state.pins[m.i])status.push("pin");
+    else status.push("out");
+  });
+  var droppedList=DATA.filter(function(m){return status[m.i]==="out"});
+  var sc=state.mode==="sum"?sumCost(droppedList):0;
+  if(state.mode==="sum"&&sc>cap&&droppedList.length){ // cannot even afford summary
+    sc=0;
+  }
+  return {status:status,sumCost:sc,dropped:droppedList};
+}
+
+var chat=$("chat"),tape=$("tape"),qsEl=$("qs");
+function build(){
+  chat.innerHTML="";
+  var sumLi=document.createElement("li");sumLi.id="sumli";sumLi.className="msg sum sumcard";sumLi.hidden=true;
+  sumLi.innerHTML='<div class="who"><span>Summary of earlier messages</span><span id="sumn"></span></div><p id="sumtxt"></p>';
+  chat.appendChild(sumLi);
+  DATA.forEach(function(m){
+    var li=document.createElement("li");li.className="msg "+m.r;li.id="m"+m.i;
+    var toks=m.p.map(function(p){return '<span class="tok">'+p.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>'}).join("");
+    li.innerHTML='<div class="who"><span>'+(m.r==="u"?"You":"Assistant")+' · '+m.n+' tokens</span>'+
+      '<button class="pinbtn" type="button" aria-pressed="false" data-i="'+m.i+'" aria-label="Pin message '+(m.i+1)+'">Pin</button></div><p>'+toks+'</p>';
+    chat.appendChild(li);
+  });
+  tape.innerHTML="";
+  var s=document.createElement("div");s.className="seg sum";s.id="tsum";s.style.setProperty("--w","0");tape.appendChild(s);
+  DATA.forEach(function(m){var d=document.createElement("div");d.className="seg";d.id="t"+m.i;d.style.setProperty("--w",m.n);tape.appendChild(d);});
+  qsEl.innerHTML="";
+  QS.forEach(function(q,i){
+    var d=document.createElement("div");d.className="q";d.id="q"+i;
+    d.innerHTML='<div class="qq">'+q.q+'</div><div class="aa"><span class="ans"></span><span class="tag"></span></div>';
+    qsEl.appendChild(d);
+  });
+}
+build();
+
+var shown=-1,prevQ=[];
+function render(){
+  var r=compute(),st=r.status;
+  $("winv").textContent=state.win;$("tot").textContent=TOTAL;
+  var sumShown=state.mode==="sum"&&r.dropped.length&&r.sumCost>0;
+  var li=$("sumli");li.hidden=!sumShown;
+  if(sumShown){
+    $("sumn").textContent=r.sumCost+" tokens";
+    var facts=r.dropped.filter(function(m){return m.f!==undefined&&QS[m.f].major}).map(function(m){return QS[m.f].a});
+    $("sumtxt").textContent="Earlier: "+(facts.length?facts.join(", "):"small talk")+". Fine detail was dropped.";
+  }
+  DATA.forEach(function(m){
+    var el=$("m"+m.i),s=st[m.i];
+    el.classList.toggle("out",s==="out");
+    el.classList.toggle("pin",s==="pin");
+    var b=el.querySelector(".pinbtn");b.setAttribute("aria-pressed",state.pins[m.i]?"true":"false");
+    b.textContent=state.pins[m.i]?"Pinned":"Pin";
+    var t=$("t"+m.i);t.className="seg "+(s==="in"?"in":s==="pin"?"pin":"out");
+  });
+  $("tsum").style.setProperty("--w",sumShown?r.sumCost:0);
+  // answers
+  var ok=0,flags=[];
+  QS.forEach(function(q,i){
+    var src=DATA.filter(function(m){return m.f===i})[0],s=st[src.i],good,via;
+    if(s==="in"){good=true;via="in window";}
+    else if(s==="pin"){good=true;via="pinned";}
+    else if(state.mode==="sum"&&sumShown&&q.major){good=true;via="from summary";}
+    else{good=false;}
+    var el=$("q"+i);
+    el.className="q "+(good?"ok":"bad");
+    el.querySelector(".ans").textContent=good?q.a:q.g;
+    el.querySelector(".tag").textContent=good?via:"guessing";
+    if(prevQ[i]!==undefined&&prevQ[i]!==good&&!RM){el.classList.add("pop");}
+    prevQ[i]=good;if(good)ok++;
+  });
+  countTo(ok);
+  var sc=$("score");sc.classList.toggle("perfect",ok===QS.length);
+  var tokUsed=0;st.forEach(function(s,i){if(s!=="out")tokUsed+=DATA[i].n});tokUsed+=sumShown?r.sumCost:0;
+  var v;
+  if(ok===QS.length&&state.win<TOTAL)v="Perfect recall in "+state.win+" tokens, "+Math.round((1-state.win/TOTAL)*100)+"% smaller than the full chat. That is the whole game of memory management.";
+  else if(ok===QS.length)v="Everything fits, so nothing is forgotten. Now drag the window smaller.";
+  else if(ok===0)v="The assistant remembers nothing useful and is making things up with total confidence.";
+  else v=(QS.length-ok)+" of 6 answers are guesses. "+(state.mode==="trunc"?"Try Summarize or Pin messages to save the facts that matter.":state.mode==="sum"?"A summary keeps big facts but drops small details like the hotel joke.":"Pins cost window space, so choose the messages whose facts you can't lose.");
+  $("verdict").textContent=v;
+  $("hint").textContent=HINTS[state.mode];
+  document.body.classList.toggle("pin-mode",state.mode==="pin");
+  chat.classList.toggle("showtok",state.showTok);
+}
+var cur=0,raf=0;
+function countTo(n){
+  var el=$("sn");
+  if(RM){el.textContent=n;cur=n;return;}
+  cancelAnimationFrame(raf);var from=cur,t0=performance.now();
+  function step(t){var k=Math.min(1,(t-t0)/350);el.textContent=Math.round(from+(n-from)*k);if(k<1)raf=requestAnimationFrame(step);else cur=n;}
+  raf=requestAnimationFrame(step);
+}
+// controls
+var win=$("win");
+win.min=12;win.max=TOTAL;win.value=TOTAL;
+win.addEventListener("input",function(){state.win=+win.value;render();});
+document.querySelectorAll(".modes button").forEach(function(b){
+  b.addEventListener("click",function(){
+    state.mode=b.dataset.mode;
+    document.querySelectorAll(".modes button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false")});
+    render();
+  });
+});
+chat.addEventListener("click",function(e){
+  var b=e.target.closest(".pinbtn");if(!b)return;
+  var i=+b.dataset.i;state.pins[i]=!state.pins[i];render();
+});
+$("tokbtn").addEventListener("click",function(){
+  state.showTok=!state.showTok;this.setAttribute("aria-pressed",state.showTok);render();
+});
+// intro: sweep window down once to show the idea
+(function intro(){
+  state.win=TOTAL;render();
+  if(RM)return;
+  var start=null,target=Math.round(TOTAL*.45),done=false;
+  win.addEventListener("pointerdown",function(){done=true},{once:true});
+  setTimeout(function(){
+    var t0=performance.now();
+    (function s(t){
+      if(done)return;
+      var k=Math.min(1,(t-t0)/1800),e=1-Math.pow(1-k,3);
+      state.win=Math.round(TOTAL-(TOTAL-target)*e);win.value=state.win;render();
+      if(k<1)requestAnimationFrame(s);
+    })(t0);
+  },700);
+})();
+})();
+</script>
+</body>
+</html>

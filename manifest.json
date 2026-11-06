@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-06",
+      "slug": "2026-11-06",
+      "title": "Short Memory",
+      "category": "trend",
+      "design": "modern-editorial",
+      "oneLiner": "Shrink a small model's context window and watch which parts of a conversation it forgets.",
+      "path": "apps/2026-11-06/"
+    },
+    {
       "date": "2026-11-05",
       "slug": "2026-11-05",
       "title": "Per Outcome",
