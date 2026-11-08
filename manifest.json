@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-08",
+      "slug": "2026-11-08",
+      "title": "Phrase Spin",
+      "category": "games",
+      "design": "maximalist-contemporary",
+      "oneLiner": "Spin the wheel, call letters, and solve a hidden science, math or Massachusetts phrase in a pass-and-play word game.",
+      "path": "apps/2026-11-08/"
+    },
+    {
       "date": "2026-11-07",
       "slug": "2026-11-07",
       "title": "Fewer Bits",
