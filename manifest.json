@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-09",
+      "slug": "2026-11-09",
+      "title": "Graft",
+      "category": "productivity",
+      "design": "organic-nature",
+      "oneLiner": "Three parallel AI agents solved the same task. Graft the best piece of each into one merge and watch the checks respond.",
+      "path": "apps/2026-11-09/"
+    },
+    {
       "date": "2026-11-08",
       "slug": "2026-11-08",
       "title": "Phrase Spin",

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Graft</title>
+<meta name="description" content="Three parallel AI agents solved the same task. Graft the best piece of each into one merge and watch the checks respond.">
+<style>
+:root{
+  --paper:#E6ECE3; --card:#F4F7F1; --ink:#17251C; --muted:#4F6055; --line:#C5D0C2;
+  --moss:#3B6A44; --moss-deep:#27472E; --lichen:#C9DB8C; --river:#2D6D82; --bark:#8A5C38;
+  --fail:#B1412D; --warn:#A97618; --night:#13201A; --night-ink:#DCE8D3; --night-dim:#7F9585;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans);min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(88px + env(safe-area-inset-bottom)) env(safe-area-inset-left);
+  background-image:radial-gradient(900px 500px at 85% -10%,rgba(201,219,140,.45),transparent 70%),radial-gradient(700px 480px at -10% 30%,rgba(45,109,130,.10),transparent 70%)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--river);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+header{padding:48px 0 32px}
+h1{font:400 clamp(56px,11vw,112px)/.95 var(--serif);letter-spacing:-.03em;margin:0 0 16px;color:var(--moss-deep)}
+.lede{font:400 clamp(20px,2.6vw,26px)/1.45 var(--serif);max-width:34em;margin:0 0 8px}
+.task{max-width:60ch;color:var(--muted);margin:0 0 32px}
+.task code{font-family:var(--mono);font-size:.9em;background:rgba(39,71,46,.08);padding:2px 6px;border-radius:6px}
+.runs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.run{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 16px 16px;display:flex;flex-direction:column;gap:8px;
+  box-shadow:0 12px 28px -18px rgba(39,71,46,.45);transition:transform .35s var(--spring),box-shadow .3s}
+.run:hover{transform:translateY(-3px)}
+.run h2{margin:0;font:600 17px/1.3 var(--serif);display:flex;align-items:center;gap:8px}
+.run p{margin:0;font-size:14px;color:var(--muted);line-height:1.5;flex:1}
+.badge{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font:700 14px/1 var(--sans);flex:none}
+.bA{background:var(--bark)}.bB{background:var(--river)}.bC{background:var(--moss)}
+.take{min-height:44px;border:1.5px solid var(--moss-deep);background:transparent;border-radius:999px;padding:0 16px;font-weight:600;font-size:14px;transition:transform .2s var(--spring),background .2s,color .2s}
+.take:hover{background:var(--moss-deep);color:#fff}
+.take:active{transform:scale(.96)}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:48px;align-items:start;padding-bottom:48px}
+.stem{position:relative;margin:0;padding:0 0 0 40px;list-style:none}
+.stem::before{content:"";position:absolute;left:11px;top:12px;bottom:0;width:2px;background:var(--line);border-radius:2px}
+.stem::after{content:"";position:absolute;left:11px;top:12px;width:2px;height:var(--grow,0px);background:var(--moss);border-radius:2px;transition:height .7s var(--spring)}
+.hunk{position:relative;padding:0 0 40px}
+.node{position:absolute;left:-40px;top:2px;width:24px;height:24px;border-radius:50%;background:var(--paper);border:2px solid var(--line);z-index:1;transition:all .4s var(--spring);display:grid;place-items:center}
+.hunk.done .node{background:var(--moss);border-color:var(--moss);transform:scale(1.12)}
+.node svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.4);transition:all .35s var(--spring)}
+.hunk.done .node svg{opacity:1;transform:none}
+.hunk h3{font:600 24px/1.25 var(--serif);margin:0 0 4px}
+.hunk .q{margin:0 0 16px;color:var(--muted);max-width:56ch}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border:0;padding:0;margin:0}
+.opt{position:relative;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;min-height:44px;display:flex;flex-direction:column;gap:8px;
+  transition:transform .3s var(--spring),border-color .2s,box-shadow .3s,background .2s}
+.opt:hover{transform:translateY(-2px);border-color:var(--moss)}
+.opt:active{transform:scale(.975)}
+.opt[aria-checked=true]{border-color:var(--moss);background:#fff;box-shadow:0 14px 28px -14px rgba(59,106,68,.6),0 0 0 3px rgba(201,219,140,.7)}
+.opt .top{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;line-height:1.3}
+.opt .top .badge{width:22px;height:22px;font-size:12px}
+.opt .d{font-size:13.5px;line-height:1.5;color:var(--muted)}
+.opt code{font:12px/1.5 var(--mono);color:var(--moss-deep);background:rgba(39,71,46,.07);padding:2px 6px;border-radius:6px;align-self:flex-start;word-break:break-all}
+.panel,.stem{min-width:0}
+.panel{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
+.code{background:var(--night);color:var(--night-ink);border-radius:20px;padding:16px 0;box-shadow:0 24px 48px -24px rgba(19,32,26,.8);overflow:hidden}
+.code header{display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;margin:0;border-bottom:1px solid rgba(220,232,211,.12)}
+.code header span{font:13px var(--mono);color:var(--night-dim)}
+.copy{min-height:44px;min-width:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(220,232,211,.3);background:transparent;color:var(--night-ink);font-size:14px;font-weight:600;transition:all .2s var(--spring)}
+.copy:hover{background:var(--lichen);color:var(--night);border-color:var(--lichen)}
+.copy:active{transform:scale(.95)}
+pre{margin:0;padding:12px 0 0;overflow-x:auto;font:13px/1.7 var(--mono);tab-size:2}
+.ln{display:block;padding:0 16px 0 14px;border-left:3px solid transparent;white-space:pre;min-height:1.7em;transition:background .3s,border-color .3s}
+.ln.ghost{color:var(--night-dim);font-style:italic}
+.ln.hl{background:rgba(201,219,140,.14);border-left-color:var(--lichen)}
+.ln.flash{animation:flash 1s ease-out}
+@keyframes flash{from{background:rgba(201,219,140,.4)}to{background:transparent}}
+.checks{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 12px 28px -18px rgba(39,71,46,.45)}
+.verdict{display:flex;align-items:baseline;gap:16px;margin:0 0 8px}
+.score{font:400 56px/1 var(--serif);color:var(--moss-deep);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.score small{font-size:22px;color:var(--muted)}
+.vtext{font:600 18px/1.3 var(--serif)}
+.vsub{font-size:14px;color:var(--muted);margin:0 0 16px}
+.checks ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.chk{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px/1 var(--sans);color:#fff;background:#B7C3B3;transition:background .3s,transform .4s var(--spring)}
+.chk[data-s=pass] .mark{background:var(--moss);transform:scale(1.08)}
+.chk[data-s=warn] .mark{background:var(--warn)}
+.chk[data-s=fail] .mark{background:var(--fail)}
+.chk b{display:block;font-size:15px;line-height:1.35}
+.chk div>span{display:block;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.chk[data-s=wait] b{color:var(--muted);font-weight:500}
+.chk .go{margin-top:4px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:transparent;font-size:13.5px;font-weight:600;color:var(--moss-deep)}
+.chk .go:hover{border-color:var(--moss)}
+.reset{background:none;border:0;min-height:44px;padding:0 4px;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:3px;margin-top:8px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;display:none;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px 24px calc(12px + env(safe-area-inset-bottom));background:rgba(244,247,241,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.bar b{font:600 17px var(--serif)}
+.bar .take{background:var(--moss-deep);color:#fff}
+.leaf{position:fixed;width:14px;height:14px;border-radius:0 100% 0 100%;pointer-events:none;z-index:20}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:1000px){
+  main{grid-template-columns:minmax(0,1fr);gap:16px}
+  .panel{position:static}
+  .bar{display:flex}
+}
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  header{padding:32px 0 24px}
+  .runs{grid-template-columns:1fr}
+  .opts{grid-template-columns:1fr}
+  .opt{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Graft</h1>
+    <p class="lede">Three agents worked the same task in parallel. Take the strongest piece of each and join them into one change.</p>
+    <p class="task">The task: <code>retry failed payment webhooks</code> without hammering the customer's server or charging twice. Pick one approach per decision, or take a whole run to start from.</p>
+    <div class="runs" id="runs"></div>
+  </header>
+  <main>
+    <ol class="stem" id="stem" aria-label="Decisions"></ol>
+    <aside class="panel" aria-label="Merged result">
+      <section class="code" id="mergeSec">
+        <header><span>deliver.js</span><button class="copy" id="copy" type="button">Copy merge</button></header>
+        <pre id="pre" aria-live="polite"></pre>
+      </section>
+      <section class="checks" aria-label="Checks">
+        <div class="verdict"><div class="score" id="score">0<small> / 5</small></div><div class="vtext" id="vtext">Nothing grafted yet</div></div>
+        <p class="vsub" id="vsub">Choose a piece for each decision. Checks run as you go.</p>
+        <ul id="checks"></ul>
+        <button class="reset" id="reset" type="button">Clear all picks</button>
+      </section>
+    </aside>
+  </main>
+</div>
+<div class="bar"><div><b id="barScore">0 of 5 checks</b></div><button class="take" id="barGo" type="button">See the merge</button></div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>
+const RUNS={
+  A:{name:"Run A, the quick one",desc:"Shipped fastest. Fixed attempts, fixed wait, retries everything, no safeguards.",cls:"bA"},
+  B:{name:"Run B, the careful one",desc:"Time budget, exponential waits, skips bad requests, adds an idempotency key.",cls:"bB"},
+  C:{name:"Run C, the clever one",desc:"Recursive, jittered waits, honours Retry-After, adds an idempotency key.",cls:"bC"}
+};
+const HUNKS=[
+ {id:"h1",title:"How it loops",q:"What keeps the retry going, and what stops it?",opts:[
+  {id:"for",run:"A",t:"Four attempts",d:"A plain for loop that gives up after the fourth failure.",c:"attempt < 4"},
+  {id:"budget",run:"B",t:"Fifteen second budget",d:"Keeps trying until a deadline passes, however many attempts that takes.",c:"Date.now() < deadline"},
+  {id:"recurse",run:"C",t:"Calls itself",d:"The function calls itself with attempt + 1. Short, but all state is per call.",c:"deliver(…, attempt + 1)"}]},
+ {id:"h2",title:"How long it waits",q:"What happens between one failure and the next try?",opts:[
+  {id:"fixed",run:"A",t:"One second, always",d:"Simple and predictable. Also predictable for the server it is hitting.",c:"sleep(1000)"},
+  {id:"exp",run:"B",t:"Doubles each time",d:"Half a second, then one, then two. Backs off from a struggling server.",c:"500 * 2 ** attempt"},
+  {id:"jitter",run:"C",t:"Doubles, with jitter",d:"Same growth, but a random fraction so clients stop retrying in lockstep.",c:"random() * 500 * 2 ** attempt"}]},
+ {id:"h3",title:"What it retries",q:"Which failures deserve another try?",opts:[
+  {id:"all",run:"A",t:"Everything",d:"Any non-OK response triggers a retry, including a rejected request.",c:"// retry any failure"},
+  {id:"status",run:"B",t:"Server trouble only",d:"Retries 5xx and 429. A 400 is final and throws straight away.",c:"status < 500 && !== 429"},
+  {id:"after",run:"C",t:"Server trouble, and listens",d:"Same filter, and reads the Retry-After header as a minimum wait.",c:"headers.get(\"retry-after\")"}]},
+ {id:"h4",title:"Duplicate protection",q:"A timeout doesn't mean the charge failed. What stops a double charge?",opts:[
+  {id:"none",run:"A",t:"Nothing",d:"Each retry is a fresh request. Fastest to write.",c:"// no key"},
+  {id:"key",run:"B",t:"Idempotency key",d:"One key per delivery, sent on every attempt, so the receiver can dedupe.",c:"Idempotency-Key: key"}]}
+];
+const PICKS={A:{h1:"for",h2:"fixed",h3:"all",h4:"none"},B:{h1:"budget",h2:"exp",h3:"status",h4:"key"},C:{h1:"recurse",h2:"jitter",h3:"after",h4:"key"}};
+const CHECKS=[
+ {id:"c1",t:"Backs off from a struggling server",need:["h2"],f:s=>s.h2==="fixed"?["fail","A fixed one second wait keeps pressure on a server that is already down.","h2"]:["pass","Waits grow between attempts."]},
+ {id:"c2",t:"Doesn't retry in lockstep",need:["h2"],f:s=>s.h2==="jitter"?["pass","Random spread keeps clients out of sync."]:s.h2==="exp"?["warn","Every client retries on the same beat after an outage. Jitter would spread them.","h2"]:["fail","Every client retries on the same second.","h2"]},
+ {id:"c3",t:"Gives up on bad requests",need:["h3"],f:s=>s.h3==="all"?["fail","A 400 is retried over and over and will never succeed.","h3"]:["pass","Client errors fail immediately."]},
+ {id:"c4",t:"Safe to retry a charge",need:["h4","h1"],f:s=>s.h4==="none"?["fail","A retry after a timeout can charge the customer twice.","h4"]:s.h1==="recurse"?["fail","The key is created inside the function, so each recursive call makes a new one. The receiver sees different keys and can't dedupe.","h1"]:["pass","One key is reused on every attempt."]},
+ {id:"c5",t:"Stays inside its time limit",need:["h1","h3"],f:s=>s.h1==="budget"&&s.h3==="after"?["warn","A Retry-After of two minutes sleeps far past the fifteen second budget.","h3"]:["pass","Waits can't outrun the stop condition."]}
+];
+const $=s=>document.querySelector(s);
+const state={h1:null,h2:null,h3:null,h4:null};
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* build UI */
+$("#runs").innerHTML=Object.entries(RUNS).map(([k,r])=>`<div class="run"><h2><span class="badge ${r.cls}">${k}</span>${r.name}</h2><p>${r.desc}</p><button class="take" data-run="${k}" type="button">Start from Run ${k}</button></div>`).join("");
+$("#stem").innerHTML=HUNKS.map(h=>`<li class="hunk" id="${h.id}"><span class="node"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.6 2.6L10 3.4"/></svg></span>
+<h3 id="${h.id}t">${h.title}</h3><p class="q">${h.q}</p>
+<div class="opts" role="radiogroup" aria-labelledby="${h.id}t" style="${h.opts.length===2?"grid-template-columns:repeat(2,1fr)":""}">
+${h.opts.map(o=>`<button type="button" class="opt" role="radio" aria-checked="false" data-h="${h.id}" data-o="${o.id}"><span class="top"><span class="badge ${RUNS[o.run].cls}" title="From Run ${o.run}">${o.run}</span>${o.t}</span><span class="d">${o.d}</span><code>${o.c}</code></button>`).join("")}
+</div></li>`).join("");
+$("#checks").innerHTML=CHECKS.map(c=>`<li class="chk" id="${c.id}" data-s="wait"><span class="mark">·</span><div><b>${c.t}</b><span></span></div></li>`).join("");
+
+/* code generation */
+function gen(){
+  const L=[],add=(t,h,g)=>L.push({t,h,g});
+  const loop=state.h1,key=state.h4==="key";
+  const body=[];
+  const ind=loop==="recurse"?"  ":"    ";
+  body.push([`const res = await send(url, payload${key?', { "Idempotency-Key": key }':""});`,state.h4==="key"?"h4":"h1"]);
+  body.push([`if (res.ok) return res;`,"h1"]);
+  if(state.h3==="all")body.push([`// any failure is retried`,"h3"]);
+  else if(state.h3){body.push([`if (res.status < 500 && res.status !== 429)`,"h3"]);body.push([`  throw new Error(\`rejected with \${res.status}\`);`,"h3"]);}
+  else body.push([`// choose what to retry`,null,1]);
+  let wait={fixed:"1000",exp:"500 * 2 ** attempt",jitter:"Math.random() * 500 * 2 ** attempt"}[state.h2];
+  if(state.h3==="after"){body.push([`const hinted = Number(res.headers.get("retry-after") ?? 0) * 1000;`,"h3"]);wait=wait?`Math.max(hinted, ${wait})`:"hinted";}
+  body.push(wait?[`await sleep(${wait});`,"h2"]:[`// choose how long to wait`,null,1]);
+  if(loop==="recurse"){
+    add(`async function deliver(url, payload, attempt = 0) {`,"h1");
+    add(`  if (attempt >= 4) throw new Error("gave up after 4 attempts");`,"h1");
+    if(key)add(`  const key = crypto.randomUUID();`,"h4");
+    body.forEach(b=>add(ind+b[0],b[1],b[2]));
+    add(`  return deliver(url, payload, attempt + 1);`,"h1");
+    add(`}`,"h1");
+  }else{
+    add(`async function deliver(url, payload) {`,loop?"h1":null);
+    if(key)add(`  const key = crypto.randomUUID();`,"h4");
+    if(loop==="for")add(`  for (let attempt = 0; attempt < 4; attempt++) {`,"h1");
+    else if(loop==="budget"){add(`  const deadline = Date.now() + 15_000;`,"h1");add(`  for (let attempt = 0; Date.now() < deadline; attempt++) {`,"h1");}
+    else add(`  // choose a retry loop`,null,1);
+    body.forEach(b=>add(ind+(loop?"":"")+b[0],b[1],b[2]));
+    if(loop){add(`  }`,"h1");add(loop==="for"?`  throw new Error("gave up after 4 attempts");`:`  throw new Error("retry budget spent");`,"h1");}
+    add(`}`,loop?"h1":null);
+  }
+  if(!key){const i=L.findIndex(l=>l.t.includes("choose")&&0);}
+  if(!key&&!state.h4){const idx=L.findIndex(l=>l.t.startsWith("async function"));L.splice(idx+1,0,{t:"  // choose duplicate protection",h:null,g:1});}
+  return L;
+}
+let prev=[];
+function renderCode(hover){
+  const L=gen();
+  $("#pre").innerHTML=L.map(l=>{
+    const changed=!prev.includes(l.t);
+    return `<code class="ln${l.g?" ghost":""}${hover&&l.h===hover?" hl":""}${changed&&prev.length&&!reduce?" flash":""}">${l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;")||" "}</code>`}).join("");
+  prev=L.map(l=>l.t);
+}
+let shown=0,tick=0;
+function countTo(n,sel,suffix){
+  const el=$(sel);const from=shown;shown=n;
+  if(reduce||from===n){el.innerHTML=n+suffix;return}
+  cancelAnimationFrame(tick);const t0=performance.now();
+  (function step(t){const p=Math.min(1,(t-t0)/500),v=from+(n-from)*(1-Math.pow(1-p,3));
+    el.innerHTML=(Math.round(v*2)/2)+suffix;if(p<1)tick=requestAnimationFrame(step)})(t0);
+}
+let celebrated=false;
+function evaluate(){
+  let score=0,fails=0,warns=0,pend=0;
+  CHECKS.forEach(c=>{
+    const el=$("#"+c.id);
+    if(!c.need.every(n=>state[n])){el.dataset.s="wait";el.querySelector(".mark").textContent="·";el.querySelector("span").innerHTML="";pend++;return}
+    const [s,msg,fix]=c.f(state);el.dataset.s=s;
+    el.querySelector(".mark").textContent=s==="pass"?"✓":s==="warn"?"!":"✕";
+    el.querySelector("span").innerHTML=msg+(fix?`<br><button class="go" type="button" data-go="${fix}">Change this decision</button>`:"");
+    if(s==="pass")score++;else if(s==="warn"){score+=.5;warns++}else fails++;
+  });
+  countTo(score,"#score","<small> / 5</small>");
+  const picked=Object.values(state).filter(Boolean).length;
+  let vt,vs;
+  if(!picked){vt="Nothing grafted yet";vs="Choose a piece for each decision. Checks run as you go."}
+  else if(picked<4){vt=`${picked} of 4 decisions made`;vs="Some checks are waiting on decisions you haven't made."}
+  else if(fails){vt="Not mergeable yet";vs=`${fails} check${fails>1?"s":""} failing. Use the buttons below to jump to the decision at fault.`}
+  else if(warns){vt="Mergeable, with notes";vs=`${warns} check${warns>1?"s":""} could be stronger. Fix ${warns>1?"them":"it"} or ship as is.`}
+  else{vt="Clean graft";vs="All five checks pass. Copy the merge and ship it."}
+  $("#vtext").textContent=vt;$("#vsub").textContent=vs;
+  $("#barScore").textContent=`${score} of 5 checks`;
+  $("#live").textContent=vt;
+  const done=HUNKS.filter(h=>state[h.id]).length;
+  const stem=$("#stem"),last=[...stem.querySelectorAll(".hunk")].filter((_,i)=>state[HUNKS[i].id]).pop();
+  stem.style.setProperty("--grow",(last?last.offsetTop+14:0)+"px");
+  if(picked===4&&!fails&&!warns){if(!celebrated){celebrated=true;burst()}}else if(!(picked===4&&!fails&&!warns))celebrated=false;
+}
+function burst(){
+  if(reduce)return;
+  const r=$("#score").getBoundingClientRect(),cols=["#3B6A44","#C9DB8C","#2D6D82","#8A5C38"];
+  for(let i=0;i<22;i++){
+    const l=document.createElement("i");l.className="leaf";l.style.background=cols[i%4];
+    l.style.left=(r.left+30)+"px";l.style.top=(r.top+20)+"px";document.body.appendChild(l);
+    const a=Math.random()*Math.PI*2,d=60+Math.random()*120;
+    l.animate([{transform:"translate(0,0) rotate(0) scale(.4)",opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d-30}px) rotate(${Math.random()*400}deg) scale(1)`,opacity:1,offset:.5},{transform:`translate(${Math.cos(a)*d*1.1}px,${Math.sin(a)*d+120}px) rotate(${Math.random()*700}deg) scale(.8)`,opacity:0}],{duration:1400+Math.random()*600,easing:"cubic-bezier(.2,.7,.3,1)"}).onfinish=()=>l.remove();
+  }
+}
+function paint(){
+  document.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-checked",state[b.dataset.h]===b.dataset.o));
+  HUNKS.forEach(h=>$("#"+h.id).classList.toggle("done",!!state[h.id]));
+  renderCode();evaluate();
+}
+function pick(h,o){state[h]=state[h]===o?null:o;paint()}
+document.addEventListener("click",e=>{
+  const opt=e.target.closest(".opt");if(opt)return pick(opt.dataset.h,opt.dataset.o);
+  const run=e.target.closest("[data-run]");if(run){Object.assign(state,PICKS[run.dataset.run]);paint();$("#mergeSec").scrollIntoView({behavior:reduce?"auto":"smooth",block:"nearest"});return}
+  const go=e.target.closest("[data-go]");if(go){const t=$("#"+go.dataset.go);t.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});setTimeout(()=>t.querySelector(".opt").focus({preventScroll:true}),reduce?0:350);}
+});
+document.addEventListener("keydown",e=>{
+  const o=e.target.closest&&e.target.closest(".opt");if(!o)return;
+  if(!["ArrowRight","ArrowDown","ArrowLeft","ArrowUp"].includes(e.key))return;
+  e.preventDefault();const g=[...o.parentElement.querySelectorAll(".opt")],i=g.indexOf(o),n=g[(i+(e.key==="ArrowRight"||e.key==="ArrowDown"?1:g.length-1))%g.length];n.focus();
+});
+document.querySelectorAll(".opt").forEach(b=>{
+  b.addEventListener("mouseenter",()=>renderHover(b.dataset.h));b.addEventListener("focus",()=>renderHover(b.dataset.h));
+  b.addEventListener("mouseleave",()=>renderHover(null));b.addEventListener("blur",()=>renderHover(null));
+});
+function renderHover(h){document.querySelectorAll(".ln").forEach((el,i)=>{});const L=gen();document.querySelectorAll("#pre .ln").forEach((el,i)=>el.classList.toggle("hl",!!h&&L[i]&&L[i].h===h))}
+$("#reset").onclick=()=>{Object.keys(state).forEach(k=>state[k]=null);prev=[];paint()};
+$("#barGo").onclick=()=>$("#mergeSec").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+$("#copy").onclick=async()=>{
+  const txt=[...document.querySelectorAll("#pre .ln")].map(l=>l.textContent).join("\n");
+  const b=$("#copy");
+  try{await navigator.clipboard.writeText(txt);b.textContent="Copied"}catch(_){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");b.textContent="Copied"}catch(__){b.textContent="Select and copy"}ta.remove()}
+  setTimeout(()=>b.textContent="Copy merge",1600);
+};
+addEventListener("resize",()=>evaluate());
+paint();
+</script>
+</body>
+</html>
