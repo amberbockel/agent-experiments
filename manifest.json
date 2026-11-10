@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-10",
+      "slug": "2026-11-10",
+      "title": "Blurry click",
+      "category": "trend",
+      "design": "monochrome-type-led",
+      "oneLiner": "Play a computer-use agent: pick how sharp a screenshot to buy, then click the right pixel for the fewest tokens.",
+      "path": "apps/2026-11-10/"
+    },
+    {
       "date": "2026-11-09",
       "slug": "2026-11-09",
       "title": "Graft",

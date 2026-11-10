@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Blurry click</title>
+<meta name="description" content="Play a computer-use agent: choose how sharp a screenshot to buy, then click the right pixel for the fewest tokens.">
+<style>
+:root{
+  --paper:#fafafa; --ink:#000; --g1:#efefee; --g2:#d4d4d2; --g3:#8a8a88; --g4:#454543; --signal:#1d2bff;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","Segoe UI",Arial,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--font);min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--signal);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.bar{border-bottom:1px solid var(--ink)}
+header.bar .wrap{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:16px}
+.mark{font-weight:800;letter-spacing:-.03em;font-size:20px}
+.meter{display:flex;align-items:baseline;gap:10px;color:var(--g4);font-size:13px}
+.meter b{font-size:32px;line-height:1;font-weight:800;letter-spacing:-.04em;color:var(--ink);min-width:3ch;text-align:right}
+
+/* intro */
+#intro{padding:clamp(32px,8vh,96px) 0 64px}
+.hero{position:relative;display:inline-block}
+h1{font-weight:800;letter-spacing:-.065em;line-height:.88;font-size:clamp(72px,22vw,208px);padding-bottom:.04em}
+h1 span{display:block}
+#hero-px{position:absolute;left:0;top:0;pointer-events:none;image-rendering:pixelated}
+.intro-grid{display:grid;gap:32px;margin-top:40px}
+.lede{font-size:clamp(20px,3.4vw,28px);line-height:1.25;letter-spacing:-.02em;font-weight:500;max-width:34ch}
+.fine{color:var(--g4);font-size:15px;line-height:1.55;max-width:56ch}
+.fine + .fine{margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 32px;border-radius:6px;
+  background:var(--ink);color:var(--paper);font-weight:650;font-size:17px;letter-spacing:-.01em;
+  transition:transform .35s var(--spring),background .2s,color .2s,box-shadow .2s}
+.btn:hover{background:var(--signal)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{background:var(--g2);color:var(--g3);cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.src{margin-top:48px;color:var(--g3);font-size:13px;max-width:60ch}
+
+/* game */
+#game,#final{padding:24px 0 56px}
+.ticks{display:flex;gap:6px;margin-bottom:20px}
+.ticks i{flex:1;height:6px;background:var(--g2);transition:background .3s}
+.ticks i.now{background:var(--g4)}
+.ticks i.hit{background:var(--ink)}
+.ticks i.miss{background:var(--paper);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.play{display:grid;gap:20px}
+@media(min-width:920px){.play{grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:56px;align-items:start}}
+.task{font-size:clamp(28px,6.4vw,44px);font-weight:750;letter-spacing:-.04em;line-height:1.08;margin-bottom:16px}
+.stage{position:relative;border:1px solid var(--ink);background:#fff;aspect-ratio:8/5;overflow:hidden;
+  touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none;box-shadow:0 24px 48px -24px rgba(29,43,255,.28)}
+.stage canvas{display:block;width:100%;height:100%}
+.stage canvas.px{image-rendering:pixelated}
+.cap{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:13px;color:var(--g4)}
+.cell{position:absolute;min-width:7px;min-height:7px;background:rgba(29,43,255,.22);outline:1.5px solid var(--signal);pointer-events:none}
+.ret{position:absolute;width:0;height:0;pointer-events:none}
+.ret::before{content:"";position:absolute;left:-16px;top:-16px;width:32px;height:32px;border-radius:50%;border:2px solid var(--signal);background:rgba(250,250,250,.35)}
+.ret::after{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--signal)}
+.ret.pop{animation:pop .4s var(--spring)}
+.tbox{position:absolute;border:2.5px solid var(--ink);box-shadow:0 0 0 2px #fff,0 0 0 5px rgba(0,0,0,.18);pointer-events:none;animation:fadein .4s both}
+.pulse{position:absolute;width:0;height:0;pointer-events:none}
+.pulse::before{content:"";position:absolute;left:-12px;top:-12px;width:24px;height:24px;border-radius:50%;border:3px solid var(--signal);animation:pulse .9s ease-out forwards}
+.hold{position:absolute;inset:0;display:none}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pulse{to{transform:scale(7);opacity:0}}
+@keyframes verdict{from{transform:translateY(14px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+
+.side h3{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.side .hint{color:var(--g4);font-size:14px;line-height:1.5;margin:4px 0 12px;max-width:44ch}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.opt{position:relative;min-height:84px;padding:10px 6px 8px;border-radius:6px;text-align:left;
+  box-shadow:inset 0 0 0 1.5px var(--g2);transition:box-shadow .2s,background .2s,transform .35s var(--spring);display:flex;flex-direction:column;justify-content:space-between}
+.opt:hover{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.opt:active{transform:scale(.96)}
+.opt .sc{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.opt .dm{font-size:12px;color:var(--g4);line-height:1.3}
+.opt .tk{font-size:12px;font-weight:650;line-height:1.3}
+.opt[aria-pressed=true]{background:var(--ink);color:var(--paper);box-shadow:none}
+.opt[aria-pressed=true] .dm{color:var(--g2)}
+.opt.owned::after{content:"";position:absolute;top:8px;right:8px;width:7px;height:7px;background:currentColor;opacity:.55}
+.send{margin-top:16px;width:100%}
+.readout{margin-top:12px;font-size:13px;color:var(--g4);min-height:20px}
+.verdict{font-size:clamp(56px,13vw,96px);font-weight:800;letter-spacing:-.07em;line-height:.9;animation:verdict .55s var(--spring) both}
+.verdict.miss{color:var(--g3)}
+.res-p{margin:16px 0 0;max-width:46ch;line-height:1.55}
+.res-s{margin:12px 0 20px;color:var(--g4);font-size:14px;max-width:46ch}
+
+/* final */
+.fin{display:grid;gap:32px}
+@media(min-width:920px){.fin{grid-template-columns:1fr 1fr;gap:56px}}
+.big{font-size:clamp(96px,28vw,240px);font-weight:800;letter-spacing:-.08em;line-height:.85}
+.big small{font-size:.38em;letter-spacing:-.04em;color:var(--g3);margin-left:.2em}
+.stats{display:flex;flex-wrap:wrap;gap:24px 40px;margin:24px 0}
+.stats div{min-width:120px}
+.stats b{display:block;font-size:36px;font-weight:800;letter-spacing:-.05em;line-height:1.05}
+.stats span{font-size:13px;color:var(--g4)}
+.recap{list-style:none;padding:0;border-top:1px solid var(--ink)}
+.recap li{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;min-height:52px;border-bottom:1px solid var(--g2);font-size:15px}
+.recap .sq{width:14px;height:14px;background:var(--ink)}
+.recap .sq.m{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.recap em{font-style:normal;color:var(--g4);font-size:13px;text-align:right}
+.acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap">
+  <div class="mark">Blurry click</div>
+  <div class="meter" id="meter" hidden>Tokens spent <b id="tok">0</b></div>
+</div></header>
+
+<main class="wrap">
+<section id="intro">
+  <div class="hero"><h1 id="h1"><span>Blurry</span><span>click</span></h1><canvas id="hero-px" aria-hidden="true"></canvas></div>
+  <div class="intro-grid">
+    <p class="lede">You are the computer-use agent. Decide how sharp a screenshot to buy, then click.</p>
+    <div>
+      <p class="fine">Agents that drive apps look at a screenshot and answer with an x,y position. Every pixel they look at costs tokens (roughly width times height divided by 750), so sharper vision is slower and pricier. Blurrier vision is cheap, but it moves the click to the nearest pixel centre.</p>
+      <p class="fine">Six screens. Start at the cheapest view, pay to sharpen when you need to, and land every click for as few tokens as you can.</p>
+    </div>
+    <div><button class="btn" id="start">Start the run</button></div>
+  </div>
+  <p class="src">Built around the new wave of computer-use agents trending on Product Hunt, such as NeuralAgent 3.0 and Ara, which act on your screen by pixel coordinates.</p>
+</section>
+
+<section id="game" hidden>
+  <div class="ticks" id="ticks" role="img" aria-label="Progress"></div>
+  <div class="play">
+    <div>
+      <h2 class="task" id="task" aria-live="polite"></h2>
+      <div class="stage" id="stage" tabindex="0" role="group" aria-label="The screenshot your agent sees. Tap to aim, or use the arrow keys, then press Enter to send the click.">
+        <canvas id="shot" width="80" height="50"></canvas>
+        <div class="cell" id="cellbox" hidden></div>
+        <div class="tbox" id="tbox" hidden></div>
+        <div class="ret" id="ret" hidden></div>
+        <div class="pulse" id="pulse" hidden></div>
+      </div>
+      <div class="cap"><span id="scname"></span><span id="seen"></span></div>
+    </div>
+    <div class="side">
+      <div id="aim">
+        <h3>How sharp should the screenshot be?</h3>
+        <p class="hint">You pay once per sharpness you look at. Clicks snap to the centre of the nearest pixel you can see.</p>
+        <div class="opts" id="opts" role="group" aria-label="Screenshot sharpness"></div>
+        <p class="readout" id="readout" aria-live="polite">Tap the screenshot to aim.</p>
+        <button class="btn send" id="send" disabled>Send click</button>
+      </div>
+      <div id="reveal" hidden>
+        <div class="verdict" id="verdict" aria-live="assertive"></div>
+        <p class="res-p" id="lesson"></p>
+        <p class="res-s" id="could"></p>
+        <button class="btn" id="next">Next screen</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="final" hidden>
+  <div class="fin">
+    <div>
+      <div class="big"><span id="f-hits">0</span><small>of 6</small></div>
+      <p class="lede" id="f-line" style="margin-top:16px"></p>
+      <div class="stats">
+        <div><b id="f-tok">0</b><span>tokens spent</span></div>
+        <div><b id="f-full">0</b><span>if every look was full size</span></div>
+        <div><b id="f-save">0%</b><span id="f-save-l">saved</span></div>
+      </div>
+      <div class="acts"><button class="btn" id="again">Play again</button><button class="btn ghost" id="copy">Copy result</button></div>
+      <p class="readout" id="copied" aria-live="polite"></p>
+    </div>
+    <ol class="recap" id="recap"></ol>
+  </div>
+</section>
+</main>
+
+<script>
+(()=>{
+"use strict";
+const W=640,H=400,FONT='-apple-system,"Helvetica Neue",Arial,sans-serif';
+const SCALES=[8,4,2,1];
+const tok=s=>Math.round(W*H/(s*s)/750);
+const label=s=>s===1?'Full':'1/'+s;
+const $=q=>document.querySelector(q);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- scene helpers ---------- */
+function rr(c,x,y,w,h,r,fill,stroke,lw){c.beginPath();c.roundRect(x,y,w,h,r);if(fill){c.fillStyle=fill;c.fill()}if(stroke){c.lineWidth=lw||1;c.strokeStyle=stroke;c.stroke()}}
+function tx(c,s,x,y,size,weight,color,align){c.font=(weight||400)+' '+size+'px '+FONT;c.fillStyle=color;c.textAlign=align||'left';c.textBaseline='alphabetic';c.fillText(s,x,y)}
+function page(c){
+  c.fillStyle='#e3e3e0';c.fillRect(0,0,W,H);
+  c.fillStyle='#fff';c.fillRect(0,0,W,34);
+  rr(c,16,10,14,14,3,'#111');tx(c,'Fieldnote',38,23,12,700,'#111');
+  [[420,70],[500,46],[560,50]].forEach(a=>tx(c,'',0,0,1,1,'#000'));
+  for(let i=0;i<3;i++)rr(c,420+i*66,14,48,6,3,'#c9c9c6');
+  c.fillStyle='#cfcfcc';
+  for(let i=0;i<9;i++)rr(c,40,60+i*34,i%3===0?360:520-(i%4)*40,10,5,'#cfcfcc');
+  rr(c,40,52,220,14,4,'#9d9d9a');
+}
+function card(c,x,y,w,h){c.save();c.shadowColor='rgba(0,0,0,.18)';c.shadowBlur=24;c.shadowOffsetY=8;rr(c,x,y,w,h,16,'#fff');c.restore()}
+
+const SCENES=[
+{name:'Cookie banner',task:'Reject the cookies.',target:[324,322,52,22],
+ lesson:'Reject was a 50 pixel text link beside a big dark button. Small, plain targets vanish first when the screenshot shrinks.',
+ draw(c){page(c);card(c,40,232,560,134);
+  tx(c,'We value your privacy',64,266,16,700,'#111');
+  tx(c,'We use cookies to personalise ads and measure traffic.',64,288,12.5,400,'#555');
+  tx(c,'You can change your choice at any time.',64,305,12.5,400,'#555');
+  rr(c,448,314,128,38,19,'#111');tx(c,'Accept all',512,337,14,650,'#fff','center');
+  tx(c,'Reject',332,337,14,500,'#555');c.fillStyle='#555';c.fillRect(332,340,38,1.2);
+  tx(c,'Settings',392,337,14,500,'#999');}},
+{name:'Sponsored pop-up',task:'Close the ad.',target:[483,81,22,22],
+ lesson:'The close button was 20 pixels square. Ads hide their exits on purpose, and a blurry screenshot hides them even better.',
+ draw(c){page(c);c.fillStyle='rgba(0,0,0,.32)';c.fillRect(0,0,W,H);card(c,120,64,400,272);
+  rr(c,136,80,368,150,10,'#1b1b1b');
+  c.save();c.beginPath();c.roundRect(136,80,368,150,10);c.clip();c.strokeStyle='rgba(255,255,255,.07)';c.lineWidth=10;
+  for(let i=-6;i<20;i++){c.beginPath();c.moveTo(136+i*30,230);c.lineTo(136+i*30+150,80);c.stroke()}c.restore();
+  tx(c,'50% off today',320,170,36,800,'#fff','center');tx(c,'Sponsored',320,196,13,500,'#bbb','center');
+  rr(c,483,81,22,22,11,'#cbcbc8');c.strokeStyle='#555';c.lineWidth=1.6;c.beginPath();c.moveTo(490,88);c.lineTo(498,96);c.moveTo(498,88);c.lineTo(490,96);c.stroke();
+  tx(c,'Your cart misses you',136,262,17,700,'#111');
+  rr(c,136,278,368,42,21,'#111');tx(c,'Install the app',320,304,15,650,'#fff','center');}},
+{name:'Checkout',task:'Place the order.',target:[330,292,218,48],
+ lesson:'Place order was 218 pixels wide and the only dark shape on the screen. Big, high contrast targets survive almost any downscale, so extra sharpness here is wasted tokens.',
+ draw(c){page(c);card(c,60,48,520,310);
+  tx(c,'Order summary',92,88,17,700,'#111');
+  [['Linen shirt','$64.00'],['Canvas tote','$38.00'],['Shipping','$6.00']].forEach((r,i)=>{
+    tx(c,r[0],92,126+i*30,14,400,'#444');tx(c,r[1],548,126+i*30,14,400,'#444','right');});
+  c.fillStyle='#d9d9d6';c.fillRect(92,222,456,1.5);
+  tx(c,'Total',92,254,17,700,'#111');tx(c,'$108.00',548,254,17,700,'#111','right');
+  rr(c,92,292,150,48,24,null,'#999',1.5);tx(c,'Back to cart',167,321,14,600,'#555','center');
+  rr(c,330,292,218,48,24,'#111');tx(c,'Place order',439,322,16,700,'#fff','center');}},
+{name:'Sign-up form',task:'Tick “I agree to the terms”.',target:[128,234,148,22],
+ lesson:'Three checkboxes sat 28 pixels apart. When rows blur together you can see a checkbox, just not which row you picked.',
+ draw(c){page(c);card(c,100,40,440,324);
+  tx(c,'Create account',132,84,18,700,'#111');
+  rr(c,132,100,376,36,8,'#f2f2f0','#d0d0cd');tx(c,'Full name',146,123,13,400,'#999');
+  rr(c,132,146,376,36,8,'#f2f2f0','#d0d0cd');tx(c,'Email',146,169,13,400,'#999');
+  const rows=[['Email me product news',true],['I agree to the terms',false],['Share usage data',true]];
+  rows.forEach((r,i)=>{const y=210+i*28;
+    if(r[1]){rr(c,132,y,15,15,3,'#111');c.strokeStyle='#fff';c.lineWidth=1.8;c.beginPath();c.moveTo(135,y+8);c.lineTo(139,y+12);c.lineTo(145,y+4);c.stroke()}
+    else rr(c,132,y,15,15,3,'#fff','#555',1.5);
+    tx(c,r[0],156,y+12,13.5,400,'#333');});
+  rr(c,132,310,376,38,19,'#cdcdca');tx(c,'Create account',320,334,14,650,'#8a8a88','center');}},
+{name:'Settings',task:'Turn on Notifications.',target:[448,206,52,28],
+ lesson:'Every row looked alike. The toggles were easy to find at low resolution, but the labels were not, so choosing the right one meant paying to read.',
+ draw(c){page(c);card(c,80,28,480,348);
+  tx(c,'Settings',112,70,18,700,'#111');
+  [['Wi-Fi',1],['Bluetooth',0],['Notifications',0],['Location',1],['Analytics',0]].forEach((r,i)=>{
+    const y=92+i*56;tx(c,r[0],112,y+34,15,500,'#222');
+    if(i<4){c.fillStyle='#e4e4e1';c.fillRect(112,y+56,416,1)}
+    rr(c,452,y+20,44,24,12,r[1]?'#111':'#cfcfcc');
+    c.beginPath();c.arc(r[1]?484:464,y+32,9,0,7);c.fillStyle='#fff';c.fill();});}},
+{name:'Calendar',task:'Pick the 19th.',target:[68,246,72,50],
+ lesson:'A date grid is mostly readable by position. You can count cells, but you need enough sharpness to confirm the number you landed on.',
+ draw(c){page(c);card(c,40,22,560,358);
+  tx(c,'November',68,60,18,700,'#111');
+  'SMTWTFS'.split('').forEach((d,i)=>tx(c,d,68+i*72+36,86,12,600,'#999','center'));
+  for(let d=1;d<=30;d++){const k=d+1,col=k%7,row=Math.floor(k/7),x=68+col*72,y=96+row*50;
+    c.strokeStyle='#e0e0dd';c.lineWidth=1;c.strokeRect(x+.5,y+.5,72,50);
+    if(d===12){c.beginPath();c.arc(x+22,y+19,13,0,7);c.fillStyle='#111';c.fill();tx(c,'12',x+22,y+24,13,700,'#fff','center')}
+    else tx(c,String(d),x+10,y+24,13,500,'#444');}}}
+];
+
+/* ---------- state ---------- */
+let S,R,raw=null;
+const el={tok:$('#tok'),shot:$('#shot'),stage:$('#stage'),cell:$('#cellbox'),ret:$('#ret'),tbox:$('#tbox'),pulse:$('#pulse'),
+  send:$('#send'),readout:$('#readout'),opts:$('#opts')};
+
+function animateNum(node,to,fmt){
+  const from=Number(node.dataset.v||0);node.dataset.v=to;
+  const f=fmt||(n=>Math.round(n).toLocaleString());
+  if(reduce||from===to){node.textContent=f(to);return}
+  const t0=performance.now(),d=550;
+  (function step(t){const p=Math.min(1,(t-t0)/d),e=1-Math.pow(1-p,3);node.textContent=f(from+(to-from)*e);if(p<1)requestAnimationFrame(step)})(t0);
+}
+function show(id){['intro','game','final'].forEach(s=>$('#'+s).hidden=s!==id);$('#meter').hidden=id==='intro';window.scrollTo(0,0)}
+
+function start(){
+  S={round:0,tokens:0,results:[]};el.tok.dataset.v=0;el.tok.textContent='0';
+  show('game');beginRound();
+}
+function ticks(){
+  $('#ticks').innerHTML=SCENES.map((_,i)=>{const r=S.results[i];return '<i class="'+(r?(r.hit?'hit':'miss'):i===S.round?'now':'')+'"></i>'}).join('');
+  $('#ticks').setAttribute('aria-label','Screen '+(S.round+1)+' of '+SCENES.length);
+}
+function beginRound(){
+  const sc=SCENES[S.round];
+  R={bought:new Set([8]),res:8,tap:null,done:false};
+  const rc=document.createElement('canvas');rc.width=W;rc.height=H;const c=rc.getContext('2d');sc.draw(c);
+  raw=c.getImageData(0,0,W,H).data;
+  S.tokens+=tok(8);animateNum(el.tok,S.tokens);
+  $('#task').textContent=sc.task;$('#scname').textContent=sc.name+', 640 by 400';
+  $('#aim').hidden=false;$('#reveal').hidden=true;
+  ['cell','ret','tbox','pulse'].forEach(k=>el[k].hidden=true);
+  el.stage.style.cursor='crosshair';
+  buildOpts();ticks();paint();updateAim();
+}
+function buildOpts(){
+  el.opts.innerHTML=SCALES.map(s=>'<button class="opt" data-s="'+s+'" aria-pressed="false"><span class="sc">'+label(s)+'</span><span><span class="dm">'+(W/s)+'×'+(H/s)+'</span><br><span class="tk">'+tok(s)+' tokens</span></span></button>').join('');
+  syncOpts();
+}
+function syncOpts(){
+  el.opts.querySelectorAll('.opt').forEach(b=>{const s=+b.dataset.s;b.setAttribute('aria-pressed',s===R.res);b.classList.toggle('owned',R.bought.has(s));
+    b.setAttribute('aria-label',label(s)+' sharpness, '+(W/s)+' by '+(H/s)+' pixels, '+tok(s)+' tokens'+(R.bought.has(s)?', already viewed':''))});
+}
+el.opts.addEventListener('click',e=>{
+  const b=e.target.closest('.opt');if(!b||R.done)return;const s=+b.dataset.s;
+  if(!R.bought.has(s)){R.bought.add(s);S.tokens+=tok(s);animateNum(el.tok,S.tokens)}
+  R.res=s;snap();syncOpts();paint();updateAim();
+});
+
+/* ---------- rendering ---------- */
+function paint(full){
+  const s=full?1:R.res,cv=el.shot,c=cv.getContext('2d');
+  if(s===1){cv.width=W*2;cv.height=H*2;c.setTransform(2,0,0,2,0,0);SCENES[S.round].draw(c);cv.classList.remove('px');return}
+  const w=W/s,h=H/s;cv.width=w;cv.height=h;cv.classList.add('px');
+  const out=c.createImageData(w,h),n=s*s;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let r=0,g=0,b=0;
+    for(let j=0;j<s;j++){let i=((y*s+j)*W+x*s)*4;for(let k=0;k<s;k++){r+=raw[i];g+=raw[i+1];b+=raw[i+2];i+=4}}
+    const o=(y*w+x)*4;out.data[o]=r/n;out.data[o+1]=g/n;out.data[o+2]=b/n;out.data[o+3]=255;
+  }
+  c.putImageData(out,0,0);
+}
+function snap(){
+  if(!R.tap)return;
+  const s=R.res,cx=Math.min(W/s-1,Math.max(0,Math.floor(R.tap.x/s))),cy=Math.min(H/s-1,Math.max(0,Math.floor(R.tap.y/s)));
+  R.cell={cx,cy};R.pt={x:(cx+.5)*s,y:(cy+.5)*s};
+}
+function updateAim(popIt){
+  const s=R.res;
+  if(!R.pt){el.cell.hidden=el.ret.hidden=true;el.send.disabled=true;el.readout.textContent='Tap the screenshot to aim, or focus it and use the arrow keys.';return}
+  el.cell.hidden=el.ret.hidden=false;
+  Object.assign(el.cell.style,{left:R.cell.cx*s/W*100+'%',top:R.cell.cy*s/H*100+'%',width:s/W*100+'%',height:s/H*100+'%'});
+  Object.assign(el.ret.style,{left:R.pt.x/W*100+'%',top:R.pt.y/H*100+'%'});
+  if(popIt&&!reduce){el.ret.classList.remove('pop');void el.ret.offsetWidth;el.ret.classList.add('pop')}
+  el.send.disabled=false;
+  el.readout.textContent='Click will land at '+Math.round(R.pt.x)+', '+Math.round(R.pt.y)+' in a '+label(s).toLowerCase()+' screenshot.';
+}
+function aimAt(clientX,clientY){
+  const b=el.stage.getBoundingClientRect();
+  R.tap={x:(clientX-b.left)/b.width*W,y:(clientY-b.top)/b.height*H};snap();updateAim(true);
+}
+el.stage.addEventListener('pointerdown',e=>{if(R.done)return;e.preventDefault();el.stage.focus({preventScroll:true});aimAt(e.clientX,e.clientY)});
+el.stage.addEventListener('pointermove',e=>{if(R.done||e.buttons!==1)return;aimAt(e.clientX,e.clientY)});
+el.stage.addEventListener('keydown',e=>{
+  if(R.done)return;
+  const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(k){e.preventDefault();const s=R.res,step=(s===1?4:s)*(e.shiftKey?5:1);
+    if(!R.pt){R.pt={x:W/2,y:H/2}}
+    R.tap={x:Math.min(W-1,Math.max(0,R.pt.x+k[0]*step)),y:Math.min(H-1,Math.max(0,R.pt.y+k[1]*step))};snap();updateAim(false)}
+  else if((e.key==='Enter'||e.key===' ')&&R.pt){e.preventDefault();sendClick()}
+});
+el.send.addEventListener('click',sendClick);
+
+/* ---------- resolve ---------- */
+function inside(t,p){return p.x>=t[0]&&p.x<=t[0]+t[2]&&p.y>=t[1]&&p.y<=t[1]+t[3]}
+function canHit(t,s){for(let cy=0;cy<H/s;cy++)for(let cx=0;cx<W/s;cx++){if(inside(t,{x:(cx+.5)*s,y:(cy+.5)*s}))return true}return false}
+function sendClick(){
+  if(!R.pt||R.done)return;R.done=true;
+  const sc=SCENES[S.round],t=sc.target,hit=inside(t,R.pt);
+  let spent=0;R.bought.forEach(s=>spent+=tok(s));
+  S.results.push({name:sc.name,hit,res:R.res,spent});
+  paint(true);el.cell.hidden=true;el.stage.style.cursor='default';
+  Object.assign(el.tbox.style,{left:t[0]/W*100+'%',top:t[1]/H*100+'%',width:t[2]/W*100+'%',height:t[3]/H*100+'%'});el.tbox.hidden=false;
+  Object.assign(el.pulse.style,{left:R.pt.x/W*100+'%',top:R.pt.y/H*100+'%'});
+  el.pulse.hidden=true;void el.pulse.offsetWidth;el.pulse.hidden=false;
+  $('#aim').hidden=true;$('#reveal').hidden=false;
+  const v=$('#verdict');v.textContent=hit?'Hit.':'Missed.';v.className='verdict'+(hit?'':' miss');
+  $('#lesson').textContent=sc.lesson;
+  const ok=SCALES.filter(s=>canHit(t,s)).map(s=>label(s).toLowerCase());
+  $('#could').textContent='You clicked at '+label(R.res).toLowerCase()+' for '+spent+' tokens on this screen. A pixel centre lands inside the target at: '+ok.join(', ')+'.';
+  $('#next').textContent=S.round===SCENES.length-1?'See your run':'Next screen';
+  ticks();$('#next').focus({preventScroll:true});
+}
+$('#next').addEventListener('click',()=>{S.round++;if(S.round>=SCENES.length)finish();else beginRound()});
+
+function finish(){
+  show('final');
+  const hits=S.results.filter(r=>r.hit).length,full=SCENES.length*tok(1),save=Math.round((1-S.tokens/full)*100);
+  animateNum($('#f-hits'),hits);animateNum($('#f-tok'),S.tokens);animateNum($('#f-full'),full);
+  animateNum($('#f-save'),Math.abs(save),n=>Math.round(n)+'%');
+  $('#f-save-l').textContent=save>=0?'cheaper than full size every time':'more than full size every time';
+  $('#f-line').textContent=hits===6&&S.tokens<=450?'Surgical. Every pixel you bought earned its place.'
+    :hits===6?'Perfect aim on a generous budget. Try buying fewer pixels.'
+    :hits>=4?'Close. A few targets were smaller than your screenshot could resolve.'
+    :'Blurry. The agent clicked where the pixels said, not where the buttons were.';
+  $('#recap').innerHTML=S.results.map(r=>'<li><span class="sq'+(r.hit?'':' m')+'" role="img" aria-label="'+(r.hit?'Hit':'Missed')+'"></span><span>'+r.name+'</span><em>'+(r.hit?'Hit':'Missed')+' at '+label(r.res).toLowerCase()+', '+r.spent+' tokens</em></li>').join('');
+  $('#copied').textContent='';
+  S.share='Blurry click: '+hits+'/6 hits for '+S.tokens+' tokens ('+(save>=0?save+'% under':Math.abs(save)+'% over')+' full size). https://amberbockel.github.io/agent-experiments/apps/2026-11-10/';
+}
+$('#again').addEventListener('click',start);
+$('#copy').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(S.share);$('#copied').textContent='Copied to your clipboard.'}
+  catch(e){$('#copied').textContent=S.share}
+});
+$('#start').addEventListener('click',start);
+
+/* ---------- intro: headline sharpens from blocks ---------- */
+function heroSharpen(){
+  const h=$('#h1'),cv=$('#hero-px');if(reduce||!h.offsetWidth)return;
+  const cs=getComputedStyle(h),w=h.offsetWidth,hh=h.offsetHeight,fs=parseFloat(cs.fontSize),lh=fs*.88;
+  const big=document.createElement('canvas');big.width=w;big.height=hh;const b=big.getContext('2d');
+  b.fillStyle='#000';b.font='800 '+fs+'px '+cs.fontFamily;b.textBaseline='alphabetic';
+  b.letterSpacing=cs.letterSpacing;
+  ['Blurry','click'].forEach((t,i)=>{b.fillText(t,0,lh*i+lh*.8)});
+  cv.width=w;cv.height=hh;cv.style.width=w+'px';cv.style.height=hh+'px';
+  const sizes=[Math.round(fs/4),Math.round(fs/6),Math.round(fs/9),Math.round(fs/14),Math.round(fs/24),Math.round(fs/48),1];
+  h.style.opacity=0;let i=0;
+  (function frame(){
+    const px=sizes[i],c=cv.getContext('2d');c.clearRect(0,0,w,hh);
+    if(px<=1){h.style.opacity=1;cv.width=cv.width;return}
+    const sw=Math.max(1,Math.ceil(w/px)),sh=Math.max(1,Math.ceil(hh/px)),t=document.createElement('canvas');t.width=sw;t.height=sh;
+    const tc=t.getContext('2d');tc.imageSmoothingEnabled=true;tc.drawImage(big,0,0,sw,sh);
+    c.imageSmoothingEnabled=false;c.drawImage(t,0,0,sw*px,sh*px);
+    i++;setTimeout(frame,170);
+  })();
+}
+requestAnimationFrame(()=>setTimeout(heroSharpen,250));
+})();
+</script>
+</body>
+</html>
