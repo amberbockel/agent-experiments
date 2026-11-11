@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-11",
+      "slug": "2026-11-11",
+      "title": "Inbox Duty",
+      "category": "business",
+      "design": "clean-dashboard-dataviz",
+      "oneLiner": "Eight emails hit an AI agent's own inbox: decide what it handles alone, what needs a human, and what to quarantine.",
+      "path": "apps/2026-11-11/"
+    },
+    {
       "date": "2026-11-10",
       "slug": "2026-11-10",
       "title": "Blurry click",
