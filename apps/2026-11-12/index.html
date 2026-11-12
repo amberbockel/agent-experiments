@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Draft and Verify</title>
+<meta name="description" content="Race a big language model against the same model with a small drafter, and find the draft length that makes it fastest.">
+<style>
+:root{
+  --plum:#2b1a45; --plum-2:#5b4a78; --plum-3:#8a7ba3;
+  --mint:#0fa37f; --mint-d:#087a5e; --mint-l:#c9f3e6;
+  --coral:#ee4466; --coral-l:#ffd9e1;
+  --slate:#6d5d90; --slate-l:#e6e0f2;
+  --glass:rgba(255,255,255,.62); --glass-b:rgba(255,255,255,.9);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --t1:12px; --t2:14px; --t3:16px; --t4:20px; --t5:32px;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100dvh;color:var(--plum);
+  font:400 var(--t3)/1.5 "Avenir Next","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(60rem 40rem at 8% -10%,#b6f0df 0,transparent 60%),
+    radial-gradient(50rem 38rem at 100% 0%,#ffd3df 0,transparent 58%),
+    radial-gradient(60rem 40rem at 60% 110%,#fff0b8 0,transparent 60%),
+    #f7f5fb;
+  background-attachment:fixed;
+  padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+}
+main{max-width:880px;margin:0 auto}
+h1{font-size:clamp(44px,11vw,84px);line-height:.95;font-weight:800;letter-spacing:-.045em;margin:16px 0 16px}
+.lede{max-width:56ch;font-size:var(--t4);line-height:1.45;color:var(--plum-2)}
+.card{
+  background:var(--glass);border:1px solid var(--glass-b);border-radius:24px;
+  backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+  box-shadow:0 1px 0 #fff inset,0 24px 48px -24px rgba(91,74,120,.35);
+  padding:24px;
+}
+.controls{display:grid;gap:24px;margin:32px 0 16px;grid-template-columns:1fr}
+@media(min-width:720px){.controls{grid-template-columns:1.1fr 1fr auto;align-items:end}}
+.ctl-label{display:block;font-size:var(--t2);font-weight:600;margin-bottom:8px}
+.ctl-label span{font-weight:400;color:var(--plum-2)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:16px;background:rgba(91,74,120,.1)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{
+  min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:12px;font-size:var(--t2);font-weight:600;cursor:pointer;line-height:1.2;
+  transition:background .25s,box-shadow .25s,transform .25s var(--spring);
+}
+.seg label small{font-size:var(--t1);font-weight:400;color:var(--plum-2)}
+.seg input:checked+label{background:#fff;box-shadow:0 6px 14px -6px rgba(91,74,120,.5)}
+.seg input:focus-visible+label{outline:3px solid var(--mint);outline-offset:2px}
+.seg label:active{transform:scale(.96)}
+.slider{display:flex;align-items:center;gap:16px}
+.slider output{min-width:2ch;font-size:var(--t5);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:44px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:8px;background:linear-gradient(90deg,var(--mint-l),var(--mint))}
+input[type=range]::-moz-range-track{height:8px;border-radius:8px;background:linear-gradient(90deg,var(--mint-l),var(--mint))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:#fff;border:0;box-shadow:0 6px 14px -2px rgba(15,163,127,.6),0 0 0 1px rgba(15,163,127,.25)}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:0;box-shadow:0 6px 14px -2px rgba(15,163,127,.6)}
+input[type=range]:focus-visible{outline:3px solid var(--mint);outline-offset:2px;border-radius:12px}
+.btn{
+  min-height:48px;padding:0 28px;border:0;border-radius:16px;font:inherit;font-weight:700;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#17c298,#0a8a6a);box-shadow:0 14px 24px -10px rgba(15,163,127,.75),0 1px 0 rgba(255,255,255,.4) inset;
+  transition:transform .3s var(--spring),box-shadow .3s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 18px 28px -10px rgba(15,163,127,.8),0 1px 0 rgba(255,255,255,.4) inset}
+.btn:active{transform:translateY(1px) scale(.97)}
+.btn:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+
+.lanes{display:grid;gap:16px;margin-top:16px}
+.lane-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.lane-head h2{font-size:var(--t4);font-weight:700;letter-spacing:-.02em}
+.rate{font-size:var(--t2);color:var(--plum-2)}
+.rate b{font-size:var(--t5);letter-spacing:-.03em;color:var(--plum);font-variant-numeric:tabular-nums;margin-right:4px}
+.lane.fast{box-shadow:0 1px 0 #fff inset,0 28px 56px -22px rgba(15,163,127,.55)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:92px;align-content:flex-start}
+.chip{
+  padding:6px 12px;border-radius:12px;font-size:var(--t2);line-height:1.4;font-weight:500;white-space:pre;
+  animation:pop .45s var(--spring) both;
+}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.chip.slow{background:var(--slate-l);color:var(--plum-2)}
+.chip.ok{background:linear-gradient(135deg,#17c298,#0a8a6a);color:#fff;box-shadow:0 8px 14px -8px rgba(15,163,127,.8)}
+.chip.big{background:var(--slate);color:#fff;box-shadow:0 8px 14px -8px rgba(109,93,144,.8)}
+.chip.draft{background:rgba(15,163,127,.08);border:1.5px dashed var(--mint);color:var(--mint-d);padding:4.5px 10.5px}
+.chip.draft.yes{background:var(--mint-l);border-style:solid}
+.chip.draft.no{background:var(--coral-l);border:1.5px solid var(--coral);color:var(--coral);text-decoration:line-through}
+.chip.draft.skip{opacity:.35;text-decoration:line-through;border-color:var(--plum-3);color:var(--plum-3);background:transparent}
+.chip.cursor{background:transparent;border:1.5px solid var(--plum-3);width:36px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:var(--t1);color:var(--plum-2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+
+.verdict{margin:16px 0;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(201,243,230,.7));}
+.verdict .big{font-size:clamp(56px,14vw,96px);line-height:1;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:var(--mint-d)}
+.verdict p{max-width:46ch;color:var(--plum-2);flex:1;min-width:220px}
+.verdict p b{color:var(--plum)}
+.verdict.pop .big{animation:thud .7s var(--spring)}
+@keyframes thud{0%{transform:scale(.8)}100%{transform:none}}
+
+.chart h2{font-size:var(--t4);font-weight:700;letter-spacing:-.02em}
+.chart>p{color:var(--plum-2);max-width:60ch;margin:4px 0 16px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.hit{cursor:pointer;fill:transparent}
+.hit:focus-visible{outline:none}
+.ax{font-size:17px;fill:var(--plum-2)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+footer{margin-top:32px;font-size:var(--t2);color:var(--plum-2);max-width:64ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Draft and verify</h1>
+  <p class="lede">A big model writes one token per pass. Give it a small drafter that guesses ahead, and it can check a whole guess in a single pass. Pick how far the drafter guesses and watch the two race.</p>
+
+  <section class="card controls" aria-label="Controls">
+    <div>
+      <span class="ctl-label" id="dq">Drafter quality</span>
+      <div class="seg" role="radiogroup" aria-labelledby="dq">
+        <input type="radio" name="q" id="q0" value="0"><label for="q0">Tiny<small>55% right</small></label>
+        <input type="radio" name="q" id="q1" value="1" checked><label for="q1">Small<small>75% right</small></label>
+        <input type="radio" name="q" id="q2" value="2"><label for="q2">Sharp<small>90% right</small></label>
+      </div>
+    </div>
+    <div>
+      <label class="ctl-label" for="k">Draft length <span>tokens guessed per round</span></label>
+      <div class="slider"><input id="k" type="range" min="1" max="8" value="4"><output id="kout" for="k">4</output></div>
+    </div>
+    <button class="btn" id="run" type="button">Race again</button>
+  </section>
+
+  <section class="lanes" aria-label="Race">
+    <article class="card lane">
+      <div class="lane-head"><h2>Big model alone</h2><div class="rate"><b id="r0">0</b>tokens per second</div></div>
+      <div class="chips" id="c0"></div>
+    </article>
+    <article class="card lane fast">
+      <div class="lane-head"><h2>Big model with a drafter</h2><div class="rate"><b id="r1">0</b>tokens per second</div></div>
+      <div class="chips" id="c1"></div>
+      <div class="legend">
+        <span><i style="border:1.5px dashed var(--mint)"></i>Drafter's guess</span>
+        <span><i style="background:#17c298"></i>Guess accepted</span>
+        <span><i style="background:var(--coral)"></i>Guess rejected</span>
+        <span><i style="background:var(--slate)"></i>Written by the big model</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="card verdict" id="verdict" aria-live="polite">
+    <div class="big" id="sp">1.00×</div>
+    <p id="vtext">Both lanes write the same sentence. The drafter lane finishes sooner because most guesses are accepted for the price of one check.</p>
+  </section>
+
+  <section class="card chart">
+    <h2>Longer guesses stop paying off</h2>
+    <p>Each extra guessed token costs drafter time and is less likely to survive. Tap a point to try that length.</p>
+    <svg id="chart" viewBox="0 0 640 230" role="img" aria-label="Expected speed-up for each draft length"></svg>
+  </section>
+
+  <footer>
+    Speculative decoding is lossless: the big model rejects any guess it would not have written, so the text is identical and only the wait changes. Small on-device models such as Gemma 4 pair with drafters this way to feel faster on a phone. Times here are a toy: one big-model pass is 1 unit, one drafted token is 0.1 units.
+  </footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+var TOK=["Small","models","draft","fast",",","then","a","large","model","checks","the","whole","guess","in","one","pass","and","keeps","only","what","it","would","have","written","itself",".","Nothing","changes","except","the","wait","."];
+var DECOY=["very","also","then","quick","is","and","it","many","of","new","each","so"];
+var ACC=[.55,.75,.9], C=.1, UNIT=300, PASS_MS=50;
+var N=TOK.length;
+var $=function(i){return document.getElementById(i)};
+var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var sim,t0=0,raf=0,lastKey=["",""],speedShown=false,speedAnim=0;
+
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function expected(a,k){return (1-Math.pow(a,k+1))/(1-a)/(1+k*C)}
+function build(k,qi){
+  var a=ACC[qi],r=rng(900+k*131+qi*17),p=0,time=0,rounds=[],kind=[];
+  while(p<N){
+    var kk=Math.min(k,N-p),acc=kk,drafts=[];
+    for(var i=0;i<kk;i++){
+      var good=r()<a;
+      if(acc===kk&&!good){acc=i}
+      drafts.push({ok:acc===kk||i<acc,txt:(i<acc||acc===kk)?TOK[p+i]:(i===acc?DECOY[Math.floor(r()*DECOY.length)]:DECOY[Math.floor(r()*DECOY.length)])});
+    }
+    var commit=Math.min(acc+1,N-p);
+    for(var j=0;j<commit;j++)kind[p+j]=j<acc?"ok":"big";
+    var dur=kk*C+1;
+    rounds.push({start:time,kk:kk,dend:time+kk*C,end:time+dur,p:p,acc:acc,drafts:drafts,commit:commit});
+    time+=dur;p+=commit;
+  }
+  return{rounds:rounds,kind:kind,specEnd:time,plainEnd:N,k:k,qi:qi};
+}
+function esc(s){return s}
+function chip(cls,txt,delay){return '<span class="chip '+cls+'">'+txt+'</span>'}
+
+function frame(now){
+  var t=Math.min(sim.plainEnd,(now-t0)/UNIT);
+  if(reduce)t=sim.plainEnd;
+  draw(t);
+  if(t<sim.plainEnd)raf=requestAnimationFrame(frame);else raf=0;
+}
+function draw(t){
+  // plain
+  var n0=Math.min(N,Math.floor(t));
+  var key0=n0+"";
+  if(key0!==lastKey[0]){
+    var h="";for(var i=0;i<n0;i++)h+=chip("slow",TOK[i]);
+    if(n0<N)h+='<span class="chip cursor"></span>';
+    $("c0").innerHTML=h;lastKey[0]=key0;
+  }
+  var el0=Math.min(t,sim.plainEnd);
+  $("r0").textContent=el0<.05?"0":Math.round(n0/el0*20);
+  // spec
+  var done=0,cur=null,committed=0;
+  for(var r=0;r<sim.rounds.length;r++){var R=sim.rounds[r];if(R.end<=t){committed=R.p+R.commit}else{if(R.start<=t)cur=R;break}}
+  var shown=0,reveal=false;
+  if(cur){shown=Math.min(cur.kk,Math.floor((t-cur.start)/C+1e-6));reveal=t>=cur.dend+.45;}
+  var key1=committed+"|"+shown+"|"+(reveal?1:0)+"|"+(cur?cur.p:-1);
+  if(key1!==lastKey[1]){
+    var s="";
+    for(var i=0;i<committed;i++)s+=chip(sim.kind[i],TOK[i]);
+    if(cur){
+      for(var d=0;d<shown;d++){
+        var D=cur.drafts[d],c="draft";
+        if(reveal){c+=d<cur.acc?" yes":(d===cur.acc?" no":" skip")}
+        s+=chip(c,D.txt);
+      }
+    }
+    if(committed>=N&&!cur){/* complete */}
+    $("c1").innerHTML=s;lastKey[1]=key1;
+  }
+  var el1=Math.min(t,sim.specEnd);
+  $("r1").textContent=el1<.05?"0":Math.round(committed/el1*20);
+  if(t>=sim.specEnd&&!speedShown){speedShown=true;speedAnim=performance.now();if(reduce)showSpeed(1)}
+  if(speedShown&&!reduce){var u=Math.min(1,(performance.now()-speedAnim)/900);showSpeed(u)}
+  if(t>=sim.plainEnd&&speedShown&&!reduce)showSpeed(1);
+}
+function showSpeed(u){
+  var final=sim.plainEnd/sim.specEnd,e=1-Math.pow(1-u,3);
+  $("sp").textContent=(1+(final-1)*e).toFixed(2)+"×";
+  if(u>=1){
+    var v=$("verdict");v.classList.remove("pop");void v.offsetWidth;if(!reduce)v.classList.add("pop");
+    $("vtext").innerHTML="<b>"+final.toFixed(2)+" times faster</b> than writing one token at a time, and the sentence is word for word the same. The big model rejected "+rejected()+" guess"+(rejected()===1?"":"es")+" and wrote those tokens itself.";
+  }
+}
+function rejected(){var n=0;sim.rounds.forEach(function(R){if(R.acc<R.kk)n++});return n}
+
+function chart(){
+  var a=ACC[sim.qi],pts=[],best=1,bi=1;
+  for(var k=1;k<=8;k++){var v=expected(a,k);pts.push(v);if(v>best){best=v;bi=k}}
+  var W=640,H=230,L=40,R=16,T=36,B=40,ymax=Math.ceil(best*2+.5)/2+.0;
+  var x=function(k){return L+(k-1)*(W-L-R)/7},y=function(v){return T+(H-T-B)*(1-(v-1)/(ymax-1))};
+  var d="",area="";
+  pts.forEach(function(v,i){d+=(i?"L":"M")+x(i+1).toFixed(1)+" "+y(v).toFixed(1)});
+  area=d+"L"+x(8)+" "+y(1)+"L"+x(1)+" "+y(1)+"Z";
+  var s='<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0fa37f" stop-opacity=".35"/><stop offset="1" stop-color="#0fa37f" stop-opacity="0"/></linearGradient></defs>';
+  for(var g=1;g<=ymax;g+=.5){if(g%1===0||ymax<3){s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(g)+'" y2="'+y(g)+'" stroke="rgba(91,74,120,.15)"/><text class="ax" x="'+(L-8)+'" y="'+(y(g)+4)+'" text-anchor="end">'+g.toFixed(0)+'×</text>'}}
+  s+='<path d="'+area+'" fill="url(#ag)"/><path d="'+d+'" fill="none" stroke="#0fa37f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';
+  for(var k2=1;k2<=8;k2++){
+    var cur=k2===sim.k,pk=k2===bi;
+    s+='<text class="ax" x="'+x(k2)+'" y="'+(H-10)+'" text-anchor="middle" '+(cur?'font-weight="700" style="fill:#2b1a45"':'')+'>'+k2+'</text>';
+    s+='<circle cx="'+x(k2)+'" cy="'+y(pts[k2-1])+'" r="'+(cur?9:4.5)+'" fill="'+(cur?'#fff':'#0fa37f')+'" stroke="#0fa37f" stroke-width="'+(cur?4:0)+'" style="filter:drop-shadow(0 6px 6px rgba(15,163,127,.5))"/>';
+    s+='<rect class="hit" data-k="'+k2+'" x="'+(x(k2)-30)+'" y="0" width="60" height="'+H+'"><title>Draft length '+k2+': '+pts[k2-1].toFixed(2)+'× expected</title></rect>';
+  }
+  s+='<text x="'+x(bi)+'" y="'+(y(best)-16)+'" text-anchor="middle" font-size="18" font-weight="700" fill="#087a5e">Sweet spot: '+bi+' ('+best.toFixed(1)+'×)</text>';
+  s+='<text class="ax" x="'+(W/2)+'" y="'+(H+6)+'" text-anchor="middle" style="display:none"></text>';
+  $("chart").innerHTML=s;
+  $("chart").setAttribute("aria-label","Expected speed-up by draft length for this drafter. Best draft length is "+bi+" at "+best.toFixed(1)+" times.");
+}
+function start(){
+  cancelAnimationFrame(raf);
+  var k=+$("k").value,qi=+document.querySelector('input[name=q]:checked').value;
+  $("kout").textContent=k;
+  sim=build(k,qi);lastKey=["",""];speedShown=false;
+  $("sp").textContent="1.00×";$("verdict").classList.remove("pop");
+  $("vtext").textContent="Both lanes write the same sentence. The drafter lane finishes sooner because most guesses are accepted for the price of one check.";
+  chart();
+  t0=performance.now();raf=requestAnimationFrame(frame);
+}
+$("run").addEventListener("click",start);
+$("k").addEventListener("input",function(){$("kout").textContent=this.value});
+$("k").addEventListener("change",start);
+document.querySelectorAll('input[name=q]').forEach(function(e){e.addEventListener("change",start)});
+$("chart").addEventListener("click",function(e){var h=e.target.closest&&e.target.closest(".hit");if(h){$("k").value=h.getAttribute("data-k");start()}});
+start();
+})();
+</script>
+</body>
+</html>

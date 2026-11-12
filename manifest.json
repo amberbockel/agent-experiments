@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-12",
+      "slug": "2026-11-12",
+      "title": "Draft and Verify",
+      "category": "trend",
+      "design": "soft-gradient-depth",
+      "oneLiner": "Race a big language model against the same model with a small drafter, and find the draft length that makes it fastest.",
+      "path": "apps/2026-11-12/"
+    },
+    {
       "date": "2026-11-11",
       "slug": "2026-11-11",
       "title": "Inbox Duty",
