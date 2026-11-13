@@ -380,6 +380,7 @@
     ALL_LIST=list; latestKey=list[0]?.d ? list[0].p : '';
     recentGrid.innerHTML=list.slice(0, 3).map(function(a){ return lcardHTML(a, a.p===latestKey); }).join('');
     if(curFilter!=='all' && !list.some(function(a){return a.c===curFilter;})) curFilter='all';
+    document.getElementById('statCount').textContent=list.length;
     renderFilters(); paintList();
   }
   filters.addEventListener('click',function(event){
@@ -394,13 +395,11 @@
 
   renderFeatured();
   setList(APPS);
-  document.getElementById('statCount').textContent=APPS.length;
 
   // live manifest: keep the full archive current (same-origin fetch works on the live site)
   try{
     fetch("manifest.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
       if(!d||!d.apps||!d.apps.length)return;
-      document.getElementById('statCount').textContent=d.apps.length;
       var list=d.apps.map(function(a){return {t:a.title,c:a.category||'trend',p:a.path||('apps/'+a.date+'/'),o:a.oneLiner||a.description||'',e:a.emoji||'',d:a.date};});
       var manifestPaths=new Set(list.map(function(a){return a.p;}));
       list=list.concat(APPS.filter(function(a){return !manifestPaths.has(a.p);}));
