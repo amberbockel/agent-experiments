@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nudge: help a stuck agent</title>
+<meta name="description" content="A greedy agent walks a maze and gets stuck. Place the fewest hints that get it home.">
+<style>
+:root{
+  --bg:#E8ECEE; --paper:#FFFFFF; --ink:#0E1317; --mute:#5A646C; --line:#C9D0D5;
+  --red:#FF3B1F; --blue:#2339FF; --blue-soft:rgba(35,57,255,.08);
+  --ease:cubic-bezier(.2,.9,.25,1.15);
+  --font:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100dvh;
+  padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:24px}
+@media(min-width:880px){.wrap{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start;padding-top:32px}}
+h1{font-size:clamp(56px,13vw,112px);line-height:.88;letter-spacing:-.055em;font-weight:700}
+.lead{margin-top:16px;max-width:44ch;color:var(--mute);font-size:17px;line-height:1.55}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:32px;border-top:2px solid var(--ink)}
+.stat{padding:12px 12px 8px 0}
+.stat+.stat{padding-left:12px;border-left:1px solid var(--line)}
+.stat b{display:block;font-size:clamp(40px,7vw,64px);line-height:1;letter-spacing:-.04em;font-weight:700;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--mute)}
+.stat.hot b{color:var(--blue)}
+.status{margin-top:24px;min-height:84px;padding:16px;background:var(--paper);border-left:4px solid var(--ink);font-size:16px;line-height:1.5;
+  transition:border-color .3s, background .3s}
+.status[data-s=stuck]{border-color:var(--red)}
+.status[data-s=won]{border-color:var(--blue)}
+.status strong{display:block;font-size:18px;letter-spacing:-.01em;margin-bottom:2px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+button{font:inherit;font-weight:600;min-height:48px;padding:0 20px;border:2px solid var(--ink);background:transparent;color:var(--ink);
+  border-radius:999px;cursor:pointer;transition:transform .18s var(--ease),background .15s,color .15s,opacity .15s}
+button:hover:not(:disabled){background:var(--ink);color:#fff}
+button:active:not(:disabled){transform:scale(.95)}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button.primary:hover:not(:disabled){background:#1428d6;border-color:#1428d6}
+button:disabled{opacity:.35;cursor:not-allowed}
+button:focus-visible,canvas:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.board{position:relative}
+canvas{display:block;width:100%;aspect-ratio:1;background:var(--paper);touch-action:none;cursor:crosshair;
+  box-shadow:0 1px 0 var(--line),0 24px 48px -24px rgba(14,19,23,.28)}
+.hint{margin-top:12px;font-size:14px;color:var(--mute);max-width:60ch}
+.ledger{margin-top:32px;list-style:none;padding:0;border-top:1px solid var(--line);max-width:420px}
+.ledger li{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:15px}
+.ledger li span:last-child{color:var(--mute)}
+.ledger li.under span:last-child{color:var(--blue);font-weight:600}
+.ledger li.new{animation:in .5s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section>
+    <h1>Nudge</h1>
+    <p class="lead">The agent always walks toward the goal. That works until it meets a dead end and starts circling. When it stalls, leave one hint within reach and send it on. Use as few as you can.</p>
+    <div class="stats" aria-label="Score">
+      <div class="stat hot"><b id="nHints">0</b><span>Hints used</span></div>
+      <div class="stat"><b id="nSteps">0</b><span>Steps</span></div>
+      <div class="stat"><b id="nPar">0</b><span>Par</span></div>
+    </div>
+    <div class="status" id="status" data-s="run" role="status" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary" id="place" disabled>Place hint</button>
+      <button id="retry" disabled>Let it try again</button>
+      <button id="speed" aria-pressed="false">Speed 1x</button>
+      <button id="next">New maze</button>
+    </div>
+    <ul class="ledger" id="ledger" aria-label="Finished mazes"></ul>
+  </section>
+  <section class="board">
+    <canvas id="cv" tabindex="0" role="application" aria-label="Maze. Use arrow keys to move the hint cursor and Enter to place a hint when the agent is stuck."></canvas>
+    <p class="hint">Tap a shaded cell, or use the arrow keys and Enter. The agent follows your hint along the real corridors, then goes back to walking toward the goal.</p>
+  </section>
+</main>
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$("cv"),ctx=cv.getContext("2d");
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const R=5;                       // reach of a hint, in cells (Manhattan)
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+
+function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- maze ---------- */
+function makeMaze(N,seed){
+  const r=rng(seed),open=Array.from({length:N*N},()=>[0,0,0,0]),seen=new Uint8Array(N*N);
+  const st=[0];seen[0]=1;
+  while(st.length){
+    const c=st[st.length-1],x=c%N,y=(c/N)|0,opts=[];
+    DIRS.forEach(([dx,dy],d)=>{const nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<N&&ny<N&&!seen[ny*N+nx])opts.push(d)});
+    if(!opts.length){st.pop();continue}
+    const d=opts[(r()*opts.length)|0],n=(y+DIRS[d][1])*N+x+DIRS[d][0];
+    open[c][d]=1;open[n][(d+2)%4]=1;seen[n]=1;st.push(n);
+  }
+  for(let k=0;k<N*N*.06;k++){ // knock out a few walls so loops exist
+    const x=(r()*(N-1))|0,y=(r()*(N-1))|0,d=r()<.5?1:2,c=y*N+x,n=(y+DIRS[d][1])*N+x+DIRS[d][0];
+    open[c][d]=1;open[n][(d+2)%4]=1;
+  }
+  return {N,open,start:0,goal:N*N-1};
+}
+function nbrs(m,i){const x=i%m.N,y=(i/m.N)|0,o=[];for(let d=0;d<4;d++)if(m.open[i][d])o.push((y+DIRS[d][1])*m.N+x+DIRS[d][0]);return o}
+function bfs(m,a,b){
+  const prev=new Int32Array(m.N*m.N).fill(-1);prev[a]=a;const q=[a];
+  for(let h=0;h<q.length;h++){const c=q[h];if(c===b)break;for(const n of nbrs(m,c))if(prev[n]<0){prev[n]=c;q.push(n)}}
+  const p=[];for(let c=b;c!==a;c=prev[c])p.push(c);return p.reverse();
+}
+const man=(m,a,b)=>Math.abs(a%m.N-b%m.N)+Math.abs(((a/m.N)|0)-((b/m.N)|0));
+
+/* ---------- agent policy (pure, shared with the par solver) ---------- */
+function newAgent(m){const v=new Uint8Array(m.N*m.N);v[m.start]=1;return{pos:m.start,visits:v,path:[],mode:"greedy",limit:3,steps:0,hints:0}}
+function advance(m,s){
+  if(s.mode==="guided"){
+    s.pos=s.path.shift();s.steps++;
+    if(s.pos===m.goal){s.mode="won";return}
+    if(!s.path.length){s.mode="greedy";s.visits.fill(0);s.visits[s.pos]=1;s.limit=3}
+    return;
+  }
+  let best=-1,bs=1e9;
+  for(const n of nbrs(m,s.pos)){const sc=man(m,n,m.goal)+1.5*s.visits[n];if(sc<bs){bs=sc;best=n}}
+  s.pos=best;s.visits[best]++;s.steps++;
+  if(best===m.goal)s.mode="won";
+  else if(s.visits[best]>=s.limit)s.mode="stuck";
+}
+function giveHint(m,s,cell){s.path=bfs(m,s.pos,cell);s.mode="guided";s.hints++}
+function solvePar(m){
+  const s=newAgent(m),sol=[];let guard=0;
+  while(s.mode!=="won"&&guard++<20000){
+    if(s.mode==="stuck"){
+      const p=bfs(m,s.pos,m.goal);let k=0;
+      for(let i=0;i<p.length;i++)if(man(m,s.pos,p[i])<=R&&bfs(m,s.pos,p[i]).length>0)k=i;
+      sol.push(p[k]);giveHint(m,s,p[k]);
+    }else advance(m,s);
+  }
+  return s.mode==="won"?s.hints:99;
+}
+
+/* ---------- game state ---------- */
+let level=0,maze,ag,par,beacons=[],cursor=0,fx=[],drawPos,lastStep=0,speed=1,heat,ledgerRows=[];
+const dpr=Math.min(devicePixelRatio||1,2);
+function newMaze(){
+  level++;
+  const N=Math.min(17,11+Math.floor((level-1)/2)*2);
+  let seed=level*7919+((Math.random()*1e6)|0),m,p,tries=0;
+  do{m=makeMaze(N,seed+=104729);p=solvePar(m);tries++}while((p<2||p>5)&&tries<60);
+  maze=m;par=p;ag=newAgent(m);beacons=[];fx=[];heat=new Float32Array(N*N);heat[m.start]=1;
+  cursor=m.goal-N*2-2>0?m.goal-N*2-2:m.goal;drawPos=pos(m.start);lastStep=performance.now();
+  tween($("nPar"),0,par,500);tween($("nHints"),+$("nHints").textContent,0,300);setSteps(0);
+  setStatus("run","The agent is walking.","It heads for the goal square in the far corner, one step at a time.");
+  sync();
+}
+const pos=i=>({x:i%maze.N+.5,y:((i/maze.N)|0)+.5});
+
+/* ---------- ui ---------- */
+function tween(el,a,b,ms){
+  if(reduce||a===b){el.textContent=b;return}
+  const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);el.textContent=Math.round(a+(b-a)*e);if(k<1)requestAnimationFrame(f)})(t0);
+}
+function setSteps(n){$("nSteps").textContent=n}
+function setStatus(s,h,p){const el=$("status");el.dataset.s=s;el.innerHTML="<strong>"+h+"</strong>"+p}
+function sync(){
+  const stuck=ag.mode==="stuck";
+  $("place").disabled=!stuck||!valid(cursor);$("retry").disabled=!stuck;
+}
+const valid=c=>ag.mode==="stuck"&&c!==ag.pos&&man(maze,ag.pos,c)<=R;
+
+function place(c){
+  if(ag.mode!=="stuck"){return}
+  if(!valid(c)){setStatus("stuck","That cell is out of reach.","Hints work within "+R+" cells of the agent. Pick a shaded one.");return}
+  beacons.push(c);giveHint(maze,ag,c);
+  tween($("nHints"),ag.hints-1,ag.hints,250);
+  setStatus("run","Hint sent.","The agent follows the corridors to your marker, then goes back to walking toward the goal.");
+  sync();
+}
+function win(){
+  const over=ag.hints-par;
+  const head=over<0?"Under par. Nicely done.":over===0?"At par. Clean run.":(over+" over par.");
+  const rows=over<0?"under":"";
+  setStatus("won",head,ag.hints+" hint"+(ag.hints===1?"":"s")+" and "+ag.steps+" steps. Press New maze for a harder one.");
+  for(let i=0;i<4;i++)fx.push({t:performance.now()+i*160,c:maze.goal});
+  const li=document.createElement("li");li.className="new "+rows;
+  li.innerHTML="<span>Maze "+level+"</span><span>"+ag.hints+" hint"+(ag.hints===1?"":"s")+", par "+par+"</span>";
+  $("ledger").prepend(li);sync();
+  $("next").textContent="Next maze";
+}
+
+/* ---------- loop ---------- */
+function loop(now){
+  const dt=Math.min(.05,(now-(loop.p||now))/1000);loop.p=now;
+  const iv=(speed>1?55:130);
+  if((ag.mode==="greedy"||ag.mode==="guided")&&now-lastStep>iv){
+    lastStep=now;const was=ag.mode;advance(maze,ag);heat[ag.pos]+=1;setSteps(ag.steps);
+    if(ag.mode==="stuck"){
+      setStatus("stuck","The agent is stuck.","It has walked the same corner three times. Place a hint within reach of it, or let it try again.");
+      cursor=ag.pos;sync();
+    } else if(ag.mode==="won")win();
+    else if(was==="guided"&&ag.mode==="greedy")setStatus("run","Back on its own.","Nothing left to do but watch.");
+  }
+  const t=pos(ag.pos),k=reduce?1:1-Math.exp(-dt*(speed>1?30:16));
+  drawPos.x+=(t.x-drawPos.x)*k;drawPos.y+=(t.y-drawPos.y)*k;
+  draw(now);requestAnimationFrame(loop);
+}
+function draw(now){
+  const W=cv.width,N=maze.N,cs=W/N,px=dpr;
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="#fff";ctx.fillRect(0,0,W,W);
+  const stuck=ag.mode==="stuck";
+  for(let i=0;i<N*N;i++){
+    const x=i%N,y=(i/N)|0;
+    if(stuck&&valid(i)){ctx.fillStyle="rgba(35,57,255,.075)";ctx.fillRect(x*cs,y*cs,cs,cs)}
+    if(heat[i]>0){ctx.fillStyle="rgba(255,59,31,"+Math.min(.5,heat[i]*.09)+")";ctx.fillRect(x*cs,y*cs,cs,cs)}
+  }
+  // goal
+  const g=maze.goal,gx=(g%N)*cs,gy=((g/N)|0)*cs;
+  ctx.fillStyle="#0E1317";ctx.fillRect(gx+cs*.14,gy+cs*.14,cs*.72,cs*.72);
+  // beacons
+  beacons.forEach((b,i)=>{const p=pos0(b);ctx.strokeStyle="rgba(35,57,255,.55)";ctx.lineWidth=2*px;ctx.beginPath();ctx.arc(p.x*cs,p.y*cs,cs*.2,0,7);ctx.stroke();
+    ctx.fillStyle="#2339FF";ctx.font="700 "+(cs*.26)+"px "+getComputedStyle(document.body).fontFamily;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(i+1,p.x*cs,p.y*cs+px)});
+  // cursor
+  if(stuck){
+    const cx=(cursor%N)*cs,cy=((cursor/N)|0)*cs,ok=valid(cursor);
+    ctx.strokeStyle=ok?"#2339FF":"#9AA3AA";ctx.lineWidth=3*px;ctx.strokeRect(cx+3*px,cy+3*px,cs-6*px,cs-6*px);
+  }
+  // walls
+  ctx.strokeStyle="#0E1317";ctx.lineWidth=Math.max(2,cs*.07);ctx.lineCap="square";ctx.beginPath();
+  for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,o=maze.open[i];
+    if(!o[0]){ctx.moveTo(x*cs,y*cs);ctx.lineTo((x+1)*cs,y*cs)}
+    if(!o[3]){ctx.moveTo(x*cs,y*cs);ctx.lineTo(x*cs,(y+1)*cs)}
+    if(!o[1]){ctx.moveTo((x+1)*cs,y*cs);ctx.lineTo((x+1)*cs,(y+1)*cs)}
+    if(!o[2]){ctx.moveTo(x*cs,(y+1)*cs);ctx.lineTo((x+1)*cs,(y+1)*cs)}}
+  ctx.stroke();
+  // agent
+  const ax=drawPos.x*cs,ay=drawPos.y*cs;
+  if(stuck&&!reduce){const p=(now%1200)/1200;ctx.strokeStyle="rgba(255,59,31,"+(1-p)*.8+")";ctx.lineWidth=2*px;ctx.beginPath();ctx.arc(ax,ay,cs*(.3+p*.5),0,7);ctx.stroke()}
+  else if(stuck){ctx.strokeStyle="#FF3B1F";ctx.lineWidth=2*px;ctx.beginPath();ctx.arc(ax,ay,cs*.5,0,7);ctx.stroke()}
+  ctx.fillStyle="#FF3B1F";ctx.beginPath();ctx.arc(ax,ay,cs*.27,0,7);ctx.fill();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(ax,ay,cs*.09,0,7);ctx.fill();
+  // win rings
+  fx=fx.filter(f=>now-f.t<1400);
+  fx.forEach(f=>{const p=(now-f.t)/1400;if(p<0)return;const q=pos0(f.c);ctx.strokeStyle="rgba(35,57,255,"+(1-p)+")";ctx.lineWidth=3*px;ctx.beginPath();ctx.arc(q.x*cs,q.y*cs,cs*(.4+p*5),0,7);ctx.stroke()});
+}
+const pos0=i=>({x:i%maze.N+.5,y:((i/maze.N)|0)+.5});
+
+/* ---------- input ---------- */
+function resize(){const w=Math.round(cv.getBoundingClientRect().width*dpr);if(w&&cv.width!==w){cv.width=cv.height=w}}
+addEventListener("resize",resize);
+function cellAt(e){const r=cv.getBoundingClientRect(),N=maze.N;return Math.min(N-1,Math.max(0,((e.clientY-r.top)/r.height*N)|0))*N+Math.min(N-1,Math.max(0,((e.clientX-r.left)/r.width*N)|0))}
+cv.addEventListener("pointermove",e=>{cursor=cellAt(e);sync()});
+cv.addEventListener("pointerdown",e=>{cursor=cellAt(e);if(ag.mode==="stuck")place(cursor);else if(ag.mode!=="won")setStatus("run","Still moving.","Hints open up when the agent stalls. Watch for the pulsing ring.")});
+cv.addEventListener("keydown",e=>{
+  const N=maze.N,x=cursor%N,y=(cursor/N)|0;let nx=x,ny=y;
+  if(e.key==="ArrowLeft")nx--;else if(e.key==="ArrowRight")nx++;else if(e.key==="ArrowUp")ny--;else if(e.key==="ArrowDown")ny++;
+  else if(e.key==="Enter"||e.key===" "){e.preventDefault();place(cursor);return}else return;
+  e.preventDefault();cursor=Math.min(N-1,Math.max(0,ny))*N+Math.min(N-1,Math.max(0,nx));sync();
+});
+$("place").onclick=()=>place(cursor);
+$("retry").onclick=()=>{if(ag.mode!=="stuck")return;ag.mode="greedy";ag.limit+=3;setStatus("run","Trying again.","It will give itself three more laps before it stalls.");sync()};
+$("speed").onclick=e=>{speed=speed>1?1:3;e.currentTarget.textContent="Speed "+(speed>1?"3x":"1x");e.currentTarget.setAttribute("aria-pressed",speed>1)};
+$("next").onclick=()=>{$("next").textContent="New maze";newMaze()};
+
+resize();newMaze();resize();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

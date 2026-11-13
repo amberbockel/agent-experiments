@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-13",
+      "slug": "2026-11-13",
+      "title": "Nudge",
+      "category": "delightful",
+      "design": "swiss-minimal",
+      "oneLiner": "Watch a greedy agent wander a maze, get stuck, and leave the fewest hints that get it home.",
+      "path": "apps/2026-11-13/"
+    },
+    {
       "date": "2026-11-12",
       "slug": "2026-11-12",
       "title": "Draft and Verify",
