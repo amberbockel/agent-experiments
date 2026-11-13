@@ -15,16 +15,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # Build job: bundle the site and upload it as the Pages artifact.
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
+  # Deploy job: runs only after build finishes, so the artifact is fully
+  # registered before deploy-pages queries it. This avoids the "Found 0
+  # artifacts" race that happens when upload + deploy share one job.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
