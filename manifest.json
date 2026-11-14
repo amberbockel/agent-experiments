@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-14",
+      "slug": "2026-11-14",
+      "title": "Trigger Words",
+      "category": "trend",
+      "design": "modern-editorial",
+      "oneLiner": "Write the one-line description that makes an AI agent load your skill at the right moment, and only then.",
+      "path": "apps/2026-11-14/"
+    },
+    {
       "date": "2026-11-13",
       "slug": "2026-11-13",
       "title": "Nudge",

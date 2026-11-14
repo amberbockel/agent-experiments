@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trigger Words</title>
+<meta name="description" content="Write the one-line description that makes an AI agent load your skill at the right moment, and only then.">
+<style>
+:root{
+  --paper:#F5F6F4; --card:#FFFFFF; --ink:#13171D; --muted:#5A6471; --rule:#DADDE1;
+  --green:#0E7A5C; --green-soft:#DDF1E9; --red:#B8312A; --red-soft:#F8E3E1; --hi:#F7E27A;
+  --serif:Charter,"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s5:48px;--s6:64px;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#101317; --card:#181C22; --ink:#ECEEF1; --muted:#98A2AF; --rule:#2A3038;
+  --green:#4CC9A0; --green-soft:#16342B; --red:#F08A82; --red-soft:#3A1F1E; --hi:#6B5F14;
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--sans);min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.wrap{max-width:1080px;margin:0 auto;padding:var(--s4) var(--s2) var(--s6)}
+@media(min-width:720px){.wrap{padding:var(--s5) var(--s4) var(--s6)}}
+h1,h2,h3{font-family:var(--serif);font-weight:700;margin:0;letter-spacing:-.015em}
+h1{font-size:clamp(2.6rem,9vw,4.6rem);line-height:1;letter-spacing:-.03em}
+.dek{font:400 1.25rem/1.55 var(--serif);max-width:34em;margin:var(--s2) 0 0;color:var(--ink)}
+.dek b{font-weight:400;background:linear-gradient(transparent 58%,var(--hi) 58% 92%,transparent 92%)}
+.how{margin:var(--s3) 0 0;color:var(--muted);font-size:.9375rem;max-width:38em}
+
+.rounds{display:flex;gap:var(--s1);margin:var(--s5) 0 var(--s3);border-bottom:1px solid var(--rule);overflow-x:auto}
+.rounds button{appearance:none;border:0;background:none;color:var(--muted);font:600 .9375rem var(--sans);min-height:48px;padding:0 var(--s2);
+  border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.rounds button[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+.rounds button:disabled{opacity:.4;cursor:not-allowed}
+.rounds button:not(:disabled):hover{color:var(--ink)}
+.stars{color:var(--green);letter-spacing:1px;font-size:.875rem}
+
+.desk{display:grid;gap:var(--s4)}
+@media(min-width:860px){.desk{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:var(--s5);align-items:start}}
+.editor{position:sticky;top:var(--s2)}
+@media(max-width:859px){.editor{position:static}}
+.brief{font:400 1.0625rem/1.65 var(--serif);margin:0 0 var(--s3);max-width:34em}
+.skillname{font:700 1.5625rem/1.2 var(--serif);margin:0 0 var(--s1);display:flex;align-items:baseline;gap:var(--s1);flex-wrap:wrap}
+.skillname small{font:400 .875rem var(--sans);color:var(--muted)}
+textarea{width:100%;min-height:128px;resize:vertical;font:400 1.1875rem/1.55 var(--serif);color:var(--ink);background:var(--card);
+  border:1.5px solid var(--rule);border-radius:12px;padding:var(--s2);box-shadow:0 1px 0 rgba(19,23,29,.04),0 12px 32px -16px rgba(19,23,29,.18);
+  transition:border-color .2s,box-shadow .2s}
+textarea:focus-visible,button:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+textarea:focus{border-color:var(--green)}
+.meter{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s1);font-size:.875rem;color:var(--muted)}
+.bar{flex:1;height:6px;background:var(--rule);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--green);border-radius:3px;transition:width .35s var(--spring),background .2s}
+.bar i.hot{background:var(--red)}
+.cost{margin:var(--s2) 0 0;font-size:.9375rem;color:var(--muted);max-width:34em}
+.actions{display:flex;gap:var(--s1);flex-wrap:wrap;margin-top:var(--s3)}
+.btn{appearance:none;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);font:600 1rem var(--sans);min-height:48px;padding:0 var(--s3);
+  border-radius:999px;cursor:pointer;transition:transform .25s var(--spring),box-shadow .25s;box-shadow:0 8px 20px -10px rgba(14,122,92,.7)}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.96)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none}
+.hint{margin:var(--s2) 0 0;padding:var(--s2);border-left:3px solid var(--hi);background:var(--card);border-radius:0 8px 8px 0;font:400 1rem/1.6 var(--serif);max-width:34em}
+
+.library{margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--rule)}
+.library h3{font-size:1rem;font-family:var(--sans);font-weight:600;margin-bottom:var(--s1)}
+.library ul{list-style:none;margin:0;padding:0;display:grid;gap:var(--s2)}
+.library li{font-size:.9375rem;line-height:1.5;color:var(--muted)}
+.library li b{display:block;font:700 1rem var(--serif);color:var(--ink)}
+
+.board-head{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s2);margin-bottom:var(--s2)}
+.board-head h2{font-size:1.5625rem}
+.score{font:700 3rem/1 var(--serif);letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:right}
+.score small{font:400 .9375rem var(--sans);color:var(--muted);letter-spacing:0;display:block;margin-top:4px}
+.prompts{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.p{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:var(--s2) var(--s2) 14px;display:grid;gap:10px;
+  box-shadow:0 14px 30px -22px rgba(19,23,29,.35);transition:border-color .3s,background .3s,transform .4s var(--spring)}
+.p.pass{border-color:color-mix(in srgb,var(--green) 55%,var(--rule))}
+.p.pop{transform:scale(1.015)}
+.q{font:400 1.0625rem/1.55 var(--serif);margin:0;max-width:36em}
+.q mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 1px}
+.verdict{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:.875rem}
+.want{color:var(--muted)}
+.got{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:4px 12px 4px 8px;border-radius:999px;min-height:28px}
+.got.ok{background:var(--green-soft);color:var(--green)}
+.got.bad{background:var(--red-soft);color:var(--red)}
+.got svg{width:16px;height:16px;flex:none}
+.why{width:100%;color:var(--muted);font-size:.8125rem;line-height:1.45}
+
+.win{margin-top:var(--s3);padding:var(--s3);border-radius:16px;background:var(--ink);color:var(--paper);display:none;
+  box-shadow:0 24px 48px -24px rgba(14,122,92,.8)}
+.win.on{display:block;animation:rise .6s var(--spring)}
+.win h3{font-size:1.5625rem;margin-bottom:6px}
+.win p{margin:0 0 var(--s2);font:400 1rem/1.6 var(--serif);max-width:34em}
+.win .btn{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+
+.finale{display:none}
+.finale.on{display:block;animation:rise .6s var(--spring)}
+.finale h2{font-size:clamp(2rem,6vw,3rem);line-height:1.05;margin-bottom:var(--s2)}
+.finale p{font:400 1.125rem/1.7 var(--serif);max-width:34em;margin:0 0 var(--s2)}
+.recap{display:grid;gap:12px;margin:var(--s3) 0;max-width:34em}
+.recap div{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:var(--s2)}
+.recap b{font-family:var(--serif);font-size:1.0625rem}
+.recap span{display:block;font:400 1rem/1.5 var(--serif);color:var(--muted);margin-top:4px}
+footer{margin-top:var(--s6);padding-top:var(--s2);border-top:1px solid var(--rule);font-size:.8125rem;color:var(--muted);max-width:44em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Trigger Words</h1>
+    <p class="dek">An agent decides which skill to open by reading <b>one line of description</b>. Write that line well and it shows up when it should, and stays out when it shouldn't.</p>
+    <p class="how">Each round, rewrite the description for one skill. The router below loads a skill when a request shares at least two words with its description, and the closest match wins. Get every request routed correctly.</p>
+  </header>
+
+  <div class="rounds" role="tablist" aria-label="Rounds" id="rounds"></div>
+
+  <main id="game" class="desk">
+    <section class="editor" aria-label="Description editor">
+      <p class="brief" id="brief"></p>
+      <label class="skillname" for="desc"><span id="sname"></span><small>description, always in the agent's context</small></label>
+      <textarea id="desc" maxlength="120" spellcheck="false" autocomplete="off"></textarea>
+      <div class="meter"><div class="bar"><i id="bar"></i></div><span id="chars" aria-live="off">0 / 120</span></div>
+      <p class="cost" id="cost"></p>
+      <div class="actions">
+        <button class="btn ghost" id="hintBtn" type="button">Show a hint</button>
+        <button class="btn ghost" id="resetBtn" type="button">Reset line</button>
+      </div>
+      <p class="hint" id="hint" hidden></p>
+      <div class="library"><h3>The other skills installed</h3><ul id="lib"></ul></div>
+    </section>
+
+    <section aria-label="Routing results">
+      <div class="board-head">
+        <h2>Incoming requests</h2>
+        <div class="score" aria-live="polite"><span id="num">0</span><small id="of"></small></div>
+      </div>
+      <ol class="prompts" id="prompts"></ol>
+      <div class="win" id="win" role="status">
+        <h3 id="winT"></h3><p id="winP"></p>
+        <button class="btn" id="nextBtn" type="button"></button>
+      </div>
+    </section>
+  </main>
+
+  <section class="finale" id="finale" aria-live="polite">
+    <h2 id="finT"></h2>
+    <p>Three lines, each under a hundred characters, and an agent could pick the right tool every time. That is the whole trick behind skills: the description is the only part always loaded, so it is the only part the agent can judge you by. The full instructions in the body stay closed until the description earns them.</p>
+    <div class="recap" id="recap"></div>
+    <p>Vague lines trigger on everything. Crowded lines trigger on lookalikes. The sharp ones name the verbs people actually use.</p>
+    <button class="btn" id="againBtn" type="button">Play again</button>
+  </section>
+
+  <footer>Inspired by the wave of agent-skill and SKILL.md tooling, where a skill's frontmatter description decides when it loads. The router here is a deliberately simple word-overlap model, not a real LLM, so every decision is visible. Runs fully offline.</footer>
+</div>
+
+<script>
+(()=>{
+const STOP=new Set("the a an and or of to in on for from with into this that these those it its is are was be as at by my me i we our you your us who what which when where how out up about after before over under than then so but not no do does did can could will would should have has had".split(" "));
+function stem(w){ if(w.length>4){ if(/ies$/.test(w))w=w.replace(/ies$/,"y"); else if(/(ch|sh|x|s)es$/.test(w))w=w.slice(0,-2); else if(/s$/.test(w)&&!/ss$/.test(w))w=w.slice(0,-1); }
+  if(w.length>5){ if(/ing$/.test(w))w=w.slice(0,-3); else if(/ed$/.test(w))w=w.slice(0,-2);} return w; }
+function toks(s){ return (s.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>w.length>2&&!STOP.has(w)).map(stem); }
+
+const ROUNDS=[
+ {skill:"pdf-forms",start:"Helps with documents.",
+  brief:"Your teammate keeps asking the agent to fill in paperwork, and the pdf-forms skill never opens. Make it load for form work and nothing else.",
+  hint:"Name what people do to a form: the verbs and the parts of it. Skip words that any PDF request would share.",
+  others:[["calendar-sync","Schedule meetings, find free time, and move events on the user's calendar."],["sql-reports","Write and run SQL queries against the warehouse and summarize results as tables."],["slide-deck","Build presentation slides and speaker notes from an outline."]],
+  prompts:[["Fill out the W-9 tax form and save it as a PDF",1],["Sign the lease PDF and flatten the fields",1],["Which fields are in this fillable form?",1],["Summarize this PDF report in three bullets",0],["Build a slide deck from my notes",0],["Find a free hour Thursday to meet Dana",0],["Write a query for last week's signups",0]],
+  win:"The form skill now opens for paperwork and ignores report reading, which a bare word like PDF could not tell apart."},
+ {skill:"meeting-notes",start:"Takes notes.",
+  brief:"A notetaker skill should wake up for recordings and transcripts. Right now it either sleeps through them or grabs every request that says meeting.",
+  hint:"Think about what the agent is handed afterwards: a call, a recording, and what people want back from it.",
+  others:[["calendar-sync","Schedule meetings, find free time, and move events on the user's calendar."],["slide-deck","Build presentation slides and speaker notes from an outline."],["pdf-forms","Fill, sign, flatten PDF form fields."]],
+  prompts:[["Turn this call transcript into action items",1],["Who owns the follow-ups from standup?",1],["Summarize the recording of today's design review",1],["Schedule a review meeting for Friday",0],["Find a free hour to meet the design team",0],["Draft slides for the design review",0],["Fill in the tax form PDF",0]],
+  win:"Notes now trigger on what you hand over, not on the word meeting. That is the line between a helper and a nuisance."},
+ {skill:"chart-maker",start:"Makes visuals.",
+  brief:"The chart skill is supposed to draw graphs, but SQL keeps winning the numbers. Teach the router what a chart request sounds like.",
+  hint:"Chart requests name a shape. The data requests next door name a query or a table.",
+  others:[["sql-reports","Write and run SQL queries against the warehouse and summarize results as tables."],["slide-deck","Build presentation slides and speaker notes from an outline."],["meeting-notes","Summarize calls and recordings; list action items and follow-ups."]],
+  prompts:[["Plot signups by week as a bar chart",1],["Show which region grew fastest as a graph or chart",1],["Make a line chart of churn since March",1],["Write a query that counts signups by week",0],["Turn these results into a table",0],["Put the chart on slide three",0],["Summarize the call recording from Monday",0]],
+  win:"Three descriptions, three clean handoffs. Every skill an agent carries is a line like this, read on every single turn."}
+];
+const MAX=120;
+const $=id=>document.getElementById(id);
+const state={i:0,done:[],text:ROUNDS.map(r=>r.start),stars:[0,0,0],shown:0,solved:false};
+
+function route(r,text){
+  const skills=[[r.skill,text],...r.others];
+  const sets=skills.map(([n,d])=>new Set(toks(d)));
+  const df={}; sets.forEach(s=>s.forEach(t=>df[t]=(df[t]||0)+1));
+  return r.prompts.map(([q,want])=>{
+    const pt=[...new Set(toks(q))];
+    const res=sets.map((s,k)=>{const m=pt.filter(t=>s.has(t));return{name:skills[k][0],m,w:m.reduce((a,t)=>a+Math.log(1+skills.length/df[t]),0)}});
+    const c=res.filter(x=>x.m.length>=2).sort((a,b)=>b.w-a.w);
+    let pick=null,why="No skill shares two words with this request.";
+    if(c.length){ if(c.length>1&&Math.abs(c[0].w-c[1].w)<1e-9){why="Tied between "+c[0].name+" and "+c[1].name+", so nothing loads.";}
+      else{pick=c[0].name;why="Matched "+c[0].m.join(", ")+".";} }
+    else{const near=res.filter(x=>x.m.length===1);if(near.length)why="Only one shared word ("+near.map(x=>x.m[0]).join(", ")+"), so nothing loads."}
+    const ok=want?pick===r.skill:pick!==r.skill;
+    return{q,want,pick,ok,why,hl:new Set(pick?res.find(x=>x.name===pick).m:[]),stem:pt};
+  });
+}
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function hlq(q,hl){return esc(q).replace(/[A-Za-z0-9]+/g,w=>hl.has(stem(w.toLowerCase()))&&w.length>2&&!STOP.has(w.toLowerCase())?"<mark>"+w+"</mark>":w)}
+
+const ICON={ok:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>',
+ bad:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>'};
+
+let prev=[];
+function renderTabs(){
+  $("rounds").innerHTML=ROUNDS.map((r,k)=>{const unlocked=k===0||state.done[k-1];
+    return `<button role="tab" id="tab${k}" aria-selected="${state.i===k&&!finaleOn}" ${unlocked?"":"disabled"} data-k="${k}">Round ${k+1}<span class="stars" aria-label="${state.stars[k]} of 3 stars">${state.done[k]?"★".repeat(state.stars[k])+"☆".repeat(3-state.stars[k]):""}</span></button>`}).join("");
+  document.querySelectorAll("#rounds button").forEach(b=>b.onclick=()=>{finaleOn=false;load(+b.dataset.k)});
+}
+let finaleOn=false;
+function load(k){
+  state.i=k;const r=ROUNDS[k];finaleOn=false;
+  $("game").style.display="";$("finale").classList.remove("on");
+  $("brief").textContent=r.brief;$("sname").textContent=r.skill;
+  $("desc").value=state.text[k];$("hint").hidden=true;$("hintBtn").textContent="Show a hint";
+  $("lib").innerHTML=r.others.map(([n,d])=>`<li><b>${n}</b>${esc(d)}</li>`).join("");
+  $("win").classList.remove("on");state.shown=0;prev=[];$("num").textContent="0";
+  renderTabs();update(true);
+}
+function countTo(el,to){const from=state.shown;state.shown=to;
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches||from===to){el.textContent=to;return}
+  const t0=performance.now(),d=420;const f=t=>{const p=Math.min(1,(t-t0)/d),e=1-Math.pow(1-p,3);el.textContent=Math.round(from+(to-from)*e);if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
+function update(first){
+  const k=state.i,r=ROUNDS[k],text=$("desc").value;state.text[k]=text;
+  const n=text.length;$("chars").textContent=n+" / "+MAX;
+  $("bar").style.width=Math.min(100,n/MAX*100)+"%";$("bar").classList.toggle("hot",n>MAX*.85);
+  const tk=Math.max(1,Math.ceil(n/4));
+  $("cost").textContent=`About ${tk} tokens, spent on every turn whether or not the skill is used. The instructions behind it cost nothing until it loads.`;
+  const out=route(r,text);const pass=out.filter(o=>o.ok).length;
+  $("prompts").innerHTML=out.map((o,j)=>{
+    const want=o.want?`Should load ${r.skill}`:`Should not load ${r.skill}`;
+    const got=o.pick?`Loaded ${o.pick}`:"No skill loaded";
+    return `<li class="p ${o.ok?"pass":""}" data-j="${j}"><p class="q">${hlq(o.q,o.hl)}</p><div class="verdict"><span class="want">${want}</span><span class="got ${o.ok?"ok":"bad"}">${o.ok?ICON.ok:ICON.bad}<span>${got}</span></span><span class="sr">${o.ok?"Correct":"Wrong"}</span><span class="why">${o.why}</span></div></li>`}).join("");
+  out.forEach((o,j)=>{if(!first&&prev[j]===false&&o.ok){const el=$("prompts").children[j];el.classList.add("pop");setTimeout(()=>el.classList.remove("pop"),350)}});
+  prev=out.map(o=>o.ok);
+  countTo($("num"),pass);$("of").textContent="of "+out.length+" routed correctly";
+  const solved=pass===out.length&&n>0;
+  if(solved&&!state.done[k]){state.done[k]=true;state.stars[k]=n<=60?3:n<=95?2:1;renderTabs()}
+  else if(solved){const s=n<=60?3:n<=95?2:1;if(s>state.stars[k]){state.stars[k]=s;renderTabs()}}
+  const w=$("win");
+  if(solved){
+    const s=state.stars[k];
+    $("winT").textContent=["","Solved in "+n+" characters.","Solved in "+n+" characters. Tighter is possible.","Solved in "+n+" characters. Lean and exact."][s];
+    $("winP").textContent=r.win+(s<3?" Try getting under "+(s===1?95:60)+" characters for another star.":"");
+    $("nextBtn").textContent=k<ROUNDS.length-1?"Start round "+(k+2):"See the results";
+    if(!w.classList.contains("on")){w.classList.add("on")}
+  }else w.classList.remove("on");
+}
+$("desc").addEventListener("input",()=>update(false));
+$("hintBtn").onclick=()=>{const h=$("hint");h.hidden=!h.hidden;h.textContent=ROUNDS[state.i].hint;$("hintBtn").textContent=h.hidden?"Show a hint":"Hide the hint"};
+$("resetBtn").onclick=()=>{$("desc").value=ROUNDS[state.i].start;update(true);$("desc").focus()};
+$("nextBtn").onclick=()=>{ if(state.i<ROUNDS.length-1){load(state.i+1);window.scrollTo({top:0,behavior:"smooth"})} else finale()};
+function finale(){
+  finaleOn=true;renderTabs();$("game").style.display="none";
+  const tot=state.stars.reduce((a,b)=>a+b,0);
+  $("finT").textContent=tot===9?"Nine stars. The router never doubted you.":"You scored "+tot+" of 9 stars.";
+  $("recap").innerHTML=ROUNDS.map((r,k)=>`<div><b>${r.skill} <span class="stars" style="display:inline;margin:0">${"★".repeat(state.stars[k])+"☆".repeat(3-state.stars[k])}</span></b><span>${esc(state.text[k])}</span></div>`).join("");
+  $("finale").classList.add("on");window.scrollTo({top:0,behavior:"smooth"});
+}
+$("againBtn").onclick=()=>{state.done=[];state.stars=[0,0,0];state.text=ROUNDS.map(r=>r.start);load(0)};
+load(0);
+})();
+</script>
+</body>
+</html>
