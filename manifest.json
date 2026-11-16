@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-16",
+      "slug": "2026-11-16",
+      "title": "Rerun",
+      "category": "delightful",
+      "design": "minimal-dark",
+      "oneLiner": "Draw walls, then watch 36 simulated agents fail, remember, and get better with every run.",
+      "path": "apps/2026-11-16/"
+    },
+    {
       "date": "2026-11-15",
       "slug": "2026-11-15",
       "title": "Press On",

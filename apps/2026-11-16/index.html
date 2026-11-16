@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rerun</title>
+<meta name="description" content="Draw walls, then watch a swarm of simulated agents fail, remember, and get better with every run.">
+<style>
+:root{
+  --bg:#10131a; --panel:#171b25; --line:#262c3a; --dot:#2b3242;
+  --ink:#e9ecf4; --mute:#939cb2; --wall:#cdd5e8;
+  --win:#6fe0be; --fail:#ff7f6e; --mem:#5b7cfa;
+  --ease:cubic-bezier(.34,1.56,.64,1);
+  --font:"SF Pro Display","Segoe UI Variable Display","Helvetica Neue",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100dvh;
+  padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  background-image:radial-gradient(900px 500px at 85% -10%,rgba(91,124,250,.14),transparent 60%);
+  -webkit-font-smoothing:antialiased}
+main{max-width:1040px;margin:0 auto}
+header{display:grid;gap:16px;margin-bottom:32px}
+h1{font-weight:300;font-size:clamp(48px,11vw,104px);line-height:.95;letter-spacing:-.04em}
+header p{color:var(--mute);font-size:18px;line-height:1.5;max-width:52ch}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:16px;
+  box-shadow:0 24px 60px -24px rgba(91,124,250,.35),0 2px 0 rgba(255,255,255,.03) inset}
+.cwrap{position:relative;touch-action:none;border-radius:14px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;cursor:crosshair;border-radius:14px;outline:none}
+canvas:focus-visible{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--win)}
+.banner{position:absolute;left:50%;top:16px;transform:translate(-50%,-140%);background:var(--win);color:#08231b;
+  padding:10px 20px;border-radius:999px;font-weight:600;font-size:15px;white-space:nowrap;
+  transition:transform .6s var(--ease),opacity .3s;opacity:0;box-shadow:0 12px 30px -8px rgba(111,224,190,.6);pointer-events:none}
+.banner.on{transform:translate(-50%,0);opacity:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px 8px 8px}
+.stat b{display:block;font-weight:300;font-size:clamp(32px,7vw,56px);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:8px;color:var(--mute);font-size:14px;line-height:1.4}
+.hist{display:flex;align-items:flex-end;gap:3px;height:56px;margin:16px 8px 0;border-bottom:1px solid var(--line)}
+.hist i{flex:1;min-width:3px;max-width:18px;border-radius:3px 3px 0 0;background:var(--win);transform-origin:bottom;animation:grow .5s var(--ease)}
+.hist i.wall{background:var(--fail)}
+.hist:empty::before{content:"Each bar is one run. Press Run to start.";color:var(--mute);font-size:14px;align-self:center}
+@keyframes grow{from{transform:scaleY(0)}}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;align-items:center}
+button,select{font:inherit;font-size:15px;color:var(--ink);background:#1e2432;border:1px solid var(--line);
+  border-radius:12px;min-height:44px;padding:0 20px;cursor:pointer;transition:transform .2s var(--ease),background .2s,border-color .2s}
+button:hover,select:hover{background:#262d3e;border-color:#38415a}
+button:active{transform:scale(.95)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--win);outline-offset:2px}
+button.primary{background:var(--win);color:#08231b;border-color:transparent;font-weight:600;box-shadow:0 10px 24px -10px rgba(111,224,190,.7)}
+button.primary:hover{background:#86edcd}
+button[aria-pressed=true]{background:#2a3350;border-color:var(--mem)}
+button:disabled{opacity:.45;cursor:default;transform:none}
+.sp{flex:1}
+.log{margin-top:32px}
+.log h2{font-weight:500;font-size:20px;margin-bottom:16px}
+ol{list-style:none;padding:0;display:grid;gap:8px;max-width:72ch}
+li{display:grid;grid-template-columns:auto 1fr;gap:16px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;line-height:1.5;font-size:15px}
+li strong{font-variant-numeric:tabular-nums;color:var(--win);font-weight:600;min-width:3ch}
+li.fresh{animation:pop .5s var(--ease)}
+@keyframes pop{from{transform:scale(.97);opacity:0}}
+.empty{color:var(--mute);font-size:15px;line-height:1.5;max-width:60ch}
+.hint{color:var(--mute);font-size:14px;line-height:1.5;margin-top:16px;max-width:64ch}
+@media (max-width:560px){.stats{gap:8px}.sp{display:none}.controls button,.controls select{flex:1 1 calc(50% - 8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Rerun</h1>
+  <p>Thirty-six simulated agents try to cross your map. Most fail the first time. Each run, they keep what they learned and try again.</p>
+</header>
+
+<section class="stage" aria-label="Simulation">
+  <div class="cwrap">
+    <canvas id="cv" tabindex="0" role="application" aria-label="Agent map. Use arrow keys to move the cursor and Enter to toggle a wall."></canvas>
+    <div class="banner" id="banner" role="status"></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="sRun">0</b><span>Runs so far</span></div>
+    <div class="stat"><b id="sReach">0/36</b><span>Reached the goal this run</span></div>
+    <div class="stat"><b id="sBest">0%</b><span>Best success rate</span></div>
+  </div>
+  <div class="hist" id="hist" aria-label="Success rate per run"></div>
+  <div class="controls">
+    <button class="primary" id="bRun">Run</button>
+    <button id="bAuto" aria-pressed="false">Auto-run</button>
+    <select id="preset" aria-label="Map"><option value="gap">Wall with a gap</option><option value="open">Open field</option><option value="maze">Zigzag</option><option value="doors">Two doors</option></select>
+    <span class="sp"></span>
+    <button id="bForget">Wipe memory</button>
+    <button id="bClear">Clear walls</button>
+  </div>
+  <p class="hint">Drag on the map to draw or erase walls. Move a wall after the agents have learned a route and watch them struggle, then adapt.</p>
+</section>
+
+<section class="log">
+  <h2>What they learned</h2>
+  <p class="empty" id="empty">Nothing yet. Run the simulation and each run writes a line here.</p>
+  <ol id="log" aria-live="polite"></ol>
+</section>
+</main>
+
+<script>
+(()=>{
+const W=18,H=11,N=36,MAXS=110,START=[1,5],GOAL=[16,5];
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let walls=new Uint8Array(W*H), Q=new Float32Array(W*H*4);
+let run=0,best=0,last=0,episodes=[],anim=null,auto=false,dirty=false,busy=false,cur=[8,5],painting=null,celebrated=false;
+const idx=(x,y)=>y*W+x;
+const isGoal=(x,y)=>x===GOAL[0]&&y===GOAL[1];
+
+const PRESETS={
+ open:()=>[],
+ gap:()=>{const a=[];for(let y=0;y<H;y++)if(y!==5)a.push([8,y]);return a},
+ maze:()=>{const a=[];for(let y=0;y<9;y++)a.push([5,y]);for(let y=2;y<H;y++)a.push([10,y]);return a},
+ doors:()=>{const a=[];for(let y=0;y<H;y++)if(y!==2&&y!==8)a.push([8,y]);return a}
+};
+function loadPreset(n){walls.fill(0);PRESETS[n]().forEach(([x,y])=>walls[idx(x,y)]=1);dirty=true}
+
+function pickAction(x,y,eps){
+  if(Math.random()<eps)return Math.floor(Math.random()*4);
+  let b=-1e9,c=[];
+  for(let a=0;a<4;a++){const v=Q[idx(x,y)*4+a];if(v>b+1e-6){b=v;c=[a]}else if(Math.abs(v-b)<=1e-6)c.push(a)}
+  return c[Math.floor(Math.random()*c.length)];
+}
+function maxQ(x,y){let m=-1e9;for(let a=0;a<4;a++)m=Math.max(m,Q[idx(x,y)*4+a]);return m}
+
+function batch(){
+  const eps=Math.max(.04,.35*Math.pow(.86,run));
+  const eps_=[],fails=new Map();let win=0;
+  for(let n=0;n<N;n++){
+    let [x,y]=START;const trail=[[x,y]];let ok=false;
+    for(let s=0;s<MAXS;s++){
+      const a=pickAction(x,y,eps),nx=x+DIRS[a][0],ny=y+DIRS[a][1];
+      let r,tx=nx,ty=ny;
+      if(nx<0||ny<0||nx>=W||ny>=H||walls[idx(nx,ny)]){r=-.05;tx=x;ty=y}else r=-.01;
+      let done=false;if(isGoal(tx,ty)){r=1;done=true}
+      const i=idx(x,y)*4+a;
+      Q[i]+=.5*(r+(done?0:.95*maxQ(tx,ty))-Q[i]);
+      x=tx;y=ty;trail.push([x,y]);
+      if(done){ok=true;break}
+    }
+    if(ok)win++;else{const k=x+','+y;fails.set(k,(fails.get(k)||0)+1)}
+    eps_.push({trail,ok});
+  }
+  let stall=null,sc=0;fails.forEach((v,k)=>{if(v>sc){sc=v;stall=k.split(',').map(Number)}});
+  return {eps:eps_,win,stall,sc};
+}
+
+function start(){
+  if(busy)return;busy=true;$('bRun').disabled=true;
+  const prev=last,wasDirty=dirty;dirty=false;
+  const res=batch();run++;episodes=res.eps;
+  const dur=reduce?1:1700;
+  anim={t0:performance.now(),dur,res,prev,wasDirty};
+  requestAnimationFrame(tick);
+}
+function tick(now){
+  if(!anim)return;
+  const p=Math.min(1,(now-anim.t0)/anim.dur);
+  draw(p);
+  const shown=Math.round(anim.res.win*easeOut(p));
+  $('sReach').textContent=shown+'/'+N;
+  if(p<1)requestAnimationFrame(tick);else finish();
+}
+const easeOut=t=>1-Math.pow(1-t,3);
+function finish(){
+  const {res,prev,wasDirty}=anim;anim=null;last=res.win;
+  $('sRun').textContent=run;$('sReach').textContent=res.win+'/'+N;
+  const pct=Math.round(res.win/N*100);
+  if(pct>best){best=pct;$('sBest').textContent=best+'%'}
+  const h=document.createElement('i');h.style.height=Math.max(3,pct*.56)+'px';h.title='Run '+run+': '+pct+'%';
+  if(wasDirty&&run>1)h.className='wall';
+  $('hist').appendChild(h);
+  addLog(res,prev,wasDirty);
+  draw(1);
+  busy=false;$('bRun').disabled=false;
+  if(res.win===N&&!celebrated){celebrated=true;banner('All '+N+' made it in run '+run)}
+  if(auto&&res.win===N){auto=false;$('bAuto').setAttribute('aria-pressed','false')}
+  if(auto){setTimeout(()=>{if(auto)start()},reduce?200:450)}
+}
+function addLog(res,prev,wasDirty){
+  $('empty').hidden=true;
+  const li=document.createElement('li');li.className='fresh';
+  const d=res.win-prev;
+  let t;
+  if(run===1)t=res.win+' of '+N+' reached the goal. With no memory, every agent wandered.';
+  else{
+    t=(wasDirty?'Walls moved. ':'')+res.win+' of '+N+' reached the goal'+(d?(' ('+(d>0?'+':'')+d+' from last run). '):'. ');
+    if(res.win===N)t+='No agent got lost.';
+    else if(res.stall)t+=res.sc+' stalled near column '+(res.stall[0]+1)+', row '+(res.stall[1]+1)+'.';
+  }
+  li.innerHTML='<strong>'+run+'</strong><span>'+t+'</span>';
+  $('log').prepend(li);
+  while($('log').children.length>8)$('log').lastChild.remove();
+}
+function banner(t){const b=$('banner');b.textContent=t;b.classList.add('on');setTimeout(()=>b.classList.remove('on'),3200)}
+
+/* drawing */
+let cell=0,pad=0,dpr=1;
+function size(){
+  const w=cv.parentElement.clientWidth;dpr=Math.min(devicePixelRatio||1,2);
+  cell=w/W;const h=cell*H;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';
+  draw(anim?0:1);
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function draw(p){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=cell*W,h=cell*H;
+  ctx.fillStyle='#0d1017';ctx.fillRect(0,0,w,h);
+  /* memory glow */
+  let mx=0.001;const mem=new Float32Array(W*H);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=maxQ(x,y);mem[idx(x,y)]=v;if(v>mx)mx=v}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const v=mem[idx(x,y)];if(v<=0.01||walls[idx(x,y)])continue;
+    ctx.fillStyle='rgba(91,124,250,'+(Math.min(1,v/mx)*.28).toFixed(3)+')';
+    rr(x*cell+2,y*cell+2,cell-4,cell-4,cell*.28);ctx.fill();
+  }
+  /* dots */
+  ctx.fillStyle='#2b3242';
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(walls[idx(x,y)])continue;ctx.beginPath();ctx.arc((x+.5)*cell,(y+.5)*cell,cell*.045,0,7);ctx.fill()}
+  /* walls */
+  ctx.fillStyle='#cdd5e8';
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(walls[idx(x,y)]){rr(x*cell+3,y*cell+3,cell-6,cell-6,cell*.22);ctx.fill()}
+  /* trails */
+  if(episodes.length){
+    ctx.lineCap='round';ctx.lineJoin='round';
+    const failDone=!anim;
+    for(const pass of [false,true]){
+      for(const e of episodes){
+        if(e.ok!==pass)continue;
+        const n=Math.max(1,Math.floor(e.trail.length*p));
+        const col=e.ok?'111,224,190':'255,127,110';
+        ctx.strokeStyle='rgba('+col+','+(e.ok?.5:.2)+')';ctx.lineWidth=e.ok?2:1.4;
+        ctx.beginPath();
+        for(let i=0;i<n;i++){const[a,b]=e.trail[i];const X=(a+.5)*cell+((i*37%7)-3)*.8,Y=(b+.5)*cell+((i*53%7)-3)*.8;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y)}
+        ctx.stroke();
+        if(p<1){const[a,b]=e.trail[n-1];ctx.fillStyle='rgb('+col+')';ctx.beginPath();ctx.arc((a+.5)*cell,(b+.5)*cell,3,0,7);ctx.fill()}
+      }
+    }
+  }
+  /* start & goal */
+  ctx.fillStyle='#e9ecf4';ctx.beginPath();ctx.arc((START[0]+.5)*cell,(START[1]+.5)*cell,cell*.2,0,7);ctx.fill();
+  const gx=(GOAL[0]+.5)*cell,gy=(GOAL[1]+.5)*cell;
+  const pulse=reduce?0:Math.sin(performance.now()/500)*.06;
+  ctx.strokeStyle='#6fe0be';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(gx,gy,cell*(.3+pulse),0,7);ctx.stroke();
+  ctx.fillStyle='#6fe0be';ctx.beginPath();ctx.arc(gx,gy,cell*.12,0,7);ctx.fill();
+  ctx.fillStyle='#0d1017';ctx.font='500 '+Math.max(10,cell*.28)+'px '+getComputedStyle(document.body).fontFamily;
+  /* keyboard cursor */
+  if(document.activeElement===cv){ctx.strokeStyle='#e9ecf4';ctx.lineWidth=2;rr(cur[0]*cell+2,cur[1]*cell+2,cell-4,cell-4,cell*.22);ctx.stroke()}
+}
+/* idle goal pulse */
+(function loop(){if(!anim&&!reduce)draw(1);setTimeout(()=>requestAnimationFrame(loop),90)})();
+
+/* input */
+function cellAt(e){const r=cv.getBoundingClientRect();return[Math.floor((e.clientX-r.left)/r.width*W),Math.floor((e.clientY-r.top)/r.height*H)]}
+function paint(x,y){
+  if(x<0||y<0||x>=W||y>=H||isGoal(x,y)||(x===START[0]&&y===START[1]))return;
+  const i=idx(x,y);if(walls[i]!==painting){walls[i]=painting;dirty=true}
+}
+cv.addEventListener('pointerdown',e=>{if(busy)return;cv.setPointerCapture(e.pointerId);const[x,y]=cellAt(e);painting=walls[idx(x,y)]?0:1;paint(x,y);draw(1)});
+cv.addEventListener('pointermove',e=>{if(painting===null)return;const[x,y]=cellAt(e);paint(x,y);draw(1)});
+const up=()=>{painting=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('keydown',e=>{
+  const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(m){cur=[Math.max(0,Math.min(W-1,cur[0]+m[0])),Math.max(0,Math.min(H-1,cur[1]+m[1]))];e.preventDefault();draw(1)}
+  else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(busy)return;painting=walls[idx(cur[0],cur[1])]?0:1;paint(cur[0],cur[1]);painting=null;draw(1)}
+});
+cv.addEventListener('focus',()=>draw(1));cv.addEventListener('blur',()=>draw(1));
+
+function wipe(){Q.fill(0);run=0;best=0;last=0;episodes=[];celebrated=false;dirty=false;
+  $('sRun').textContent='0';$('sReach').textContent='0/'+N;$('sBest').textContent='0%';
+  $('hist').innerHTML='';$('log').innerHTML='';$('empty').hidden=false;draw(1)}
+$('bRun').onclick=start;
+$('bAuto').onclick=e=>{auto=!auto;e.currentTarget.setAttribute('aria-pressed',auto);if(auto)start()};
+$('bForget').onclick=wipe;
+$('bClear').onclick=()=>{if(busy)return;walls.fill(0);dirty=true;draw(1)};
+$('preset').onchange=e=>{if(busy)return;loadPreset(e.target.value);draw(1)};
+addEventListener('resize',size);
+loadPreset('gap');dirty=false;size();
+window.__rerun={batch,start,get run(){return run}};
+})();
+</script>
+</body>
+</html>
