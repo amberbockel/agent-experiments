@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bedrock: order your prompt for the cache</title>
+<meta name="description" content="Stack an AI agent's prompt so the unchanging parts sit at the bottom. Watch six turns of cache hits and the bill per 1,000 conversations.">
+<style>
+:root{
+  --moss-950:#0f1d16; --moss-800:#1d3a2a; --moss-600:#3d7a52; --moss-400:#7fb48f;
+  --lichen:#e6ece4; --paper:#f3f6f1; --card:#ffffff; --slate:#5b6b62; --line:#cfd9cf;
+  --ochre:#b9862a; --ochre-soft:#f2e3bd; --clay:#a4553c;
+  --h1:#2f6f5e; --h2:#4d7fa0; --h3:#7b6aa6; --h4:#a4553c; --h5:#b9862a; --h6:#5f8a3c; --h7:#8a7a62;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --spring:cubic-bezier(.34,1.45,.5,1);
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s5:48px;--s6:64px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100dvh;background:
+  radial-gradient(1200px 500px at 85% -10%,#dfeadb 0,transparent 60%),var(--paper);
+  color:var(--moss-950);font:400 16px/1.55 var(--sans);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--moss-600);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1120px;margin:0 auto;padding:var(--s4) var(--s2) var(--s6)}
+header{max-width:62ch;margin-bottom:var(--s4)}
+h1{font:600 clamp(2.5rem,7vw,4rem)/1.02 var(--serif);letter-spacing:-.02em;margin:0 0 var(--s2)}
+.lede{font:400 1.1875rem/1.6 var(--serif);color:var(--moss-800);margin:0}
+.scen{display:flex;gap:var(--s1);flex-wrap:wrap;margin:var(--s3) 0 var(--s3)}
+.scen button{min-height:44px;padding:0 var(--s2);border-radius:999px;border:1px solid var(--line);background:var(--card);
+  transition:transform .25s var(--spring),background .2s,border-color .2s,color .2s}
+.scen button:active{transform:scale(.96)}
+.scen button[aria-pressed=true]{background:var(--moss-800);color:#fff;border-color:var(--moss-800)}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:var(--s4);align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+h2{font:600 1.375rem/1.25 var(--serif);margin:0 0 var(--s1)}
+.sub{margin:0 0 var(--s2);color:var(--slate);font-size:.9375rem;max-width:56ch}
+.top-note{display:flex;justify-content:space-between;font-size:.8125rem;color:var(--slate);padding:0 var(--s1) 6px}
+ol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.blk{position:relative;display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 4px 4px 0;
+  box-shadow:0 1px 0 rgba(15,29,22,.04),0 8px 20px -14px rgba(29,58,42,.45);
+  border-left:8px solid var(--c);touch-action:pan-y;transition:box-shadow .25s,transform .25s var(--spring)}
+.blk.drag{box-shadow:0 18px 36px -12px rgba(29,58,42,.55);z-index:5;transform:scale(1.02)}
+.blk .handle{width:44px;height:44px;border:0;background:none;border-radius:10px;display:grid;place-items:center;color:var(--slate);cursor:grab;touch-action:none}
+.blk .handle:hover{background:var(--lichen)}
+.blk .handle svg{width:18px;height:18px}
+.blk .name{font-weight:600;line-height:1.25}
+.blk .meta{font-size:.8125rem;color:var(--slate);line-height:1.3}
+.kind{display:inline-block;padding:0 8px;border-radius:99px;font-size:.75rem;line-height:20px;margin-right:6px;vertical-align:1px}
+.kind.static{background:#dcebdd;color:#1d4a2c}.kind.growing{background:var(--ochre-soft);color:#6b4a0c}.kind.volatile{background:#f2d9d0;color:#7a2f1b}
+.mv{display:flex;flex-direction:column}
+.mv button{width:44px;height:26px;border:0;background:none;border-radius:8px;color:var(--slate);display:grid;place-items:center}
+.mv button:hover:not(:disabled){background:var(--lichen);color:var(--moss-950)}
+.mv button:disabled{opacity:.25;cursor:default}
+.mv svg{width:14px;height:14px}
+.bottom-note{text-align:right;font-size:.8125rem;color:var(--slate);padding:6px var(--s1) 0}
+.panel{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:24px;
+  padding:var(--s3);box-shadow:0 30px 60px -40px rgba(29,58,42,.5)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-bottom:var(--s3)}
+.stat .v{font:600 clamp(1.75rem,4.4vw,2.5rem)/1.05 var(--serif);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .l{font-size:.8125rem;color:var(--slate);margin-top:4px;line-height:1.3}
+.chart{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,14px);align-items:end;height:var(--ch,300px);padding-bottom:0;
+  border-bottom:2px solid var(--moss-800);position:relative}
+.col{display:flex;flex-direction:column;height:100%;justify-content:flex-end;position:relative}
+.col .tower{display:flex;flex-direction:column;border-radius:8px 8px 0 0;overflow:hidden;gap:2px;transform-origin:bottom}
+.seg{display:flex;flex-direction:column;min-height:0;transition:flex-grow .6s var(--spring)}
+.seg .c,.seg .f{background:var(--c);transition:flex-grow .6s var(--spring)}
+.seg .f{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 22%,#fff) 0 5px,color-mix(in srgb,var(--c) 36%,#fff) 5px 7px)}
+.seg .c{flex-basis:0}.seg .f{flex-basis:0}
+.axis{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,14px);margin-top:8px;font-size:.8125rem;color:var(--slate);text-align:center}
+.axis b{display:block;color:var(--moss-950);font-variant-numeric:tabular-nums;font-weight:600}
+.legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin:var(--s2) 0 0;font-size:.8125rem;color:var(--slate)}
+.legend i{display:inline-block;width:18px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+.legend .a{background:var(--moss-800)}.legend .b{background:repeating-linear-gradient(135deg,#cfd9d1 0 5px,#b3c2b6 5px 7px)}
+.meter{margin:var(--s3) 0 0}
+.meter .bar{position:relative;height:14px;border-radius:99px;background:linear-gradient(90deg,#e8c3b4,#f0e2b8 50%,#b6d8bf);overflow:visible}
+.meter .pin{position:absolute;top:-7px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:var(--moss-800);border:4px solid #fff;
+  box-shadow:0 6px 14px -3px rgba(29,58,42,.6);transition:left .8s var(--spring)}
+.meter .ends{display:flex;justify-content:space-between;font-size:.8125rem;color:var(--slate);margin-top:12px}
+.verdict{margin-top:var(--s3);padding:var(--s2) var(--s3);border-radius:16px;background:var(--lichen);font:400 1.0625rem/1.65 var(--serif);max-width:68ch}
+.verdict strong{font-weight:600}
+.verdict.win{background:var(--moss-800);color:#f2f7f1;animation:pulse 1.1s var(--spring)}
+@keyframes pulse{0%{transform:scale(.97)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+.actions{display:flex;gap:var(--s1);flex-wrap:wrap;margin-top:var(--s2)}
+.btn{min-height:44px;padding:0 var(--s3);border-radius:12px;border:1px solid var(--moss-800);background:var(--card);font-weight:600;
+  transition:transform .25s var(--spring),background .2s}
+.btn:hover{background:var(--lichen)}.btn:active{transform:scale(.96)}
+.btn.primary{background:var(--moss-800);color:#fff}.btn.primary:hover{background:var(--moss-950)}
+.how{margin-top:var(--s5);max-width:66ch;color:var(--moss-800);font:400 1.0625rem/1.7 var(--serif)}
+.how h2{margin-top:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(max-width:520px){.panel{padding:var(--s2);border-radius:20px}.stats{gap:var(--s1)}.chart{--ch:240px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Bedrock</h1>
+  <p class="lede">An agent re-reads its whole prompt on every turn. The provider only gives a discount on the part that starts identically to last time. Put what never changes first and what changes last, and the discount follows.</p>
+</header>
+
+<div class="scen" role="group" aria-label="Choose an agent" id="scen"></div>
+
+<div class="grid">
+  <section aria-labelledby="h-stack">
+    <h2 id="h-stack">The prompt, first to last</h2>
+    <p class="sub">The model reads from the top. Drag a layer, use the arrows, or focus a handle and press the up and down keys.</p>
+    <div class="top-note"><span>Read first</span><span id="tokTotal"></span></div>
+    <ol class="stack" id="stack"></ol>
+    <div class="bottom-note">Read last</div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-run">
+    <h2 id="h-run">Six turns of the conversation</h2>
+    <p class="sub" id="runsub">Solid color was served from cache at a tenth of the price. Striped color was read fresh at full price.</p>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><div class="v" id="sCost">$0</div><div class="l">per 1,000 conversations</div></div>
+      <div class="stat"><div class="v" id="sHit">0%</div><div class="l">of tokens from cache</div></div>
+      <div class="stat"><div class="v" id="sLat">0.0s</div><div class="l">average wait for first word</div></div>
+    </div>
+    <div class="chart" id="chart" role="img" aria-label="Stacked bars of cached and fresh tokens for each of six turns"></div>
+    <div class="axis" id="axis"></div>
+    <div class="legend"><span><i class="a"></i>Cached</span><span><i class="b"></i>Fresh</span></div>
+
+    <div class="meter">
+      <div class="bar"><div class="pin" id="pin" style="left:0%"></div></div>
+      <div class="ends"><span id="mWorst"></span><span id="mBest"></span></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="actions">
+      <button class="btn primary" id="bBest">Show best order</button>
+      <button class="btn" id="bWorst">Scramble</button>
+      <button class="btn" id="bReplay">Replay turns</button>
+    </div>
+  </section>
+</div>
+
+<section class="how">
+  <h2>How the cache sees it</h2>
+  <p>Prompt caching stores the processed form of the start of your prompt. On the next call it matches your prompt against the stored copy from the top and stops at the first difference. Everything above that line is a hit. Everything from the line down is paid for again, even if a later block never changed.</p>
+  <p>So the order is the strategy. A timestamp near the top costs you the cache on all the tokens beneath it. This toy uses $3 per million fresh input tokens and $0.30 per million cached, and counts the first turn as all fresh.</p>
+</section>
+</div>
+
+<script>
+(()=>{
+const NF=n=>n.toLocaleString('en-US');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TURNS=6, PRICE=3, CACHED_PRICE=.3, FRESH_TPS=3000, CACHED_TPS=30000;
+const COLORS=['--h1','--h2','--h3','--h4','--h5','--h6','--h7'];
+const SC={
+ support:{label:'Support agent',blocks:[
+  {id:'sys',name:'House rules and tone',kind:'static',n:900,note:'Same every turn'},
+  {id:'tools',name:'Tool definitions',kind:'static',n:2400,note:'Refund, order lookup, escalate'},
+  {id:'docs',name:'Refund policy library',kind:'static',n:6000,note:'Same every turn'},
+  {id:'cust',name:'Customer profile',kind:'static',n:700,note:'Fixed for this conversation'},
+  {id:'clock',name:'Current date and time',kind:'volatile',n:60,note:'Changes on every call'},
+  {id:'hist',name:'Conversation so far',kind:'growing',n:300,inc:450,note:'Grows by appending'},
+  {id:'msg',name:'Latest customer message',kind:'volatile',n:150,note:'New every turn'}]},
+ coding:{label:'Coding agent',blocks:[
+  {id:'rules',name:'Agent instructions',kind:'static',n:1200,note:'Same every turn'},
+  {id:'schemas',name:'Tool schemas',kind:'static',n:3600,note:'Read, edit, run tests'},
+  {id:'map',name:'Repository map',kind:'static',n:8000,note:'Same every turn'},
+  {id:'diff',name:'Working diff',kind:'volatile',n:1500,note:'Rewritten after each edit'},
+  {id:'term',name:'Latest terminal output',kind:'volatile',n:900,note:'New every turn'},
+  {id:'hist',name:'Steps taken so far',kind:'growing',n:600,inc:900,note:'Grows by appending'},
+  {id:'task',name:'The task',kind:'static',n:250,note:'Set once at the start'}]},
+ research:{label:'Research agent',blocks:[
+  {id:'sys',name:'Research brief',kind:'static',n:700,note:'Same every turn'},
+  {id:'tools',name:'Search and fetch tools',kind:'static',n:1800,note:'Same every turn'},
+  {id:'lib',name:'Source library',kind:'static',n:14000,note:'Same every turn'},
+  {id:'notes',name:'Running notes',kind:'growing',n:400,inc:700,note:'Grows by appending'},
+  {id:'date',name:'Today and run counter',kind:'volatile',n:40,note:'Changes on every call'},
+  {id:'q',name:'Next sub-question',kind:'volatile',n:180,note:'New every turn'}]}
+};
+let key='support', order=[], prevAnim=0;
+const rank={static:0,growing:1,volatile:2};
+const size=(b,t)=>b.kind==='growing'?b.n+b.inc*t:b.n;
+const defs=()=>SC[key].blocks;
+const byId=id=>defs().find(b=>b.id===id);
+const colorOf=id=>'var('+COLORS[defs().findIndex(b=>b.id===id)%COLORS.length]+')';
+
+function simulate(ord){
+  const turns=[];
+  for(let t=0;t<TURNS;t++){
+    let match=t>0, segs=[], cached=0, fresh=0;
+    for(const id of ord){
+      const b=byId(id), n=size(b,t); let c=0;
+      if(match){
+        if(b.kind==='static')c=n;
+        else if(b.kind==='growing'){c=size(b,t-1);match=false}
+        else match=false;
+      }
+      segs.push({id,c,f:n-c}); cached+=c; fresh+=n-c;
+    }
+    turns.push({segs,cached,fresh,total:cached+fresh});
+  }
+  const cached=turns.reduce((a,x)=>a+x.cached,0), fresh=turns.reduce((a,x)=>a+x.fresh,0);
+  const cost=(fresh*PRICE+cached*CACHED_PRICE)/1e6*1000;
+  const lat=turns.reduce((a,x)=>a+x.fresh/FRESH_TPS+x.cached/CACHED_TPS,0)/TURNS;
+  return {turns,cached,fresh,cost,lat,hit:cached/(cached+fresh)};
+}
+const bestOrder=()=>[...order].sort((a,b)=>rank[byId(a).kind]-rank[byId(b).kind]||defs().findIndex(x=>x.id===a)-defs().findIndex(x=>x.id===b));
+const worstOrder=()=>[...order].sort((a,b)=>rank[byId(b).kind]-rank[byId(a).kind]||defs().findIndex(x=>x.id===a)-defs().findIndex(x=>x.id===b));
+
+/* ---------- rendering ---------- */
+const stackEl=document.getElementById('stack');
+const els={};
+const ICON_UP='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l5-5 5 5"/></svg>';
+const ICON_DN='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l5 5 5-5"/></svg>';
+const ICON_GRIP='<svg viewBox="0 0 18 18" fill="currentColor"><circle cx="6" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="6" cy="9" r="1.5"/><circle cx="12" cy="9" r="1.5"/><circle cx="6" cy="14" r="1.5"/><circle cx="12" cy="14" r="1.5"/></svg>';
+const kindLabel={static:'Never changes',growing:'Grows each turn',volatile:'Changes each turn'};
+
+function buildStack(){
+  stackEl.innerHTML='';
+  for(const k in els)delete els[k];
+  for(const b of defs()){
+    const li=document.createElement('li');
+    li.className='blk';li.dataset.id=b.id;li.style.setProperty('--c',colorOf(b.id));
+    li.innerHTML=`<button class="handle" aria-label="Move ${b.name}. Use up and down keys.">${ICON_GRIP}</button>
+      <div><div class="name">${b.name}</div><div class="meta"><span class="kind ${b.kind}">${kindLabel[b.kind]}</span>${b.kind==='growing'?NF(b.n)+' tokens, plus '+NF(b.inc)+' a turn':NF(b.n)+' tokens'}</div></div>
+      <div class="mv"><button data-d="-1" aria-label="Move ${b.name} up">${ICON_UP}</button><button data-d="1" aria-label="Move ${b.name} down">${ICON_DN}</button></div>`;
+    els[b.id]=li;
+  }
+  placeStack();
+}
+function placeStack(animate){
+  const first=animate?Object.fromEntries(order.map(id=>[id,els[id].getBoundingClientRect().top])):null;
+  order.forEach((id,i)=>{
+    stackEl.appendChild(els[id]);
+    const [u,d]=els[id].querySelectorAll('.mv button');
+    u.disabled=i===0;d.disabled=i===order.length-1;
+  });
+  if(first&&!reduce)order.forEach(id=>{
+    const dy=first[id]-els[id].getBoundingClientRect().top;
+    if(Math.abs(dy)>1&&!els[id].classList.contains('drag')){
+      els[id].animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:'cubic-bezier(.34,1.3,.5,1)'});
+    }
+  });
+}
+function move(id,to){
+  const i=order.indexOf(id); to=Math.max(0,Math.min(order.length-1,to));
+  if(i===to)return;
+  order.splice(i,1);order.splice(to,0,id);
+  placeStack(true);update();
+}
+stackEl.addEventListener('click',e=>{
+  const btn=e.target.closest('.mv button');if(!btn||btn.disabled)return;
+  const id=btn.closest('.blk').dataset.id;move(id,order.indexOf(id)+(+btn.dataset.d));
+  const li=els[id];const nb=li.querySelectorAll('.mv button')[btn.dataset.d==='-1'?0:1];
+  (nb.disabled?li.querySelector('.handle'):nb).focus();
+});
+stackEl.addEventListener('keydown',e=>{
+  const h=e.target.closest('.handle');if(!h)return;
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+    e.preventDefault();const id=h.closest('.blk').dataset.id;
+    move(id,order.indexOf(id)+(e.key==='ArrowUp'?-1:1));h.focus();
+  }
+});
+let drag=null;
+stackEl.addEventListener('pointerdown',e=>{
+  const h=e.target.closest('.handle');if(!h)return;
+  const li=h.closest('.blk');drag={id:li.dataset.id,li};li.classList.add('drag');
+  h.setPointerCapture(e.pointerId);
+});
+stackEl.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const others=order.filter(id=>id!==drag.id);
+  let to=others.length;
+  for(let i=0;i<others.length;i++){
+    const r=els[others[i]].getBoundingClientRect();
+    if(e.clientY<r.top+r.height/2){to=i;break}
+  }
+  move(drag.id,to);
+});
+const endDrag=()=>{if(drag){drag.li.classList.remove('drag');drag=null}};
+stackEl.addEventListener('pointerup',endDrag);stackEl.addEventListener('pointercancel',endDrag);
+
+/* ---------- chart ---------- */
+const chart=document.getElementById('chart'),axis=document.getElementById('axis');
+const cols=[];
+function buildChart(){
+  chart.innerHTML='';axis.innerHTML='';cols.length=0;
+  for(let t=0;t<TURNS;t++){
+    const col=document.createElement('div');col.className='col';
+    col.innerHTML='<div class="tower"></div>';chart.appendChild(col);
+    const ax=document.createElement('div');ax.innerHTML=`Turn ${t+1}<b></b>`;axis.appendChild(ax);
+    cols.push({col,tower:col.firstChild,ax:ax.querySelector('b'),segs:{}});
+  }
+  for(const c of cols)for(const id of order){
+    const s=document.createElement('div');s.className='seg';s.style.setProperty('--c',colorOf(id));
+    s.innerHTML='<div class="c"></div><div class="f"></div>';
+    c.segs[id]={el:s,c:s.firstChild,f:s.lastChild};
+  }
+}
+let maxTotal=1;
+function drawChart(sim){
+  chart.style.setProperty('--ch',getComputedStyle(chart).getPropertyValue('--ch')||'300px');
+  const H=chart.clientHeight-4;
+  const ref=Math.max(...[...defs()].map(()=>0),Math.max(...sim.turns.map(t=>t.total)));
+  maxTotal=Math.max(ref,1);
+  sim.turns.forEach((t,i)=>{
+    const c=cols[i];
+    t.segs.forEach(s=>c.segs[s.id].el&&c.tower.appendChild(c.segs[s.id].el));
+    const th=Math.max(0,t.total/maxTotal*(H-2*(order.length-1)-4));
+    c.tower.style.height=th+'px';c.tower.style.transition=reduce?'none':'height .6s cubic-bezier(.34,1.3,.5,1)';
+    t.segs.forEach(s=>{
+      const e=c.segs[s.id];
+      e.el.style.flex=`${s.c+s.f} 1 0`;
+      e.c.style.flex=`${s.c} 1 0`;e.f.style.flex=`${s.f} 1 0`;
+      e.el.title=`${byId(s.id).name}: ${NF(s.c)} cached, ${NF(s.f)} fresh`;
+    });
+    c.ax.textContent=(t.total/1000).toFixed(1)+'k';
+  });
+  chart.setAttribute('aria-label','Six turns. '+sim.turns.map((t,i)=>`Turn ${i+1}: ${NF(t.cached)} cached, ${NF(t.fresh)} fresh tokens`).join('. '));
+}
+
+/* ---------- stats / counters ---------- */
+const cur={cost:0,hit:0,lat:0,pin:0};
+const sCost=document.getElementById('sCost'),sHit=document.getElementById('sHit'),sLat=document.getElementById('sLat');
+const fmt={cost:v=>'$'+(v<100?v.toFixed(2):NF(Math.round(v))),hit:v=>Math.round(v*100)+'%',lat:v=>v.toFixed(2)+'s'};
+const node={cost:sCost,hit:sHit,lat:sLat};
+let raf=0;
+function tween(target){
+  cancelAnimationFrame(raf);
+  if(reduce){for(const k in target)cur[k]=target[k];paintStats();return}
+  const from={...cur},t0=performance.now(),D=700;
+  const step=now=>{
+    let p=Math.min(1,(now-t0)/D);p=1-Math.pow(1-p,3);
+    for(const k in target)cur[k]=from[k]+(target[k]-from[k])*p;
+    paintStats();if(p<1)raf=requestAnimationFrame(step);
+  };raf=requestAnimationFrame(step);
+}
+function paintStats(){for(const k of['cost','hit','lat'])node[k].textContent=fmt[k](cur[k])}
+
+let lastWin=false;
+function update(){
+  const sim=simulate(order),best=simulate(bestOrder()),worst=simulate(worstOrder());
+  drawChart(sim);
+  const pos=worst.cost===best.cost?1:(worst.cost-sim.cost)/(worst.cost-best.cost);
+  document.getElementById('pin').style.left=(Math.max(0,Math.min(1,pos))*100)+'%';
+  document.getElementById('mWorst').textContent='Worst order '+fmt.cost(worst.cost);
+  document.getElementById('mBest').textContent='Best order '+fmt.cost(best.cost);
+  document.getElementById('tokTotal').textContent=NF(sim.turns[TURNS-1].total)+' tokens by turn 6';
+  tween({cost:sim.cost,hit:sim.hit,lat:sim.lat});
+  const v=document.getElementById('verdict');
+  const win=pos>=.999;
+  // find the leak: first non-static block above a static block
+  let leak=null;
+  for(let i=0;i<order.length&&!leak;i++){
+    const b=byId(order[i]);
+    if(b.kind!=='static'){
+      const below=order.slice(i+1).map(byId).filter(x=>x.kind==='static'||x.kind==='growing'&&b.kind==='volatile');
+      const lost=below.reduce((a,x)=>a+x.n,0);
+      if(below.length)leak={b,lost,count:below.length};
+    }
+  }
+  const saved=Math.round((worst.cost-sim.cost)/worst.cost*100);
+  if(win){
+    v.className='verdict win';
+    v.innerHTML=`<strong>That is bedrock.</strong> Everything that stays the same is read first, so ${Math.round(sim.hit*100)}% of the tokens come from cache. You save ${saved}% against the worst order, and the first word arrives ${(worst.lat/sim.lat).toFixed(1)} times sooner.`;
+    if(!lastWin&&!reduce)document.getElementById('pin').animate([{transform:'scale(1)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:600,easing:'ease-out'});
+  }else if(leak){
+    v.className='verdict';
+    v.innerHTML=`<strong>${leak.b.name}</strong> sits above ${leak.count} block${leak.count>1?'s':''} that could be cached. It ${leak.b.kind==='growing'?'grows':'changes'} every turn, so the cache stops there and about ${NF(leak.lost)} tokens beneath it are paid for in full, six times over. Move it lower.`;
+  }else{
+    v.className='verdict';
+    v.innerHTML=`Almost. The cached blocks are all on top. Check that the block that grows is above the ones that change each turn, since it keeps part of its prefix.`;
+  }
+  lastWin=win;
+}
+
+/* ---------- controls ---------- */
+const scen=document.getElementById('scen');
+for(const k in SC){
+  const b=document.createElement('button');b.textContent=SC[k].label;b.dataset.k=k;b.setAttribute('aria-pressed',k===key);
+  b.onclick=()=>load(k);scen.appendChild(b);
+}
+function scramble(){
+  const base=worstOrder();
+  // a plausible first draft: how a person writes a prompt, not a perfect worst case
+  return base;
+}
+function load(k){
+  key=k;[...scen.children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));
+  order=draft();buildStack();buildChart();lastWin=false;cur.cost=cur.hit=cur.lat=0;update();
+}
+function draft(){
+  // natural writing order: as listed in the definition, with the changing items pulled early
+  const list=defs().map(b=>b.id);
+  const vol=list.filter(id=>byId(id).kind==='volatile');
+  const rest=list.filter(id=>byId(id).kind!=='volatile');
+  return [vol[0],...rest.slice(0,2),...vol.slice(1,2),...rest.slice(2)].filter(Boolean);
+}
+document.getElementById('bBest').onclick=()=>{order=bestOrder();placeStack(true);update()};
+document.getElementById('bWorst').onclick=()=>{order=worstOrder();placeStack(true);update()};
+document.getElementById('bReplay').onclick=()=>{cur.cost=cur.hit=cur.lat=0;buildChart();
+  cols.forEach(c=>{c.tower.style.height='0px'});requestAnimationFrame(()=>requestAnimationFrame(()=>update()))};
+addEventListener('resize',()=>drawChart(simulate(order)));
+load('support');
+})();
+</script>
+</body>
+</html>
