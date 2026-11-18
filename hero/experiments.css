@@ -178,7 +178,7 @@
 @keyframes charm-drift { to { transform: translateY(-10px); } }
 
 :root {
-  --intro-overlap: calc(clamp(76px, 12vw, 190px) + 300px);
+  --intro-overlap: calc(clamp(76px, 12vw, 190px) + 100px);
   --paper: #fdffff;
   --navy: #08335d;
   --graphite: #22242a;
@@ -586,7 +586,7 @@ body {
 
 .experiment-face {
   position: relative;
-  width: 78.5%;
+  width: 55%;
 }
 
 .experiment-face .experiment-portrait {
