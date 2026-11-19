@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-19",
+      "slug": "2026-11-19",
+      "title": "Pip's Allowance",
+      "category": "games",
+      "design": "soft-gradient-depth",
+      "oneLiner": "A pass-and-play game where you approve or decline what an errand agent wants to buy, doing the discount and multipack math before the card does.",
+      "path": "apps/2026-11-19/"
+    },
+    {
       "date": "2026-11-18",
       "slug": "2026-11-18",
       "title": "Handoff",
