@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Squeeze</title>
+<meta name="description" content="Shrink a language model's weights bit by bit and watch the error, the file size and your phone's memory budget react.">
+<style>
+:root{
+  --paper:#F2F4F6; --card:#FFFFFF; --ink:#0F1C2E; --ink2:#4A586B; --ink3:#8793A3; --line:#DDE2E8;
+  --fit:#0E9F7E; --fit-soft:#D8F2EA; --err:#F0553A; --err-soft:#FDE3DD; --orig:#0F1C2E; --q:#2F5BFF;
+  --r:16px; --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s5:48px;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--paper:#0B121C;--card:#131D2B;--ink:#E9EEF5;--ink2:#A3B0C2;--ink3:#6F7E93;--line:#243246;--fit:#37D0A8;--fit-soft:#0F3B33;--err:#FF7A5F;--err-soft:#3E1F1A;--orig:#E9EEF5;--q:#7C9BFF}
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.55 "Avenir Next","Segoe UI",Inter,system-ui,sans-serif;min-height:100dvh;
+  padding:max(var(--s3),env(safe-area-inset-top)) max(var(--s2),env(safe-area-inset-right)) max(var(--s4),env(safe-area-inset-bottom)) max(var(--s2),env(safe-area-inset-left))}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+main{max-width:1040px;margin:0 auto;display:grid;gap:var(--s3)}
+header{display:grid;gap:var(--s1);max-width:62ch;padding-top:var(--s2)}
+h1{font-size:clamp(2.5rem,8vw,4.5rem);line-height:.95;letter-spacing:-.045em;font-weight:700}
+header p{color:var(--ink2);font-size:1.125rem;line-height:1.5}
+.card{background:var(--card);border-radius:var(--r);padding:var(--s3);box-shadow:0 1px 0 var(--line) inset,0 12px 32px -16px rgba(15,28,46,.18)}
+.controls{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.ctl h2{font-size:.9375rem;font-weight:600;margin-bottom:var(--s1);color:var(--ink2)}
+.seg{display:flex;background:var(--paper);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--ink2);font:600 .9375rem/1 inherit;font-family:inherit;cursor:pointer;transition:background .2s,color .2s,transform .2s var(--spring)}
+.seg button:active{transform:scale(.95)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 2px 8px -2px rgba(15,28,46,.25)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--q);outline-offset:2px}
+.bits{display:flex;align-items:baseline;justify-content:space-between}
+.bits output{font-size:2.5rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+.bits small{color:var(--ink3);font-size:.9375rem}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--err),var(--q) 55%,var(--fit))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--err),var(--q) 55%,var(--fit))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--card);border:3px solid var(--ink);margin-top:-11px;box-shadow:0 4px 12px rgba(15,28,46,.3);transition:transform .2s var(--spring)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--card);border:3px solid var(--ink)}
+.plot h2{font-size:1.25rem;letter-spacing:-.01em;margin-bottom:4px}
+.plot p.sub{color:var(--ink2);font-size:.9375rem;max-width:70ch;margin-bottom:var(--s2)}
+canvas{width:100%;height:300px;display:block;border-radius:12px;touch-action:none}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2);color:var(--ink2);font-size:.875rem}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.stats{display:grid;gap:var(--s2);grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.stat{display:grid;gap:4px;align-content:start}
+.stat .k{color:var(--ink2);font-size:.9375rem}
+.stat .v{font-size:clamp(2rem,5vw,2.75rem);font-weight:700;letter-spacing:-.04em;line-height:1.05}
+.stat .v small{font-size:1rem;font-weight:500;color:var(--ink3);letter-spacing:0;margin-left:4px}
+.stat .n{color:var(--ink2);font-size:.875rem;line-height:1.45;max-width:34ch}
+.verdict{display:inline-block;padding:4px 12px;border-radius:999px;font-weight:600;font-size:.9375rem;width:max-content;transition:background .3s,color .3s}
+.phones{display:grid;gap:var(--s2);grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.phone{border-radius:14px;padding:var(--s2);background:var(--paper);display:grid;gap:12px;transition:background .35s,transform .35s var(--spring)}
+.phone .top{display:flex;justify-content:space-between;align-items:baseline}
+.phone b{font-size:1.125rem}
+.phone .st{font-size:.9375rem;font-weight:600}
+.bar{height:14px;border-radius:7px;background:var(--line);overflow:hidden;position:relative}
+.bar>div{height:100%;border-radius:7px;background:var(--fit);transform-origin:left;transition:width .5s var(--spring),background .3s}
+.phone small{color:var(--ink2);font-size:.875rem}
+.phone.ok{background:var(--fit-soft)}.phone.ok .st{color:var(--fit)}
+.phone.no .st{color:var(--err)}.phone.no .bar>div{background:var(--err)}
+.phone.pop{animation:pop .5s var(--spring)}
+@keyframes pop{0%{transform:scale(.97)}100%{transform:scale(1)}}
+footer{color:var(--ink3);font-size:.875rem;max-width:72ch;line-height:1.6}
+@media (max-width:520px){canvas{height:260px}.card{padding:var(--s2)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Squeeze</h1>
+  <p>A phone can't hold a model stored at full precision. Drop the bits per weight and see what you save, what you break, and which phones can finally run it.</p>
+</header>
+
+<section class="card controls" aria-label="Controls">
+  <div class="ctl">
+    <h2 id="mlabel">Model size</h2>
+    <div class="seg" role="group" aria-labelledby="mlabel" id="models"></div>
+  </div>
+  <div class="ctl">
+    <h2 id="glabel">Scale shared across</h2>
+    <div class="seg" role="group" aria-labelledby="glabel" id="groups"></div>
+  </div>
+  <div class="ctl">
+    <h2><label for="bits">Bits per weight</label></h2>
+    <div class="bits"><output id="bitsOut" class="num" for="bits">4</output><small id="levels" class="num">16 levels</small></div>
+    <input id="bits" type="range" min="2" max="8" step="1" value="4">
+  </div>
+</section>
+
+<section class="card plot" aria-label="Weights before and after">
+  <h2>96 weights of one layer, before and after rounding</h2>
+  <p class="sub">Every weight snaps to the nearest of a few allowed values. The red lines are the damage. A few huge weights stretch the scale, so everyone else gets rounded harshly, unless each small group gets its own scale.</p>
+  <canvas id="cv" role="img" aria-label="Chart of original weights and their quantized values"></canvas>
+  <div class="legend">
+    <span><i style="background:var(--orig)"></i>Original weight</span>
+    <span><i style="background:var(--q)"></i>After rounding</span>
+    <span><i style="background:var(--err)"></i>Error</span>
+  </div>
+</section>
+
+<section class="stats" aria-label="Results" aria-live="polite">
+  <div class="card stat"><span class="k">Model file</span><span class="v num"><span id="size">0</span><small>GB</small></span><span class="n" id="sizeN"></span></div>
+  <div class="card stat"><span class="k">Signal kept</span><span class="v num"><span id="sqnr">0</span><small>dB</small></span><span class="verdict" id="verdict"></span><span class="n" id="sqnrN"></span></div>
+  <div class="card stat"><span class="k">Reply speed</span><span class="v num"><span id="tps">0</span><small>tokens/s</small></span><span class="n">Reading weights from memory is the bottleneck, so half the bytes is about twice the speed.</span></div>
+</section>
+
+<section class="card" aria-label="Phones">
+  <h2 style="font-size:1.25rem;letter-spacing:-.01em;margin-bottom:var(--s2)">Does it fit?</h2>
+  <div class="phones" id="phones"></div>
+</section>
+
+<footer>
+  Sizes and speeds are illustrative. A phone gives a model about half its RAM; add 0.6 GB for the context cache; speed assumes 60 GB/s of memory bandwidth. The signal figure is measured live on the sample above. Rule of thumb: 25 dB and up is hard to tell from the original, under 12 dB is broken. Inspired by Gemma 4 shipping quantization-aware versions of its small models for phones.
+</footer>
+</main>
+
+<script>
+(function(){
+  // seeded PRNG
+  function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  var r=rng(20261120),N=96,W=[];
+  function gauss(){return Math.sqrt(-2*Math.log(r()+1e-9))*Math.cos(6.2831853*r())}
+  for(var i=0;i<N;i++)W.push(gauss()*0.5);
+  [9,41,70].forEach(function(i,k){W[i]=(k==1?-1:1)*(3.6+k*.4)}); // outliers
+
+  var MODELS=[{n:"2B",p:2},{n:"4B",p:4},{n:"8B",p:8},{n:"26B",p:26}];
+  var GROUPS=[{n:"Whole layer",g:96},{n:"32 weights",g:32},{n:"16 weights",g:16}];
+  var PHONES=[{n:"Budget",ram:6},{n:"Mid-range",ram:8},{n:"Flagship",ram:12},{n:"Pro Max",ram:16}];
+  var st={m:0,g:0,b:4};
+  var $=function(id){return document.getElementById(id)};
+  var reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  function seg(el,items,key,label){
+    items.forEach(function(it,i){
+      var b=document.createElement("button");b.type="button";b.textContent=label(it);
+      b.setAttribute("aria-pressed",i===st[key]);
+      b.onclick=function(){st[key]=i;[].forEach.call(el.children,function(c,j){c.setAttribute("aria-pressed",j===i)});update()};
+      el.appendChild(b);
+    });
+  }
+  seg($("models"),MODELS,"m",function(m){return m.n});
+  seg($("groups"),GROUPS,"g",function(g){return g.n});
+  var phonesEl=$("phones");
+  PHONES.forEach(function(p){
+    var d=document.createElement("div");d.className="phone";
+    d.innerHTML='<div class="top"><b>'+p.n+'</b><span class="num">'+p.ram+' GB</span></div><div class="bar"><div></div></div><div class="top"><span class="st"></span><small class="num"></small></div>';
+    phonesEl.appendChild(d);p.el=d;
+  });
+
+  function quant(b,g){
+    var q=new Array(N),L=Math.pow(2,b-1)-1;
+    for(var s=0;s<N;s+=g){
+      var mx=0;for(var i=s;i<Math.min(N,s+g);i++)mx=Math.max(mx,Math.abs(W[i]));
+      var sc=mx/L;
+      for(i=s;i<Math.min(N,s+g);i++)q[i]=Math.round(W[i]/sc)*sc;
+    }
+    return q;
+  }
+  function metrics(b,g){
+    var q=quant(b,g),sig=0,er=0;
+    for(var i=0;i<N;i++){sig+=W[i]*W[i];er+=Math.pow(W[i]-q[i],2)}
+    return{q:q,db:10*Math.log10(sig/Math.max(er,1e-12))};
+  }
+
+  // animated number
+  var shown={};
+  function tween(id,to,dec){
+    var el=$(id),from=shown[id]==null?0:shown[id];shown[id]=to;
+    if(reduce){el.textContent=to.toFixed(dec);return}
+    var t0=performance.now(),d=520;
+    (function f(t){var k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(f)})(t0);
+  }
+
+  var cv=$("cv"),ctx=cv.getContext("2d"),cur=null,anim=0,drawQ=null,fromQ=null,toQ=null,raf=0;
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+  function draw(q){
+    var dpr=Math.min(devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;
+    if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr}
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+    var padL=8,padR=8,padT=12,padB=12,pw=w-padL-padR,ph=h-padT-padB,mid=padT+ph/2,sc=ph/2/4.4;
+    var g=GROUPS[st.g].g,col=pw/N;
+    // group bands
+    for(var s=0;s<N;s+=g){
+      if((s/g)%2===0&&g<N){ctx.fillStyle=css("--paper");ctx.globalAlpha=.7;ctx.fillRect(padL+s*col,padT,g*col,ph);ctx.globalAlpha=1}
+    }
+    ctx.strokeStyle=css("--line");ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,mid);ctx.lineTo(w-padR,mid);ctx.stroke();
+    // level lines per group
+    var L=Math.pow(2,st.b-1)-1;
+    if(st.b<=5){
+      ctx.strokeStyle=css("--line");ctx.globalAlpha=.9;
+      for(s=0;s<N;s+=g){
+        var mx=0;for(var i=s;i<Math.min(N,s+g);i++)mx=Math.max(mx,Math.abs(W[i]));
+        var stp=mx/L;
+        for(var k=-L;k<=L;k++){var y=mid-k*stp*sc;ctx.beginPath();ctx.moveTo(padL+s*col,y);ctx.lineTo(padL+Math.min(N,s+g)*col,y);ctx.stroke()}
+      }
+      ctx.globalAlpha=1;
+    }
+    var rad=Math.max(2.5,Math.min(4.5,col/3));
+    for(i=0;i<N;i++){
+      var x=padL+(i+.5)*col,yo=mid-W[i]*sc,yq=mid-q[i]*sc;
+      ctx.strokeStyle=css("--err");ctx.lineWidth=Math.max(1.5,col/5);ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(x,yo);ctx.lineTo(x,yq);ctx.stroke();
+      ctx.fillStyle=css("--q");ctx.beginPath();ctx.arc(x,yq,rad,0,6.283);ctx.fill();
+      ctx.fillStyle=css("--orig");ctx.beginPath();ctx.arc(x,yo,rad,0,6.283);ctx.fill();
+    }
+  }
+  function animateTo(q){
+    cancelAnimationFrame(raf);
+    if(reduce||!cur){cur=q.slice();draw(cur);return}
+    var from=cur.slice(),t0=performance.now();
+    (function f(t){var k=Math.min(1,(t-t0)/450),e=1-Math.pow(1-k,3);
+      cur=q.map(function(v,i){return from[i]+(v-from[i])*e});draw(cur);if(k<1)raf=requestAnimationFrame(f)})(t0);
+  }
+
+  var prevFit=[];
+  function update(){
+    var b=st.b,m=MODELS[st.m],g=GROUPS[st.g].g;
+    $("bitsOut").textContent=b;$("levels").textContent=(Math.pow(2,b)-1)+" levels";
+    var mt=metrics(b,g);animateTo(mt.q);
+    var gb=m.p*(b+(g<96?16/g:0))/8, total=gb+0.6;
+    tween("size",gb,gb<10?2:1);
+    $("sizeN").textContent=(m.p*2).toFixed(0)+" GB at 16 bits, so this is "+(m.p*2/gb).toFixed(1)+"x smaller.";
+    tween("sqnr",mt.db,1);
+    var v=$("verdict"),db=mt.db,lab,bg,fg;
+    if(db>=25){lab="Hard to tell apart";bg="var(--fit-soft)";fg="var(--fit)"}
+    else if(db>=18){lab="Small loss";bg="var(--fit-soft)";fg="var(--fit)"}
+    else if(db>=12){lab="Noticeably worse";bg="var(--err-soft)";fg="var(--err)"}
+    else{lab="Broken";bg="var(--err-soft)";fg="var(--err)"}
+    v.textContent=lab;v.style.background=bg;v.style.color=fg;
+    $("sqnrN").textContent="Signal power divided by rounding-error power, measured on the weights above.";
+    tween("tps",Math.min(60/gb,200),gb<2?0:1);
+    PHONES.forEach(function(p,i){
+      var budget=p.ram*0.5,ok=total<=budget,el=p.el;
+      el.classList.toggle("ok",ok);el.classList.toggle("no",!ok);
+      el.querySelector(".bar>div").style.width=Math.min(100,total/budget*100)+"%";
+      el.querySelector(".st").textContent=ok?"Fits":"Too big";
+      el.querySelector("small").textContent=total.toFixed(1)+" of "+budget.toFixed(1)+" GB";
+      if(prevFit[i]===false&&ok&&!reduce){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")}
+      prevFit[i]=ok;
+    });
+  }
+  $("bits").addEventListener("input",function(e){st.b=+e.target.value;update()});
+  addEventListener("resize",function(){if(cur)draw(cur)});
+  matchMedia("(prefers-color-scheme:dark)").addEventListener&&matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(cur)draw(cur)});
+  update();
+})();
+</script>
+</body>
+</html>

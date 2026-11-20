@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-20",
+      "slug": "2026-11-20",
+      "title": "Squeeze",
+      "category": "trend",
+      "design": "clean-dashboard-dataviz",
+      "oneLiner": "Shrink a language model's weights bit by bit and watch the error, the file size and your phone's memory budget react.",
+      "path": "apps/2026-11-20/"
+    },
+    {
       "date": "2026-11-19",
       "slug": "2026-11-19",
       "title": "Pip's Allowance",
