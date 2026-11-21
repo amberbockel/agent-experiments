@@ -3,3 +3,4 @@ study/vendor/
 study/dev.html
 *.jpg
 *.jpeg
+__pycache__/
