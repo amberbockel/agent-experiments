@@ -18,7 +18,7 @@
       "title": "Division Drift",
       "category": "games",
       "design": "dark-neon",
-      "oneLiner": "A space-mission division game: boost your ship across the galaxy by solving long division, dividing fractions and dividing decimals, with hints that teach each step when you get stuck.",
+      "oneLiner": "A space-mission long-division game: show your work move by move and finish three ways (remainder, fraction, or decimal), with hints that teach each step when you get stuck.",
       "path": "apps/2026-11-20-division-drift/"
     },
     {
