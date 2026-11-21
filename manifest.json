@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-21",
+      "slug": "2026-11-21",
+      "title": "Calibrate",
+      "category": "business",
+      "design": "swiss-minimal",
+      "oneLiner": "Grade ten support replies yourself, then tune an AI judge until its verdicts match yours.",
+      "path": "apps/2026-11-21/"
+    },
+    {
       "date": "2026-11-20",
       "slug": "2026-11-20",
       "title": "Squeeze",
