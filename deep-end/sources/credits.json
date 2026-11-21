@@ -1218,5 +1218,405 @@
   "license": "Public domain",
   "page": "https://commons.wikimedia.org/wiki/File:De_Alice%27s_Abenteuer_im_Wunderland_Carroll_pic_04.jpg",
   "date": "1869"
+ },
+ "commons-alice-05a-1116x1492-jpg": {
+  "concept": "alice",
+  "file": "alice/commons-alice-05a-1116x1492-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice 05a-1116x1492.jpg",
+  "author": "Sir John Tenniel",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_05a-1116x1492.jpg",
+  "date": "1865"
+ },
+ "commons-alice-par-john-tenniel-08-png": {
+  "concept": "alice",
+  "file": "alice/commons-alice-par-john-tenniel-08-png.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice par John Tenniel 08.png",
+  "author": "John Tenniel",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_par_John_Tenniel_08.png",
+  "date": "1865"
+ },
+ "commons-alice-par-john-tenniel-09-png": {
+  "concept": "alice",
+  "file": "alice/commons-alice-par-john-tenniel-09-png.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice par John Tenniel 09.png",
+  "author": "John Tenniel (28 f\u00e9vrier 1820 \u2013 25 f\u00e9vrier 1914)",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_par_John_Tenniel_09.png",
+  "date": "1865"
+ },
+ "commons-alice-par-john-tenniel-10-png": {
+  "concept": "alice",
+  "file": "alice/commons-alice-par-john-tenniel-10-png.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice par John Tenniel 10.png",
+  "author": "John Tenniel (1820 \u2013 1914), uploader user:Chti,",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_par_John_Tenniel_10.png",
+  "date": "2006-03-12"
+ },
+ "commons-alice-par-john-tenniel-11-png": {
+  "concept": "alice",
+  "file": "alice/commons-alice-par-john-tenniel-11-png.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice par John Tenniel 11.png",
+  "author": "",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_par_John_Tenniel_11.png",
+  "date": ""
+ },
+ "commons-alice-par-john-tenniel-21-png": {
+  "concept": "alice",
+  "file": "alice/commons-alice-par-john-tenniel-21-png.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Alice par John Tenniel 21.png",
+  "author": "Sir John Tenniel",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Alice_par_John_Tenniel_21.png",
+  "date": "1869"
+ },
+ "commons-peter-pan-1911-pipes-jpg": {
+  "concept": "peter-pan",
+  "file": "peter-pan/commons-peter-pan-1911-pipes-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Peter pan 1911 pipes.jpg",
+  "author": "Francis Donkin Bedford",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Peter_pan_1911_pipes.jpg",
+  "date": "1911"
+ },
+ "commons-approach-view-of-north-portal-big-creek-bridge-spanning-big": {
+  "concept": "coast",
+  "file": "coast/commons-approach-view-of-north-portal-big-creek-bridge-spanning-big.jpg",
+  "source": "Wikimedia Commons",
+  "title": "APPROACH VIEW OF NORTH PORTAL. - Big Creek Bridge, Spanning Big Creek on Oregon Coast Highway (US101), Florence, Lane County, OR HAER ORE,20-FLO.V,2-6.tif",
+  "author": "Related names:\n\nYoung, Kelly E, transmitter\nNorman, James, photographer",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:APPROACH_VIEW_OF_NORTH_PORTAL._-_Big_Creek_Bridge,_Spanning_Big_Creek_on_Oregon_Coast_Highway_(US101),_Florence,_Lane_County,_OR_HAER_ORE,20-FLO.V,2-6.tif",
+  "date": "Documentation compiled after 1968"
+ },
+ "commons-approach-view-of-south-portal-big-creek-bridge-spanning-big": {
+  "concept": "coast",
+  "file": "coast/commons-approach-view-of-south-portal-big-creek-bridge-spanning-big.jpg",
+  "source": "Wikimedia Commons",
+  "title": "APPROACH VIEW OF SOUTH PORTAL. - Big Creek Bridge, Spanning Big Creek on Oregon Coast Highway (US101), Florence, Lane County, OR HAER ORE,20-FLO.V,2-7.tif",
+  "author": "Related names:\n\nYoung, Kelly E, transmitter\nNorman, James, photographer",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:APPROACH_VIEW_OF_SOUTH_PORTAL._-_Big_Creek_Bridge,_Spanning_Big_Creek_on_Oregon_Coast_Highway_(US101),_Florence,_Lane_County,_OR_HAER_ORE,20-FLO.V,2-7.tif",
+  "date": "Documentation compiled after 1968"
+ },
+ "commons-detail-view-of-bridge-railing-big-creek-bridge-spanning-big": {
+  "concept": "coast",
+  "file": "coast/commons-detail-view-of-bridge-railing-big-creek-bridge-spanning-big.jpg",
+  "source": "Wikimedia Commons",
+  "title": "DETAIL VIEW OF BRIDGE RAILING. - Big Creek Bridge, Spanning Big Creek on Oregon Coast Highway (US101), Florence, Lane County, OR HAER ORE,20-FLO.V,2-12.tif",
+  "author": "Related names:\n\nYoung, Kelly E, transmitter\nNorman, James, photographer",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:DETAIL_VIEW_OF_BRIDGE_RAILING._-_Big_Creek_Bridge,_Spanning_Big_Creek_on_Oregon_Coast_Highway_(US101),_Florence,_Lane_County,_OR_HAER_ORE,20-FLO.V,2-12.tif",
+  "date": "Documentation compiled after 1968"
+ },
+ "loc-2005675319": {
+  "concept": "swimmers",
+  "file": "swimmers/loc-2005675319.jpg",
+  "source": "Library of Congress",
+  "title": "New Jersey bathing beaches, ca. 1908-1922",
+  "author": "Bain, George Grantham, 1865-1944.",
+  "license": "No known restrictions on publication",
+  "page": "https://www.loc.gov/pictures/item/2005675319/",
+  "date": "1908-1922."
+ },
+ "loc-2004678428": {
+  "concept": "swimmers",
+  "file": "swimmers/loc-2004678428.jpg",
+  "source": "Library of Congress",
+  "title": "Yorktown, Va. June, 1941. Bathing beach",
+  "author": "Delano, Jack, 1914-1997",
+  "license": "No known restrictions on publication",
+  "page": "https://www.loc.gov/pictures/item/2004678428/",
+  "date": "1941 June."
+ },
+ "loc-2010648586": {
+  "concept": "swimmers",
+  "file": "swimmers/loc-2010648586.jpg",
+  "source": "Library of Congress",
+  "title": "Bathing beach and pavilion, Gordon Park",
+  "author": "International Stereotypers and Electrotypers Union",
+  "license": "No known restrictions on publication",
+  "page": "https://www.loc.gov/pictures/item/2010648586/",
+  "date": "[1917]"
+ },
+ "commons-11-women-and-a-little-girl-lined-up-for-bathing-beauty-conte": {
+  "concept": "swimmers",
+  "file": "swimmers/commons-11-women-and-a-little-girl-lined-up-for-bathing-beauty-conte.jpg",
+  "source": "Wikimedia Commons",
+  "title": "11 women and a little girl lined up for bathing beauty contest.png",
+  "author": "Unnamed photographer for National Photo Company.",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:11_women_and_a_little_girl_lined_up_for_bathing_beauty_contest.png",
+  "date": "1920"
+ },
+ "commons-bathing-beach-beauty-contest-1920-eliz-roache-most-beautiful": {
+  "concept": "swimmers",
+  "file": "swimmers/commons-bathing-beach-beauty-contest-1920-eliz-roache-most-beautiful.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Bathing beach beauty contest, (1920), Eliz. Roache (most beautiful suit) LCCN2016828400.jpg",
+  "author": "National Photo Company Collection",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Bathing_beach_beauty_contest,_(1920),_Eliz._Roache_(most_beautiful_suit)_LCCN2016828400.jpg",
+  "date": "1920"
+ },
+ "commons-bathing-beach-beauty-contest-1920-elizabeth-margaret-william": {
+  "concept": "swimmers",
+  "file": "swimmers/commons-bathing-beach-beauty-contest-1920-elizabeth-margaret-william.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Bathing beach beauty contest, (1920), Elizabeth Margaret Williams winner LCCN2016828397.jpg",
+  "author": "National Photo Company Collection",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Bathing_beach_beauty_contest,_(1920),_Elizabeth_Margaret_Williams_winner_LCCN2016828397.jpg",
+  "date": "1920"
+ },
+ "commons-kamoa-point-kona-circa-1890-jpg": {
+  "concept": "surfing",
+  "file": "surfing/commons-kamoa-point-kona-circa-1890-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Kamoa Point, Kona Circa 1890.jpg",
+  "author": "Unknown authorUnknown author",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Kamoa_Point,_Kona_Circa_1890.jpg",
+  "date": "1890-01-01"
+ },
+ "loc-2005675542": {
+  "concept": "circus",
+  "file": "circus/loc-2005675542.jpg",
+  "source": "Library of Congress",
+  "title": "Excellent documentary photographs of churches, schoolhouses, circus posters ...",
+  "author": "Evans, Walker, 1903-1975",
+  "license": "No known restrictions on publication",
+  "page": "https://www.loc.gov/pictures/item/2005675542/",
+  "date": "ca. 1936."
+ },
+ "commons-john-gould-and-h-c-richter-diphogena-aurora-gould-s-rainbow": {
+  "concept": "rainbow",
+  "file": "rainbow/commons-john-gould-and-h-c-richter-diphogena-aurora-gould-s-rainbow.jpg",
+  "source": "Wikimedia Commons",
+  "title": "John Gould and H.C. Richter, Diphogena aurora (Gould's Rainbow), NGA 53565.jpg",
+  "author": "John Gould and H.C. Richter",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:John_Gould_and_H.C._Richter,_Diphogena_aurora_(Gould%27s_Rainbow),_NGA_53565.jpg",
+  "date": ""
+ },
+ "commons-rainbow-obstacle-hindernis-regenbogen-met-dp836345-jpg": {
+  "concept": "rainbow",
+  "file": "rainbow/commons-rainbow-obstacle-hindernis-regenbogen-met-dp836345-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Rainbow Obstacle (Hindernis Regenbogen) MET DP836345.jpg",
+  "author": "Moriz Jung / Wiener Werkst\u00e4tte",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Rainbow_Obstacle_(Hindernis_Regenbogen)_MET_DP836345.jpg",
+  "date": "1911<div style=\"display: none;\">date QS:"
+ },
+ "commons-rainbow-pitta-from-birds-of-the-tropics-series-n38-for-allen": {
+  "concept": "rainbow",
+  "file": "rainbow/commons-rainbow-pitta-from-birds-of-the-tropics-series-n38-for-allen.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Rainbow Pitta, from Birds of the Tropics series (N38) for Allen & Ginter Cigarettes MET DP839038.jpg",
+  "author": "Allen &amp; Ginter / Geo. S. Harris and Sons",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Rainbow_Pitta,_from_Birds_of_the_Tropics_series_(N38)_for_Allen_%26_Ginter_Cigarettes_MET_DP839038.jpg",
+  "date": "1889<div style=\"display: none;\">date QS:"
+ },
+ "commons-rainbow-pitta-from-the-birds-of-the-tropics-series-n5-for-al": {
+  "concept": "rainbow",
+  "file": "rainbow/commons-rainbow-pitta-from-the-birds-of-the-tropics-series-n5-for-al.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Rainbow Pitta, from the Birds of the Tropics series (N5) for Allen & Ginter Cigarettes Brands MET DP829129.jpg",
+  "author": "Allen &amp; Ginter / Geo. S. Harris and Sons",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Rainbow_Pitta,_from_the_Birds_of_the_Tropics_series_(N5)_for_Allen_%26_Ginter_Cigarettes_Brands_MET_DP829129.jpg",
+  "date": "1889<div style=\"display: none;\">date QS:"
+ },
+ "commons-whiteley-s-original-hidden-hand-co-lccn2014636029-jpg": {
+  "concept": "hands",
+  "file": "hands/commons-whiteley-s-original-hidden-hand-co-lccn2014636029-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Whiteley's Original Hidden Hand Co. LCCN2014636029.jpg",
+  "author": "Jno. B. Jeffery Pr. &amp; Eng.; Whiteley's Original Hidden Hand Co.",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Whiteley%27s_Original_Hidden_Hand_Co._LCCN2014636029.jpg",
+  "date": "1884"
+ },
+ "commons-whiteley-s-original-hidden-hand-co-lccn2014636030-jpg": {
+  "concept": "hands",
+  "file": "hands/commons-whiteley-s-original-hidden-hand-co-lccn2014636030-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Whiteley's Original Hidden Hand Co. LCCN2014636030.jpg",
+  "author": "Jno. B. Jeffery Pr. &amp; Eng.; Whiteley's Original Hidden Hand Co.",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Whiteley%27s_Original_Hidden_Hand_Co._LCCN2014636030.jpg",
+  "date": "1884"
+ },
+ "commons-anatomische-les-rp-p-ob-61-578-jpg": {
+  "concept": "hands",
+  "file": "hands/commons-anatomische-les-rp-p-ob-61-578-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Anatomische les, RP-P-OB-61.578.jpg",
+  "author": "Rijksmuseum",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Anatomische_les,_RP-P-OB-61.578.jpg",
+  "date": "1725"
+ },
+ "commons-botten-van-de-handen-rp-p-1922-423-jpg": {
+  "concept": "hands",
+  "file": "hands/commons-botten-van-de-handen-rp-p-1922-423-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Botten van de handen, RP-P-1922-423.jpg",
+  "author": "Rijksmuseum",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Botten_van_de_handen,_RP-P-1922-423.jpg",
+  "date": "1725"
+ },
+ "commons-tri-state-medical-journal-and-practitioner-1897-14591666580": {
+  "concept": "hands",
+  "file": "hands/commons-tri-state-medical-journal-and-practitioner-1897-14591666580.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Tri-State medical journal and practitioner (1897) (14591666580).jpg",
+  "author": "Internet Archive Book Images",
+  "license": "No restrictions",
+  "page": "https://commons.wikimedia.org/wiki/File:Tri-State_medical_journal_and_practitioner_(1897)_(14591666580).jpg",
+  "date": "1897"
+ },
+ "commons-espalion-mus-e-du-scaphandre-2-jpg": {
+  "concept": "diver",
+  "file": "diver/commons-espalion-mus-e-du-scaphandre-2-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Espalion-Mus\u00e9e du Scaphandre-2.jpg",
+  "author": "Ji-Elle",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Espalion-Mus%C3%A9e_du_Scaphandre-2.jpg",
+  "date": "2008-09-12"
+ },
+ "commons-espalion-mus-e-du-scaphandre-3-jpg": {
+  "concept": "diver",
+  "file": "diver/commons-espalion-mus-e-du-scaphandre-3-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Espalion-Mus\u00e9e du Scaphandre-3.jpg",
+  "author": "Ji-Elle",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Espalion-Mus%C3%A9e_du_Scaphandre-3.jpg",
+  "date": "2008-09-12"
+ },
+ "commons-het-versieren-van-den-deurklopper-titel-op-object-rp-p-ob-30": {
+  "concept": "keys-doors",
+  "file": "keys-doors/commons-het-versieren-van-den-deurklopper-titel-op-object-rp-p-ob-30.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Het versieren van den deurklopper (titel op object), RP-P-OB-30.135.jpg",
+  "author": "Rijksmuseum",
+  "license": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Het_versieren_van_den_deurklopper_(titel_op_object),_RP-P-OB-30.135.jpg",
+  "date": "between 1847 and 1883<div style=\"display"
+ },
+ "commons-styles-of-ornament-exhibited-in-designs-and-arranged-in-hist": {
+  "concept": "keys-doors",
+  "file": "keys-doors/commons-styles-of-ornament-exhibited-in-designs-and-arranged-in-hist.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Styles of ornament, exhibited in designs, and arranged in historical order, with descriptive text. A handbook for architects, designers, painters, sculptors, wood-carvers, chasers, modellers, (14578872820).jpg",
+  "author": "Internet Archive Book Images",
+  "license": "No restrictions",
+  "page": "https://commons.wikimedia.org/wiki/File:Styles_of_ornament,_exhibited_in_designs,_and_arranged_in_historical_order,_with_descriptive_text._A_handbook_for_architects,_designers,_painters,_sculptors,_wood-carvers,_chasers,_modellers,_(14578872820).jpg",
+  "date": "1910"
+ },
+ "commons-a-sure-horse-for-the-first-money-lccn2002695764-restored-jp": {
+  "concept": "horses",
+  "file": "horses/commons-a-sure-horse-for-the-first-money-lccn2002695764-restored-jp.jpg",
+  "source": "Wikimedia Commons",
+  "title": "\"A sure horse for the first money\" LCCN2002695764-restored.jpg",
+  "author": "Popular Graphic Arts",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:%22A_sure_horse_for_the_first_money%22_LCCN2002695764-restored.jpg",
+  "date": "1886"
+ },
+ "commons-a-rider-and-a-dead-horse-in-a-landscape-met-dp805944-jpg": {
+  "concept": "horses",
+  "file": "horses/commons-a-rider-and-a-dead-horse-in-a-landscape-met-dp805944-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "A Rider and a Dead Horse in a Landscape MET DP805944.jpg",
+  "author": "Gustave Dor\u00e9",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:A_Rider_and_a_Dead_Horse_in_a_Landscape_MET_DP805944.jpg",
+  "date": ""
+ },
+ "commons-ali-pacha-s-seraglio-and-tomb-fortress-janina-1855-lithograp": {
+  "concept": "horses",
+  "file": "horses/commons-ali-pacha-s-seraglio-and-tomb-fortress-janina-1855-lithograp.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Ali Pacha's seraglio and tomb, fortress, Janina (1855); lithograph by George de la Poer Beresford.jpg",
+  "author": "George de la Poer Beresford",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Ali_Pacha%27s_seraglio_and_tomb,_fortress,_Janina_(1855);_lithograph_by_George_de_la_Poer_Beresford.jpg",
+  "date": "1855<div style=\"display: none;\">date QS:"
+ },
+ "commons-attributed-to-th-odore-g-ricault-frightened-horse-between-la": {
+  "concept": "horses",
+  "file": "horses/commons-attributed-to-th-odore-g-ricault-frightened-horse-between-la.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Attributed to Th\u00e9odore G\u00e9ricault - Frightened Horse, between late 18th and early 19th century.jpg",
+  "author": "Th\u00e9odore G\u00e9ricault",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Attributed_to_Th%C3%A9odore_G%C3%A9ricault_-_Frightened_Horse,_between_late_18th_and_early_19th_century.jpg",
+  "date": "Between late 18th and early 19th century"
+ },
+ "loc-2004678413": {
+  "concept": "horses",
+  "file": "horses/loc-2004678413.jpg",
+  "source": "Library of Congress",
+  "title": "Warrenton, Va. May, 1941. The Virginia Gold Cup Horse Race",
+  "author": "Wolcott, Marion Post, 1910-1990",
+  "license": "No known restrictions on publication",
+  "page": "https://www.loc.gov/pictures/item/2004678413/",
+  "date": "1941 May."
+ },
+ "commons-chapuy-after-pierre-joseph-redout-kamtschatka-rose-rosa-kamt": {
+  "concept": "flowers",
+  "file": "flowers/commons-chapuy-after-pierre-joseph-redout-kamtschatka-rose-rosa-kamt.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Chapuy, after Pierre- Joseph Redout\u00e9 - Kamtschatka Rose (Rosa Kamtschatica), from Redout\u00e9, \" Les Roses\", Paris, 1817\u20131824) - Google Art Project.jpg",
+  "author": "Chapuy, after Pierre- Joseph Redout\u00e9 19th century \u2013 By (French) Details on Google Art Project",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Chapuy,_after_Pierre-_Joseph_Redout%C3%A9_-_Kamtschatka_Rose_(Rosa_Kamtschatica),_from_Redout%C3%A9,_%22_Les_Roses%22,_Paris,_1817%E2%80%931824)_-_Google_Art_Project.jpg",
+  "date": "1817<div style=\"display: none;\">date QS:"
+ },
+ "commons-portrait-of-pierre-joseph-redout-and-his-daughter-marie-loui": {
+  "concept": "flowers",
+  "file": "flowers/commons-portrait-of-pierre-joseph-redout-and-his-daughter-marie-loui.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Portrait of Pierre-Joseph Redout\u00e9 and his daughter Marie-Louise.jpg",
+  "author": "19th century French School",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Portrait_of_Pierre-Joseph_Redout%C3%A9_and_his_daughter_Marie-Louise.jpg",
+  "date": "circa 1805<div style=\"display: none;\">da"
+ },
+ "commons-redoute-rosa-inermis-jpg": {
+  "concept": "flowers",
+  "file": "flowers/commons-redoute-rosa-inermis-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Redoute-rosa inermis.jpg",
+  "author": "Pierre-Joseph Redout\u00e9",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Redoute-rosa_inermis.jpg",
+  "date": "circa 1817<div style=\"display: none;\">da"
+ },
+ "commons-redoute-rosa-centifolia-foliacea-jpg": {
+  "concept": "flowers",
+  "file": "flowers/commons-redoute-rosa-centifolia-foliacea-jpg.jpg",
+  "source": "Wikimedia Commons",
+  "title": "Redoute - Rosa centifolia foliacea.jpg",
+  "author": "Pierre-Joseph Redout\u00e9",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Redoute_-_Rosa_centifolia_foliacea.jpg",
+  "date": "1824"
  }
 }
