@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Division Drift</title>
+<meta name="description" content="A space-mission division game. Boost your ship across the galaxy by solving long division, dividing fractions, and dividing decimals.">
+<style>
+  :root{
+    --bg:#05081c;
+    --bg2:#0a0f33;
+    --ink:#f3f6ff;
+    --muted:#a2b2ea;
+    --faint:#5f6fb2;
+    --cyan:#2fe6ff;
+    --violet:#a874ff;
+    --magenta:#ff5ccd;
+    --mint:#49ffb3;
+    --gold:#ffcf47;
+    --danger:#ff5d7a;
+    --card:rgba(18,26,70,.66);
+    --card-edge:rgba(132,162,255,.22);
+    --radius:22px;
+    --pad:clamp(16px,4vw,28px);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --accent:var(--cyan);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% -12%, #141b4d 0%, var(--bg2) 42%, var(--bg) 100%);
+    min-height:100dvh;
+    overflow-x:hidden;
+    -webkit-text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* drifting aurora nebula field */
+  body::before,body::after{
+    content:"";position:fixed;z-index:0;pointer-events:none;border-radius:50%;
+    filter:blur(72px);opacity:.5;mix-blend-mode:screen;will-change:transform;
+  }
+  body::before{
+    width:88vw;height:88vw;max-width:740px;max-height:740px;left:-20vw;top:-16vh;
+    background:radial-gradient(circle at 32% 30%,var(--magenta),transparent 60%),
+               radial-gradient(circle at 72% 64%,var(--violet),transparent 58%);
+    animation:drift1 24s ease-in-out infinite alternate;
+  }
+  body::after{
+    width:82vw;height:82vw;max-width:700px;max-height:700px;right:-22vw;bottom:-20vh;
+    background:radial-gradient(circle at 60% 38%,var(--cyan),transparent 58%),
+               radial-gradient(circle at 30% 72%,var(--mint),transparent 60%);
+    animation:drift2 29s ease-in-out infinite alternate;
+  }
+  @keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(9vw,7vh) scale(1.16)}}
+  @keyframes drift2{from{transform:translate(0,0) scale(1.06)}to{transform:translate(-8vw,-6vh) scale(.9)}}
+  #stars{position:fixed;inset:0;z-index:1;pointer-events:none}
+  .wrap{
+    position:relative;z-index:2;
+    max-width:720px;margin:0 auto;
+    padding:max(18px,env(safe-area-inset-top)) var(--pad) calc(32px + env(safe-area-inset-bottom));
+    min-height:100dvh;display:flex;flex-direction:column;
+  }
+  .screen{display:none;flex:1;flex-direction:column;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .screen.active{display:flex}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .mark{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em;font-size:13px;color:var(--muted);text-transform:uppercase}
+  .mark .dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(140deg,var(--cyan),var(--magenta));box-shadow:0 0 14px var(--cyan)}
+  .iconbtn{
+    appearance:none;border:1px solid var(--card-edge);background:var(--card);color:var(--muted);
+    width:42px;height:42px;border-radius:12px;font-size:18px;cursor:pointer;display:grid;place-items:center;
+    transition:transform .15s,color .2s,border-color .2s;backdrop-filter:blur(8px);
+  }
+  .iconbtn:hover{color:var(--ink);border-color:rgba(120,150,255,.4)}
+  .iconbtn:active{transform:scale(.92)}
+  .iconbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+  /* ---------- menu / star map ---------- */
+  .hero{padding:10px 2px 6px}
+  .title{
+    font-size:clamp(46px,14.5vw,90px);line-height:.86;font-weight:900;letter-spacing:-.035em;margin:10px 0 0;
+    background:linear-gradient(100deg,var(--cyan),var(--violet) 40%,var(--magenta) 70%,var(--gold));
+    background-size:230% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 10px 46px rgba(168,116,255,.42));
+    animation:sheen 9s ease-in-out infinite;
+  }
+  @keyframes sheen{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .tagline{color:var(--muted);font-size:clamp(15px,3.6vw,18px);margin:14px 0 2px;max-width:46ch}
+  .xpstrip{display:flex;align-items:center;gap:14px;margin:22px 0 10px;flex-wrap:wrap}
+  .xpchip{display:flex;align-items:baseline;gap:8px;background:var(--card);border:1px solid var(--card-edge);
+    padding:10px 16px;border-radius:999px;backdrop-filter:blur(8px);box-shadow:0 0 28px -16px var(--cyan)}
+  .xpchip b{font-size:21px;font-weight:850;font-variant-numeric:tabular-nums;
+    background:linear-gradient(120deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .xpchip span{color:var(--muted);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+
+  .map{display:flex;flex-direction:column;gap:16px;margin-top:14px}
+  .sector{
+    position:relative;text-align:left;cursor:pointer;color:inherit;overflow:hidden;
+    border:1px solid var(--card-edge);border-radius:var(--radius);
+    background:linear-gradient(170deg,var(--card),rgba(11,17,50,.62));
+    padding:20px 20px 20px 24px;display:flex;align-items:center;gap:18px;backdrop-filter:blur(10px);
+    transition:transform .18s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .32s;
+    width:100%;font-family:inherit;
+  }
+  .sector::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+    background:linear-gradient(180deg,var(--sc,#2fe6ff),transparent 90%)}
+  .sector:hover{transform:translateY(-4px);
+    border-color:color-mix(in srgb,var(--sc) 55%,transparent);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--sc) 38%,transparent),
+               0 26px 64px -26px color-mix(in srgb,var(--sc) 75%,#000)}
+  .sector:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .sector[data-locked="true"]{opacity:.5;cursor:not-allowed;filter:grayscale(.3)}
+  .sector .orb{
+    width:60px;height:60px;border-radius:50%;flex:none;position:relative;
+    background:radial-gradient(circle at 34% 28%, #ffffffcc, transparent 42%),
+              radial-gradient(circle at 64% 72%, color-mix(in srgb,var(--sc,#2fe6ff) 62%,#05061a), var(--sc,#2fe6ff));
+    box-shadow:0 0 0 1px rgba(255,255,255,.28), 0 0 32px -2px var(--sc,#2fe6ff), 0 12px 34px -8px var(--sc,#2fe6ff);
+  }
+  .sector .orb::before{content:"";position:absolute;inset:-9px;border-radius:50%;
+    background:radial-gradient(circle,transparent 56%,color-mix(in srgb,var(--sc) 42%,transparent) 68%,transparent 71%);
+    animation:halo 4.5s ease-in-out infinite}
+  @keyframes halo{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.14);opacity:1}}
+  .sector .orb.ring::after{content:"";position:absolute;inset:-8px -14px;border:2px solid var(--sc);
+    border-radius:50%;transform:rotate(-18deg);opacity:.6}
+  .sector .meta{flex:1;min-width:0}
+  .sector .sname{font-weight:800;font-size:20px;letter-spacing:-.015em}
+  .sector .ssub{color:var(--muted);font-size:14px;margin-top:3px}
+  .sector .best{margin-top:9px;display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--faint)}
+  .starrow{letter-spacing:2px;color:var(--gold)}
+  .sector .go{color:var(--muted);font-size:22px;flex:none}
+  .lockchip{position:absolute;top:14px;right:16px;font-size:12px;color:var(--faint);display:flex;align-items:center;gap:5px}
+  .footnote{margin-top:auto;padding-top:26px;color:var(--faint);font-size:12.5px;text-align:center}
+  .footnote a{color:var(--muted)}
+
+  /* ---------- mission hud ---------- */
+  .hud{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:6px 0 16px}
+  .hud .back{flex:none}
+  .hud-mid{flex:1;text-align:center}
+  .hud-mid .hs{font-weight:750;font-size:15px}
+  .hud-mid .hsub{color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .shields{display:flex;gap:5px;flex:none}
+  .shields i{width:16px;height:16px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+    background:linear-gradient(170deg,var(--cyan),var(--violet));box-shadow:0 0 12px -1px var(--cyan);transition:.3s}
+  .shields i.gone{background:#263056;box-shadow:none;transform:scale(.8);opacity:.5}
+
+  .track{position:relative;height:40px;margin:0 2px 18px}
+  .track .line{position:absolute;top:50%;left:0;right:0;height:3px;transform:translateY(-50%);
+    background:linear-gradient(90deg,rgba(120,150,255,.25),rgba(120,150,255,.08));border-radius:3px}
+  .track .fill{position:absolute;top:50%;left:0;height:4px;transform:translateY(-50%);
+    background:linear-gradient(90deg,var(--violet),var(--accent),#fff);border-radius:4px;transition:width .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 18px var(--accent)}
+  .track .planetA,.track .planetB{position:absolute;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%}
+  .track .planetA{left:0;background:#8591c7}
+  .track .planetB{right:0;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+  .track .ship{position:absolute;top:50%;font-size:23px;transform:translate(-50%,-55%);transition:left .6s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(-7px 0 11px var(--accent)) drop-shadow(0 0 9px var(--accent))}
+
+  .scorebar{display:flex;justify-content:space-between;align-items:center;margin:0 2px 14px}
+  .scorebar .sc{font-variant-numeric:tabular-nums;font-weight:850;font-size:27px}
+  .scorebar .sc small{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.08em;margin-left:6px;text-transform:uppercase}
+  .combo{font-weight:900;font-size:18px;letter-spacing:.01em;
+    background:linear-gradient(90deg,var(--gold),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent;
+    opacity:0;transform:scale(.6) rotate(-5deg);transition:transform .25s cubic-bezier(.3,1.7,.5,1),opacity .2s}
+  .combo.show{opacity:1;transform:scale(1) rotate(-3deg)}
+
+  /* ---------- problem card ---------- */
+  .card{
+    position:relative;border:1px solid var(--card-edge);border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(24,32,80,.74),rgba(11,17,46,.74));
+    padding:var(--pad);backdrop-filter:blur(12px);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 20%,transparent),0 30px 80px -40px #000,0 0 54px -26px var(--accent);
+  }
+  .qlabel{color:var(--muted);font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+  .equation{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+    font-variant-numeric:tabular-nums;font-weight:900;letter-spacing:-.015em;margin:6px 0 20px;
+    font-size:clamp(36px,11vw,58px);text-shadow:0 2px 22px rgba(0,0,0,.45)}
+  .op{color:var(--accent);filter:drop-shadow(0 0 13px var(--accent))}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;font-size:.62em;line-height:1.05;vertical-align:middle}
+  .frac .bar{width:100%;height:3px;background:currentColor;border-radius:2px;margin:3px 0}
+  .answers{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .field{
+    min-width:92px;height:62px;border-radius:14px;border:1.5px solid var(--card-edge);
+    background:rgba(8,12,34,.7);color:var(--ink);font-size:30px;font-weight:800;text-align:center;
+    display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;
+    cursor:text;transition:border-color .2s,box-shadow .2s;padding:0 10px;
+  }
+  .field.active{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 24%,transparent),0 0 24px -8px var(--accent)}
+  .field .ph{color:var(--faint);font-weight:600;font-size:20px}
+  .field-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .field-wrap label{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .fracfield{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .fracfield .bar{width:86px;height:3px;background:var(--faint);border-radius:2px}
+  .remwrap .field{min-width:74px}
+
+  .feedback{min-height:24px;text-align:center;margin:14px 0 2px;font-weight:650;font-size:15px;transition:.2s}
+  .feedback.good{color:var(--mint)}
+  .feedback.bad{color:var(--danger)}
+
+  .steps{
+    margin:10px 0 2px;border-left:2px solid var(--accent);background:rgba(91,232,255,.06);
+    border-radius:0 12px 12px 0;padding:14px 16px;font-size:14.5px;line-height:1.6;color:#d7e0ff;
+    display:none;animation:rise .3s both;
+  }
+  .steps.show{display:block}
+  .steps h4{margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .steps .st{margin:4px 0}
+  .steps b{color:#fff;font-variant-numeric:tabular-nums}
+
+  /* ---------- keypad ---------- */
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+  .key{
+    appearance:none;border:1px solid var(--card-edge);background:rgba(16,22,54,.8);color:var(--ink);
+    height:58px;border-radius:14px;font-size:24px;font-weight:700;cursor:pointer;font-family:inherit;
+    transition:transform .1s,background .2s,border-color .2s;font-variant-numeric:tabular-nums;
+  }
+  .key:hover{border-color:rgba(120,150,255,.45)}
+  .key:active{transform:scale(.92);border-color:var(--accent);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 28%,#141c38),#141c38)}
+  .key:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .key.util{color:var(--muted);font-size:18px}
+  .actions{display:flex;gap:10px;margin-top:12px}
+  .btn{
+    appearance:none;flex:1;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:750;
+    cursor:pointer;font-family:inherit;transition:transform .12s,filter .2s,opacity .2s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .btn-primary{background:linear-gradient(120deg,var(--cyan),var(--violet) 58%,var(--magenta));color:#06112e;font-weight:850;
+    box-shadow:0 16px 38px -14px var(--violet),0 0 0 1px rgba(255,255,255,.16) inset}
+  .btn-primary:hover{filter:brightness(1.08) saturate(1.05)}
+  .btn-ghost{flex:0 0 auto;background:var(--card);color:var(--muted);border:1px solid var(--card-edge);padding:16px 18px}
+  .btn-ghost:hover{color:var(--ink)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+  /* ---------- results overlay ---------- */
+  .overlay{position:fixed;inset:0;z-index:5;display:none;place-items:center;padding:24px;
+    background:rgba(4,7,22,.72);backdrop-filter:blur(6px)}
+  .overlay.show{display:grid;animation:rise .35s both}
+  .result{max-width:420px;width:100%;text-align:center;border:1px solid var(--card-edge);
+    background:linear-gradient(180deg,rgba(32,42,96,.96),rgba(13,19,50,.96));border-radius:26px;padding:30px 26px 26px;
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent),0 50px 120px -30px #000,0 0 90px -44px var(--accent)}
+  .result h2{margin:0 0 4px;font-size:29px;font-weight:850;letter-spacing:-.015em}
+  .result .rsub{color:var(--muted);margin:0 0 16px}
+  .bigstars{font-size:46px;letter-spacing:8px;margin:6px 0 14px;filter:drop-shadow(0 0 16px rgba(255,209,102,.5))}
+  .bigstars .on{color:var(--gold)}
+  .bigstars .off{color:#38406e}
+  .rstats{display:flex;justify-content:center;gap:26px;margin:10px 0 22px}
+  .rstats div{display:flex;flex-direction:column}
+  .rstats b{font-size:26px;font-variant-numeric:tabular-nums}
+  .rstats span{color:var(--muted);font-size:12px;letter-spacing:.07em;text-transform:uppercase;margin-top:2px}
+  #confetti{position:fixed;inset:0;z-index:6;pointer-events:none;display:none}
+
+  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+    background:#eaf1ff;color:#0a1030;padding:11px 18px;border-radius:999px;font-weight:650;font-size:14px;
+    opacity:0;transition:.3s;z-index:7;pointer-events:none;box-shadow:0 14px 40px -12px #000}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:420px){
+    .pad .key{height:54px}
+    .sector .orb{width:50px;height:50px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;transition-duration:.08s !important}
+    body::before,body::after,.title,.sector .orb::before{animation:none !important}
+    .track .ship{transition:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <!-- ========== MENU / STAR MAP ========== -->
+  <section id="menu" class="screen active" aria-label="Star map">
+    <div class="topbar">
+      <div class="mark"><span class="dot"></span> Division Drift</div>
+      <button class="iconbtn" id="muteBtn" aria-label="Toggle sound" aria-pressed="false">🔊</button>
+    </div>
+    <div class="hero">
+      <h1 class="title">Division<br>Drift</h1>
+      <p class="tagline">Pilot your ship across the galaxy. Every answer you nail is a burst of thrust toward the next planet.</p>
+      <div class="xpstrip">
+        <div class="xpchip"><b id="xpTotal">0</b><span>Total XP</span></div>
+        <div class="xpchip"><b id="sectorsCleared">0/3</b><span>Sectors cleared</span></div>
+      </div>
+    </div>
+    <div class="map" id="map"></div>
+    <p class="footnote">Built for a 6th-grade pilot. Tap a sector to launch. <button id="resetBtn" style="background:none;border:none;color:var(--faint);text-decoration:underline;cursor:pointer;font:inherit">Reset progress</button></p>
+  </section>
+
+  <!-- ========== MISSION ========== -->
+  <section id="mission" class="screen" aria-label="Mission">
+    <div class="hud">
+      <button class="iconbtn back" id="backBtn" aria-label="Back to star map">←</button>
+      <div class="hud-mid">
+        <div class="hs" id="mName">Asteroid Belt</div>
+        <div class="hsub" id="mSub">Long division</div>
+      </div>
+      <div class="shields" id="shields" aria-label="Shields remaining"></div>
+    </div>
+
+    <div class="track" aria-hidden="true">
+      <div class="line"></div><div class="fill" id="trackFill"></div>
+      <div class="planetA"></div><div class="planetB"></div>
+      <div class="ship" id="ship">🚀</div>
+    </div>
+
+    <div class="scorebar">
+      <div class="sc"><span id="score">0</span><small>pts</small></div>
+      <div class="combo" id="combo">×2 COMBO</div>
+    </div>
+
+    <div class="card">
+      <div class="qlabel" id="qLabel">Problem 1 of 8</div>
+      <div class="equation" id="equation"></div>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <div class="steps" id="steps"></div>
+
+      <div class="pad" id="pad"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="hintBtn" aria-label="Show the steps">Show steps</button>
+        <button class="btn btn-primary" id="submitBtn">Boost →</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- results -->
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="result" role="dialog" aria-modal="true" aria-labelledby="rTitle">
+    <h2 id="rTitle">Sector cleared!</h2>
+    <p class="rsub" id="rSub">You reached the next planet.</p>
+    <div class="bigstars" id="bigstars" aria-hidden="true"></div>
+    <div class="rstats">
+      <div><b id="rScore">0</b><span>Score</span></div>
+      <div><b id="rAcc">0%</b><span>Accuracy</span></div>
+      <div><b id="rXP">+0</b><span>XP</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" id="rMap">Star map</button>
+      <button class="btn btn-primary" id="rNext">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s)};
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- persistence ---------------- */
+  var KEY="divisionDrift:v1";
+  var save={unlocked:1,best:{},xp:0,muted:false};
+  try{var raw=localStorage.getItem(KEY); if(raw) save=Object.assign(save,JSON.parse(raw));}catch(e){}
+  function persist(){try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){}}
+
+  /* ---------------- sectors ---------------- */
+  var SECTORS=[
+    {id:1,name:"Asteroid Belt",sub:"Long division",color:"#2fe6ff",gen:genLong,desc:"Multi-digit ÷ with remainders"},
+    {id:2,name:"Fraction Nebula",sub:"Dividing fractions",color:"#a874ff",gen:genFrac,desc:"Keep · change · flip"},
+    {id:3,name:"Decimal Deep Space",sub:"Dividing decimals",color:"#49ffb3",gen:genDec,desc:"Shift the decimal, then divide"}
+  ];
+  var QUESTIONS=8;
+
+  /* ---------------- utils ---------------- */
+  function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+  function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t;}return a||1;}
+  function pick(arr){return arr[ri(0,arr.length-1)];}
+
+  /* ---------------- problem generators ---------------- */
+  // difficulty 0..1 by question index
+  function genLong(diff){
+    var V, Q, hi;
+    if(diff<.4){ V=ri(2,9); Q=ri(4,19); }
+    else if(diff<.75){ V=ri(3,12); Q=ri(8,39); }
+    else { V=ri(4,15); Q=ri(12,69); }
+    var R=ri(0,V-1);
+    var D=Q*V+R;
+    return {
+      mode:"long", dividend:D, divisor:V, q:Q, r:R,
+      label:D+" ÷ "+V,
+      render:function(){return num(D)+' <span class="op">÷</span> '+num(V);},
+      fields:[{id:"q",label:"Quotient",ph:"?",w:"q"},{id:"r",label:"Remainder",ph:"R",w:"r"}],
+      check:function(v){return parseInt(v.q,10)===Q && parseInt(v.r||"0",10)===R;},
+      answerText:Q+(R?" R "+R:" R 0"),
+      steps:longSteps(D,V)
+    };
+  }
+  function genFrac(diff){
+    var a,b,c,d,n,m,g,nn,mm,hi=(diff<.5?6:9);
+    do{
+      b=ri(2,hi); a=ri(1,b-1);            // proper fraction a/b (a < b)
+      d=ri(2,hi); c=ri(1,d-1);            // proper fraction c/d (c < d)
+      n=a*d; m=b*c; g=gcd(n,m); nn=n/g; mm=m/g;   // a/b ÷ c/d = (a*d)/(b*c)
+    }while(mm===1);                        // skip whole-number answers (awkward in a 2-box input)
+    return {
+      mode:"frac", a:a,b:b,c:c,d:d, nn:nn, mm:mm,
+      label:a+"/"+b+" ÷ "+c+"/"+d,
+      render:function(){return frac(a,b)+' <span class="op">÷</span> '+frac(c,d);},
+      fields:[{id:"n",label:"",ph:"?",w:"fn"},{id:"d",label:"",ph:"?",w:"fd"}],
+      fracInput:true,
+      check:function(v){
+        var un=parseInt(v.n,10), ud=parseInt(v.d,10);
+        if(isNaN(un)||isNaN(ud)||ud===0) return false;
+        return un*mm===nn*ud;           // equivalent fraction accepted
+      },
+      answerText:(mm===1?nn:nn+"/"+mm),
+      steps:fracSteps(a,b,c,d,nn,mm)
+    };
+  }
+  function genDec(diff){
+    var V=ri(2,(diff<.5?6:9));
+    var places=(diff<.45)?1:pick([1,2]);
+    var ansUnits=(places===1)?ri(11,98):ri(105,975);   // avoid trivial
+    var pow=(places===1)?10:100;
+    var ans=ansUnits/pow;
+    var D=Math.round(ans*V*pow)/pow;                   // exact
+    return {
+      mode:"dec", dividend:D, divisor:V, ans:ans, places:places,
+      label:fmt(D)+" ÷ "+V,
+      render:function(){return num(fmt(D))+' <span class="op">÷</span> '+num(V);},
+      fields:[{id:"x",label:"Answer",ph:"?",w:"dec"}],
+      decInput:true,
+      check:function(v){var u=parseFloat(v.x);return !isNaN(u)&&Math.abs(u-ans)<1e-9;},
+      answerText:fmt(ans),
+      steps:decSteps(D,V,ans,places)
+    };
+  }
+  function fmt(x){ // trim trailing zeros to a clean decimal string
+    return parseFloat(x.toFixed(4)).toString();
+  }
+
+  /* ---------------- step explanations ---------------- */
+  function longSteps(D,V){
+    var digits=String(D).split(""), rem=0, out=[], started=false, qd="";
+    for(var i=0;i<digits.length;i++){
+      var cur=rem*10+Number(digits[i]);
+      var q=Math.floor(cur/V), prod=q*V; rem=cur-prod; qd+=q;
+      if(!started && q===0 && i<digits.length-1){ continue; } // skip leading 0 narration
+      started=true;
+      out.push("<span class='st'><b>"+V+"</b> goes into <b>"+cur+"</b> → <b>"+q+"</b> time"+(q===1?"":"s")+". "+q+"×"+V+"="+prod+", and "+cur+"−"+prod+"=<b>"+rem+"</b>."+(i<digits.length-1?" Bring down the "+digits[i+1]+".":""));
+    }
+    out.push("<span class='st'>Quotient <b>"+Number(qd)+"</b>, remainder <b>"+rem+"</b>.</span>");
+    return "<h4>How to solve it</h4>"+out.join("");
+  }
+  function fracSteps(a,b,c,d,nn,mm){
+    var out=[];
+    out.push("<span class='st'>Keep the first fraction: <b>"+a+"/"+b+"</b>.</span>");
+    out.push("<span class='st'>Change ÷ to ×, and flip "+c+"/"+d+" to <b>"+d+"/"+c+"</b>.</span>");
+    out.push("<span class='st'>Multiply across: ("+a+"×"+d+") / ("+b+"×"+c+") = <b>"+(a*d)+"/"+(b*c)+"</b>.</span>");
+    var simplified=(a*d!==nn||b*c!==mm);
+    out.push("<span class='st'>"+(simplified?"Simplify: ":"Already simplest: ")+"<b>"+(mm===1?nn:nn+"/"+mm)+"</b>.</span>");
+    return "<h4>Keep · Change · Flip</h4>"+out.join("");
+  }
+  function decSteps(D,V,ans,places){
+    var pow=Math.pow(10,places);
+    var out=[];
+    out.push("<span class='st'>The divisor <b>"+V+"</b> is already a whole number, so divide straight down.</span>");
+    out.push("<span class='st'>Think: "+fmt(D)+" ÷ "+V+". It helps to see "+(D*pow)+" ÷ "+V+" = <b>"+(ans*pow)+"</b>.</span>");
+    out.push("<span class='st'>Put the decimal back ("+places+" place"+(places===1?"":"s")+"): <b>"+fmt(ans)+"</b>.</span>");
+    return "<h4>Dividing decimals</h4>"+out.join("");
+  }
+
+  /* ---------------- render helpers ---------------- */
+  function num(x){return '<span>'+x+'</span>';}
+  function frac(n,d){return '<span class="frac"><span>'+n+'</span><span class="bar"></span><span>'+d+'</span></span>';}
+
+  /* ---------------- sound ---------------- */
+  var AC=null;
+  function ac(){ if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(AC&&AC.state==="suspended")AC.resume(); return AC; }
+  function beep(freqs,dur,type,vol){
+    if(save.muted) return; var c=ac(); if(!c) return;
+    var t0=c.currentTime;
+    freqs.forEach(function(f,i){
+      var o=c.createOscillator(), g=c.createGain();
+      o.type=type||"sine"; o.frequency.value=f;
+      var st=t0+i*(dur*0.5);
+      g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(vol||.14,st+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
+      o.connect(g); g.connect(c.destination); o.start(st); o.stop(st+dur);
+    });
+  }
+  var sCorrect=function(){beep([660,990],.18,"triangle",.16);};
+  var sWrong=function(){beep([200,150],.22,"sawtooth",.12);};
+  var sWarp=function(){ if(save.muted)return; var c=ac(); if(!c)return;
+    var o=c.createOscillator(),g=c.createGain(); o.type="sawtooth";
+    o.frequency.setValueAtTime(180,c.currentTime); o.frequency.exponentialRampToValueAtTime(900,c.currentTime+.5);
+    g.gain.setValueAtTime(.0001,c.currentTime); g.gain.linearRampToValueAtTime(.12,c.currentTime+.05);
+    g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.6);
+    o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.62);
+  };
+
+  /* ---------------- starfield ---------------- */
+  (function starfield(){
+    var cv=$("#stars"), cx=cv.getContext("2d"), W,H,stars=[];
+    function resize(){ W=cv.width=innerWidth*devicePixelRatio; H=cv.height=innerHeight*devicePixelRatio;
+      cv.style.width=innerWidth+"px"; cv.style.height=innerHeight+"px";
+      stars=[]; var n=Math.min(150,Math.floor(innerWidth*innerHeight/9000));
+      for(var i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,z:Math.random()*.8+.2,r:Math.random()*1.4+.3,t:Math.random()*6.28});
+    }
+    resize(); addEventListener("resize",resize);
+    function frame(){
+      cx.clearRect(0,0,W,H);
+      for(var i=0;i<stars.length;i++){var s=stars[i];
+        if(!reduce){ s.y+=s.z*.25*devicePixelRatio; if(s.y>H){s.y=0;s.x=Math.random()*W;} s.t+=.03; }
+        var tw=reduce?.8:(.55+Math.sin(s.t)*.45);
+        cx.globalAlpha=tw*s.z; cx.fillStyle= i%17===0?"#9fd8ff":"#eaf1ff";
+        cx.beginPath();cx.arc(s.x,s.y,s.r*devicePixelRatio,0,6.28);cx.fill();
+      }
+      cx.globalAlpha=1;
+      if(!reduce) requestAnimationFrame(frame);
+    }
+    frame();
+    if(reduce){ /* draw once */ }
+  })();
+
+  /* ---------------- confetti ---------------- */
+  function confetti(color){
+    if(reduce) return;
+    var cv=$("#confetti"), cx=cv.getContext("2d");
+    cv.width=innerWidth; cv.height=innerHeight; cv.style.display="block";
+    var cols=[color,"#ffcf47","#49ffb3","#a874ff","#ff5ccd","#ffffff"], P=[];
+    for(var i=0;i<120;i++)P.push({x:innerWidth/2+(Math.random()-.5)*120,y:innerHeight*.4,
+      vx:(Math.random()-.5)*9,vy:Math.random()*-11-4,g:.35,r:Math.random()*6+3,
+      c:pick(cols),a:1,rot:Math.random()*6.28,vr:(Math.random()-.5)*.3});
+    var t0=performance.now();
+    (function run(now){
+      var dt=Math.min(32,now-t0); t0=now; cx.clearRect(0,0,cv.width,cv.height);
+      var alive=false;
+      for(var i=0;i<P.length;i++){var p=P[i];
+        p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.a-=.009;
+        if(p.a>0&&p.y<cv.height+20){alive=true;
+          cx.globalAlpha=Math.max(0,p.a); cx.fillStyle=p.c;
+          cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);
+          cx.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6);cx.restore();
+        }
+      }
+      cx.globalAlpha=1;
+      if(alive) requestAnimationFrame(run); else cv.style.display="none";
+    })(t0);
+  }
+
+  /* ---------------- menu ---------------- */
+  function renderMenu(){
+    $("#xpTotal").textContent=save.xp;
+    var cleared=SECTORS.filter(function(s){return save.best[s.id];}).length;
+    $("#sectorsCleared").textContent=cleared+"/3";
+    var map=$("#map"); map.innerHTML="";
+    SECTORS.forEach(function(s){
+      var locked = s.id>save.unlocked;
+      var best=save.best[s.id];
+      var el=document.createElement("button");
+      el.className="sector"; el.setAttribute("data-locked",locked);
+      el.style.setProperty("--sc",s.color);
+      el.innerHTML=
+        '<div class="orb '+(s.id===2?'ring':'')+'"></div>'+
+        '<div class="meta"><div class="sname">'+s.name+'</div>'+
+        '<div class="ssub">'+s.desc+'</div>'+
+        (best?'<div class="best"><span class="starrow">'+stars(best.stars)+'</span> best '+best.score+'</div>'
+             :'<div class="best">'+(locked?'Clear the previous sector to unlock':'Not flown yet')+'</div>')+
+        '</div>'+
+        (locked?'<div class="lockchip">🔒 Locked</div>':'<div class="go">→</div>');
+      if(!locked) el.addEventListener("click",function(){ac();startMission(s);});
+      else el.addEventListener("click",function(){toast("Clear "+SECTORS[s.id-2].name+" first ✦");});
+      map.appendChild(el);
+    });
+  }
+  function stars(n){var o="";for(var i=0;i<3;i++)o+= i<n?"★":"☆";return o;}
+
+  /* ---------------- mission ---------------- */
+  var M=null;
+  function startMission(sec){
+    M={sec:sec, i:0, score:0, combo:0, maxCombo:0, shields:3, correct:0, cur:null, locked:false};
+    $("#mName").textContent=sec.name;
+    $("#mSub").textContent=sec.sub;
+    document.documentElement.style.setProperty("--accent",sec.color);
+    show("mission");
+    drawShields(); setScore(0); setTrack(0);
+    nextProblem();
+  }
+  function drawShields(){
+    var h=""; for(var i=0;i<3;i++)h+='<i class="'+(i<M.shields?"":"gone")+'"></i>';
+    $("#shields").innerHTML=h;
+  }
+  function setScore(v){ $("#score").textContent=v; }
+  function animateScore(from,to){
+    if(reduce){setScore(to);return;}
+    var t0=performance.now(),dur=500;
+    (function tick(n){var p=Math.min(1,(n-t0)/dur);
+      setScore(Math.round(from+(to-from)*(1-Math.pow(1-p,3))));
+      if(p<1)requestAnimationFrame(tick);})(t0);
+  }
+  function setTrack(frac){
+    var pct=Math.max(0,Math.min(1,frac));
+    $("#trackFill").style.width=(pct*100)+"%";
+    $("#ship").style.left=(pct*100)+"%";
+  }
+
+  var inputs={}, active=null;
+  function nextProblem(){
+    M.locked=false;
+    var diff=M.i/(QUESTIONS-1);
+    M.cur=M.sec.gen(diff);
+    $("#qLabel").textContent="Problem "+(M.i+1)+" of "+QUESTIONS;
+    $("#equation").innerHTML=M.cur.render();
+    $("#feedback").textContent=""; $("#feedback").className="feedback";
+    $("#steps").className="steps"; $("#steps").innerHTML="";
+    $("#submitBtn").disabled=false; $("#submitBtn").textContent="Boost →";
+    buildAnswers(M.cur);
+  }
+  function buildAnswers(p){
+    inputs={}; var box=$("#answers"); box.innerHTML="";
+    if(p.fracInput){
+      box.appendChild(fracInputEl(p.fields[0],p.fields[1]));
+    } else {
+      p.fields.forEach(function(f,idx){
+        var w=document.createElement("div"); w.className="field-wrap"+(f.w==="r"?" remwrap":"");
+        var fl=document.createElement("div"); fl.className="field"; fl.tabIndex=0; fl.dataset.k=f.id;
+        fl.innerHTML='<span class="ph">'+f.ph+'</span>';
+        w.appendChild(fl);
+        if(f.label){var lab=document.createElement("label");lab.textContent=f.label;w.appendChild(lab);}
+        box.appendChild(w);
+        inputs[f.id]={el:fl,val:""};
+        fl.addEventListener("click",function(){setActive(f.id);});
+        if(idx===0) setActive(f.id);
+      });
+    }
+  }
+  function fracInputEl(fn,fd){
+    var wrap=document.createElement("div"); wrap.className="fracfield";
+    var top=mkField(fn.id,fn.ph), bar=document.createElement("div"); bar.className="bar";
+    var bot=mkField(fd.id,fd.ph);
+    wrap.appendChild(top);wrap.appendChild(bar);wrap.appendChild(bot);
+    setActive(fn.id);
+    return wrap;
+  }
+  function mkField(id,ph){
+    var fl=document.createElement("div"); fl.className="field"; fl.tabIndex=0; fl.dataset.k=id;
+    fl.innerHTML='<span class="ph">'+ph+'</span>';
+    inputs[id]={el:fl,val:""};
+    fl.addEventListener("click",function(){setActive(id);});
+    return fl;
+  }
+  function setActive(id){
+    active=id;
+    Object.keys(inputs).forEach(function(k){inputs[k].el.classList.toggle("active",k===id);});
+  }
+  function renderField(id){
+    var o=inputs[id]; if(!o)return;
+    o.el.innerHTML = o.val!=="" ? o.val : '<span class="ph">'+(o.el.dataset.k==="r"?"R":"?")+'</span>';
+  }
+  function keyIn(ch){
+    if(M.locked||!active) return;
+    var o=inputs[active]; if(!o)return;
+    if(ch==="back"){ o.val=o.val.slice(0,-1); }
+    else if(ch==="."){ if(M.cur.decInput && o.val.indexOf(".")<0 && o.val!=="") o.val+="."; }
+    else { if(o.val.replace(".","").length>=4) return; if(o.val==="0"&&ch!==".")o.val=ch; else o.val+=ch; }
+    renderField(active);
+  }
+
+  function buildPad(){
+    var pad=$("#pad"); pad.innerHTML="";
+    var keys=["1","2","3","4","5","6","7","8","9"];
+    keys.forEach(function(k){pad.appendChild(mkKey(k,k));});
+    // bottom row depends on mode
+    var dec = M.cur && M.cur.decInput;
+    pad.appendChild(mkKey(dec?".":"⇄", dec?".":"swap","util"));
+    pad.appendChild(mkKey("0","0"));
+    pad.appendChild(mkKey("⌫","back","util"));
+  }
+  function mkKey(label,val,cls){
+    var b=document.createElement("button"); b.className="key"+(cls?" "+cls:"");
+    b.type="button"; b.textContent=label; b.setAttribute("aria-label",val==="back"?"delete":val==="swap"?"switch field":label);
+    b.addEventListener("click",function(){
+      if(val==="swap"){ swapField(); return; }
+      ac(); keyIn(val);
+    });
+    return b;
+  }
+  function swapField(){
+    var ks=Object.keys(inputs); if(ks.length<2)return;
+    var idx=ks.indexOf(active); setActive(ks[(idx+1)%ks.length]);
+  }
+
+  function submit(){
+    if(M.locked) { advance(); return; }
+    var vals={}; Object.keys(inputs).forEach(function(k){vals[k]=inputs[k].val;});
+    // require filled
+    var empty=M.cur.fields.some(function(f){return (vals[f.id]===undefined||vals[f.id]==="") && !(f.id==="r");});
+    if(empty){ toast("Fill in your answer, pilot ✦"); return; }
+    M.locked=true;
+    var ok=M.cur.check(vals);
+    if(ok){
+      M.correct++; M.combo++; M.maxCombo=Math.max(M.maxCombo,M.combo);
+      var mult=Math.min(5,1+Math.floor((M.combo-1)/2)); // x1,x1,x2,x2,x3...
+      var gained=100*mult;
+      var from=M.score; M.score+=gained; animateScore(from,M.score);
+      showCombo(mult);
+      sCorrect(); pulseShip();
+      var fb=$("#feedback"); fb.className="feedback good";
+      fb.textContent= pick(["Direct hit! +","Locked on! +","Clean burn! +","Nailed it! +"])+gained+" pts";
+      $("#submitBtn").textContent = (M.i+1>=QUESTIONS)?"Finish →":"Next →";
+      setTrack((M.i+1)/QUESTIONS);
+    } else {
+      M.combo=0; M.shields--; drawShields();
+      sWrong(); shake();
+      var fb2=$("#feedback"); fb2.className="feedback bad";
+      fb2.textContent="Off course — the answer was "+M.cur.answerText+".";
+      $("#combo").classList.remove("show");
+      showSteps();
+      $("#submitBtn").textContent = (M.i+1>=QUESTIONS)?"Finish →":"Next →";
+      if(M.shields<=0){ setTimeout(function(){endMission(false);},700); return; }
+    }
+  }
+  function advance(){
+    $("#combo").classList.remove("show");
+    M.i++;
+    if(M.i>=QUESTIONS){ endMission(M.shields>0); return; }
+    nextProblem();
+  }
+  function showCombo(mult){
+    if(mult<2){$("#combo").classList.remove("show");return;}
+    var c=$("#combo"); c.textContent="×"+mult+" COMBO"; c.classList.add("show");
+  }
+  function showSteps(){ $("#steps").innerHTML=M.cur.steps; $("#steps").classList.add("show"); }
+
+  function pulseShip(){ if(reduce)return; var s=$("#ship"); s.animate?s.animate([{transform:s.style.transform+" scale(1)"},{transform:s.style.transform+" scale(1.4)"},{transform:s.style.transform+" scale(1)"}],{duration:380}):0; }
+  function shake(){ if(reduce)return; var c=$(".card"); c.animate?c.animate([{transform:"translateX(0)"},{transform:"translateX(-7px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],{duration:260}):0; }
+
+  function endMission(cleared){
+    var acc=Math.round(M.correct/QUESTIONS*100);
+    var starsN = cleared ? (M.correct===QUESTIONS?3:(M.correct>=QUESTIONS-2?2:1)) : (M.correct>=5?1:0);
+    var xp = M.correct*20 + M.maxCombo*10 + (cleared?60:0);
+    // persist best + unlock
+    var prev=save.best[M.sec.id];
+    if(!prev || M.score>prev.score) save.best[M.sec.id]={score:M.score,stars:Math.max(starsN,prev?prev.stars:0)};
+    else if(prev && starsN>prev.stars) prev.stars=starsN;
+    if(cleared && M.sec.id===save.unlocked && save.unlocked<SECTORS.length) save.unlocked++;
+    save.xp+=xp; persist();
+
+    $("#rTitle").textContent = cleared?"Sector cleared!":"Drifted off course";
+    $("#rSub").textContent = cleared
+      ? (M.sec.id<SECTORS.length?"New sector unlocked: "+SECTORS[M.sec.id].name:"You've cleared every sector. Ace pilot!")
+      : "You ran out of shields. Recalibrate and try again.";
+    $("#bigstars").innerHTML = '<span class="'+(starsN>=1?'on':'off')+'">★</span><span class="'+(starsN>=2?'on':'off')+'">★</span><span class="'+(starsN>=3?'on':'off')+'">★</span>';
+    $("#rScore").textContent=M.score; $("#rAcc").textContent=acc+"%"; $("#rXP").textContent="+"+xp;
+    $("#rNext").textContent = cleared ? (M.sec.id<SECTORS.length?"Next sector →":"Star map") : "Retry →";
+    $("#rNext").dataset.act = cleared ? (M.sec.id<SECTORS.length?"next":"map") : "retry";
+    var ov=$("#overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+    if(cleared){ sWarp(); confetti(M.sec.color); }
+  }
+
+  /* ---------------- screens ---------------- */
+  function show(id){
+    ["menu","mission"].forEach(function(s){$("#"+s).classList.toggle("active",s===id);});
+    if(id==="menu"){document.documentElement.style.setProperty("--accent","var(--cyan)");renderMenu();}
+    window.scrollTo(0,0);
+  }
+
+  /* ---------------- toast ---------------- */
+  var toTimer=null;
+  function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toTimer);toTimer=setTimeout(function(){t.classList.remove("show");},1900);}
+
+  /* ---------------- wire up ---------------- */
+  $("#submitBtn").addEventListener("click",submit);
+  $("#hintBtn").addEventListener("click",function(){ if(!M)return; showSteps(); });
+  $("#backBtn").addEventListener("click",function(){ show("menu"); });
+  $("#resetBtn").addEventListener("click",function(){
+    if(confirm("Reset all progress and XP?")){ save={unlocked:1,best:{},xp:0,muted:save.muted}; persist(); renderMenu(); toast("Progress reset ✦"); }
+  });
+  $("#muteBtn").addEventListener("click",function(){
+    save.muted=!save.muted; persist();
+    this.textContent=save.muted?"🔇":"🔊"; this.setAttribute("aria-pressed",save.muted);
+    if(!save.muted) sCorrect();
+  });
+  $("#rMap").addEventListener("click",function(){$("#overlay").classList.remove("show");$("#overlay").setAttribute("aria-hidden","true");show("menu");});
+  $("#rNext").addEventListener("click",function(){
+    var act=this.dataset.act; $("#overlay").classList.remove("show"); $("#overlay").setAttribute("aria-hidden","true");
+    if(act==="retry"){ startMission(M.sec); }
+    else if(act==="next"){ startMission(SECTORS[M.sec.id]); } // sec.id is 1-based → next index
+    else { show("menu"); }
+  });
+
+  // physical keyboard
+  document.addEventListener("keydown",function(e){
+    if(!$("#mission").classList.contains("active")) return;
+    if(e.key>="0"&&e.key<="9"){ac();keyIn(e.key);}
+    else if(e.key==="."){keyIn(".");}
+    else if(e.key==="Backspace"){ if(active){e.preventDefault();keyIn("back");} }
+    else if(e.key==="Tab"){ if(Object.keys(inputs).length>1){e.preventDefault();swapField();} }
+    else if(e.key==="Enter"){ e.preventDefault(); submit(); }
+  });
+
+  // build keypad once per problem (mode may change '.' key)
+  var _np=nextProblem;
+  nextProblem=function(){_np();buildPad();};
+
+  // init
+  $("#muteBtn").textContent=save.muted?"🔇":"🔊";
+  $("#muteBtn").setAttribute("aria-pressed",save.muted);
+  renderMenu();
+})();
+</script>
+</body>
+</html>

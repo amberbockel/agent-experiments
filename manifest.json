@@ -14,6 +14,15 @@
     },
     {
       "date": "2026-11-20",
+      "slug": "2026-11-20-division-drift",
+      "title": "Division Drift",
+      "category": "games",
+      "design": "dark-neon",
+      "oneLiner": "A space-mission division game: boost your ship across the galaxy by solving long division, dividing fractions and dividing decimals, with hints that teach each step when you get stuck.",
+      "path": "apps/2026-11-20-division-drift/"
+    },
+    {
+      "date": "2026-11-20",
       "slug": "2026-11-20",
       "title": "Squeeze",
       "category": "trend",
