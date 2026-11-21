@@ -1,10 +1,11 @@
 // Headless render check for the study. Screenshots four moments of the fall.
-// Usage: node tools/shoot.mjs <out_dir>   (loads study/dev.html from disk)
+// Usage: node tools/shoot.mjs <out_dir> [page]   (loads study/<page> from disk; default dev.html)
 import { createRequire } from 'module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 import fs from 'fs';
 
 const out = process.argv[2] || 'shots';
+const pageFile = process.argv[3] || 'dev.html';
 fs.mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--allow-file-access-from-files'] });
@@ -13,7 +14,7 @@ const log = [];
 page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') log.push(m.type() + ': ' + m.text()); });
 page.on('pageerror', e => log.push('pageerror: ' + e.message));
 
-await page.goto('file:///home/user/agent-experiments/deep-end/study/dev.html');
+await page.goto('file:///home/user/agent-experiments/deep-end/study/' + pageFile + '');
 await page.waitForTimeout(1500);
 await page.screenshot({ path: `${out}/0-intro.png` });
 await page.click('#enter');
