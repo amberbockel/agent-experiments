@@ -26,6 +26,26 @@ CREDITS_PATH = os.path.join(OUT, "credits.json")
 credits = json.load(open(CREDITS_PATH)) if os.path.exists(CREDITS_PATH) else {}
 
 # concept: list of (source, query, how many to keep)
+PASS2 = {
+    "sharks":       [("commons", "shark Brehm Tierleben", 4), ("commons", "requin gravure", 3), ("commons", "Carcharias illustration", 3)],
+    "alice":        [("commons", "Alice Tenniel rabbit hole falling", 4), ("commons", "Tenniel Alice drink me", 3), ("commons", "Alice in Wonderland 1865 Tenniel illustration", 6)],
+    "peter-pan":    [("commons", "Peter Pan Bedford 1911", 4), ("commons", "Peter and Wendy 1911 illustration", 4)],
+    "coast":        [("loc", "big sur california", 5), ("loc", "monterey california coast", 4), ("commons", "Pacific Coast Highway 1930s", 3)],
+    "swimmers":     [("loc", "bathing beach", 6), ("loc", "swimming pool", 4), ("commons", "bathing beauties 1920 photograph", 3)],
+    "surfing":      [("loc", "surf board riding", 4), ("commons", "surfing Hawaii 1890 photograph", 4)],
+    "amusement":    [("loc", "coney island roller coaster", 6), ("loc", "ferris wheel", 4), ("loc", "merry-go-round", 3)],
+    "circus":       [("loc", "circus poster", 6)],
+    "theatre":      [("commons", "toy theatre proscenium", 4), ("loc", "theater curtain", 3), ("commons", "stage curtain 19th century lithograph", 3)],
+    "rainbow":      [("commons", "rainbow lithograph", 4), ("commons", "Regenbogen Illustration 1900", 3)],
+    "hands":        [("commons", "manicule", 4), ("commons", "hand pointing woodcut", 3), ("commons", "Vesalius hand", 3)],
+    "sea-monsters": [("commons", "Olaus Magnus sea monster", 4), ("commons", "kraken illustration 19th century", 3)],
+    "eyes":         [("commons", "human eye engraving anatomy", 4), ("commons", "eye illustration Encyclopedie", 3)],
+    "diver":        [("commons", "scaphandre", 3), ("commons", "deep sea diver 1890s photograph", 3)],
+    "keys-doors":   [("commons", "door knocker engraving", 3), ("loc", "doorway", 3)],
+    "horses":       [("commons", "horse lithograph 19th century", 4), ("loc", "horse race", 3)],
+    "clouds":       [("commons", "cloud atlas 1896 plate", 4)],
+    "flowers":      [("commons", "Pierre-Joseph Redoute Les Roses", 4), ("commons", "botanical plate Curtis rose", 3)],
+}
 CONCEPTS = {
     "sharks":        [("commons", "incategory:\"Shark illustrations\" shark", 6), ("commons", "shark lithograph 1880 Carcharodon", 4), ("commons", "Squalus illustration Bloch", 3)],
     "deep-sea":      [("commons", "incategory:\"Kunstformen der Natur\" Medusae", 6), ("commons", "deep sea fish Valdivia expedition plate", 5), ("commons", "Haeckel Siphonophorae", 3)],
@@ -123,7 +143,7 @@ def commons(concept, query, want):
 
 
 def loc(concept, query, want):
-    api = f"https://www.loc.gov/pictures/search/?q={urllib.parse.quote(query)}&fo=json&c=40"
+    api = f"https://www.loc.gov/pictures/search/?q={urllib.parse.quote(query)}&fo=json&c=30"
     j = get(api)
     if not j:
         return 0
@@ -131,21 +151,26 @@ def loc(concept, query, want):
     for r in j.get("results", []):
         if got >= want:
             break
-        rights = (r.get("rights") or "") + " " + " ".join(r.get("medium", []) if isinstance(r.get("medium"), list) else [str(r.get("medium", ""))])
+        item_url = r.get("links", {}).get("item", "")
+        if not item_url:
+            continue
+        item = get(item_url.rstrip("/") + "/?fo=json")
+        if not item:
+            continue
+        it = item.get("item", {})
+        rights = " ".join(str(it.get(k, "")) for k in ("rights_advisory", "rights", "rights_information"))
         if "no known restrictions" not in rights.lower():
             continue
-        img = r.get("image", {})
-        url = img.get("full") or img.get("alt")
-        if not url:
+        thumb = (r.get("image") or {}).get("full") or ""
+        if "_150px" not in thumb:
             continue
-        if url.startswith("//"):
-            url = "https:" + url
-        key = "loc-" + re.sub(r"[^a-z0-9]+", "-", str(r.get("pk", r.get("title", "")))).strip("-")[:60]
-        meta = {"source": "Library of Congress", "title": r.get("title", "")[:140], "author": (r.get("creator") or "")[:120],
-                "license": "No known restrictions on publication", "page": r.get("links", {}).get("item", ""), "date": str(r.get("created_published_date", ""))[:40]}
+        url = thumb.replace("_150px.jpg", "r.jpg")   # the reference-size rendition
+        key = "loc-" + re.sub(r"[^a-z0-9]+", "-", str(r.get("pk", ""))).strip("-")[:60]
+        meta = {"source": "Library of Congress", "title": str(r.get("title", ""))[:140], "author": str(r.get("creator") or "")[:120],
+                "license": "No known restrictions on publication", "page": item_url, "date": str(r.get("created_published_date", ""))[:40]}
         if save(concept, key, url, meta):
             got += 1
-        time.sleep(1.3)
+        time.sleep(1.0)
     return got
 
 
@@ -176,7 +201,8 @@ def nasa(concept, query, want):
 
 FETCH = {"commons": commons, "loc": loc, "nasa": nasa}
 
-for concept, jobs in CONCEPTS.items():
+TABLE = PASS2 if os.environ.get("PASS2") else CONCEPTS
+for concept, jobs in TABLE.items():
     if ONLY and concept not in ONLY:
         continue
     print(concept)

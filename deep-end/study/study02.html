@@ -100,6 +100,12 @@ const FLOOR_Y = -40.6;
 // [name, x, y, z, height, rot deg, caption, rig]
 const LAYOUT = [
   // the yard
+  ['rose-pink',      -6.8,  3.0, -1.4, 5.0,  12, 'a rose, 1827', { type: 'bob', amp: 0.03 }],
+  ['rose-china',      6.9,  2.4, -1.6, 5.2, -10, 'a china rose', { type: 'bob', amp: 0.03 }],
+  ['rose-wild',       6.6, -8.4, -1.2, 4.2,  18, 'a wild rose', { type: 'bob', amp: 0.03 }],
+  ['white-rabbit',    5.2, -4.0,  0.9, 2.8,  -4, 'he is late', { type: 'hop', every: 2, h: 0.35 }],
+  ['muybridge',      -9.0, -3.4,  0.4, 1.9,   0, 'palo alto, 1878', { type: 'gallop', from: -11, to: 11, beats: 12 }],
+  ['earth',           3.6,  5.0, -3.0, 2.2,   0, 'apollo 13', { type: 'rock', amp: 2, beats: 8 }],
   ['hero-body',      -0.8, -1.6,  0.0, 7.4,  -2, 'the yard', { type: 'sing' }, 'hero'],
   ['girl-closeup',    4.6,  1.2, -2.6, 4.6,  -6, 'same day, no sunglasses', { type: 'bob' }],
   ['girl-swing',     -5.4,  1.6, -1.0, 5.4,   0, 'the swing', { type: 'swing', px: 0.62, py: -0.55, amp: 16, beats: 4 }],
@@ -109,10 +115,17 @@ const LAYOUT = [
   ['girl-picnic',    -2.8, -8.8, -1.6, 3.0,   8, 'the picnic', { type: 'bob' }],
   ['note-grad',      -1.2,-10.3,  1.0, 0.9,  -3, 'summer 1989, in her hand', { type: 'bob' }],
   ['grad-girl',       3.2,-10.6, -0.4, 3.2,   0, 'montessori graduation', { type: 'hop', every: 2, h: 0.25 }],
-  ['heather',         0.0,-11.8,  0.3, 3.0,   0, 'the heather', { type: 'bob' }, null, { count: 5, from: -6.4, to: 6.4, zStep: -0.15 }],
-  ['dog',            -6.0,-12.4, -0.3, 2.2,   0, 'the dog', { type: 'drive', from: -9, to: 9, beats: 24 }],
-  ['rabbit',          0.0,-12.8,  0.6, 1.5,   0, 'the rabbit', { type: 'hop', every: 1, h: 0.5, travel: 1.0 }, null, { count: 6, from: -7, to: 7, zStep: 0.05 }],
+  ['heather',         0.0,-11.8,  0.3, 3.0,   0, 'the heather', { type: 'bob' }, null, { count: 3, from: -5.5, to: 5.5, zStep: -0.15 }],
+  ['dog',            -6.0,-12.4, -0.3, 2.0,   0, 'the dog', { type: 'drive', from: -9, to: 9, beats: 24 }],
+  ['rabbit',          0.0,-12.8,  0.6, 1.5,   0, 'the rabbit', { type: 'hop', every: 1, h: 0.5, travel: 1.0 }, null, { count: 4, from: -7, to: 7, zStep: 0.05 }],
   // the water
+  ['jelly-blue',     -6.4,-17.0, -2.2, 6.0,   8, 'haeckel, 1904', { type: 'drift', beats: 16, amp: 0.6 }],
+  ['jelly-disco',     6.6,-20.6, -2.6, 6.2,  -6, 'haeckel, 1904', { type: 'drift', beats: 20, amp: 0.5 }],
+  ['jelly-siphon',    0.6,-23.6, -3.2, 4.6,  14, 'siphonophorae', { type: 'drift', beats: 24, amp: 0.4 }],
+  ['shark-spotted',  -2.8,-15.4, -1.4, 1.6,  -4, 'the spotted one', { type: 'drive', from: 11, to: -11, beats: 40 }],
+  ['shark-bloch',     3.4,-25.8, -0.6, 1.4,   3, 'bloch, 1785', { type: 'drive', from: -11, to: 11, beats: 52 }],
+  ['titanic',         0.0,-13.9, -3.8, 2.6,   0, 'april 1912', { type: 'rock', amp: 1.5, beats: 8 }],
+  ['white-rabbit',   -4.6,-24.4,  0.8, 2.4,   6, 'still late', { type: 'hop', every: 2, h: 0.3 }],
   ['note-lindsey',   -4.2,-14.9,  0.8, 0.8,   4, 'lindsey and dee', { type: 'bob' }],
   ['kiddie-pool',    -4.4,-16.6, -1.2, 1.9,   0, 'the kiddie pool', { type: 'bob', amp: 0.08 }],
   ['horse-brown',     4.8,-17.0, -2.4, 2.6,   0, 'the brown horse', { type: 'rock', amp: 5, beats: 2 }],
@@ -126,6 +139,8 @@ const LAYOUT = [
   ['print-portrait',  5.8,-26.2, -3.0, 2.8,  12, 'school picture', { type: 'bob', amp: 0.02 }],
   ['rabbit',          1.0,-27.6,  0.4, 1.3,   0, 'the rabbit again', { type: 'hop', every: 2, h: 0.4, travel: 0.6 }, null, { count: 2, from: -3, to: 3, zStep: 0 }],
   // the canyon
+  ['calliope',        0.2,-32.8, -2.4, 3.6,   0, 'the steam car of the muses', { type: 'drive', from: 12, to: -12, beats: 48 }],
+  ['white-rabbit',    4.4,-38.8,  0.9, 2.2,  -5, 'he went this way', { type: 'hop', every: 4, h: 0.25 }],
   ['bucket-hat',     -1.6,-30.2, -2.2, 3.6,  -6, 'the hat', { type: 'bob' }],
   ['cotton-candy',   -5.6,-30.4, -1.2, 4.4,   0, 'harajuku', { type: 'shake' }],
   ['cameras',         4.2,-31.6, -0.6, 4.6,   0, 'two cameras, 2025', { type: 'flash' }],
@@ -142,10 +157,14 @@ const LAYOUT = [
 ];
 const HEART = { name: 'barrel', x: 0.4, y: -41.4, z: -0.4, h: 6.6, behind: 'baby-dad', caption: 'the first photograph' };
 const BACKDROPS = [
-  // [name, y center, height, z, repeatX]
-  ['bg-sky',   -3.0, 16.5, -7.0, 1],
-  ['bg-wave', -21.0, 20.0, -7.0, 1],
-  ['bg-bryce',-35.0, 21.0, -7.0, 1.75],
+  // [name, y center, height, z, repeatX, saturation keep 0..1]
+  ['bg-stars',       -2.0, 24.0, -7.2, 1.0, 0.55],
+  ['bg-clouds-pink', -6.5, 13.0, -6.6, 1.0, 0.95],
+  ['bg-clouds-sea',   3.5, 12.0, -6.8, 1.0, 0.9],
+  ['bg-hokusai',    -21.0, 22.0, -7.0, 1.0, 0.9],
+  ['bg-dore',       -27.5, 12.0, -6.4, 1.0, 0.7],
+  ['bg-nebula',     -35.0, 24.0, -7.2, 1.0, 0.8],
+  ['bg-bryce',      -37.0, 16.0, -6.6, 1.0, 0.9],
 ];
 
 // ---------- renderer ----------
@@ -177,7 +196,7 @@ const pieceFrag = /* glsl */`
     gl_FragColor = vec4(c, t.a * uOpacity);
   }`;
 const backFrag = /* glsl */`
-  uniform sampler2D map; uniform vec3 uLight; uniform float uPulse; uniform vec2 uRepeat; uniform float uTop; uniform float uBottom; uniform float uStep;
+  uniform sampler2D map; uniform vec3 uLight; uniform float uPulse; uniform vec2 uRepeat; uniform float uTop; uniform float uBottom; uniform float uStep; uniform float uSat;
   varying vec2 vUv; varying vec3 vW;
   float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   void main(){
@@ -185,9 +204,9 @@ const backFrag = /* glsl */`
     float d = distance(vW.xy, uLight.xy);
     float spot = smoothstep(16.0, 0.0, d) * (1.0 + 0.25 * uPulse);
     vec3 c = t * (0.42 + 0.5 * spot);
-    c = mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))), 0.25);   // a little drained, so the paper in front stays the color
+    c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, uSat);
     float g = hash(floor(vW.xy * 60.0) + uStep) - 0.5; c += g * 0.045;
-    float fade = smoothstep(uTop, uTop - 2.5, vW.y) * smoothstep(uBottom, uBottom + 2.5, vW.y);
+    float fade = smoothstep(uTop, uTop - 3.5, vW.y) * smoothstep(uBottom, uBottom + 3.5, vW.y);
     gl_FragColor = vec4(c, fade);
   }`;
 const waterFrag = /* glsl */`
@@ -229,17 +248,18 @@ function tintFor(y) {
   return { t, ambient: 0.5 + 0.2 * yard - 0.05 * dark };
 }
 async function addBackdrops(manifest) {
-  for (const [name, yc, h, z, rep] of BACKDROPS) {
+  let order = -2;
+  for (const [name, yc, h, z, rep, sat] of BACKDROPS) {
     const m = manifest[name]; if (!m) continue;
     const tex = await loadTex(`assets/${name}.jpg`); tex.wrapS = THREE.MirroredRepeatWrapping;
     const w = h * (m.w / m.h) * rep;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w, 28), h), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: backFrag,
-      uniforms: { map: { value: tex }, uLight: { value: light }, uPulse, uStep, uRepeat: { value: new THREE.Vector2(Math.max(w, 28) / (h * m.w / m.h), 1) }, uTop: { value: yc + h / 2 }, uBottom: { value: yc - h / 2 } } }));
-    mesh.position.set(0, yc, z); mesh.renderOrder = -2; scene.add(mesh);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w, 30), h), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: backFrag,
+      uniforms: { map: { value: tex }, uLight: { value: light }, uPulse, uStep, uSat: { value: sat }, uRepeat: { value: new THREE.Vector2(Math.max(w, 30) / (h * m.w / m.h), 1) }, uTop: { value: yc + h / 2 }, uBottom: { value: yc - h / 2 } } }));
+    mesh.position.set(0, yc, z); mesh.renderOrder = order++; scene.add(mesh);
   }
   // a dark wall behind everything so the seams between backdrops read as room, not void
   const wall = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshBasicMaterial({ color: 0x14100f }));
-  wall.position.set(0, -20, -7.5); wall.renderOrder = -3; scene.add(wall);
+  wall.position.set(0, -20, -7.5); wall.renderOrder = -20; scene.add(wall);
 }
 function latticeTexture() {
   const s = 1024, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d');
@@ -286,7 +306,9 @@ async function addPiece(entry, manifest, instance = 0, instances = 1) {
   const x = x0 + (visitRand() - 0.5) * 2 * drift, y = y0 + (visitRand() - 0.5) * drift;
   const rot = THREE.MathUtils.degToRad(rotDeg + (hero || visits === 1 ? 0 : (visitRand() - 0.5) * 8));
   const [tex, shTex] = await Promise.all([getTex(name), getTex(name + '_shadow').catch(() => null)]);
-  const w = h * (m.w / m.h);
+  const isSprite = m.kind === 'sprite';
+  if (isSprite) { tex.repeat.set(1 / m.cols, 1 / m.rows); tex.magFilter = THREE.NearestFilter; }
+  const w = isSprite ? h * (m.fw / m.fh) : h * (m.w / m.h);
   // the pivot: rigs that swing hang from a point, rigs that rock stand on their feet
   let px = 0.5, py = 0.5;
   if (rig.type === 'swing') { px = rig.px; py = rig.py; }
@@ -298,7 +320,8 @@ async function addPiece(entry, manifest, instance = 0, instances = 1) {
   let shadow = null;
   if (shTex) { shadow = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ alphaMap: shTex, color: 0x100a08, transparent: true, opacity: 0.4, depthWrite: false })); shadow.renderOrder = 1; scene.add(shadow); }
   scene.add(group);
-  const piece = { name, group, mesh, shadow, caption, rest: new THREE.Vector3(x, y, z), rot, lift: 0, jitter: new THREE.Vector3(), jrot: 0, phase: visitRand() * 7 + instance * 0.9, rig, tex, w, h, instance, hero, px, py, extraParts: [] };
+  if (isSprite) { mesh.material.uniforms.map.value = tex.clone(); mesh.material.uniforms.map.value.needsUpdate = true; mesh.material.uniforms.map.value.repeat.set(1 / m.cols, 1 / m.rows); mesh.material.uniforms.map.value.magFilter = THREE.NearestFilter; }
+  const piece = { name, group, mesh, shadow, caption, sprite: isSprite ? m : null, rest: new THREE.Vector3(x, y, z), rot, lift: 0, jitter: new THREE.Vector3(), jrot: 0, phase: visitRand() * 7 + instance * 0.9, rig, tex, w, h, instance, hero, px, py, extraParts: [] };
   mesh.userData.piece = piece; pieces.push(piece); pickable.push(mesh);
   if (rig.type === 'frames') { piece.altTex = await getTex(rig.alt); }
   if (rig.type === 'sing' && m.jaw) {
@@ -538,6 +561,8 @@ function rigPose(p, b, T) {
     case 'hop': { const ph = ((b + p.instance * 0.37) % r.every); const u = Math.min(1, ph / 0.8); out.dy = r.h * Math.sin(Math.PI * u) * amp;
       out.sy = 1 + 0.12 * Math.sin(Math.PI * u) * amp; out.sx = 1 - 0.08 * Math.sin(Math.PI * u) * amp;
       if (r.travel) { const bars = Math.floor((b + p.instance * 0.37) / r.every); out.dx = ((bars * r.travel + p.instance * 2.3) % 14) - 7 - p.rest.x + p.rest.x * 0; } break; }
+    case 'gallop': { const f = ((b / r.beats) + p.phase * 0.1) % 1; out.dx = r.from + f * (r.to - r.from) - p.rest.x; out.dy = 0; break; }
+    case 'drift': { out.dx = Math.sin(2 * Math.PI * (b + p.phase) / r.beats) * r.amp * amp; out.dy = Math.cos(2 * Math.PI * (b + p.phase * 0.7) / (r.beats * 0.6)) * r.amp * 0.5 * amp; out.rot = Math.sin(2 * Math.PI * b / r.beats) * 0.06 * amp; break; }
     case 'drive': { const f = ((b / r.beats) + p.phase * 0.1) % 1; out.dx = r.from + f * (r.to - r.from) - p.rest.x; out.dy = Math.abs(Math.sin(b * Math.PI)) * 0.05 * amp; break; }
     case 'shake': { const ph = b % 1; out.dx = Math.sin(ph * 2 * Math.PI * 2) * Math.max(0, 1 - ph * 3) * 0.14 * amp; break; }
     case 'flash': { const ph = b % 4; out.sx = out.sy = 1 + Math.max(0, 1 - ph * 4) * 0.05 * amp; break; }
@@ -585,6 +610,7 @@ function frame() {
       if (!reduced) { p.jitter.set((Math.random() - 0.5) * 0.012, (Math.random() - 0.5) * 0.012, 0); p.jrot = (Math.random() - 0.5) * 0.004; }
       const pose = rigPose(p, b, T);
       p.pose = pose;
+      if (p.sprite) { const fr = Math.floor(b * 5.5) % p.sprite.frames; const t = p.mesh.material.uniforms.map.value; t.offset.set((fr % p.sprite.cols) / p.sprite.cols, 1 - 1 / p.sprite.rows - Math.floor(fr / p.sprite.cols) / p.sprite.rows); }
       if (p.rig.type === 'frames' && p.altTex) { const alt = Math.floor(b / p.rig.every) % 2 === 1; p.mesh.material.uniforms.map.value = alt ? p.altTex : p.tex; }
       if (p.jaw) {
         const e8 = Math.floor(b * 2), ph8 = (b * 2) % 1, open = SYLLABLES[((e8 % 32) + 32) % 32] ? Math.max(0, 1 - ph8 * 1.5) : 0;
