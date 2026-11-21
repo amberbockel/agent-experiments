@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Division Drift</title>
-<meta name="description" content="A space-mission long-division game. Show your work step by step and finish three ways: remainder, fraction, or decimal.">
+<meta name="description" content="A space-mission long-division game. Show your work the Big Seven way (partial quotients) and finish three ways: remainder, fraction, or decimal.">
 <style>
   :root{
     --bg:#05081c;
@@ -141,27 +141,23 @@
   .prompt{font-size:clamp(16px,4vw,19px);font-weight:700;min-height:48px;display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#eaf0ff}
   .prompt .op{color:var(--accent);font-weight:900}
 
-  /* worktable */
-  .worktable{display:flex;justify-content:center;margin:4px 0 8px;font-variant-numeric:tabular-nums;overflow-x:auto}
-  .wt-grid{position:relative}
-  .wt-row{display:flex;align-items:stretch}
-  .wt-gut{width:clamp(30px,8vw,46px);display:grid;place-items:center end;padding-right:7px;font-weight:850;font-size:clamp(20px,5.4vw,26px);color:var(--ink)}
-  .wt-cell.bar{border-top:3px solid var(--ink)}
-  .wt-cell.brk{border-left:3px solid var(--ink);border-top-left-radius:4px}
-  .wt-cell{width:clamp(26px,7.4vw,34px);height:clamp(30px,8vw,38px);display:grid;place-items:center;
-    font-weight:850;font-size:clamp(19px,5vw,24px);position:relative}
-  .wt-cell.point{width:12px;color:var(--muted)}
-  .wt-cell .d{opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s}
-  .wt-cell.show .d{opacity:1;transform:none}
-  .wt-cell.good .d{color:#dff6ff}
-  .wt-cell.fix .d{color:var(--gold)}
-  .wt-cell.active{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);animation:pulseCell 1.3s ease-in-out infinite}
-  @keyframes pulseCell{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 40%,transparent)}50%{box-shadow:0 0 0 5px transparent}}
-  .wt-row.vinc{border-top:3px solid var(--ink)}
-  .wt-row.vinc .wt-cell:first-child{border-left:3px solid var(--ink);border-top-left-radius:4px;margin-left:-1px}
-  .wt-cell.rule{border-bottom:2px solid color-mix(in srgb,var(--muted) 70%,transparent)}
-  .wt-annot{position:absolute;left:100%;white-space:nowrap;margin-left:10px;color:var(--faint);font-size:12px;font-weight:600;transform:translateY(2px);opacity:0;transition:opacity .25s}
-  .wt-annot.show{opacity:1}
+  /* Big Seven worktable (partial quotients) */
+  .bseven{display:flex;justify-content:center;gap:4px;margin:6px 0 4px;font-variant-numeric:tabular-nums;overflow-x:auto}
+  .bs-div{align-self:flex-start;padding:4px 6px 0 0;font-weight:850;font-size:clamp(20px,5.4vw,26px);color:var(--ink);white-space:nowrap}
+  .bs-grid{display:grid;grid-template-columns:auto auto;column-gap:16px;align-items:center}
+  .bs-l,.bs-r{height:clamp(30px,8vw,38px);display:flex;align-items:center;font-weight:850;font-size:clamp(19px,5vw,24px)}
+  .bs-l{justify-self:end;justify-content:flex-end;gap:7px;padding:0 10px;border-right:3px solid var(--ink)}
+  .bs-l.bs-top{border-top:3px solid var(--ink)}
+  .bs-l.ruled{border-bottom:2px solid color-mix(in srgb,var(--muted) 70%,transparent)}
+  .bs-l .op{color:var(--muted);font-weight:800;font-size:.78em}
+  .bs-r{justify-self:start;padding-left:2px;color:var(--cyan)}
+  .bs-r.bs-sumline{border-top:2px solid color-mix(in srgb,var(--muted) 70%,transparent);color:var(--gold);margin-top:-1px}
+  .bs-l .d,.bs-r .d{opacity:0;transform:translateY(-3px);transition:opacity .2s,transform .2s}
+  .bs-l.show .d,.bs-r.show .d{opacity:1;transform:none}
+  .bs-l.good .d{color:#dff6ff}.bs-l.fix .d{color:var(--gold)}
+  .bs-r.good .d{color:#aef0ff}.bs-r.fix .d{color:var(--gold)}
+  .bs-grid .active{outline:2px solid var(--accent);outline-offset:3px;border-radius:9px;background:color-mix(in srgb,var(--accent) 14%,transparent);animation:pulseCell 1.3s ease-in-out infinite}
+  @keyframes pulseCell{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 40%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
 
   /* fraction work (Fraction Nebula ending) */
   .fracwork{display:flex;align-items:center;justify-content:center;gap:14px;margin:10px 0 2px;font-weight:850;flex-wrap:wrap}
@@ -229,7 +225,7 @@
   @media (max-width:420px){ .pad .key{height:50px} .sector .orb{width:52px;height:52px} }
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.001ms !important;transition-duration:.08s !important}
-    body::before,body::after,.title,.sector .orb::before,.wt-cell.active{animation:none !important}
+    body::before,body::after,.title,.sector .orb::before,.bs-grid .active{animation:none !important}
     .track .ship{transition:none}
   }
 </style>
@@ -247,7 +243,7 @@
     </div>
     <div class="hero">
       <h1 class="title">Division<br>Drift</h1>
-      <p class="tagline">Fly the galaxy by showing your work in long division. Each move is a burst of thrust, and every sector ends your answer a different way.</p>
+      <p class="tagline">Fly the galaxy by showing your work in long division. Pull out friendly chunks the Big Seven way, and every sector ends your answer differently.</p>
       <div class="xpstrip">
         <div class="xpchip"><b id="xpTotal">0</b><span>Total XP</span></div>
         <div class="xpchip"><b id="sectorsCleared">0/3</b><span>Sectors cleared</span></div>
@@ -255,7 +251,7 @@
     </div>
     <div class="map" id="map"></div>
     <button class="labcta" id="labBtn"><span class="lg">&#128302;</span><span><b>Work Lab</b><span>Type any problem and watch every step, like a worked example.</span></span></button>
-    <p class="footnote">Built for a 6th-grade pilot who is learning to show the steps. <button id="resetBtn">Reset progress</button></p>
+    <p class="footnote">Built for a 6th-grade pilot who is learning partial quotients. <button id="resetBtn">Reset progress</button></p>
   </section>
 
   <!-- ===== MISSION ===== -->
@@ -307,7 +303,7 @@
           </div>
         </div>
       </div>
-      <div class="labhint" id="labHint">432 &#247; 15 becomes&#8230;</div>
+      <div class="labhint" id="labHint">432 &#247; 15 the Big Seven way&#8230;</div>
       <div class="worktable" id="labTable"></div>
       <div class="fracwork" id="labFrac" style="display:none"></div>
       <div class="actions">
@@ -337,14 +333,14 @@
   var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- persistence ---------- */
-  var KEY="divisionDrift:v2";
+  var KEY="divisionDrift:v3";
   var save={unlocked:1,best:{},xp:0,muted:false};
   try{var raw=localStorage.getItem(KEY); if(raw) save=Object.assign(save,JSON.parse(raw));}catch(e){}
   function persist(){try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){}}
 
   /* ---------- sectors (the three endings from the worked example) ---------- */
   var SECTORS=[
-    {id:1,name:"Asteroid Belt",sub:"Finish with a remainder",ending:"rem",color:"#2fe6ff",glyph:"R",desc:"Long division, answer as a remainder"},
+    {id:1,name:"Asteroid Belt",sub:"Finish with a remainder",ending:"rem",color:"#2fe6ff",glyph:"R",desc:"Partial quotients, answer as a remainder"},
     {id:2,name:"Fraction Nebula",sub:"Remainder as a fraction",ending:"frac",color:"#a874ff",glyph:"⅛",desc:"Put the remainder over the divisor"},
     {id:3,name:"Decimal Deep Space",sub:"Carry on into decimals",ending:"dec",color:"#49ffb3",glyph:".",desc:"Add a decimal point and keep dividing"}
   ];
@@ -355,7 +351,6 @@
   function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t;}return a||1;}
   function pick(a){return a[ri(0,a.length-1)];}
   function noZero(n){return String(n).indexOf("0")<0;}
-  function placeName(p){return {1:"ones",10:"tens",100:"hundreds",1000:"thousands",0.1:"tenths",0.01:"hundredths"}[p]||(""+p);}
 
   /* ---------- problem generators ---------- */
   function genRem(diff){
@@ -375,138 +370,62 @@
   }
   function genFor(ending,diff){ return ending==="dec"?genDec(diff):genRem(diff); }
 
-  /* ---------- long-division planner (compact bring-down method) ----------
-     Returns grid geometry + an ordered list of interactive steps. */
-  function planDivision(D,V,ending){
-    var intDigits=String(D).split("").map(Number);
-    var intLen=intDigits.length;
-    // sequence of numeric columns to process (dividend digits, then decimal zeros for the decimal ending)
-    var seq=[]; for(var c=0;c<intLen;c++) seq.push({col:c,d:intDigits[c]});
-    var decCount=0, finalDec="";
-    if(ending==="dec"){
-      var A=D/V; finalDec=(String(Math.round(A*100)/100).split(".")[1]||"");
-      decCount=finalDec.length;
-      for(var k=0;k<decCount;k++) seq.push({col:intLen+k,d:0,dec:true});
+  /* ---------- partial-quotients (Big Seven) planner ----------
+     Partial quotients has no single path, so the board is built live as the
+     student picks chunks. This just precomputes the final answer, plus a
+     friendly chunk decomposition for the Work Lab. */
+  function planPQ(D,V,ending){
+    var whole=Math.floor(D/V), rem=D%V, answer="", frac=null, finalDec="";
+    if(ending==="rem"){ answer=whole+" R "+rem; }
+    else if(ending==="frac"){ var g=gcd(rem,V),nn=rem/g,mm=V/g;
+      frac={num:rem,den:V,snum:nn,sden:mm,reduces:g>1}; answer=whole+" "+nn+"/"+mm; }
+    else { var A=D/V; finalDec=(String(Math.round(A*100)/100).split(".")[1]||"");
+      answer=finalDec?whole+"."+finalDec:String(whole); }
+    return {D:D,V:V,ending:ending,quotientInt:String(whole),whole:whole,remainder:rem,frac:frac,finalDec:finalDec,answer:answer};
+  }
+  // greedy friendly-chunk decomposition for the Work Lab (e.g. 432 ÷ 15 → [20, 8])
+  function pqChunks(D,V){
+    var r=D, parts=[], guard=0;
+    while(r>=V && guard++<40){
+      var max=Math.floor(r/V), place=Math.pow(10,String(max).length-1);
+      var m=Math.floor(max/place)*place; if(m<1)m=max;
+      parts.push(m); r-=m*V;
     }
-    var cols=intLen+decCount;
-    var pointAfter=(ending==="dec")?intLen-1:-1;
-
-    var quot={};               // col -> digit char
-    var quotPoint=(ending==="dec");
-    var rows=[];               // visual work rows below the dividend
-    var steps=[];
-    var rem=0, started=false, crossed=false;
-
-    function rightAlign(str,endCol){
-      var cells=[]; for(var i=0;i<str.length;i++) cells.push({col:endCol-(str.length-1)+i,ch:str[i]}); return cells;
-    }
-
-    for(var j=0;j<seq.length;j++){
-      var sgcol=seq[j].col, cur=rem*10+seq[j].d;
-      var q=Math.floor(cur/V), prod=q*V, diff=cur-prod;
-      if(!started && q===0){ quot[sgcol]=""; rem=cur; continue; } // leading digit too small; skip
-      started=true;
-      quot[sgcol]=String(q);
-      var prodCells=rightAlign(String(prod),sgcol);
-      var prodRow={cells:prodCells,hidden:true,annot:V+" × "+q};
-      var diffCells=rightAlign(String(diff),sgcol);
-      var diffRow={cells:diffCells.slice(),hidden:true};
-      rows.push(prodRow); rows.push(diffRow);
-
-      steps.push({kind:"qdigit",col:sgcol,expect:String(q),
-        prompt:V+" into "+cur+" — how many times?",
-        why:V+" × "+q+" = "+prod+", and "+V+" × "+(q+1)+" = "+(V*(q+1))+" would be too big."});
-      steps.push({kind:"num",row:prodRow,cells:prodCells,expect:String(prod),isProduct:true,
-        prompt:q+" × "+V+" = ?", why:q+" × "+V+" = "+prod+"."});
-      steps.push({kind:"num",row:diffRow,cells:diffCells,expect:String(diff),
-        prompt:cur+" − "+prod+" = ?", why:cur+" − "+prod+" = "+diff+"."});
-      rem=diff;
-      if(j<seq.length-1){
-        var nx=seq[j+1];
-        if(nx.dec && !crossed){ crossed=true;
-          steps.push({kind:"point",prompt:"The whole-number part is done. Add a decimal point to the answer.",
-            why:"Write a decimal point in the quotient after "+quotStr()+", then keep dividing the leftover."}); }
-        steps.push({kind:"bring",row:diffRow,col:nx.col,ch:String(nx.d),
-          prompt:"Bring down the "+(nx.dec?"zero":nx.d)+".",
-          why:"Carry it down next to "+diff+"."});
-      }
-    }
-
-    function quotStr(){
-      var s=""; for(var c=0;c<intLen;c++) s+=(quot[c]||""); return s;
-    }
-    var quotientInt=quotStr();
-    var remainder=rem;
-    var answer="", frac=null;
-
-    if(ending==="rem"){
-      answer=quotientInt+" r "+remainder;
-      steps.push({kind:"done",prompt:"The leftover "+remainder+" is the remainder. Lock it in!",final:true,
-        why:"Answer: "+quotientInt+" remainder "+remainder+"."});
-    } else if(ending==="frac"){
-      var g=gcd(remainder,V), nn=remainder/g, mm=V/g;
-      frac={num:remainder,den:V,snum:nn,sden:mm,reduces:g>1};
-      answer=quotientInt+" "+nn+"/"+mm;
-      steps.push({kind:"fnum",expect:String(remainder),prompt:"Put the remainder on top of the fraction.",why:"The remainder "+remainder+" becomes the numerator."});
-      steps.push({kind:"fden",expect:String(V),prompt:"…and the divisor on the bottom.",why:"The divisor "+V+" becomes the denominator."});
-      if(g>1){
-        steps.push({kind:"fsnum",expect:String(nn),prompt:"Simplify: divide top and bottom by "+g+". New top?",why:remainder+" ÷ "+g+" = "+nn+"."});
-        steps.push({kind:"fsden",expect:String(mm),prompt:"New bottom?",final:true,why:V+" ÷ "+g+" = "+mm+". Answer: "+quotientInt+" "+nn+"/"+mm+"."});
-      } else {
-        steps.push({kind:"done",prompt:remainder+"/"+V+" is already as simple as it gets. Lock it in!",final:true,why:"Answer: "+quotientInt+" "+nn+"/"+mm+"."});
-      }
-    } else { // dec
-      answer=quotientInt+"."+finalDec;
-      steps.push({kind:"done",prompt:"No leftover — the decimal is exact. Lock it in!",final:true,why:"Answer: "+quotientInt+"."+finalDec+"."});
-    }
-
-    return {D:D,V:V,ending:ending,cols:cols,pointAfter:pointAfter,intLen:intLen,
-      dividendSeq:seq,quot:quot,quotPoint:quotPoint,rows:rows,steps:steps,
-      answer:answer,remainder:remainder,quotientInt:quotientInt,frac:frac};
+    return {parts:parts,rem:r};
   }
 
-  /* ---------- tableau rendering ---------- */
-  function cellHTML(ch,cls){return '<div class="wt-cell '+(cls||"")+'">'+(ch!==undefined&&ch!==""?'<span class="d">'+ch+'</span>':'')+'</div>';}
-  function pointCell(show){return '<div class="wt-cell point"><span class="d" style="opacity:'+(show?1:0)+'">.</span></div>';}
-
-  // build the DOM for a plan into container `host`; reveal controlled by caller
-  function buildTableau(host,plan){
+  /* ---------- Big Seven board (built live, row by row) ---------- */
+  function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function makeBoard(host,D,V){
     host.innerHTML="";
-    var grid=document.createElement("div"); grid.className="wt-grid";
-    function addRow(map,opts){
-      opts=opts||{};
-      var r=document.createElement("div"); r.className="wt-row";
-      r.insertAdjacentHTML("beforeend",'<div class="wt-gut">'+(opts.gut||"")+'</div>');
-      for(var c=0;c<plan.cols;c++){
-        if(plan.pointAfter>=0 && c===plan.pointAfter+1) r.insertAdjacentHTML("beforeend",pointCell(opts.pointVisible));
-        r.insertAdjacentHTML("beforeend",cellHTML(map[c],""));
-      }
-      return r;
-    }
-    // quotient row (digits pre-rendered but hidden until solved)
-    var qr=addRow(plan.quot,{pointVisible:false}); qr.dataset.role="quot"; grid.appendChild(qr);
-    // dividend row with the divisor in the gutter and a corner bracket
-    var dmap={}; plan.dividendSeq.forEach(function(s){dmap[s.col]=String(s.d);});
-    var dr=addRow(dmap,{pointVisible:plan.pointAfter>=0,gut:String(plan.V)}); dr.dataset.role="dividend"; grid.appendChild(dr);
-    dr.querySelectorAll(".wt-cell").forEach(function(c,i){ c.classList.add("bar"); if(i===0) c.classList.add("brk"); });
-    // work rows (hidden until each step reveals them)
-    plan.rows.forEach(function(row,ri){
-      var map={}; row.cells.forEach(function(c){map[c.col]=c.ch;});
-      var el=addRow(map,{pointVisible:false}); el.dataset.role="work"; el.dataset.idx=ri;
-      if(row.annot){var a=document.createElement("div");a.className="wt-annot";a.textContent=row.annot;el.appendChild(a);}
-      row._el=el; grid.appendChild(el);
-    });
-    host.appendChild(grid);
-    plan._grid=grid; plan._qr=qr; plan._dr=dr;
-    revealRow(dr,true);
+    var wrap=el("div","bseven");
+    wrap.appendChild(el("div","bs-div",String(V)));
+    var g=el("div","bs-grid"); wrap.appendChild(g);
+    host.appendChild(wrap);
+    var L=el("div","bs-l bs-top show"); L.innerHTML='<span class="d">'+D+'</span>';
+    g.appendChild(L); g.appendChild(el("div","bs-r"));
+    return {host:host,grid:g};
   }
-  function revealRow(rowEl,on){ rowEl.querySelectorAll(".wt-cell").forEach(function(c){ if(c.querySelector(".d")) c.classList.toggle("show",on!==false); }); }
-  function cellAtCol(rowEl,col,pointAfter){
-    // map a logical numeric col to a DOM cell index (accounting for the point column)
-    var idx=col + (pointAfter>=0 && col>pointAfter?1:0);
-    var cells=rowEl.querySelectorAll(".wt-cell");
-    return cells[idx];
+  function boardRound(board){ // one subtraction round: product (left) + partial (right) + new remainder (left)
+    var g=board.grid;
+    var prodL=el("div","bs-l"); prodL.innerHTML='<span class="op">&#8722;</span><span class="d"></span>';
+    var partR=el("div","bs-r"); partR.innerHTML='<span class="d"></span>';
+    var remL=el("div","bs-l"); remL.innerHTML='<span class="d"></span>';
+    g.appendChild(prodL); g.appendChild(partR); g.appendChild(remL); g.appendChild(el("div","bs-r"));
+    return {prodL:prodL,partR:partR,remL:remL};
   }
+  function boardRow(board,val){ // a standalone left value (decimal bring-down)
+    var L=el("div","bs-l show"); L.innerHTML='<span class="d">'+val+'</span>';
+    board.grid.appendChild(L); board.grid.appendChild(el("div","bs-r"));
+    return L;
+  }
+  function boardSum(board){ // the summed quotient, bottom of the partials column
+    board.grid.appendChild(el("div","bs-l"));
+    var R=el("div","bs-r bs-sumline"); R.innerHTML='<span class="d"></span>';
+    board.grid.appendChild(R);
+    return R;
+  }
+  function setLineVal(cell,val,cls){ if(!cell)return; var d=cell.querySelector(".d"); if(d)d.textContent=val; cell.classList.add("show"); if(cls)cell.classList.add(cls); }
 
   /* ---------- fraction widget ---------- */
   function buildFrac(host,plan){
@@ -563,14 +482,14 @@
     var map=$("#map"); map.innerHTML="";
     SECTORS.forEach(function(s){
       var locked=s.id>save.unlocked, best=save.best[s.id];
-      var el=document.createElement("button"); el.className="sector"; el.setAttribute("data-locked",locked); el.style.setProperty("--sc",s.color);
-      el.innerHTML='<div class="orb"><span class="glyph">'+s.glyph+'</span></div>'+
+      var e=document.createElement("button"); e.className="sector"; e.setAttribute("data-locked",locked); e.style.setProperty("--sc",s.color);
+      e.innerHTML='<div class="orb"><span class="glyph">'+s.glyph+'</span></div>'+
         '<div class="meta"><div class="sname">'+s.name+'</div><div class="ssub">'+s.desc+'</div>'+
         (best?'<div class="best"><span class="starrow">'+stars(best.stars)+'</span> best '+best.score+'</div>':'<div class="best">'+(locked?"Clear the previous sector to unlock":"Not flown yet")+'</div>')+
         '</div>'+(locked?'<div class="lockchip">&#128274; Locked</div>':'<div class="go">&#8594;</div>');
-      if(!locked) el.addEventListener("click",function(){ac();startMission(s);});
-      else el.addEventListener("click",function(){toast("Clear "+SECTORS[s.id-2].name+" first ✦");});
-      map.appendChild(el);
+      if(!locked) e.addEventListener("click",function(){ac();startMission(s);});
+      else e.addEventListener("click",function(){toast("Clear "+SECTORS[s.id-2].name+" first ✦");});
+      map.appendChild(e);
     });
   }
   function stars(n){var o="";for(var i=0;i<3;i++)o+=i<n?"★":"☆";return o;}
@@ -578,7 +497,7 @@
   /* ---------- mission ---------- */
   var M=null;
   function startMission(sec){
-    M={sec:sec,i:0,score:0,combo:0,maxCombo:0,shields:3,cleanProblems:0,curClean:true,plan:null,si:0,entry:"",locked:false};
+    M={sec:sec,i:0,score:0,combo:0,maxCombo:0,shields:3,cleanProblems:0,curClean:true,plan:null,entry:"",locked:false};
     $("#mName").textContent=sec.name; $("#mSub").textContent=sec.sub;
     document.documentElement.style.setProperty("--accent",sec.color);
     show("mission"); drawShields(); setScore(0); setTrack(0); buildPad(); nextProblem();
@@ -589,109 +508,166 @@
   function setTrack(f){var p=Math.max(0,Math.min(1,f));$("#trackFill").style.width=(p*100)+"%";$("#ship").style.left=(p*100)+"%";}
 
   function nextProblem(){
-    M.curClean=true; M.locked=false; M.si=0; M.entry="";
+    M.curClean=true; M.locked=false; M.entry="";
     var diff=M.i/(QUESTIONS-1);
     var pr=genFor(M.sec.ending,diff);
-    M.plan=planDivision(pr.D,pr.V,M.sec.ending);
+    M.plan=planPQ(pr.D,pr.V,M.sec.ending);
+    M.V=pr.V; M.rem=pr.D; M.partials=[]; M.stage="pick"; M.round=null; M.pend={}; M.sumCell=null;
+    M.inDec=false; M.decCount=0; M.decDone=0;
     $("#qLabel").textContent="Problem "+(M.i+1)+" of "+QUESTIONS;
     $("#feedback").textContent=""; $("#feedback").className="feedback";
     $("#why").className="why"; $("#why").innerHTML="";
-    buildTableau($("#worktable"),M.plan);
+    M.board=makeBoard($("#worktable"),pr.D,pr.V);
     buildFrac($("#fracwork"),M.plan);
     $("#goBtn").disabled=false;
     primeStep();
   }
 
-  function curStep(){return M.plan.steps[M.si];}
-  function isInput(step){return step && (step.kind==="qdigit"||step.kind==="num"||step.kind==="fnum"||step.kind==="fden"||step.kind==="fsnum"||step.kind==="fsden");}
+  /* build the current step from live game state (no pre-baked step list) */
+  function curStep(){
+    var V=M.V, s=M.stage;
+    if(s==="pick") return {kind:"pick",
+      prompt:"Pull a chunk out of "+M.rem+": how many "+V+"s can you take? Use a friendly number.",
+      why:"Try a round number. "+V+" × 10 = "+(V*10)+", "+V+" × 20 = "+(V*20)+"… take the biggest that still fits inside "+M.rem+"."};
+    if(s==="mult") return {kind:"mult",expect:String(V*M.pend.m),
+      prompt:M.pend.m+" × "+V+" = ?", why:M.pend.m+" × "+V+" = "+(V*M.pend.m)+". Write it under "+M.rem+"."};
+    if(s==="sub") return {kind:"sub",expect:String(M.rem-M.pend.prod),
+      prompt:M.rem+" − "+M.pend.prod+" = ?", why:M.rem+" − "+M.pend.prod+" = "+(M.rem-M.pend.prod)+" is what's left to divide."};
+    if(s==="sum") return {kind:"sum",expect:M.plan.quotientInt,
+      prompt:"Add your partials: "+M.partials.join(" + ")+" = ?", why:"Add the right-hand column: "+M.partials.join(" + ")+" = "+M.plan.quotientInt+"."};
+    if(s==="fnum") return {kind:"fnum",expect:String(M.plan.remainder),prompt:"Put the leftover "+M.plan.remainder+" on top of the fraction.",why:"The remainder "+M.plan.remainder+" becomes the numerator."};
+    if(s==="fden") return {kind:"fden",expect:String(M.V),prompt:"…and the divisor "+M.V+" on the bottom.",why:"The divisor "+M.V+" becomes the denominator."};
+    if(s==="fsnum") return {kind:"fsnum",expect:String(M.plan.frac.snum),prompt:"Simplify: divide top and bottom by "+gcd(M.plan.remainder,M.V)+". New top?",why:M.plan.remainder+" ÷ "+gcd(M.plan.remainder,M.V)+" = "+M.plan.frac.snum+"."};
+    if(s==="fsden") return {kind:"fsden",expect:String(M.plan.frac.sden),final:true,prompt:"New bottom?",why:M.V+" ÷ "+gcd(M.plan.remainder,M.V)+" = "+M.plan.frac.sden+". Answer: "+M.plan.answer+"."};
+    if(s==="decpoint") return {kind:"decpoint",prompt:"Whole part done. Add a decimal point, then a zero: "+M.rem+" becomes "+(M.rem*10)+".",why:"Keep dividing the leftover into tenths."};
+    if(s==="decdigit") return {kind:"decdigit",expect:String(Math.floor(M.rem/M.V)),prompt:"How many "+M.V+"s go into "+M.rem+"? (one digit)",why:M.V+" × "+Math.floor(M.rem/M.V)+" = "+(M.V*Math.floor(M.rem/M.V))+"."};
+    if(s==="decbring") return {kind:"decbring",prompt:"Bring down another zero: "+M.rem+" becomes "+(M.rem*10)+".",why:"Carry on into the next decimal place."};
+    if(s==="done") return {kind:"done",final:true,
+      prompt:M.plan.ending==="rem"?("The leftover "+M.plan.remainder+" is the remainder. Lock it in!"):(M.plan.ending==="dec"?"No leftover — the decimal is exact. Lock it in!":"That's it — lock it in!"),
+      why:"Answer: "+M.plan.answer+"."};
+    return null; // stage "end"
+  }
+  function isInput(st){return st && (st.kind==="pick"||st.kind==="mult"||st.kind==="sub"||st.kind==="sum"||st.kind==="decdigit"||st.kind==="fnum"||st.kind==="fden"||st.kind==="fsnum"||st.kind==="fsden");}
+  function targetCell(){
+    if(M.stage==="pick"||M.stage==="decdigit") return M.round&&M.round.partR;
+    if(M.stage==="mult") return M.round&&M.round.prodL;
+    if(M.stage==="sub") return M.round&&M.round.remL;
+    if(M.stage==="sum") return M.sumCell;
+    return null;
+  }
 
   function primeStep(){
     clearActive(); M.entry="";
     var st=curStep();
     if(!st){ finishProblem(); return; }
     renderPrompt(st.prompt);
-    // reveal the active target(s) and mark active
-    if(st.kind==="qdigit"){ markActive([cellAtCol(M.plan._qr,st.col,M.plan.pointAfter)]); }
-    else if(st.kind==="num"){ st._dom=st.cells.map(function(c){return cellAtCol(st.row._el,c.col,M.plan.pointAfter);}); markActive(st._dom); }
-    else if(st.kind==="bring"){ /* action */ }
-    else if(st.kind==="point"){ renderPrompt(st.prompt); }
-    else if(st.kind==="fnum"||st.kind==="fden"||st.kind==="fsnum"||st.kind==="fsden"){
-      var b=fbox($("#fracwork"),st.kind); if(b){b.classList.add("active");} }
-    else if(st.kind==="done"){ renderPrompt(st.prompt); }
-    // button label
+    if(st.kind==="pick"||st.kind==="decdigit"){ if(!M.round) M.round=boardRound(M.board); markActive([M.round.partR]); }
+    else if(st.kind==="mult"){ markActive([M.round.prodL]); }
+    else if(st.kind==="sub"){ markActive([M.round.remL]); }
+    else if(st.kind==="sum"){ if(!M.sumCell) M.sumCell=boardSum(M.board); markActive([M.sumCell]); }
+    else if(st.kind==="fnum"||st.kind==="fden"||st.kind==="fsnum"||st.kind==="fsden"){ var b=fbox($("#fracwork"),st.kind); if(b)b.classList.add("active"); }
     var last=!!st.final;
-    $("#goBtn").textContent = (st.kind==="bring")?"Bring down ↓" : (st.kind==="point")?"Add the . ↓" : (st.kind==="done")? (last?"Finish →":"Next →") : (last?"Finish →":"Enter →");
+    $("#goBtn").textContent = (st.kind==="decpoint"||st.kind==="decbring")?"Bring the zero ↓" : (st.kind==="done")?"Finish →" : (last?"Finish →":"Enter →");
   }
   function renderPrompt(txt){ $("#prompt").innerHTML=txt.replace(/×|÷|−/g,function(m){return '<span class="op">'+m+'</span>';}); }
   function markActive(cells){ cells.forEach(function(c){ if(c) c.classList.add("active"); }); M._active=cells; }
   function clearActive(){ if(M._active)M._active.forEach(function(c){c&&c.classList.remove("active");}); M._active=null;
     var fb=$("#fracwork"); if(fb) fb.querySelectorAll(".fbox.active").forEach(function(b){b.classList.remove("active");}); }
 
-  // fill active cells with typed entry (right-aligned)
   function renderEntry(){
     var st=curStep(); if(!isInput(st)) return;
-    if(st.kind==="qdigit"){
-      var cell=cellAtCol(M.plan._qr,st.col,M.plan.pointAfter);
-      setCell(cell,M.entry.slice(-1));
-    } else if(st.kind==="num"){
-      var cells=st._dom; var s=M.entry;
-      for(var i=0;i<cells.length;i++){ var ch=s[s.length-cells.length+i]; setCell(cells[i], (ch===undefined?"":ch)); }
-    } else {
-      var b=fbox($("#fracwork"),st.kind); if(b){ b.textContent=M.entry; b.classList.add("active"); }
+    if(st.kind==="fnum"||st.kind==="fden"||st.kind==="fsnum"||st.kind==="fsden"){
+      var b=fbox($("#fracwork"),st.kind); if(b){ b.textContent=M.entry; b.classList.add("active"); } return;
     }
+    var cell=targetCell(); if(!cell)return;
+    var d=cell.querySelector(".d"); if(d)d.textContent=M.entry; cell.classList.add("show");
   }
-  function setCell(cell,ch){ if(!cell)return; var d=cell.querySelector(".d");
-    if(ch===""||ch===undefined){ if(d){d.textContent="";} cell.classList.remove("show"); }
-    else{ if(!d){d=document.createElement("span");d.className="d";cell.appendChild(d);} d.textContent=ch; cell.classList.add("show"); } }
 
   function keyIn(ch){
     if(M.locked)return; var st=curStep(); if(!isInput(st))return;
     if(ch==="back") M.entry=M.entry.slice(0,-1);
-    else if(st.kind==="qdigit") M.entry=ch;
     else { if(M.entry.length>=4)return; if(M.entry==="0")M.entry=ch; else M.entry+=ch; }
-    // prepare dom cells for num steps
-    if(st.kind==="num" && !st._dom){ st._dom=st.cells.map(function(c){return cellAtCol(st.row._el,c.col,M.plan.pointAfter);}); markActive(st._dom); }
     renderEntry(); sStep();
   }
 
   function go(){
-    if(M.locked){ return; }
+    if(M.locked) return;
     var st=curStep(); if(!st){ finishProblem(); return; }
-    if(st.kind==="bring"){ // reveal brought-down digit
-      var cell=cellAtCol(st.row._el,st.col,M.plan.pointAfter); setCell(cell,st.ch); cell.classList.add("good");
-      sStep(); advance(); return;
+    var V=M.V;
+    if(st.kind==="decpoint"||st.kind==="decbring"){
+      if(st.kind==="decpoint"){ M.inDec=true; M.decCount=(M.plan.finalDec||"").length||1; M.decDone=0; }
+      M.rem=M.rem*10; boardRow(M.board,M.rem); sStep();
+      M.stage="decdigit"; M.round=null; advance(); return;
     }
-    if(st.kind==="point"){ // reveal decimal point in quotient + dividend zeros already present
-      M.plan._qr.querySelectorAll(".wt-cell.point .d").forEach(function(d){d.style.opacity="1";});
-      sStep(); advance(); return;
-    }
-    if(st.kind==="done"){ advance(); return; }
-    // input steps: validate
-    if(st.kind==="num" && !st._dom){ st._dom=st.cells.map(function(c){return cellAtCol(st.row._el,c.col,M.plan.pointAfter);}); }
+    if(st.kind==="done"){ M.stage="end"; advance(); return; }
     if(M.entry===""){ toast("Type your answer, pilot ✦"); return; }
-    var ok=(M.entry===st.expect);
-    if(ok){ fillCorrect(st,true); sGood(); flashGood(); M.score+=20; animateScore(M.score-20,M.score); advance(); }
-    else { fillCorrect(st,false); sBad(); shake(); loseShield(); showWhy(st.why); M.curClean=false; advance(true); }
+    var val=parseInt(M.entry,10);
+
+    if(st.kind==="pick"){
+      var m=val;
+      if(!(m>=1) || V*m>M.rem){
+        wrongMove(V*m>M.rem ? (V+" × "+m+" = "+(V*m)+", and that's more than "+M.rem+". Take a smaller chunk.") : "Pick at least 1.");
+        var pc=M.round&&M.round.partR; if(pc){var d=pc.querySelector(".d");if(d)d.textContent="";pc.classList.remove("show");}
+        M.entry=""; if(M.shields>0) primeStep(); return;
+      }
+      M.pend={m:m,prod:V*m}; M.partials.push(m);
+      setLineVal(M.round.partR,m,"good"); sGood(); flashGood(); M.score+=20; animateScore(M.score-20,M.score);
+      M.stage="mult"; advance(); return;
+    }
+    if(st.kind==="decdigit"){
+      if(String(val)!==st.expect){ setLineVal(M.round.partR,st.expect,"fix"); M.pend={m:parseInt(st.expect,10),prod:parseInt(st.expect,10)*V}; wrongMove(st.why); M.stage="mult"; advance(true); return; }
+      M.pend={m:val,prod:val*V}; setLineVal(M.round.partR,val,"good"); sGood(); flashGood(); M.score+=20; animateScore(M.score-20,M.score);
+      M.stage="mult"; advance(); return;
+    }
+
+    // mult / sub / sum / fraction: one correct value
+    var ok=(M.entry===String(st.expect));
+    if(ok){ fillStep(st,true); sGood(); flashGood(); M.score+=20; animateScore(M.score-20,M.score); nextStage(st); advance(); }
+    else { fillStep(st,false); wrongMove(st.why); nextStage(st); advance(true); }
   }
-  function fillCorrect(st,right){
+
+  function nextStage(st){
+    if(st.kind==="mult"){ M.stage="sub"; return; }
+    if(st.kind==="sub"){
+      M.rem=M.rem-M.pend.prod; M.round=null;
+      if(M.inDec){ M.decDone++; M.stage=(M.rem===0||M.decDone>=M.decCount)?"done":"decbring"; return; }
+      if(M.rem>=M.V) M.stage="pick";
+      else M.stage="sum";
+      return;
+    }
+    if(st.kind==="sum"){
+      if(M.plan.ending==="rem") M.stage="done";
+      else if(M.plan.ending==="frac") M.stage="fnum";
+      else M.stage=(M.plan.remainder>0)?"decpoint":"done";
+      return;
+    }
+    if(st.kind==="fnum"){ M.stage="fden"; return; }
+    if(st.kind==="fden"){ M.stage=(M.plan.frac&&M.plan.frac.reduces)?"fsnum":"done"; return; }
+    if(st.kind==="fsnum"){ M.stage="fsden"; return; }
+    if(st.kind==="fsden"){ M.stage="done"; return; }
+  }
+
+  function fillStep(st,right){
     var cls=right?"good":"fix";
-    if(st.kind==="qdigit"){ var c=cellAtCol(M.plan._qr,st.col,M.plan.pointAfter); setCell(c,st.expect); c.classList.add(cls); }
-    else if(st.kind==="num"){ var cells=st._dom||st.cells.map(function(c){return cellAtCol(st.row._el,c.col,M.plan.pointAfter);}); var s=st.expect;
-      for(var i=0;i<cells.length;i++){ var ch=s[s.length-cells.length+i]; if(ch!==undefined){ setCell(cells[i],ch); cells[i].classList.add(cls); if(st.isProduct)cells[i].classList.add("rule"); } }
-      if(st.isProduct){ var an=st.row._el.querySelector(".wt-annot"); if(an)an.classList.add("show"); } }
-    else { var b=fbox($("#fracwork"),st.kind); if(b){ b.textContent=st.expect; b.classList.remove("active"); b.classList.add(cls);} }
+    if(st.kind==="mult"){ setLineVal(M.round.prodL,st.expect,cls); M.round.prodL.classList.add("ruled"); }
+    else if(st.kind==="sub"){ setLineVal(M.round.remL,st.expect,cls); }
+    else if(st.kind==="sum"){ setLineVal(M.sumCell,st.expect,cls); }
+    else { var b=fbox($("#fracwork"),st.kind); if(b){ b.textContent=st.expect; b.classList.remove("active"); b.classList.add(cls); } }
   }
-  function flashGood(){ var fb=$("#feedback"); fb.className="feedback good"; fb.textContent=pick(["Clean burn!","Locked on!","Nice move!","On target!"]); }
+
+  function wrongMove(why){ sBad(); shake(); loseShield(); showWhy(why); M.curClean=false;
+    if(M.shields<=0){ M.locked=true; setTimeout(function(){endMission(false);},760); } }
+  function flashGood(){ var fb=$("#feedback"); fb.className="feedback good"; fb.textContent=pick(["Clean burn!","Locked on!","Nice move!","On target!","Good chunk!"]); }
   function showWhy(w){ var fb=$("#feedback"); fb.className="feedback bad"; fb.textContent="Not quite — here's the move:"; $("#why").innerHTML=w; $("#why").classList.add("show"); }
   function loseShield(){ if(M.shields>0){M.shields--; drawShields();} }
 
   function advance(wasWrong){
-    M.si++; M.entry="";
+    M.entry="";
     $("#feedback").className="feedback"; $("#feedback").textContent="";
     if(!wasWrong){ $("#why").className="why"; $("#why").innerHTML=""; }
+    if(M.locked && M.shields<=0) return; // mission ending
     var st=curStep();
     if(!st){ finishProblem(); return; }
-    // small delay so the student sees the filled line
     setTimeout(primeStep, wasWrong?60:40);
   }
 
@@ -760,61 +736,56 @@
   function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toTimer);toTimer=setTimeout(function(){t.classList.remove("show");},1900);}
 
   /* ---------- WORK LAB ---------- */
-  var LAB={plan:null,step:0,ending:"rem"};
+  var LAB={actions:[],step:0,ending:"rem",answer:""};
   function labBuild(){
     var D=parseInt($("#labD").value,10), V=parseInt($("#labV").value,10);
     if(!(D>0)||!(V>1)){ $("#labHint").textContent="Enter a dividend and a divisor (divisor 2 or more)."; return; }
-    if(LAB.ending==="dec"){ // ensure a tidy terminating decimal, else nudge
-      var A=D/V; if(Math.abs(A*1000-Math.round(A*1000))>1e-9){ $("#labHint").textContent=D+" ÷ "+V+" doesn't end neatly — showing it to 3 places."; }
+    var plan=planPQ(D,V,LAB.ending);
+    var board=makeBoard($("#labTable"),D,V);
+    buildFrac($("#labFrac"),plan);
+    LAB.actions=[]; LAB.step=0; LAB.answer=plan.answer;
+    var ch=pqChunks(D,V), rem=D, acts=LAB.actions;
+    ch.parts.forEach(function(m){
+      var prod=V*m, r=boardRound(board), before=rem, after=rem-prod;
+      acts.push({t:"Take "+m+" — "+V+" × "+m+" = "+prod, f:function(){setLineVal(r.partR,m,"good");}});
+      acts.push({t:"Write "+prod+" under "+before, f:function(){setLineVal(r.prodL,prod,"good");r.prodL.classList.add("ruled");}});
+      acts.push({t:before+" − "+prod+" = "+after, f:function(){setLineVal(r.remL,after,"good");}});
+      rem=after;
+    });
+    var sumCell=boardSum(board);
+    acts.push({t:"Add the partials: "+ch.parts.join(" + ")+" = "+plan.quotientInt, f:function(){setLineVal(sumCell,plan.quotientInt,"good");}});
+    if(LAB.ending==="rem"){
+      acts.push({t:"Leftover "+ch.rem+" is the remainder → "+plan.answer, f:function(){}});
+    } else if(LAB.ending==="frac"){
+      acts.push({t:"Remainder over divisor: "+plan.remainder+"/"+V, f:function(){setLineVal2(fbox($("#labFrac"),"fnum"),plan.remainder);setLineVal2(fbox($("#labFrac"),"fden"),V);}});
+      if(plan.frac.reduces){ var g=gcd(plan.remainder,V);
+        acts.push({t:"Simplify by "+g+" → "+plan.frac.snum+"/"+plan.frac.sden, f:function(){setLineVal2(fbox($("#labFrac"),"fsnum"),plan.frac.snum);setLineVal2(fbox($("#labFrac"),"fsden"),plan.frac.sden);}}); }
+      acts.push({t:"Answer: "+plan.answer, f:function(){}});
+    } else { // dec
+      var digits=(plan.finalDec||"").split(""), cur=plan.remainder;
+      acts.push({t:"Add a decimal point, bring a zero: "+cur+" → "+(cur*10), f:function(){}});
+      cur=plan.remainder;
+      digits.forEach(function(dig,ix){
+        var digit=parseInt(dig,10), scaled=cur*10, prod=digit*V, after=scaled-prod;
+        acts.push({t:V+" into "+scaled+" → "+digit+" ("+V+" × "+digit+" = "+prod+")", f:function(){boardRow(board,scaled);var r=boardRound(board);r._dig=r;setLineVal(r.partR,digit,"good");setLineVal(r.prodL,prod,"good");r.prodL.classList.add("ruled");setLineVal(r.remL,after,"good");}});
+        cur=after;
+      });
+      acts.push({t:"Answer: "+plan.answer, f:function(){}});
     }
-    LAB.plan=planDivisionLab(D,V,LAB.ending);
-    LAB.step=0;
-    buildTableau($("#labTable"),LAB.plan);
-    buildFrac($("#labFrac"),LAB.plan);
-    // hide all work rows + quotient until stepped
-    LAB.plan.rows.forEach(function(r){ r._el.querySelectorAll(".wt-cell .d").forEach(function(d){d.parentNode.classList.remove("show");}); });
-    $("#labHint").textContent=D+" ÷ "+V+" becomes "+LAB.plan.answer;
+    $("#labHint").textContent=acts[0]?acts[0].t:(D+" ÷ "+V);
     $("#labNext").textContent="Show step ▸"; $("#labNext").disabled=false;
   }
-  // lab uses the same planner but tolerates non-terminating decimals (cap 3 places)
-  function planDivisionLab(D,V,ending){
-    if(ending==="dec"){ var A=D/V; if(Math.abs(A*100-Math.round(A*100))>1e-9){ return planDecimalCapped(D,V,3); } }
-    return planDivision(D,V,ending);
-  }
-  function planDecimalCapped(D,V,places){
-    // build a decimal plan to a fixed number of places (for non-terminating cases in the lab)
-    var dec=""; var r=D%V; var whole=Math.floor(D/V);
-    // reuse planDivision by faking an exact dividend is messy; instead compute digits directly
-    var digits=[]; var rem=D%V;
-    for(var i=0;i<places;i++){ rem*=10; digits.push(Math.floor(rem/V)); rem=rem%V; }
-    // construct a synthetic terminating problem is complex; fall back to a simple reveal plan
-    var plan=planDivision(Math.floor(D/V)*V + (D%V),V,"rem"); // integer part worktable
-    plan.answer=whole+"."+digits.join("")+"…";
-    plan.ending="rem"; plan.frac=null;
-    return plan;
-  }
+  function setLineVal2(box,val){ if(box){box.textContent=val; box.classList.add("good");} }
   function labStep(){
-    if(!LAB.plan){ labBuild(); return; }
-    var st=LAB.plan.steps[LAB.step];
-    if(!st){ $("#labNext").textContent="Done ✓"; $("#labNext").disabled=true; return; }
-    // auto-perform each step (reveal answer)
-    applyLabStep(st);
-    LAB.step++;
-    if(!LAB.plan.steps[LAB.step]){ $("#labNext").textContent="Done ✓"; $("#labNext").disabled=true; $("#labHint").textContent="Answer: "+LAB.plan.answer; }
-    else $("#labHint").textContent=LAB.plan.steps[LAB.step].prompt;
+    if(!LAB.actions.length){ labBuild(); return; }
+    var a=LAB.actions[LAB.step];
+    if(!a){ $("#labNext").textContent="Done ✓"; $("#labNext").disabled=true; return; }
+    a.f(); sStep(); LAB.step++;
+    var nx=LAB.actions[LAB.step];
+    if(nx){ $("#labHint").textContent=nx.t; }
+    else { $("#labNext").textContent="Done ✓"; $("#labNext").disabled=true; $("#labHint").textContent="Answer: "+LAB.answer; }
   }
-  function applyLabStep(st){
-    var p=LAB.plan;
-    if(st.kind==="qdigit"){ var c=cellAtCol(p._qr,st.col,p.pointAfter); setCell(c,st.expect); c.classList.add("good"); }
-    else if(st.kind==="num"){ var cells=st.cells.map(function(x){return cellAtCol(st.row._el,x.col,p.pointAfter);}); var s=st.expect;
-      for(var i=0;i<cells.length;i++){var ch=s[s.length-cells.length+i]; if(ch!==undefined){setCell(cells[i],ch);cells[i].classList.add("good");if(st.isProduct)cells[i].classList.add("rule");}}
-      if(st.isProduct){var an=st.row._el.querySelector(".wt-annot");if(an)an.classList.add("show");} }
-    else if(st.kind==="bring"){ var cc=cellAtCol(st.row._el,st.col,p.pointAfter); setCell(cc,st.ch); cc.classList.add("good"); }
-    else if(st.kind==="point"){ p._qr.querySelectorAll(".wt-cell.point .d").forEach(function(d){d.style.opacity="1";}); }
-    else if(st.kind==="fnum"||st.kind==="fden"||st.kind==="fsnum"||st.kind==="fsden"){ var b=fbox($("#labFrac"),st.kind); if(b){b.textContent=st.expect;b.classList.add("good");} }
-    sStep();
-  }
-  function labReset(){ LAB.step=0; if($("#labD").value&&$("#labV").value) labBuild(); }
+  function labReset(){ labBuild(); }
 
   /* ---------- wire up ---------- */
   $("#goBtn").addEventListener("click",go);
