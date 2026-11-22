@@ -40,6 +40,22 @@ and sound. Study 01 has three:
    of study 01 opens after about six seconds of stillness and reveals the first
    photograph.
 
+## Studies so far
+
+| study | what it tests | verdict |
+|---|---|---|
+| 01 | the paper itself: rims, shadows, lamp, 12fps jitter, one patience door | paper works; door was a drawn keyhole and meant nothing |
+| 02 | motion to music: hinged jaw, swing, gallop, flash, torn cuts on the downbeat; layered archive backdrops | motion right; the heart-in-the-barrel portal was an object the owner didn't recognise |
+| 03 | five floors fed by the Favorites album; carousel orbits, teacup spin, Dumbo flight; red proscenium; gilded mirror as portal | current |
+
+Rule learned in 02: a portal has to be something the owner already knows. Never promote a background object to a door.
+
+## Sources
+
+- `study/assets/` (ignored): everything the page loads. Personal photos become `cutouts`, `prints`, `backdrops`; archive material is flagged `archive: true` in the manifest.
+- `sources/` (ignored except `credits.json`): public-domain downloads from Wikimedia Commons, Library of Congress and NASA. Every file has source, author, license and page URL in `credits.json`.
+- The Favorites album is pulled with `tools/prepare_favorites.py` from a local download; nothing from it is committed.
+
 ## Phases
 
 1. **Material study** (this folder, `study/`). One column, three floors, the paper
