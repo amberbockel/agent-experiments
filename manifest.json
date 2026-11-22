@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-22",
+      "slug": "2026-11-22",
+      "title": "Scribe Cadet",
+      "category": "games",
+      "design": "maximalist-contemporary",
+      "oneLiner": "Write math answers by hand and an offline, from-scratch recognizer reads them to fly your starship to the next planet.",
+      "path": "apps/2026-11-22/"
+    },
+    {
       "date": "2026-11-21",
       "slug": "2026-11-21",
       "title": "Calibrate",
