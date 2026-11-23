@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-23",
+      "slug": "2026-11-23",
+      "title": "Crosswind",
+      "category": "games",
+      "design": "modern-editorial",
+      "oneLiner": "Land a plane on a runway while gusts shove you sideways, flying solo or taking turns with family.",
+      "path": "apps/2026-11-23/"
+    },
+    {
       "date": "2026-11-22",
       "slug": "2026-11-22",
       "title": "Scribe Cadet",
