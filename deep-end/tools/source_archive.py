@@ -26,6 +26,16 @@ CREDITS_PATH = os.path.join(OUT, "credits.json")
 credits = json.load(open(CREDITS_PATH)) if os.path.exists(CREDITS_PATH) else {}
 
 # concept: list of (source, query, how many to keep)
+PASS3 = {
+    "grandville":   [("commons", "Grandville Les Metamorphoses du jour", 8), ("commons", "Grandville Un autre monde", 6), ("commons", "Grandville Scenes de la vie privee et publique des animaux", 6)],
+    "rackham":      [("commons", "Arthur Rackham Alice in Wonderland 1907", 8), ("commons", "Arthur Rackham Peter Pan in Kensington Gardens", 6), ("commons", "Arthur Rackham fairy illustration 1908", 4)],
+    "audubon":      [("commons", "Audubon Birds of America plate flamingo", 3), ("commons", "Audubon Birds of America plate", 10), ("commons", "Audubon swallow plate", 3)],
+    "lear":         [("commons", "Edward Lear parrot lithograph", 5), ("commons", "Edward Lear nonsense drawing", 4)],
+    "birds":        [("commons", "bird in flight engraving 19th century", 4), ("commons", "swallows flying illustration vintage", 4), ("commons", "Gould hummingbird plate", 4)],
+    "butterflies":  [("commons", "butterfly plate 19th century chromolithograph", 6)],
+    "hot-air":      [("commons", "hot air balloon lithograph 19th century", 5), ("commons", "montgolfier balloon engraving", 3)],
+    "outrun":       [("loc", "pacific coast highway", 4), ("commons", "palm tree engraving 19th century", 4), ("commons", "Bixby Bridge", 3)],
+}
 PASS2 = {
     "sharks":       [("commons", "shark Brehm Tierleben", 4), ("commons", "requin gravure", 3), ("commons", "Carcharias illustration", 3)],
     "alice":        [("commons", "Alice Tenniel rabbit hole falling", 4), ("commons", "Tenniel Alice drink me", 3), ("commons", "Alice in Wonderland 1865 Tenniel illustration", 6)],
@@ -201,7 +211,7 @@ def nasa(concept, query, want):
 
 FETCH = {"commons": commons, "loc": loc, "nasa": nasa}
 
-TABLE = PASS2 if os.environ.get("PASS2") else CONCEPTS
+TABLE = PASS3 if os.environ.get("PASS3") else PASS2 if os.environ.get("PASS2") else CONCEPTS
 for concept, jobs in TABLE.items():
     if ONLY and concept not in ONLY:
         continue
