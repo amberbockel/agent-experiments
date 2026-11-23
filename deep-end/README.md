@@ -47,7 +47,8 @@ and sound. Study 01 has three:
 | 01 | the paper itself: rims, shadows, lamp, 12fps jitter, one patience door | paper works; door was a drawn keyhole and meant nothing |
 | 02 | motion to music: hinged jaw, swing, gallop, flash, torn cuts on the downbeat; layered archive backdrops | motion right; the heart-in-the-barrel portal was an object the owner didn't recognise |
 | 03 | five floors fed by the Favorites album; carousel orbits, teacup spin, Dumbo flight; red proscenium; gilded mirror as portal | owner wanted denser, and doors |
-| 04 | real portals: openings in the prints sample a live render of the room behind; six side rooms with two exits each; a pocket of three items; locked exits and a locked mirror; torn-paper crossings | current |
+| 04 | real portals: openings in the prints sample a live render of the room behind; six side rooms with two exits each; a pocket of three items; locked exits and a locked mirror; torn-paper crossings | owner: denser, and scale it like a film |
+| 05 | the hall of four doors (love, travel, motherhood, adventure), twelve wing rooms from the Favorites album, the drive in the red car, paper birds in flocks | current; see TREATMENT.md |
 
 ## How the doors work (study 04)
 
