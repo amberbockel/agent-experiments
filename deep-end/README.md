@@ -46,7 +46,15 @@ and sound. Study 01 has three:
 |---|---|---|
 | 01 | the paper itself: rims, shadows, lamp, 12fps jitter, one patience door | paper works; door was a drawn keyhole and meant nothing |
 | 02 | motion to music: hinged jaw, swing, gallop, flash, torn cuts on the downbeat; layered archive backdrops | motion right; the heart-in-the-barrel portal was an object the owner didn't recognise |
-| 03 | five floors fed by the Favorites album; carousel orbits, teacup spin, Dumbo flight; red proscenium; gilded mirror as portal | current |
+| 03 | five floors fed by the Favorites album; carousel orbits, teacup spin, Dumbo flight; red proscenium; gilded mirror as portal | owner wanted denser, and doors |
+| 04 | real portals: openings in the prints sample a live render of the room behind; six side rooms with two exits each; a pocket of three items; locked exits and a locked mirror; torn-paper crossings | current |
+
+## How the doors work (study 04)
+
+- A door is a print with a hole. Over the hole sits an ellipse whose shader samples a render target in screen space, so the view through it parallaxes like a real window. Each door owns a render target and a camera; only doors within nine units of the viewer are rendered each frame.
+- Rooms are separate scenes. Inside one, the fall stops and the pointer looks around. Every room has exactly two exits: one drops you into the column deeper than you were, one goes sideways to another room. The sideways route is where the items are.
+- Items go into a pocket that persists between visits. A locked exit shows a dim silhouette of what it wants. The mirror at the bottom wants the rabbit, who waits in the rocks room, behind the corridor door on the water floor.
+- The choice, stated plainly: fall fast and arrive with nothing, or take the long way and arrive with the thing that opens the end.
 
 Rule learned in 02: a portal has to be something the owner already knows. Never promote a background object to a door.
 
