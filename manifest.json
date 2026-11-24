@@ -14,6 +14,15 @@
     },
     {
       "date": "2026-11-22",
+      "slug": "2026-11-22-deadletter-detective",
+      "title": "Deadletter Detective",
+      "category": "games",
+      "design": "editorial-noir",
+      "oneLiner": "A handwriting mystery: work out each clue, write it in your clearest hand, and photograph it. On-device OCR only cracks the case open when your letters are readable, and no photo ever leaves your device.",
+      "path": "apps/2026-11-22-deadletter-detective/"
+    },
+    {
+      "date": "2026-11-22",
       "slug": "2026-11-22",
       "title": "Scribe Cadet",
       "category": "games",

@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deadletter Detective</title>
+<meta name="description" content="A handwriting mystery game: write each clue in your clearest hand, photograph it, and the case cracks open when your letters are readable.">
+<style>
+:root{
+  --ink:#14161c;          /* deep ink background */
+  --ink-2:#1b1e27;        /* raised panel on dark */
+  --ink-3:#242836;
+  --paper:#efe7d4;        /* evidence paper */
+  --paper-2:#e4d9c0;      /* paper shadow edge */
+  --paper-ink:#28231c;    /* text on paper */
+  --paper-faint:#6b6253;  /* faded paper text */
+  --red:#c5341f;          /* case-stamp red / string */
+  --red-deep:#9c2515;
+  --amber:#d9a441;        /* brass highlight */
+  --green:#4f8a53;        /* decoded green */
+  --cool:#9aa3b5;         /* cool grey chrome */
+  --cool-dim:#5f6678;
+  --line:#2c3040;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --type:"Courier New",ui-monospace,Menlo,Consolas,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 78% -8%, #222838 0%, rgba(34,40,56,0) 60%),
+    radial-gradient(900px 520px at 8% 108%, #20242f 0%, rgba(32,36,47,0) 58%),
+    var(--ink);
+  color:var(--cool);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  min-height:100svh;
+  line-height:1.5;
+}
+.wrap{max-width:760px;margin:0 auto;padding:22px 18px calc(28px + env(safe-area-inset-bottom));}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none !important}
+
+/* ---------- Desk / intro ---------- */
+.deskhead{display:flex;align-items:center;gap:12px;margin:6px 0 20px}
+.badge{
+  width:44px;height:44px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 34% 30%, #f0c766, var(--amber) 46%, #9c6f1d 100%);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.4), 0 6px 16px rgba(0,0,0,.45);
+  display:grid;place-items:center;color:#3a2a06;font-family:var(--type);font-weight:700;font-size:13px;
+}
+.agency{font-family:var(--type);letter-spacing:.14em;font-size:12px;color:var(--cool-dim);text-transform:uppercase}
+.agency b{color:var(--cool);font-weight:700}
+
+.folder{
+  position:relative;
+  background:linear-gradient(174deg,var(--paper) 0%, var(--paper-2) 100%);
+  color:var(--paper-ink);
+  border-radius:4px 16px 4px 4px;
+  padding:26px 24px 28px;
+  box-shadow:0 20px 50px rgba(0,0,0,.5), 0 2px 0 rgba(255,255,255,.25) inset;
+  border-top:3px solid #d8cba7;
+}
+.folder::before{ /* folder tab */
+  content:"";position:absolute;top:-14px;left:22px;width:140px;height:16px;
+  background:var(--paper);border-radius:8px 8px 0 0;box-shadow:0 -3px 8px rgba(0,0,0,.25);
+}
+.conf{
+  font-family:var(--type);font-weight:700;letter-spacing:.26em;font-size:12px;
+  color:var(--red);border:2px solid var(--red);display:inline-block;padding:3px 10px;border-radius:3px;
+  transform:rotate(-3deg);opacity:.9;margin-bottom:14px;
+}
+.casekicker{font-family:var(--type);font-size:12px;letter-spacing:.12em;color:var(--paper-faint);text-transform:uppercase;margin-bottom:6px}
+h1.casetitle{font-family:var(--serif);font-weight:700;font-size:clamp(28px,7.4vw,42px);line-height:1.05;margin:0 0 12px;color:#1c1813;letter-spacing:-.01em}
+.brief{font-family:var(--serif);font-size:17px;line-height:1.62;color:#352e24;max-width:56ch}
+.brief p{margin:0 0 12px}
+.howline{
+  margin-top:18px;border-top:1px dashed #c3b797;padding-top:14px;
+  font-size:14px;color:var(--paper-faint);display:flex;gap:10px;align-items:flex-start
+}
+.howline svg{flex:none;margin-top:1px}
+
+/* case chooser */
+.cases{display:grid;gap:12px;margin-top:8px}
+.casecard{
+  text-align:left;width:100%;background:var(--ink-2);border:1px solid var(--line);
+  border-radius:12px;padding:15px 16px;color:var(--cool);display:flex;gap:14px;align-items:center;
+  transition:border-color .18s, transform .18s, background .18s;
+}
+.casecard:hover{border-color:var(--amber);transform:translateY(-2px);background:var(--ink-3)}
+.casecard .no{font-family:var(--type);font-size:12px;color:var(--amber);border:1px solid var(--cool-dim);border-radius:6px;padding:7px 9px;flex:none}
+.casecard .ct{display:block;font-family:var(--serif);font-size:18px;color:#eef0f5;margin:0 0 3px}
+.casecard .cd{display:block;font-size:13px;color:var(--cool-dim);line-height:1.4}
+.casecard .solved{margin-left:auto;font-family:var(--type);font-size:11px;color:var(--green);letter-spacing:.1em;flex:none}
+
+.cta{
+  appearance:none;border:none;border-radius:11px;
+  background:linear-gradient(180deg,#d8402a,var(--red) 60%,var(--red-deep));
+  color:#fff;font-weight:700;font-size:16px;letter-spacing:.02em;
+  padding:15px 22px;width:100%;margin-top:20px;
+  box-shadow:0 10px 24px rgba(197,52,31,.38), inset 0 1px 0 rgba(255,255,255,.3);
+  transition:transform .15s, box-shadow .15s;
+}
+.cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(197,52,31,.5)}
+.cta.ghost{background:none;color:var(--cool);border:1px solid var(--line);box-shadow:none;font-weight:600}
+.cta.ghost:hover{border-color:var(--cool);transform:none}
+.cta.amber{background:linear-gradient(180deg,#eab84f,var(--amber) 60%,#b4801f);color:#2a1e03;box-shadow:0 10px 24px rgba(217,164,65,.34), inset 0 1px 0 rgba(255,255,255,.4)}
+
+/* ---------- Case board progress ---------- */
+.board{display:flex;align-items:center;gap:7px;margin:4px 2px 18px;flex-wrap:wrap}
+.pin{display:flex;align-items:center;gap:7px}
+.dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--cool-dim);background:var(--ink-2)}
+.dot.done{background:var(--red);border-color:var(--red);box-shadow:0 0 0 3px rgba(197,52,31,.18)}
+.dot.now{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,164,65,.18)}
+.thread{width:20px;height:2px;background:repeating-linear-gradient(90deg,var(--cool-dim) 0 5px, transparent 5px 9px)}
+.thread.done{background:var(--red)}
+
+/* ---------- Clue card ---------- */
+.evidence{
+  position:relative;background:linear-gradient(174deg,var(--paper),var(--paper-2));
+  color:var(--paper-ink);border-radius:5px;padding:22px 22px 24px;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+}
+.evidence::after{ /* tape */
+  content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-1.5deg);
+  width:96px;height:22px;background:rgba(217,164,65,.5);border:1px solid rgba(180,128,31,.45);
+  border-radius:2px;box-shadow:0 2px 5px rgba(0,0,0,.2);
+}
+.evstamp{font-family:var(--type);font-size:11px;letter-spacing:.2em;color:var(--red);text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between}
+.evstamp .n{color:var(--paper-faint)}
+.cluekind{font-family:var(--type);font-size:12px;letter-spacing:.08em;color:var(--paper-faint);text-transform:uppercase;margin-bottom:8px}
+.clueprompt{font-family:var(--serif);font-size:20px;line-height:1.5;color:#231e16;margin:0 0 6px}
+.cluetarget{
+  font-family:var(--serif);font-weight:700;font-size:30px;letter-spacing:.06em;color:#1c1813;
+  background:rgba(197,52,31,.08);border:1px dashed rgba(156,37,21,.5);border-radius:8px;
+  padding:10px 14px;margin:12px 0 4px;text-align:center;word-break:break-word;
+}
+.scramble{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0 4px}
+.scramble span{font-family:var(--type);font-weight:700;font-size:22px;color:#1c1813;background:#fff;border:1px solid #cdbf9e;border-radius:7px;width:40px;height:46px;display:grid;place-items:center;box-shadow:0 2px 4px rgba(0,0,0,.12)}
+.writeline{margin:16px 0 2px;color:var(--paper-faint);font-size:14px;display:flex;align-items:center;gap:8px}
+.writeline svg{flex:none}
+.hintbtn{background:none;border:none;color:var(--red-deep);font-family:var(--type);font-size:12px;letter-spacing:.06em;text-decoration:underline;text-underline-offset:3px;padding:6px 0;margin-top:6px}
+.hinttext{font-family:var(--serif);font-style:italic;color:#4a4134;font-size:15px;margin-top:4px}
+
+.actionrow{display:grid;gap:10px;margin-top:18px}
+
+/* ---------- Scan + verdict ---------- */
+.scanstage{margin-top:16px;text-align:center}
+.shotframe{
+  position:relative;display:inline-block;max-width:100%;border-radius:10px;overflow:hidden;
+  border:1px solid var(--line);background:#0e1016;
+}
+.shotframe canvas,.shotframe img{display:block;max-width:100%;height:auto}
+.verdictStamp{
+  position:absolute;top:50%;left:50%;
+  font-family:var(--type);font-weight:700;letter-spacing:.14em;font-size:clamp(26px,8vw,46px);
+  padding:6px 18px;border:5px solid;border-radius:8px;text-transform:uppercase;white-space:nowrap;
+  opacity:0;pointer-events:none;
+}
+.verdictStamp.show{animation:slam .5s cubic-bezier(.2,1.5,.5,1) forwards}
+.verdictStamp.decoded{color:var(--green);border-color:var(--green);transform:translate(-50%,-50%) rotate(-11deg)}
+.verdictStamp.smudged{color:var(--red);border-color:var(--red);transform:translate(-50%,-50%) rotate(-7deg)}
+@keyframes slam{0%{opacity:0;transform:translate(-50%,-50%) scale(2.4) rotate(-20deg)}70%{opacity:1}100%{opacity:.92}}
+
+.readout{font-family:var(--type);font-size:13px;color:var(--cool-dim);margin-top:12px}
+.readout b{color:var(--cool)}
+.feedback{
+  background:var(--ink-2);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-top:14px;text-align:left;color:var(--cool);font-size:15px;line-height:1.55
+}
+.feedback .lead{font-family:var(--serif);font-size:16px;color:#eef0f5;margin:0 0 6px}
+.feedback .letters{display:inline-flex;gap:6px;margin:4px 0 2px;flex-wrap:wrap}
+.feedback .letters i{font-style:normal;font-family:var(--type);font-weight:700;background:rgba(197,52,31,.16);color:#f0b2a6;border:1px solid rgba(197,52,31,.5);border-radius:6px;padding:2px 9px}
+
+.loader{text-align:center;padding:26px 10px;color:var(--cool)}
+.lens{width:52px;height:52px;margin:0 auto 14px;position:relative}
+.lens svg{animation:sweep 2.4s ease-in-out infinite;transform-origin:50% 50%}
+.bar{height:7px;border-radius:5px;background:var(--ink-3);overflow:hidden;max-width:260px;margin:12px auto 0}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--red));transition:width .3s}
+.loadnote{font-family:var(--type);font-size:12px;color:var(--cool-dim);margin-top:10px}
+@keyframes sweep{0%,100%{transform:translate(-5px,0) rotate(-8deg)}50%{transform:translate(5px,0) rotate(8deg)}}
+
+/* ---------- Ending ---------- */
+.solved-wrap{text-align:center}
+.caseclosed{font-family:var(--type);letter-spacing:.2em;color:#2f6b38;font-size:13px;text-transform:uppercase;margin-bottom:10px}
+.rating{font-family:var(--serif);font-size:19px;color:#1c1813;margin:6px 0 2px}
+.stars{font-size:26px;letter-spacing:4px;color:#b4801f;margin:4px 0 8px}
+.ratingnote{color:var(--paper-faint);font-size:14px;max-width:46ch;margin:0 auto 6px}
+
+.tinyfoot{margin-top:26px;text-align:center;font-family:var(--type);font-size:11px;letter-spacing:.06em;color:var(--cool-dim)}
+.mutebtn{background:none;border:1px solid var(--line);color:var(--cool-dim);border-radius:8px;padding:6px 10px;font-family:var(--type);font-size:11px}
+
+@media (prefers-reduced-motion: reduce){
+  .verdictStamp.show{animation:none;opacity:.92}
+  .lens svg{animation:none}
+  .casecard:hover,.cta:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="deskhead">
+    <div class="badge">DD</div>
+    <div class="agency"><b>Deadletter Detective</b><br>Field Office · Evidence Desk</div>
+    <button id="mute" class="mutebtn" style="margin-left:auto" aria-pressed="false">SOUND ON</button>
+  </div>
+
+  <!-- INTRO / CASE SELECT -->
+  <section id="intro">
+    <div class="folder">
+      <span class="conf">Confidential</span>
+      <div class="casekicker">Case Desk · New Assignment</div>
+      <h1 class="casetitle">The ink never lies.</h1>
+      <div class="brief">
+        <p>Every case lands on your desk as a scrap of evidence with a word to recover. You work it out, then write it in your own hand and photograph it for the lab.</p>
+        <p>If your letters are clean, the clue decodes and the trail moves on. If they smudge, the lab tells you which letters to fix. Neat writing cracks the case.</p>
+      </div>
+      <div class="howline">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9c2515" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        <span>Work the clue &rarr; write it on paper &rarr; snap a photo &rarr; the lab reads it.</span>
+      </div>
+    </div>
+
+    <div style="margin-top:22px" class="casekicker" aria-hidden="true">&nbsp;</div>
+    <h2 style="font-family:var(--type);font-size:13px;letter-spacing:.14em;color:var(--cool-dim);text-transform:uppercase;margin:4px 2px 10px">Open a case file</h2>
+    <div class="cases" id="caseList"></div>
+    <div class="tinyfoot">Your writing is read on your device. No photo ever leaves it.</div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="hidden"></section>
+
+  <!-- ENDING -->
+  <section id="ending" class="hidden"></section>
+</div>
+
+<input type="file" accept="image/*" capture="environment" id="shot" class="hidden">
+
+<script src="./vendor/tesseract.min.js"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var elc=function(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+
+/* ============================ CASE CONTENT ============================ */
+var CASES=[
+ {
+  id:"vellum", no:"01", title:"The Vanishing at Vellum Hall",
+  desc:"A one-of-a-kind diary is gone from the library overnight.",
+  intro:"The Whisperwood Diary vanished from Vellum Hall between the ten o'clock bell and dawn. No broken locks, no alarm. Just an empty shelf and a trail of clues only a careful hand can read.",
+  solution:{ name:"MARLOW",
+    text:"It was Archivist Marlow. A key that was never reported, a buyer who knew the diary's worth, and boots that smelled of harbor salt. Case closed, detective." },
+  clues:[
+   { kind:"copy", answer:"MIDNIGHT",
+     prompt:"The thief left a taunting card on the empty shelf. One word is stamped across it. Copy it for the lab:",
+     reveal:"The stamp ink matches the library's own date-stamp. This was an inside job." },
+   { kind:"riddle", answer:"PIANO", accept:["PIANOS"],
+     prompt:"A note tucked in the card reads: “I have keys but open no doors, and scales but no fish. Look inside me.” What is it?",
+     hint:"It sits in the reading room and plays music. Keys… scales…",
+     reveal:"Inside the piano lid: a scrap of shipping paper, salt-stained." },
+   { kind:"unscramble", answer:"HARBOR", scramble:"BRAHRO",
+     prompt:"The shipping scrap is torn, letters jumbled. Unscramble them and write the place:",
+     hint:"Where boats tie up. Six letters.",
+     reveal:"The diary was headed for the waterfront before dawn." },
+   { kind:"phrase", answer:"SILVER GULL", accept:["THE SILVER GULL","SILVERGULL"],
+     prompt:"A dock-hand saw a small boat slip out at first light. Write the name painted on its hull:",
+     hint:"Two words. A colour, then a seabird.",
+     reveal:"The Silver Gull is chartered under a library staff account." },
+   { kind:"name", answer:"MARLOW", accept:["MARLOWE"],
+     prompt:"Three people had a key, knew the diary's price, and live near the water. Only one charters the Silver Gull. Name the thief:",
+     hint:"The quiet archivist who always offered to lock up. Six letters.",
+     reveal:"You write the name and press it to the file. The lab confirms the charter signature." }
+  ]
+ },
+ {
+  id:"canvas", no:"02", title:"The Smudged Canvas",
+  desc:"A museum painting was swapped for a fake. Catch the forger.",
+  intro:"The Blue Heron canvas at the Harbor Museum is a forgery. The swap happened during the gala. Follow the paint, detective.",
+  solution:{ name:"FINCH",
+    text:"The forger is Dorian Finch. A guest list alias, turpentine on the fire escape, and a signature that trembled. You read every clue clean. Masterful." },
+  clues:[
+   { kind:"copy", answer:"GALLERY",
+     prompt:"Security tape is labelled by room. Copy the room name so the lab can pull the right reel:",
+     reveal:"Camera 3 in the Gallery went dark for nine minutes during the gala." },
+   { kind:"riddle", answer:"SHADOW", accept:["SHADOWS"],
+     prompt:"Painted in the corner of the fake is a riddle: “I follow you by day, I vanish at night, and I never make a sound.” What am I?",
+     hint:"The dark shape the sun makes behind you.",
+     reveal:"Under UV light the word SHADOW glows — the forger's calling card." },
+   { kind:"unscramble", answer:"PALETTE", scramble:"TLEEPTA",
+     prompt:"A tool was left on the fire escape. The evidence tag letters are scrambled. Write the tool:",
+     hint:"A painter mixes colours on it. Seven letters.",
+     reveal:"The palette still holds wet cobalt — the exact blue of the heron." },
+   { kind:"phrase", answer:"HARBOR MUSEUM", accept:["THE HARBOR MUSEUM","HARBOUR MUSEUM"],
+     prompt:"The alias on the gala guest list used a fake address. Write the place it copied:",
+     hint:"Two words. Where you are standing right now.",
+     reveal:"The alias mirrored the museum's own name — an arrogant signature." },
+   { kind:"name", answer:"FINCH", accept:["FINCHE"],
+     prompt:"One guest signed in late, smelled of turpentine, and painted herons as a hobby. Name the forger:",
+     hint:"A small songbird, five letters, on the guest list as ‘D. F.’",
+     reveal:"You ink the name across the file. The gala signature matches, letter for letter." }
+  ]
+ }
+];
+
+var KIND_LABEL={copy:"Evidence · copy it",riddle:"Riddle · solve it",unscramble:"Scrambled · unscramble it",phrase:"Hull name · write it",name:"Suspect · name them"};
+
+/* ============================ SOUND ============================ */
+var muted=false; try{ muted=localStorage.getItem("ddet:mute")==="1"; }catch(e){}
+var ac=null;
+function tone(f,d,t,g){ if(muted)return; try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); var o=ac.createOscillator(),ga=ac.createGain(); o.type=t||"sine"; o.frequency.value=f; o.connect(ga); ga.connect(ac.destination); var n=ac.currentTime; ga.gain.setValueAtTime(0,n); ga.gain.linearRampToValueAtTime(g||.09,n+.012); ga.gain.exponentialRampToValueAtTime(.0001,n+d); o.start(n); o.stop(n+d+.02);}catch(e){} }
+function sClick(){ tone(320,.06,"triangle",.05); }
+function sStamp(){ tone(140,.16,"square",.12); setTimeout(function(){tone(90,.2,"sine",.1)},40); }
+function sGood(){ tone(523,.1,"sine",.08); setTimeout(function(){tone(784,.18,"sine",.08)},90); }
+function sBad(){ tone(196,.18,"sawtooth",.06); }
+function updMute(){ var b=$("#mute"); b.textContent=muted?"SOUND OFF":"SOUND ON"; b.setAttribute("aria-pressed",String(muted)); }
+$("#mute").addEventListener("click",function(){ muted=!muted; try{localStorage.setItem("ddet:mute",muted?"1":"0");}catch(e){} updMute(); if(!muted)sClick(); });
+updMute();
+
+/* ============================ PROGRESS (local) ============================ */
+function solvedSet(){ try{ return JSON.parse(localStorage.getItem("ddet:solved")||"[]"); }catch(e){ return []; } }
+function markSolved(id){ var s=solvedSet(); if(s.indexOf(id)<0){ s.push(id); try{localStorage.setItem("ddet:solved",JSON.stringify(s));}catch(e){} } }
+
+/* ============================ OCR ============================ */
+var OCR=(function(){
+  var workerP=null, prog=function(){};
+  function get(){
+    if(!workerP){
+      workerP=Tesseract.createWorker("eng",1,{
+        workerPath:"./vendor/worker.min.js",
+        corePath:"./vendor/",
+        langPath:"./vendor/",
+        gzip:true,
+        logger:function(m){ if(m && m.status && m.progress!=null) prog(m); }
+      });
+    }
+    return workerP;
+  }
+  function read(canvas,singleWord){
+    return get().then(function(w){
+      return w.setParameters({
+        tessedit_pageseg_mode: singleWord?"8":"7",
+        tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '-"
+      }).then(function(){ return w.recognize(canvas); })
+       .then(function(r){ return { text:(r.data.text||""), conf:r.data.confidence||0 }; });
+    });
+  }
+  return { get:get, read:read, onProgress:function(f){prog=f;}, warm:function(){ return get(); } };
+})();
+
+/* image -> cleaned canvas (grayscale, Otsu threshold, polarity fix) */
+function preprocess(img){
+  var w0=img.naturalWidth||img.width, h0=img.naturalHeight||img.height;
+  var scale=1;
+  if(h0>900) scale=900/h0;
+  else if(h0<260) scale=260/h0;
+  var w=Math.max(1,Math.round(w0*scale)), h=Math.max(1,Math.round(h0*scale));
+  var c=document.createElement("canvas"); c.width=w; c.height=h;
+  var x=c.getContext("2d"); x.drawImage(img,0,0,w,h);
+  var d, p;
+  try{ d=x.getImageData(0,0,w,h); p=d.data; }catch(e){ return c; }
+  var hist=new Array(256).fill(0), g=new Uint8Array(w*h), i,j;
+  for(i=0,j=0;i<p.length;i+=4,j++){ var v=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114)|0; g[j]=v; hist[v]++; }
+  var total=w*h, sum=0, t;
+  for(t=0;t<256;t++) sum+=t*hist[t];
+  var sumB=0,wB=0,wF=0,maxv=0,thr=127;
+  for(t=0;t<256;t++){ wB+=hist[t]; if(!wB)continue; wF=total-wB; if(!wF)break; sumB+=t*hist[t]; var mB=sumB/wB, mF=(sum-sumB)/wF, bt=wB*wF*(mB-mF)*(mB-mF); if(bt>maxv){maxv=bt;thr=t;} }
+  var dark=0;
+  for(j=0;j<g.length;j++){ if(g[j]<thr) dark++; }
+  var invert = dark > total*0.5; /* background is dark -> invert so text stays dark */
+  for(i=0,j=0;i<p.length;i+=4,j++){ var on=g[j]<thr; if(invert)on=!on; var val=on?30:245; p[i]=p[i+1]=p[i+2]=val; }
+  x.putImageData(d,0,0);
+  return c;
+}
+
+/* ============================ MATCHING ============================ */
+function norm(s){ return (s||"").toLowerCase().replace(/[^a-z' -]/g," ").replace(/\s+/g," ").trim(); }
+function squish(s){ return norm(s).replace(/[ '-]/g,""); }
+function lev(a,b){
+  var m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  var prev=[],cur=[],i,k; for(k=0;k<=n;k++)prev[k]=k;
+  for(i=1;i<=m;i++){ cur[0]=i; for(k=1;k<=n;k++){ var cost=a[i-1]===b[k-1]?0:1; cur[k]=Math.min(prev[k]+1,cur[k-1]+1,prev[k-1]+cost);} for(k=0;k<=n;k++)prev[k]=cur[k]; }
+  return prev[n];
+}
+function sim(a,b){ a=squish(a); b=squish(b); if(!a&&!b)return 1; var d=lev(a,b); return 1-d/Math.max(a.length,b.length); }
+/* target letters (in order) not matched by recognized text, via LCS */
+function missingLetters(target,got){
+  var a=squish(target), b=squish(got), m=a.length,n=b.length;
+  var dp=[]; for(var i=0;i<=m;i++){ dp[i]=[]; for(var k=0;k<=n;k++)dp[i][k]=0; }
+  for(i=1;i<=m;i++)for(var k2=1;k2<=n;k2++){ dp[i][k2]=a[i-1]===b[k2-1]?dp[i-1][k2-1]+1:Math.max(dp[i-1][k2],dp[i][k2-1]); }
+  var miss=[], ii=m, kk=n;
+  while(ii>0){ if(kk>0 && a[ii-1]===b[kk-1]){ii--;kk--;} else if(kk>0 && dp[ii][kk-1]>=dp[ii-1][kk]){kk--;} else { miss.push(a[ii-1]); ii--; } }
+  miss.reverse();
+  var uniq=[],seen={}; for(i=0;i<miss.length;i++){ var ch=miss[i]; if(!seen[ch]){seen[ch]=1;uniq.push(ch);} }
+  return uniq;
+}
+function bestMatch(got, clue){
+  var cands=[clue.answer].concat(clue.accept||[]);
+  var best=0, which=clue.answer;
+  for(var i=0;i<cands.length;i++){ var s=sim(got,cands[i]); if(s>best){best=s;which=cands[i];} }
+  return { score:best, target:which };
+}
+
+/* verdict thresholds */
+var PASS=0.8, SOFT=0.5, CLEARWRONG=0.45, CONF_WRONG=58;
+function judge(got, conf, clue){
+  var bm=bestMatch(got,clue);
+  var isCopy=clue.kind==="copy";
+  if(bm.score>=PASS) return { v:"decoded", target:bm.target, score:bm.score };
+  var cleanRead = squish(got).length>=2 && conf>=CONF_WRONG;
+  if(!isCopy && cleanRead && bm.score<CLEARWRONG)
+    return { v:"wrong", target:bm.target, score:bm.score };
+  var close = bm.score>=SOFT;
+  /* override is for "right word, messy hand" only: on hidden-answer clues it appears
+     just when the read is already close, so a plainly wrong word can't be waved through.
+     On copy clues the answer is shown, so it's purely a legibility call -> always offer. */
+  return { v:"unclear", target:clue.answer, score:bm.score,
+           miss:missingLetters(clue.answer,got),
+           offerJudge:(isCopy||close), close:close, isCopy:isCopy };
+}
+
+/* ============================ RENDER: CASE LIST ============================ */
+function renderIntro(){
+  show("intro");
+  var list=$("#caseList"); list.innerHTML="";
+  var solved=solvedSet();
+  CASES.forEach(function(c){
+    var done=solved.indexOf(c.id)>=0;
+    var card=elc("button","casecard");
+    card.innerHTML='<span class="no">'+c.no+'</span>'+
+      '<span style="flex:1"><span class="ct">'+c.title+'</span><span class="cd">'+c.desc+'</span></span>'+
+      (done?'<span class="solved">✓ CLOSED</span>':'');
+    card.addEventListener("click",function(){ sClick(); startCase(c); });
+    list.appendChild(card);
+  });
+}
+
+/* ============================ GAME STATE ============================ */
+var M=null;
+function startCase(c){
+  M={ c:c, i:0, cleanFirst:0, retries:0 };
+  OCR.warm(); /* begin loading the engine quietly while they read the brief */
+  renderBrief();
+}
+function renderBrief(){
+  var g=show("game"); g.innerHTML="";
+  var f=elc("div","folder");
+  f.innerHTML='<span class="conf">Case '+M.c.no+'</span>'+
+    '<div class="casekicker">Briefing</div>'+
+    '<h1 class="casetitle">'+M.c.title+'</h1>'+
+    '<div class="brief"><p>'+M.c.intro+'</p></div>';
+  g.appendChild(f);
+  var row=elc("div","actionrow");
+  var start=elc("button","cta","Start the trail →");
+  start.addEventListener("click",function(){ sClick(); M.i=0; renderClue(); });
+  var back=elc("button","cta ghost","Back to case desk");
+  back.addEventListener("click",function(){ sClick(); renderIntro(); });
+  row.appendChild(start); row.appendChild(back);
+  g.appendChild(row);
+}
+
+function board(){
+  var b=elc("div","board"); b.setAttribute("aria-label","Case progress");
+  M.c.clues.forEach(function(_,k){
+    if(k>0){ var th=elc("span","thread"+(k<=M.i?" done":"")); b.appendChild(th); }
+    var cls="dot"+(k<M.i?" done":(k===M.i?" now":"")); b.appendChild(elc("span",cls));
+  });
+  return b;
+}
+
+function renderClue(){
+  var clue=M.c.clues[M.i];
+  M.attempted=false; M.retriedThis=false;
+  var g=show("game"); g.innerHTML="";
+  g.appendChild(board());
+
+  var ev=elc("div","evidence");
+  var h='<div class="evstamp"><span>Evidence</span><span class="n">'+(M.i+1)+' / '+M.c.clues.length+'</span></div>';
+  h+='<div class="cluekind">'+KIND_LABEL[clue.kind]+'</div>';
+  h+='<p class="clueprompt">'+clue.prompt+'</p>';
+  if(clue.kind==="copy") h+='<div class="cluetarget">'+clue.answer+'</div>';
+  if(clue.kind==="unscramble"){
+    h+='<div class="scramble">'+clue.scramble.split("").map(function(ch){return '<span>'+ch+'</span>';}).join("")+'</div>';
+  }
+  h+='<div class="writeline"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9c2515" stroke-width="1.8"><path d="M3 21l3-1 11-11-2-2L4 18l-1 3zM15 6l3 3"/></svg>'+
+     (clue.kind==="copy"?"Write it in your clearest hand.":"Write your answer in your clearest hand.")+'</div>';
+  ev.appendChild(elc("div",null,h));
+
+  if(clue.hint){
+    var hb=elc("button","hintbtn","Need a nudge?");
+    var ht=elc("div","hinttext"); ht.style.display="none"; ht.textContent=clue.hint;
+    hb.addEventListener("click",function(){ sClick(); ht.style.display= ht.style.display==="none"?"block":"none"; });
+    ev.appendChild(hb); ev.appendChild(ht);
+  }
+  g.appendChild(ev);
+
+  var stage=elc("div","scanstage"); stage.id="stage"; g.appendChild(stage);
+
+  var row=elc("div","actionrow");
+  var scan=elc("button","cta amber","📷  I’ve written it — scan my paper");
+  scan.addEventListener("click",function(){ sClick(); openCamera(); });
+  row.appendChild(scan);
+  if(M.i>0){ var back=elc("button","cta ghost","Back a clue");
+    back.addEventListener("click",function(){ sClick(); M.i--; renderClue(); }); row.appendChild(back); }
+  g.appendChild(row);
+}
+
+/* ---------- camera ---------- */
+var fileInput=$("#shot");
+function openCamera(){ fileInput.value=""; fileInput.click(); }
+fileInput.addEventListener("change",function(){
+  var file=fileInput.files&&fileInput.files[0]; if(!file)return;
+  var url=URL.createObjectURL(file);
+  var img=new Image();
+  img.onload=function(){ URL.revokeObjectURL(url); runScan(img); };
+  img.onerror=function(){ URL.revokeObjectURL(url); fail("That image wouldn’t open. Try snapping it again."); };
+  img.src=url;
+});
+
+function showLoader(stage){
+  stage.innerHTML=
+   '<div class="loader"><div class="lens"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#d9a441" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></div>'+
+   '<div>Reading your handwriting…</div>'+
+   '<div class="bar"><i id="pbar"></i></div>'+
+   '<div class="loadnote" id="pnote">warming up the lab</div></div>';
+}
+OCR.onProgress(function(m){
+  var bar=$("#pbar"), note=$("#pnote"); if(!bar)return;
+  bar.style.width=Math.round(m.progress*100)+"%";
+  var map={"loading tesseract core":"unpacking the lab kit","initializing tesseract":"calibrating the lens","loading language traineddata":"loading the codebook","initializing api":"almost ready","recognizing text":"reading the ink"};
+  if(note) note.textContent=map[m.status]||m.status;
+});
+
+function runScan(img){
+  var stage=$("#stage"); showLoader(stage);
+  var clean=preprocess(img);
+  var clue=M.c.clues[M.i];
+  var singleWord = squish(clue.answer).length>0 && norm(clue.answer).indexOf(" ")<0;
+  OCR.read(clean, singleWord).then(function(res){
+    M.attempted=true;
+    var verdict=judge(res.text, res.conf, clue);
+    showVerdict(clean, res, verdict, clue);
+  }).catch(function(e){
+    fail("The lab equipment jammed. ("+(e&&e.message||e)+") Try scanning again.");
+  });
+}
+function fail(msg){
+  var stage=$("#stage");
+  stage.innerHTML='<div class="feedback"><p class="lead">Hmm.</p>'+msg+'</div>';
+  var row=elc("div","actionrow");
+  var again=elc("button","cta amber","📷  Scan again");
+  again.addEventListener("click",function(){ sClick(); openCamera(); });
+  row.appendChild(again); stage.appendChild(row);
+}
+
+function showVerdict(clean, res, verdict, clue){
+  var stage=$("#stage"); stage.innerHTML="";
+  var frame=elc("div","shotframe"); frame.appendChild(clean); stage.appendChild(frame);
+  var stamp=elc("div","verdictStamp "+(verdict.v==="decoded"?"decoded":"smudged"), verdict.v==="decoded"?"DECODED":"SMUDGED");
+  frame.appendChild(stamp);
+  // reflow then animate
+  requestAnimationFrame(function(){ stamp.classList.add("show"); if(verdict.v==="decoded"){sStamp();setTimeout(sGood,160);} else sBad(); });
+
+  var reado=elc("div","readout");
+  var shown=norm(res.text)||"—";
+  reado.innerHTML='The lab read: <b>'+shown.replace(/</g,"&lt;")+'</b>';
+  stage.appendChild(reado);
+
+  if(verdict.v==="decoded"){ if(!M.retriedThis) M.cleanFirst++; onDecoded(clue); return; }
+
+  // not decoded -> feedback
+  var fb=elc("div","feedback");
+  if(verdict.v==="wrong"){
+    fb.innerHTML='<p class="lead">That reads clearly — but it’s not the answer.</p>Your writing is sharp. The word just doesn’t fit the clue. Re-read it'+(clue.hint?' (try the nudge)':'')+' and write the right one.';
+  } else if(verdict.offerJudge){
+    var lead='<p class="lead">The ink smudged.</p>';
+    var body='The lab couldn’t quite make it out.';
+    if(verdict.miss && verdict.miss.length){
+      body+=' These letters didn’t come through:<span class="letters">'+verdict.miss.slice(0,4).map(function(c){return '<i>'+c.toUpperCase()+'</i>';}).join("")+'</span> Rewrite those bigger and clearer.';
+    } else {
+      body+=' Try more light, a darker pencil, and letters that don’t touch.';
+    }
+    fb.innerHTML=lead+body;
+  } else {
+    fb.innerHTML='<p class="lead">That didn’t match the clue.</p>Either it’s not the answer yet, or the writing’s too unclear to be sure. Re-read the clue'+(clue.hint?' (try the nudge)':'')+' and write it neatly.';
+  }
+  stage.appendChild(fb);
+
+  var row=elc("div","actionrow");
+  var again=elc("button","cta amber","📷  Rewrite &amp; scan again");
+  again.addEventListener("click",function(){ sClick(); M.retriedThis=true; M.retries++; openCamera(); });
+  row.appendChild(again);
+  // human override only when the read is a legibility call close to the answer, never a wrong word
+  if(verdict.v==="unclear" && verdict.offerJudge){
+    var judgeBtn=elc("button","cta ghost","The detective says it’s right — you be the judge");
+    judgeBtn.addEventListener("click",function(){ sClick(); humanJudge(clean, clue); });
+    row.appendChild(judgeBtn);
+  }
+  var hintb=elc("button","cta ghost", clue.hint?"Show the nudge":"Back to the clue");
+  hintb.addEventListener("click",function(){ sClick(); renderClue(); if(clue.hint){ var h=$(".hintbtn"); if(h)h.click(); } });
+  row.appendChild(hintb);
+  stage.appendChild(row);
+}
+
+/* you-be-the-judge: show the photo next to the target and let them confirm legibility */
+function humanJudge(clean, clue){
+  var stage=$("#stage"); stage.innerHTML="";
+  var fb=elc("div","feedback");
+  fb.innerHTML='<p class="lead">You be the judge.</p>Look at your photo. Compare it to the answer below. Only pass it if a stranger could read your writing as that word.';
+  stage.appendChild(fb);
+  var frame=elc("div","shotframe"); frame.appendChild(clean); stage.appendChild(frame);
+  var tgt=elc("div","readout"); tgt.innerHTML='The answer should read: <b>'+clue.answer+'</b>'; stage.appendChild(tgt);
+  var row=elc("div","actionrow");
+  var yes=elc("button","cta amber","Yes — that’s clear. Pass it");
+  yes.addEventListener("click",function(){
+    sClick(); stage.innerHTML="";
+    var f2=elc("div","shotframe"); f2.appendChild(clean); stage.appendChild(f2);
+    var st=elc("div","verdictStamp decoded","DECODED"); f2.appendChild(st);
+    requestAnimationFrame(function(){ st.classList.add("show"); sStamp(); setTimeout(sGood,150); });
+    var ro=elc("div","readout"); ro.innerHTML='Passed by the detective’s own eye.'; stage.appendChild(ro);
+    onDecoded(clue);
+  });
+  var no=elc("button","cta ghost","Not yet — I’ll rewrite it");
+  no.addEventListener("click",function(){ sClick(); M.retriedThis=true; openCamera(); });
+  row.appendChild(yes); row.appendChild(no); stage.appendChild(row);
+}
+
+function onDecoded(clue){
+  var stage=$("#stage");
+  var rev=elc("div","feedback");
+  rev.style.borderColor="rgba(79,138,83,.5)";
+  rev.innerHTML='<p class="lead" style="color:#9fd6a3">Clue decoded.</p><span style="font-family:var(--serif);font-size:16px;color:#e7ead0">'+clue.reveal+'</span>';
+  stage.appendChild(rev);
+  var row=elc("div","actionrow");
+  var last = M.i>=M.c.clues.length-1;
+  var next=elc("button","cta", last?"Close the case →":"Follow the next clue →");
+  next.addEventListener("click",function(){ sClick(); M.retriedThis=false; if(last){ finishCase(); } else { M.i++; renderClue(); } });
+  row.appendChild(next); stage.appendChild(row);
+  // lock the scan button area above by re-rendering actions? keep simple: scroll to reveal
+  rev.scrollIntoView({behavior:(matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"),block:"center"});
+}
+
+function finishCase(){
+  markSolved(M.c.id);
+  var total=M.c.clues.length, clean=M.cleanFirst;
+  var stars = clean>=total?3 : clean>=Math.ceil(total*0.6)?2 : 1;
+  var e=show("ending"); e.innerHTML="";
+  var f=elc("div","folder solved-wrap");
+  f.innerHTML='<div class="caseclosed">■ Case Closed · '+M.c.no+'</div>'+
+    '<h1 class="casetitle" style="font-size:clamp(26px,6.5vw,38px)">'+M.c.solution.name+'</h1>'+
+    '<div class="brief"><p>'+M.c.solution.text+'</p></div>'+
+    '<div class="stars" aria-label="'+stars+' of 3 stars">'+("★★★".slice(0,stars))+("☆☆☆".slice(0,3-stars))+'</div>'+
+    '<div class="rating">Clean on the first try: '+clean+' of '+total+' clues</div>'+
+    '<div class="ratingnote">'+(stars===3?"Spotless hand. Every clue read first time.":stars===2?"Steady work. A couple needed a rewrite.":"Case solved. Keep working on those letters and you’ll read clean next time.")+'</div>';
+  e.appendChild(f);
+  var row=elc("div","actionrow");
+  var next=elc("button","cta amber","Pick another case →");
+  next.addEventListener("click",function(){ sClick(); renderIntro(); });
+  var replay=elc("button","cta ghost","Replay this case");
+  replay.addEventListener("click",function(){ sClick(); startCase(M.c); });
+  row.appendChild(next); row.appendChild(replay); e.appendChild(row);
+}
+
+/* ============================ VIEW SWITCH ============================ */
+function show(id){
+  ["intro","game","ending"].forEach(function(s){ $("#"+s).classList.toggle("hidden", s!==id); });
+  window.scrollTo(0,0);
+  return $("#"+id);
+}
+
+/* ============================ BOOT ============================ */
+renderIntro();
+})();
+</script>
+</body>
+</html>
