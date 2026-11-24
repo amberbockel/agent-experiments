@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1426d6">
+<title>Sector Shove</title>
+<style>
+:root{
+  --blue:#1426d6; --yellow:#ffd21f; --ink:#0a1670; --white:#fff;
+  --ta:var(--blue); --ba:var(--yellow);
+  --tt:#fff; --bt:var(--ink);
+  --ship-t:var(--yellow); --ship-b:var(--ink);
+  --s:50%;
+  --font:"Avenir Next","Helvetica Neue","Segoe UI",Arial,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:var(--blue);font-family:var(--font);color:#fff;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+#stage{position:fixed;inset:0;height:100dvh;background:var(--ta);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:background .25s}
+#yard{position:absolute;left:0;right:0;bottom:0;top:var(--s);background:var(--ba);transition:background .25s}
+#edge{position:absolute;left:0;right:0;top:var(--s);height:8px;margin-top:-4px;background:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.4),0 0 32px 6px rgba(255,255,255,.55);z-index:2}
+.pad{position:absolute;left:0;right:0;height:50%;z-index:5;cursor:pointer}
+.pad.t{top:0}.pad.b{bottom:0}
+
+.hud{position:absolute;left:20px;right:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none;z-index:6;transition:color .25s}
+.hud.b{bottom:calc(env(safe-area-inset-bottom) + 16px);color:var(--bt)}
+.hud.t{top:calc(env(safe-area-inset-top) + 16px);color:var(--tt);transform:rotate(180deg)}
+.who{display:flex;flex-direction:column;gap:8px;min-width:0}
+.name{font-size:22px;font-weight:800;letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}
+.pips{display:flex;gap:8px}
+.pip{width:14px;height:14px;border-radius:50%;border:3px solid currentColor;transition:background .3s,transform .4s var(--spring)}
+.pip.on{background:currentColor;transform:scale(1.15)}
+.num{font-size:clamp(56px,12vh,104px);font-weight:900;letter-spacing:-.06em;line-height:.8;font-variant-numeric:tabular-nums}
+.num.pop{animation:pop .5s var(--spring)}
+@keyframes pop{0%{transform:scale(.5)}100%{transform:scale(1)}}
+
+.call{position:absolute;left:16px;right:16px;text-align:center;pointer-events:none;z-index:4;display:flex;flex-direction:column;align-items:center;gap:8px}
+.call.t{top:calc(var(--s) / 2);transform:translateY(-50%) rotate(180deg);color:var(--tt)}
+.call.b{top:calc(50% + var(--s) / 2);transform:translateY(-50%);color:var(--bt)}
+.call .big{font-size:clamp(44px,13vh,132px);font-weight:900;letter-spacing:-.05em;line-height:.9}
+.call .sub{font-size:clamp(15px,2.4vh,20px);font-weight:600;line-height:1.3;max-width:28ch;opacity:.9}
+.call .big.bump{animation:bump .18s var(--spring)}
+@keyframes bump{0%{transform:scale(.9)}100%{transform:scale(1)}}
+
+.ship{position:absolute;left:50%;width:56px;height:84px;z-index:3;pointer-events:none}
+.ship svg{width:100%;height:100%;overflow:visible;display:block}
+.ship.b{top:var(--s);transform:translate(-50%,0);color:var(--ship-b)}
+.ship.t{top:var(--s);transform:translate(-50%,-100%) rotate(180deg);color:var(--ship-t)}
+.ship .flame{transform-origin:32px 70px;animation:flick .12s infinite alternate}
+@keyframes flick{from{transform:scaleY(.7)}to{transform:scaleY(1.05)}}
+.ship.kick svg{animation:kick .14s ease-out}
+@keyframes kick{0%{transform:translateY(10px)}100%{transform:none}}
+
+.round{position:absolute;top:50%;z-index:7;width:44px;height:44px;margin-top:-22px;border-radius:50%;border:0;background:#fff;color:var(--ink);font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 6px 16px rgba(10,22,112,.35);transition:transform .2s var(--spring)}
+.round:active{transform:scale(.9)}
+#menuBtn{left:max(12px,env(safe-area-inset-left))}
+#muteBtn{right:max(12px,env(safe-area-inset-right))}
+
+#stage.warn{--ta:#3a17c9;--ba:#e8b200}
+#stage.storm{--ta:#6c2bff;--ba:#ff2e88;--tt:#fff;--bt:#fff;--ship-t:#fff;--ship-b:#fff}
+#stage.boostT .call.t{color:var(--yellow)}
+#stage.boostB .call.b{color:var(--blue)}
+
+.fx{position:absolute;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+.bit{position:absolute;width:12px;height:18px;border-radius:3px;left:50%}
+
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));background:rgba(20,38,214,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow-y:auto}
+[hidden]{display:none!important}
+.card{width:min(100%,460px);display:flex;flex-direction:column;gap:24px;margin:auto 0}
+h1{font-size:clamp(56px,17vw,96px);font-weight:900;letter-spacing:-.06em;line-height:.85}
+.lede{font-size:18px;line-height:1.5;max-width:34ch;font-weight:500}
+.group{display:flex;flex-direction:column;gap:8px}
+.group>label,.group>.lbl{font-size:15px;font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.seg button{min-height:48px;border-radius:14px;border:3px solid #fff;background:transparent;font-weight:800;font-size:16px;cursor:pointer;transition:transform .2s var(--spring),background .2s,color .2s}
+.seg button:active{transform:scale(.96)}
+.seg button[aria-pressed=true]{background:#fff;color:var(--blue)}
+input[type=text]{width:100%;min-height:48px;padding:0 16px;border-radius:14px;border:3px solid #fff;background:rgba(255,255,255,.12);font-weight:700;font-size:17px}
+input::placeholder{color:rgba(255,255,255,.6)}
+.names{display:grid;gap:8px}
+.go{min-height:64px;border-radius:20px;border:0;background:var(--yellow);color:var(--ink);font-weight:900;font-size:24px;letter-spacing:-.02em;cursor:pointer;box-shadow:0 10px 0 #b8940a,0 18px 32px rgba(10,22,112,.4);transition:transform .15s var(--spring),box-shadow .15s}
+.go:active{transform:translateY(8px);box-shadow:0 2px 0 #b8940a,0 6px 12px rgba(10,22,112,.4)}
+.ghost{min-height:48px;border:0;background:transparent;font-weight:700;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.hint{font-size:14px;line-height:1.5;opacity:.85}
+#end h2{font-size:clamp(44px,13vw,80px);font-weight:900;letter-spacing:-.05em;line-height:.9}
+#end .score{font-size:clamp(72px,22vw,140px);font-weight:900;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (prefers-reduced-motion:reduce){
+  .ship .flame,.num.pop,.call .big.bump,.ship.kick svg{animation:none}
+  *{transition-duration:.01s!important}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="yard"></div>
+  <div id="edge"></div>
+
+  <div class="call t"><div class="big" id="bigT"></div><div class="sub" id="subT"></div></div>
+  <div class="call b"><div class="big" id="bigB"></div><div class="sub" id="subB"></div></div>
+
+  <div class="ship t" id="shipT"><svg viewBox="0 0 64 96" aria-hidden="true"><g class="flame"><path d="M26 70 L32 94 L38 70Z" fill="#ff7a1a"/></g><path d="M32 2 L44 26 L60 50 L60 58 L44 52 L40 70 L24 70 L20 52 L4 58 L4 50 L20 26Z" fill="currentColor"/><ellipse cx="32" cy="30" rx="6" ry="10" fill="#ff2e88"/></svg></div>
+  <div class="ship b" id="shipB"><svg viewBox="0 0 64 96" aria-hidden="true"><g class="flame"><path d="M26 70 L32 94 L38 70Z" fill="#ff7a1a"/></g><path d="M32 2 L44 26 L60 50 L60 58 L44 52 L40 70 L24 70 L20 52 L4 58 L4 50 L20 26Z" fill="currentColor"/><ellipse cx="32" cy="30" rx="6" ry="10" fill="#ffd21f"/></svg></div>
+
+  <div class="hud t"><div class="who"><div class="name" id="nameT"></div><div class="pips" id="pipsT"></div></div><div class="num" id="numT">0</div></div>
+  <div class="hud b"><div class="who"><div class="name" id="nameB"></div><div class="pips" id="pipsB"></div></div><div class="num" id="numB">0</div></div>
+
+  <div class="pad t" id="padT" role="button" tabindex="0" aria-label="Top player: tap to shove"></div>
+  <div class="pad b" id="padB" role="button" tabindex="0" aria-label="Bottom player: tap to shove"></div>
+
+  <button class="round" id="menuBtn" aria-label="Open menu">Menu</button>
+  <button class="round" id="muteBtn" aria-label="Sound on" aria-pressed="false">Snd</button>
+  <div class="fx" id="fx"></div>
+  <div class="sr" id="live" aria-live="polite"></div>
+</div>
+
+<section class="sheet" id="setup" aria-labelledby="ttl">
+  <div class="card">
+    <h1 id="ttl">Sector<br>Shove</h1>
+    <p class="lede">Tap like crazy to push the border into your rival's sector. When the storm hits, freeze, because every tap shoves you backward.</p>
+    <div class="group"><span class="lbl" id="lblMode">Who's playing</span>
+      <div class="seg" role="group" aria-labelledby="lblMode"><button data-mode="2p">Two players</button><button data-mode="bot">Versus bot</button></div></div>
+    <div class="names">
+      <div class="group"><label for="inB">Bottom player</label><input id="inB" type="text" maxlength="14" placeholder="Player 1"></div>
+      <div class="group" id="grpT"><label for="inT">Top player (sits across)</label><input id="inT" type="text" maxlength="14" placeholder="Player 2"></div>
+    </div>
+    <div class="group" id="grpD" hidden><span class="lbl" id="lblD">Bot skill</span>
+      <div class="seg" role="group" aria-labelledby="lblD"><button data-diff="0">Rookie</button><button data-diff="1">Pilot</button><button data-diff="2">Ace</button></div></div>
+    <div class="group"><span class="lbl" id="lblW">First to</span>
+      <div class="seg" role="group" aria-labelledby="lblW"><button data-win="2">2 wins</button><button data-win="3">3 wins</button><button data-win="5">5 wins</button></div></div>
+    <button class="go" id="start">Launch</button>
+    <p class="hint">Keyboard: A taps for the top player, L for the bottom. Set the phone flat between you, or prop it up.</p>
+  </div>
+</section>
+
+<section class="sheet" id="end" hidden aria-labelledby="endT">
+  <div class="card">
+    <h2 id="endT"></h2>
+    <div class="score" id="endS"></div>
+    <button class="go" id="again">Rematch</button>
+    <button class="ghost" id="toSetup">Change setup</button>
+  </div>
+</section>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const stage=$('stage'), reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S={phase:'setup',mode:'2p',diff:1,win:3,names:['Player 1','Player 2'],score:[0,0],p:0,vis:0,ev:null,evState:'',nextEv:0,botNext:0,bot:{},timers:[]};
+try{const c=JSON.parse(localStorage.getItem('sector-shove')||'{}');Object.assign(S,{mode:c.mode||S.mode,diff:c.diff??S.diff,win:c.win||S.win});$('inB').value=c.b||'';$('inT').value=c.t||''}catch(e){}
+
+/* ---------- sound ---------- */
+let ac=null,muted=false;
+function beep(f,d=.07,type='triangle',v=.07,to){
+  if(muted)return;
+  try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+    const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;
+    o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
+    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d+.02);}catch(e){}
+}
+const arp=()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.18,'triangle',.08),i*90));
+
+/* ---------- setup ---------- */
+function syncSetup(){
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
+  document.querySelectorAll('[data-diff]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.diff===S.diff));
+  document.querySelectorAll('[data-win]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.win===S.win));
+  $('grpT').hidden=S.mode==='bot';$('grpD').hidden=S.mode!=='bot';
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.mode)S.mode=b.dataset.mode;if(b.dataset.diff)S.diff=+b.dataset.diff;if(b.dataset.win)S.win=+b.dataset.win;syncSetup();beep(600,.05)}));
+function readNames(){
+  const b=$('inB').value.trim()||'Player 1',t=$('inT').value.trim()||'Player 2';
+  S.names=[b,S.mode==='bot'?['Rookie bot','Pilot bot','Ace bot'][S.diff]:t];
+  try{localStorage.setItem('sector-shove',JSON.stringify({mode:S.mode,diff:S.diff,win:S.win,b:$('inB').value,t:$('inT').value}))}catch(e){}
+}
+
+/* ---------- hud ---------- */
+function drawHud(popSide){
+  $('nameB').textContent=S.names[0];$('nameT').textContent=S.names[1];
+  [['B',0],['T',1]].forEach(([k,i])=>{
+    $('pips'+k).innerHTML=Array.from({length:S.win},(_,j)=>`<span class="pip${j<S.score[i]?' on':''}"></span>`).join('');
+    const n=$('num'+k);n.textContent=S.score[i];
+    if(popSide===i&&!reduce){n.classList.remove('pop');void n.offsetWidth;n.classList.add('pop')}
+  });
+}
+function call(side,big,sub=''){
+  const k=side==='t'?'T':'B';$('big'+k).textContent=big;$('sub'+k).textContent=sub;
+  if(!reduce){const e=$('big'+k);e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump')}
+}
+const callBoth=(big,sub)=>{call('t',big,sub);call('b',big,sub)};
+const say=m=>{$('live').textContent=m};
+const later=(fn,ms)=>{const id=setTimeout(fn,ms);S.timers.push(id)};
+const clearTimers=()=>{S.timers.forEach(clearTimeout);S.timers=[]};
+
+/* ---------- round flow ---------- */
+function startRound(){
+  clearTimers();S.p=0;S.ev=null;S.evState='';stage.className='';S.phase='count';
+  callBoth('3','');beep(440,.1);
+  later(()=>{callBoth('2','');beep(494,.1)},800);
+  later(()=>{callBoth('1','');beep(554,.1)},1600);
+  later(()=>{S.phase='play';const n=performance.now();S.nextEv=n+2800+Math.random()*2200;S.botNext=n;
+    callBoth('Shove!','Tap your half');beep(784,.25,'triangle',.09,1175);say('Go');
+    later(()=>{if(S.phase==='play'&&!S.ev){callBoth('','')}},900)},2400);
+}
+function endRound(w){ // w: 0 bottom, 1 top
+  S.phase='over';S.ev=null;S.evState='';stage.className='';
+  S.p=w===0?1:-1;S.score[w]++;drawHud(w);
+  const win=w===0?'b':'t',lose=w===0?'t':'b';
+  call(win,'Claimed!','Sector is yours');call(lose,'So close','Shove back next round');
+  say(S.names[w]+' claims the sector');arp();burst(w);
+  if(S.score[w]>=S.win)later(()=>matchEnd(w),1900);else later(startRound,2400);
+}
+function matchEnd(w){
+  S.phase='matchover';
+  $('endT').textContent=S.names[w]+' wins!';
+  $('endS').textContent=S.score[1]+'–'+S.score[0];
+  $('endS').textContent=(w===0?S.score[0]+'–'+S.score[1]:S.score[1]+'–'+S.score[0]);
+  $('end').hidden=false;$('again').focus();
+}
+function newMatch(){S.score=[0,0];S.p=0;S.vis=0;drawHud();$('end').hidden=true;$('setup').hidden=true;startRound()}
+
+function burst(w){
+  if(reduce)return;
+  const cols=w===0?['#ffd21f','#fff','#0a1670']:['#fff','#ffd21f','#ff2e88'];
+  const fx=$('fx'),H=innerHeight,W=innerWidth;
+  for(let i=0;i<44;i++){
+    const b=document.createElement('i');b.className='bit';b.style.background=cols[i%3];
+    b.style.top=(H*(.5-S.p*.32))+'px';fx.appendChild(b);
+    const dx=(Math.random()-.5)*W*1.1,dy=(w===0?1:-1)*(Math.random()*H*.45)+(Math.random()-.5)*60;
+    b.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:1200+Math.random()*600,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>b.remove();
+  }
+}
+
+/* ---------- tapping ---------- */
+function tap(side){ // 'b' or 't'
+  if(S.phase==='count'){S.p+=side==='b'?-.05:.05;S.p=Math.max(-.9,Math.min(.9,S.p));beep(180,.12,'sawtooth',.05);call(side,'Too early!','Wait for the go');return}
+  if(S.phase!=='play')return;
+  const dir=side==='b'?1:-1;let m=1;
+  if(S.evState==='storm')m=-1.1;
+  else if(S.evState==='boost'&&S.ev.who===side)m=2.2;
+  S.p+=dir*.034*m;
+  const f=(side==='b'?420:520)+Math.abs(S.p)*260;beep(m<0?140:f,.05,m<0?'sawtooth':'triangle',m<0?.05:.05);
+  const sh=$(side==='b'?'shipB':'shipT');if(!reduce){sh.classList.remove('kick');void sh.offsetWidth;sh.classList.add('kick')}
+  if(S.p>=1)endRound(0);else if(S.p<=-1)endRound(1);
+}
+function bindPad(el,side){
+  el.addEventListener('pointerdown',e=>{e.preventDefault();tap(side)});
+  el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();tap(side)}});
+}
+bindPad($('padT'),'t');bindPad($('padB'),'b');
+addEventListener('keydown',e=>{
+  if(e.repeat||e.target.tagName==='INPUT'||!$('setup').hidden||!$('end').hidden)return;
+  const k=e.key.toLowerCase();
+  if(k==='l')tap('b');else if(k==='a'&&S.mode==='2p')tap('t');
+});
+
+/* ---------- events + bot + loop ---------- */
+function setEv(state){
+  if(state===S.evState)return;S.evState=state;
+  stage.classList.toggle('warn',state==='warn');stage.classList.toggle('storm',state==='storm');
+  stage.classList.toggle('boostT',state==='boost'&&S.ev.who==='t');stage.classList.toggle('boostB',state==='boost'&&S.ev.who==='b');
+  if(state==='warn'){callBoth('Storm coming','Keep tapping, then freeze');beep(300,.4,'sine',.07,200);say('Storm coming')}
+  else if(state==='storm'){callBoth('Freeze!','Taps shove you backward');beep(120,.5,'sawtooth',.07,60);say('Freeze');
+    const n=performance.now();S.bot={react:n+[450,300,150][S.diff],blunder:Math.random()<[.4,.18,.06][S.diff]}}
+  else if(state==='boost'){const w=S.ev.who;call(w,'Boost x2','Your taps count double');call(w==='b'?'t':'b','','');beep(660,.3,'triangle',.08,1320);say('Boost for '+S.names[w==='b'?0:1])}
+  else {callBoth('','')}
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(S.phase==='setup'||S.phase==='matchover'&&false){S.p=Math.sin(now/1100)*.5}
+  if(S.phase==='play'){
+    if(!S.ev&&now>=S.nextEv){
+      if(Math.random()<.7)S.ev={kind:'storm',warn:now+1000,end:now+1000+1500};
+      else{const who=S.p>.12?'t':S.p<-.12?'b':(Math.random()<.5?'t':'b');S.ev={kind:'boost',who,end:now+2300}}
+      setEv(S.ev.kind==='storm'?'warn':'boost');
+    }else if(S.ev){
+      if(now>=S.ev.end){S.ev=null;S.nextEv=now+3000+Math.random()*3000;setEv('');}
+      else if(S.ev.kind==='storm'&&S.evState==='warn'&&now>=S.ev.warn)setEv('storm');
+    }
+    if(S.mode==='bot'&&now>=S.botNext){
+      const rate=[4.2,5.8,7.6][S.diff],frozen=S.evState==='storm'&&now>=S.bot.react&&!S.bot.blunder;
+      if(!frozen&&S.phase==='play')tap('t');
+      S.botNext=now+1000/rate*(.7+Math.random()*.6);
+    }
+  }
+  S.vis+=(S.p-S.vis)*Math.min(1,dt*(S.phase==='over'?7:20));
+  stage.style.setProperty('--s',(50-S.vis*32)+'%');
+  requestAnimationFrame(loop);
+}
+
+/* ---------- chrome ---------- */
+$('start').addEventListener('click',()=>{readNames();$('setup').hidden=true;S.score=[0,0];S.p=0;drawHud();beep(700,.15);startRound()});
+$('again').addEventListener('click',newMatch);
+$('toSetup').addEventListener('click',openSetup);
+function openSetup(){clearTimers();S.phase='setup';S.ev=null;S.evState='';stage.className='';callBoth('','');$('end').hidden=true;$('setup').hidden=false;$('start').focus()}
+$('menuBtn').addEventListener('click',openSetup);
+$('muteBtn').addEventListener('click',e=>{muted=!muted;e.currentTarget.setAttribute('aria-pressed',muted);e.currentTarget.setAttribute('aria-label',muted?'Sound off':'Sound on');e.currentTarget.textContent=muted?'Off':'Snd'});
+$('muteBtn').textContent='Snd';
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.phase==='play')openSetup()});
+
+syncSetup();drawHud();requestAnimationFrame(loop);
+window.__S=S;window.__tap=tap;
+})();
+</script>
+</body>
+</html>

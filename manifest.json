@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-24",
+      "slug": "2026-11-24",
+      "title": "Sector Shove",
+      "category": "games",
+      "design": "high-contrast-type",
+      "oneLiner": "A two-player starship tap duel: shove the border into your rival's sector, and freeze when the storm hits.",
+      "path": "apps/2026-11-24/"
+    },
+    {
       "date": "2026-11-23",
       "slug": "2026-11-23",
       "title": "Crosswind",
