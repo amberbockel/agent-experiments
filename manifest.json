@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-25",
+      "slug": "2026-11-25",
+      "title": "Hothouse",
+      "category": "games",
+      "design": "organic-nature",
+      "oneLiner": "A pass-and-play number garden: combine seed packets with + − × ÷ to hit the target before your turn ends, and grow your plant.",
+      "path": "apps/2026-11-25/"
+    },
+    {
       "date": "2026-11-24",
       "slug": "2026-11-24",
       "title": "Sector Shove",

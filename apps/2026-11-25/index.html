@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hothouse</title>
+<meta name="description" content="A pass-and-play number garden. Combine seed packets to hit the target and grow your plant.">
+<style>
+:root{
+  --ink:#16301f; --ink-soft:#4a6a53; --moss:#2b5a38; --leaf:#4f9a49; --sprout:#a9d36a;
+  --mint:#e9f4e1; --mint-2:#d9ebcc; --paper:#f7fbf3; --sun:#ffc93c; --berry:#d6456f; --sky:#3b8fd9; --plum:#7b4fc9;
+  --p0:#d6456f; --p1:#f2a100; --p2:#3b8fd9; --p3:#7b4fc9;
+  --shadow:0 10px 24px -10px rgba(43,90,56,.45);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--ink);background:
+  radial-gradient(60vmax 40vmax at 100% 0%,#cfe8b8 0,transparent 60%),
+  radial-gradient(50vmax 40vmax at 0% 100%,#ffe9a6 0,transparent 55%),var(--mint);
+  min-height:100dvh;-webkit-font-smoothing:antialiased;line-height:1.45;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.app{max-width:560px;margin:0 auto;min-height:100dvh;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column}
+[hidden]{display:none!important}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(44px,13vw,64px);line-height:1;letter-spacing:-.02em;color:var(--moss)}
+h2{font-family:var(--serif);font-size:28px;line-height:1.15;color:var(--moss)}
+.lede{font-size:17px;line-height:1.5;color:var(--ink-soft);max-width:34ch;margin-top:12px}
+.btn{min-height:52px;padding:0 28px;border-radius:999px;font-weight:700;font-size:18px;background:var(--moss);color:#fff;box-shadow:0 8px 0 -2px #1b3d25,0 16px 24px -12px rgba(27,61,37,.6);transition:transform .18s var(--spring),box-shadow .18s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(5px);box-shadow:0 2px 0 -2px #1b3d25}
+.btn.sun{background:var(--sun);color:var(--ink);box-shadow:0 8px 0 -2px #c99a14,0 16px 24px -12px rgba(201,154,20,.7)}
+.btn.ghost{background:#fff;color:var(--moss);box-shadow:inset 0 0 0 2px var(--mint-2)}
+.btn.small{min-height:44px;padding:0 18px;font-size:16px}
+
+/* setup */
+#setup{gap:24px;padding-top:12px}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.hero svg{width:110px;flex:none;filter:drop-shadow(0 12px 14px rgba(43,90,56,.25))}
+.panel{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:28px;padding:20px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.8)}
+.panel h3{font-size:18px;margin-bottom:12px}
+.seg{display:grid;gap:8px;grid-auto-flow:column;grid-auto-columns:1fr}
+.seg button{min-height:48px;border-radius:16px;background:var(--paper);font-weight:700;box-shadow:inset 0 0 0 2px var(--mint-2);transition:transform .2s var(--spring),background .2s}
+.seg button[aria-pressed=true]{background:var(--moss);color:#fff;box-shadow:none;transform:scale(1.03)}
+.seg small{display:block;font-weight:500;font-size:12px;opacity:.8}
+.names{display:grid;gap:10px;margin-top:14px}
+.name{display:flex;align-items:center;gap:10px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.name input{flex:1;min-width:0;min-height:48px;border-radius:14px;border:2px solid var(--mint-2);background:#fff;padding:0 14px;font:inherit;font-size:17px;color:var(--ink)}
+.field+.field{margin-top:20px}
+
+/* garden / handoff */
+#garden{gap:16px}
+.topbar{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--ink-soft)}
+.pots{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end}
+.pot{background:rgba(255,255,255,.65);border-radius:24px;padding:10px 6px 12px;text-align:center;box-shadow:var(--shadow);border:2px solid transparent;transition:transform .3s var(--spring),border-color .3s}
+.pot.turn{border-color:var(--c);transform:translateY(-6px)}
+.pot svg{width:100%;max-width:96px;height:auto;display:block;margin:0 auto}
+.pot .nm{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.pot .sc{font-family:var(--serif);font-size:30px;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums}
+.handoff{text-align:center;margin-top:auto;padding:12px 0}
+.handoff p{color:var(--ink-soft);margin:6px 0 20px}
+
+/* play */
+#play{gap:14px}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.who{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;min-width:0}
+.who span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ring{position:relative;width:64px;height:64px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:7;stroke-linecap:round}
+.ring .bg{stroke:var(--mint-2)}
+.ring .fg{stroke:var(--leaf);transition:stroke .3s}
+.ring.low .fg{stroke:var(--berry)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:19px;font-variant-numeric:tabular-nums}
+.ring.low{animation:pulse .8s ease-in-out infinite}
+.target{display:grid;justify-items:center;text-align:center;padding:10px 0 2px}
+.target .lab{font-size:15px;color:var(--ink-soft)}
+.target .num{font-family:var(--serif);font-size:clamp(88px,28vw,128px);line-height:.95;font-weight:700;color:var(--moss);letter-spacing:-.03em;text-shadow:0 14px 28px rgba(79,154,73,.35)}
+.num.pop{animation:pop .5s var(--spring)}
+.table{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:4px}
+.card{position:relative;min-height:96px;border-radius:26px 26px 22px 22px;background:#fff;box-shadow:0 10px 0 -4px var(--mint-2),0 18px 26px -14px rgba(43,90,56,.55);font-family:var(--serif);font-weight:700;font-size:44px;color:var(--ink);display:grid;place-items:center;overflow:hidden;transition:transform .22s var(--spring),box-shadow .22s,background .2s;animation:deal .5s var(--spring) backwards;animation-delay:calc(var(--i)*70ms)}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:12px;background:var(--band,var(--sprout))}
+.card:hover{transform:translateY(-3px)}
+.card:active{transform:translateY(4px)}
+.card[aria-pressed=true]{background:var(--sun);transform:translateY(-6px) scale(1.04);box-shadow:0 14px 0 -4px #d9a514,0 24px 30px -14px rgba(201,154,20,.8)}
+.card.hint{outline:3px dashed var(--sky);outline-offset:4px}
+.card.merge{animation:merge .45s var(--spring)}
+.card.shake{animation:shake .4s}
+.card.empty{visibility:hidden}
+.ops{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.op{min-height:64px;border-radius:20px;background:var(--moss);color:#fff;font-size:32px;font-weight:700;box-shadow:0 8px 0 -2px #1b3d25;transition:transform .18s var(--spring),background .2s}
+.op:active{transform:translateY(5px);box-shadow:0 2px 0 -2px #1b3d25}
+.op[aria-pressed=true]{background:var(--berry);box-shadow:0 8px 0 -2px #8f2548;transform:translateY(-3px) scale(1.05)}
+.tools{display:flex;gap:8px;justify-content:space-between}
+.tools button{flex:1;min-height:48px;border-radius:16px;background:rgba(255,255,255,.75);font-weight:700;font-size:15px;box-shadow:inset 0 0 0 2px var(--mint-2)}
+.tools button:disabled{opacity:.4;cursor:default}
+.msg{min-height:44px;text-align:center;font-weight:600;color:var(--ink-soft);display:grid;place-items:center;font-size:16px;line-height:1.35}
+.msg.bad{color:var(--berry)}
+.msg.hintmsg{color:var(--sky)}
+
+/* result sheet */
+.sheet{position:fixed;inset:0;background:rgba(22,48,31,.45);display:grid;align-items:end;justify-items:center;z-index:5;animation:fade .25s}
+.sheet>div{width:min(560px,100%);background:var(--paper);border-radius:32px 32px 0 0;padding:28px 24px max(24px,env(safe-area-inset-bottom));text-align:center;animation:rise .5s var(--spring);box-shadow:0 -20px 60px -20px rgba(0,0,0,.4)}
+.sheet .big{font-family:var(--serif);font-size:72px;line-height:1;font-weight:700;color:var(--moss);font-variant-numeric:tabular-nums;margin:6px 0}
+.sheet p{color:var(--ink-soft);margin:6px auto 20px;max-width:34ch}
+.sheet code{display:block;font-family:var(--serif);font-size:22px;color:var(--ink);margin:6px 0 18px;background:var(--mint);padding:10px 14px;border-radius:14px}
+
+/* final */
+#final{gap:18px;text-align:center}
+#final h1{margin-top:10px}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:6}
+.confetti i{position:absolute;top:-24px;width:14px;height:20px;border-radius:70% 0 70% 0;background:var(--c);animation:fall var(--d) linear forwards;animation-delay:var(--dl)}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.grow{transform-origin:50% 100%;animation:growup .8s var(--spring)}
+.leaf-new{transform-box:fill-box;transform-origin:0 100%;animation:pop .7s var(--spring)}
+@keyframes pop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+@keyframes deal{from{opacity:0;transform:translateY(24px) rotate(-4deg)}}
+@keyframes merge{0%{transform:scale(.5)}100%{transform:scale(1)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes pulse{50%{transform:scale(1.08)}}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(100%)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@keyframes growup{from{transform:scaleY(.4)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(min-width:700px){.card{min-height:110px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="setup" class="screen" style="display:flex;flex-direction:column">
+  <div class="hero">
+    <div>
+      <h1>Hothouse</h1>
+      <p class="lede">Four seed packets, one target number. Combine them to hit it, and your plant grows.</p>
+    </div>
+    <svg viewBox="0 0 80 120" aria-hidden="true" id="heroPlant"></svg>
+  </div>
+  <div class="panel">
+    <div class="field">
+      <h3>Who is playing?</h3>
+      <div class="seg" id="countSeg" role="group" aria-label="Number of players"></div>
+      <div class="names" id="names"></div>
+    </div>
+    <div class="field">
+      <h3>Pick a garden</h3>
+      <div class="seg" id="modeSeg" role="group" aria-label="Garden size">
+        <button data-m="seed" aria-pressed="false">Seedlings<small>3 seeds, 45 seconds</small></button>
+        <button data-m="grow" aria-pressed="true">Greenhouse<small>4 seeds, make 24</small></button>
+      </div>
+    </div>
+    <div class="field">
+      <h3>How many rounds?</h3>
+      <div class="seg" id="roundSeg" role="group" aria-label="Rounds">
+        <button data-r="3" aria-pressed="false">3</button>
+        <button data-r="5" aria-pressed="true">5</button>
+        <button data-r="7" aria-pressed="false">7</button>
+      </div>
+    </div>
+  </div>
+  <button class="btn sun" id="startBtn" style="align-self:center">Plant the first round</button>
+</section>
+
+<section id="garden" class="screen" hidden style="flex-direction:column">
+  <div class="topbar"><span id="roundLab"></span><button class="btn ghost small" id="quitBtn">Quit game</button></div>
+  <div class="pots" id="pots"></div>
+  <div class="handoff">
+    <h2 id="passTitle"></h2>
+    <p id="passSub"></p>
+    <button class="btn" id="readyBtn">I'm ready</button>
+  </div>
+</section>
+
+<section id="play" class="screen" hidden style="flex-direction:column">
+  <div class="hud">
+    <div class="who"><span class="dot" id="whoDot"></span><span id="whoName"></span></div>
+    <div class="ring" id="ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="bg" cx="32" cy="32" r="27"/><circle class="fg" id="ringFg" cx="32" cy="32" r="27"/></svg><b id="clock" role="timer" aria-label="Seconds left">45</b></div>
+  </div>
+  <div class="target"><span class="lab">Make</span><span class="num" id="target">24</span></div>
+  <div class="table" id="table"></div>
+  <div class="ops" id="ops" role="group" aria-label="Operations">
+    <button class="op" data-op="+" aria-label="plus" aria-pressed="false">+</button>
+    <button class="op" data-op="−" aria-label="minus" aria-pressed="false">−</button>
+    <button class="op" data-op="×" aria-label="times" aria-pressed="false">×</button>
+    <button class="op" data-op="÷" aria-label="divided by" aria-pressed="false">÷</button>
+  </div>
+  <div class="msg" id="msg" aria-live="polite">Tap a seed, pick an operation, then tap a second seed.</div>
+  <div class="tools">
+    <button id="undoBtn">Undo</button>
+    <button id="resetBtn">Start over</button>
+    <button id="hintBtn">Hint (−3)</button>
+    <button id="giveBtn">Give up</button>
+  </div>
+</section>
+
+<section id="final" class="screen" hidden style="flex-direction:column">
+  <h1 id="winTitle">Garden complete</h1>
+  <p class="lede" id="winSub" style="margin-inline:auto"></p>
+  <div class="pots" id="finalPots"></div>
+  <div class="actions">
+    <button class="btn sun" id="againBtn">Play again</button>
+    <button class="btn ghost" id="changeBtn">Change players</button>
+  </div>
+</section>
+
+</div>
+<div id="sheetHost"></div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const COLORS=['var(--p0)','var(--p1)','var(--p2)','var(--p3)'];
+const HEX=['#d6456f','#f2a100','#3b8fd9','#7b4fc9'];
+const DEFAULT=['Player 1','Player 2','Player 3','Player 4'];
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let cfg={count:2,mode:'grow',rounds:5,names:[...DEFAULT]};
+try{const s=JSON.parse(localStorage.getItem('hothouse')||'null');if(s)cfg=Object.assign(cfg,s)}catch(e){}
+let G=null; // game state
+
+/* ---------- plant drawing ---------- */
+function plant(level,color,newLeaf){
+  level=Math.max(0,Math.min(10,level));
+  const h=14+level*8, top=100-h;
+  let s=`<svg viewBox="0 0 80 120" aria-hidden="true">`;
+  s+=`<g class="grow"><path d="M40 102 C38 ${100-h*.5} 42 ${100-h*.7} 40 ${top}" stroke="#3f8a3f" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+  for(let i=0;i<level;i++){
+    const y=96-i*8, side=i%2?1:-1, len=12+Math.min(i,4)*1.5;
+    const cls=(newLeaf&&i===level-1)?' class="leaf-new"':'';
+    s+=`<path${cls} d="M40 ${y} q${side*len} -${len*.9} ${side*len*1.4} ${-2} q${-side*len*.5} ${len*.9} ${-side*len*1.4} ${2}z" fill="${i%2?'#6bb85a':'#4f9a49'}"/>`;
+  }
+  if(level>=8){
+    for(let k=0;k<6;k++){const a=k*Math.PI/3;s+=`<circle cx="${40+Math.cos(a)*8}" cy="${top-4+Math.sin(a)*8}" r="6.5" fill="${color}"/>`}
+    s+=`<circle cx="40" cy="${top-4}" r="5" fill="#ffc93c"/>`;
+  } else if(level>=1){
+    s+=`<circle cx="40" cy="${top-1}" r="${3+level*.4}" fill="#a9d36a"/>`;
+  } else s+=`<circle cx="40" cy="98" r="4" fill="#8a6a45"/>`;
+  s+=`</g><path d="M22 102h36l-4 16H26z" fill="#c9825a"/><rect x="20" y="98" width="40" height="7" rx="3.5" fill="#d99870"/></svg>`;
+  return s;
+}
+$('#heroPlant').outerHTML=plant(9,'#d6456f',false).replace('<svg ','<svg id="heroPlant" ');
+
+/* ---------- solver ---------- */
+function solve(nums,target){
+  function rec(items){
+    if(items.length===1)return items[0].v===target?items[0].steps:null;
+    for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+      const A=items[i],B=items[j],rest=items.filter((_,k)=>k!==i&&k!==j);
+      const c=[];
+      c.push([A,B,'+',A.v+B.v],[A,B,'×',A.v*B.v]);
+      const [hi,lo]=A.v>=B.v?[A,B]:[B,A];
+      if(hi.v>lo.v)c.push([hi,lo,'−',hi.v-lo.v]);
+      if(lo.v>0&&hi.v%lo.v===0)c.push([hi,lo,'÷',hi.v/lo.v]);
+      for(const [x,y,op,v] of c){
+        const r=rec([...rest,{v,steps:[...x.steps,...y.steps,{a:x.v,b:y.v,op,res:v,ea:x.e,eb:y.e}],e:`(${x.e} ${op} ${y.e})`}]);
+        if(r)return r;
+      }
+    }
+    return null;
+  }
+  return rec(nums.map(n=>({v:n,steps:[],e:String(n)})));
+}
+function makePuzzle(mode){
+  for(let t=0;t<500;t++){
+    const n=mode==='grow'?4:3;
+    const nums=Array.from({length:n},()=>1+Math.floor(Math.random()*9));
+    const target=mode==='grow'?24:6+Math.floor(Math.random()*19);
+    const steps=solve(nums,target);
+    if(steps&&steps.length)return{nums,target,steps};
+  }
+  return{nums:[3,3,8,8],target:24,steps:solve([3,3,8,8],24)};
+}
+const exprOf=steps=>{const l=steps[steps.length-1];return `${l.ea} ${l.op} ${l.eb}`};
+
+/* ---------- setup screen ---------- */
+function show(id){$$('.screen').forEach(s=>{const on=s.id===id;s.hidden=!on;s.style.display=on?'flex':'none'});window.scrollTo(0,0)}
+function renderSetup(){
+  $('#countSeg').innerHTML=[1,2,3,4].map(n=>`<button data-n="${n}" aria-pressed="${cfg.count===n}">${n}</button>`).join('');
+  $('#names').innerHTML=Array.from({length:cfg.count},(_,i)=>`<label class="name"><span class="dot" style="background:${COLORS[i]}"></span><input type="text" maxlength="14" value="${esc(cfg.names[i])}" data-i="${i}" aria-label="Name for player ${i+1}" autocomplete="off"></label>`).join('');
+  $$('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===cfg.mode));
+  $$('#roundSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.r===cfg.rounds));
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#countSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;cfg.count=+b.dataset.n;renderSetup()};
+$('#modeSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;cfg.mode=b.dataset.m;renderSetup()};
+$('#roundSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;cfg.rounds=+b.dataset.r;renderSetup()};
+$('#names').oninput=e=>{if(e.target.dataset.i!=null)cfg.names[+e.target.dataset.i]=e.target.value};
+$('#startBtn').onclick=()=>{
+  try{localStorage.setItem('hothouse',JSON.stringify(cfg))}catch(e){}
+  G={players:Array.from({length:cfg.count},(_,i)=>({name:(cfg.names[i]||'').trim()||DEFAULT[i],score:0,shown:0})),round:1,turn:0,puzzle:makePuzzle(cfg.mode),limit:cfg.mode==='grow'?75:45};
+  openGarden();
+};
+
+/* ---------- garden (handoff) ---------- */
+function potsHTML(list,activeIdx,animateIdx){
+  return list.map((p,i)=>`<div class="pot${i===activeIdx?' turn':''}" style="--c:${HEX[i]}">${plant(Math.floor(p.shown/10),HEX[i],i===animateIdx)}<div class="nm">${esc(p.name)}</div><div class="sc" data-sc="${i}">${p.shown}</div></div>`).join('');
+}
+function countUp(el,from,to){
+  if(reduce||from===to){el.textContent=to;return}
+  const t0=performance.now(),d=700;
+  (function f(t){const k=Math.min(1,(t-t0)/d);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0);
+}
+function openGarden(){
+  show('garden');
+  const p=G.players[G.turn];
+  $('#roundLab').textContent=`Round ${G.round} of ${cfg.rounds}`;
+  const before=G.players.map(x=>x.shown);
+  $('#pots').innerHTML=potsHTML(G.players,G.turn,G.grew);
+  G.players.forEach((x,i)=>{x.shown=x.score;countUp($(`[data-sc="${i}"]`),before[i],x.score)});
+  G.grew=-1;
+  $('#passTitle').textContent=G.players.length>1?`Pass to ${p.name}`:`Ready, ${p.name}?`;
+  $('#passSub').textContent=`The timer starts when you tap. You get ${G.limit} seconds.`;
+  $('#readyBtn').focus({preventScroll:true});
+}
+$('#readyBtn').onclick=startTurn;
+$('#quitBtn').onclick=()=>{if(confirm('Quit this game?')){clearInterval(G.timer);show('setup')}};
+
+/* ---------- play ---------- */
+const BANDS=['#a9d36a','#ffc93c','#f58aa7','#7fc4f2'];
+function startTurn(){
+  show('play');
+  G.cards=G.puzzle.nums.map((v,i)=>({id:i,v,band:BANDS[i%4]}));
+  G.nextId=G.cards.length;G.sel=null;G.op=null;G.history=[];G.hintUsed=0;G.over=false;G.hintIds=[];
+  $('#target').textContent=G.puzzle.target;
+  $('#whoDot').style.background=COLORS[G.turn];
+  $('#whoName').textContent=G.players[G.turn].name;
+  say('Tap a seed, pick an operation, then tap a second seed.');
+  renderTable(true);
+  G.t0=performance.now();clearInterval(G.timer);
+  G.timer=setInterval(tick,100);tick();
+  $('#hintBtn').disabled=false;
+}
+const C=2*Math.PI*27;
+function tick(){
+  const left=Math.max(0,G.limit-(performance.now()-G.t0)/1000);
+  G.left=left;
+  $('#clock').textContent=Math.ceil(left);
+  $('#ringFg').style.strokeDasharray=C;
+  $('#ringFg').style.strokeDashoffset=C*(1-left/G.limit);
+  $('#ring').classList.toggle('low',left<=10);
+  if(left<=0)endTurn(false);
+}
+function say(t,cls){const m=$('#msg');m.textContent=t;m.className='msg'+(cls?' '+cls:'')}
+function renderTable(deal,mergedId){
+  const t=$('#table');
+  t.innerHTML=G.cards.map((c,i)=>`<button class="card${c.id===mergedId?' merge':''}${G.hintIds.includes(c.id)?' hint':''}" style="--band:${c.band};--i:${deal?i:0}" data-id="${c.id}" aria-pressed="${G.sel===c.id}" aria-label="${c.v}${G.sel===c.id?', selected':''}">${c.v}</button>`).join('');
+  $$('#ops .op').forEach(b=>b.setAttribute('aria-pressed',b.dataset.op===G.op));
+  $('#undoBtn').disabled=!G.history.length;
+  $('#resetBtn').disabled=!G.history.length;
+}
+function shake(id){const el=$(`.card[data-id="${id}"]`);if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}if(navigator.vibrate)navigator.vibrate(40)}
+function pickCard(id){
+  if(G.over)return;
+  G.hintIds=[];
+  if(G.sel===null){G.sel=id;renderTable();say(G.op?'Now tap the second seed.':'Now pick an operation.');return}
+  if(G.sel===id){G.sel=null;renderTable();say('Seed put back.');return}
+  if(!G.op){G.sel=id;renderTable();say('Now pick an operation.');return}
+  const a=G.cards.find(c=>c.id===G.sel),b=G.cards.find(c=>c.id===id);
+  let v;
+  if(G.op==='+')v=a.v+b.v;
+  else if(G.op==='×')v=a.v*b.v;
+  else if(G.op==='−'){v=a.v-b.v;if(v<=0){shake(id);say(`${a.v} − ${b.v} isn't above zero. Try the other order.`,'bad');return}}
+  else {if(b.v===0||a.v%b.v!==0){shake(id);say(`${a.v} ÷ ${b.v} doesn't come out even. Try another pair.`,'bad');return}v=a.v/b.v}
+  G.history.push(JSON.stringify(G.cards));
+  const nid=G.nextId++;
+  const idx=G.cards.indexOf(a);
+  G.cards=G.cards.filter(c=>c!==a&&c!==b);
+  G.cards.splice(Math.min(idx,G.cards.length),0,{id:nid,v,band:'#8fd3b0',e:`${a.v}${G.op}${b.v}`});
+  const used=G.op;G.sel=null;G.op=null;
+  renderTable(false,nid);
+  say(`${a.v} ${used} ${b.v} makes ${v}.`);
+  if(G.cards.length===1){
+    if(v===G.puzzle.target)endTurn(true);
+    else say(`That leaves ${v}, not ${G.puzzle.target}. Undo and try another route.`,'bad');
+  }
+}
+$('#table').onclick=e=>{const b=e.target.closest('.card');if(b)pickCard(+b.dataset.id)};
+$('#ops').onclick=e=>{const b=e.target.closest('.op');if(!b||G.over)return;
+  G.op=G.op===b.dataset.op?null:b.dataset.op;
+  renderTable();
+  say(G.op?(G.sel!==null?'Now tap the second seed.':'Now tap a seed.'):'Pick an operation.');};
+function undo(){if(!G.history.length||G.over)return;G.cards=JSON.parse(G.history.pop());G.sel=null;G.op=null;G.hintIds=[];renderTable();say('Undone.')}
+$('#undoBtn').onclick=undo;
+$('#resetBtn').onclick=()=>{if(!G.history.length||G.over)return;G.cards=JSON.parse(G.history[0]);G.history=[];G.sel=null;G.op=null;G.hintIds=[];renderTable();say('Fresh start with the same seeds.')};
+$('#hintBtn').onclick=()=>{
+  if(G.over)return;
+  // solve from the current cards so the hint always helps
+  const st=solve(G.cards.map(c=>c.v),G.puzzle.target);
+  if(!st||!st.length){say('These seeds can’t reach it. Try Undo.','bad');return}
+  const s=st[0];
+  const ids=[];
+  const pool=[...G.cards];
+  [s.a,s.b].forEach(v=>{const k=pool.findIndex(c=>c.v===v);if(k>-1)ids.push(pool.splice(k,1)[0].id)});
+  G.hintIds=ids;G.hintUsed++;
+  renderTable();
+  say(`Try ${s.a} ${s.op} ${s.b}. (−3 points)`,'hintmsg');
+};
+$('#giveBtn').onclick=()=>{if(!G.over)endTurn(false,true)};
+addEventListener('keydown',e=>{
+  if($('#play').hidden||G.over||e.ctrlKey||e.metaKey||e.altKey)return;
+  const map={'+':'+','-':'−','*':'×','x':'×','/':'÷'};
+  if(map[e.key]){G.op=G.op===map[e.key]?null:map[e.key];renderTable();e.preventDefault()}
+  else if(e.key==='Backspace'||e.key==='z')undo();
+});
+
+/* ---------- end of turn ---------- */
+function endTurn(won,gaveUp){
+  if(!G||G.over)return;
+  G.over=true;clearInterval(G.timer);
+  const p=G.players[G.turn];
+  let pts=0;
+  if(won){pts=Math.max(1,10+Math.round(10*G.left/G.limit)-3*G.hintUsed);p.score+=pts;G.grew=G.turn}
+  const sol=exprOf(G.puzzle.steps);
+  const last=G.turn===G.players.length-1;
+  const finalRound=G.round===cfg.rounds;
+  const next=last?(finalRound?'See the garden':'Next round'):`Pass to ${G.players[G.turn+1].name}`;
+  const host=$('#sheetHost');
+  host.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-label="Turn result"><div>
+    <h2>${won?pick(['Beautiful','Blooming','Nailed it','Green thumb']):gaveUp?'Left it to grow':'Time ran out'}</h2>
+    <div class="big" id="ptsBig">${won?'+0':'0'}</div>
+    <p>${won?(G.hintUsed?'Hints cost 3 points each.':'Fast hands earn bonus points.'):'One way to get there:'}</p>
+    ${won?'':`<code>${esc(sol)} = ${G.puzzle.target}</code>`}
+    <button class="btn" id="nextBtn">${next}</button></div></div>`;
+  if(won){const el=$('#ptsBig');countUp2(el,pts)}
+  if(won&&navigator.vibrate)navigator.vibrate([30,40,30]);
+  $('#nextBtn').focus();
+  $('#nextBtn').onclick=()=>{
+    host.innerHTML='';
+    if(last){
+      if(finalRound){finish();return}
+      G.round++;G.turn=0;G.puzzle=makePuzzle(cfg.mode);
+    } else G.turn++;
+    openGarden();
+  };
+}
+function countUp2(el,to){
+  if(reduce){el.textContent='+'+to;return}
+  const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/600);el.textContent='+'+Math.round(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0);
+}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ---------- final ---------- */
+function finish(){
+  show('final');
+  const max=Math.max(...G.players.map(p=>p.score));
+  const winners=G.players.filter(p=>p.score===max);
+  $('#winTitle').textContent=G.players.length===1?'Garden complete':winners.length>1?'A shared harvest':`${winners[0].name} wins`;
+  $('#winSub').textContent=G.players.length===1?`You grew ${max} points over ${cfg.rounds} rounds.`:winners.length>1?`${winners.map(w=>w.name).join(' and ')} tied at ${max}.`:`${max} points over ${cfg.rounds} rounds. Best garden on the windowsill.`;
+  G.players.forEach(p=>p.shown=p.score);
+  $('#finalPots').innerHTML=potsHTML(G.players,-1,-1);
+  G.players.forEach((p,i)=>countUp($(`#finalPots [data-sc="${i}"]`),0,p.score));
+  $$('#finalPots .pot').forEach((el,i)=>{if(G.players[i].score===max)el.classList.add('turn')});
+  if(!reduce)confetti();
+}
+function confetti(){
+  const d=document.createElement('div');d.className='confetti';d.setAttribute('aria-hidden','true');
+  d.innerHTML=Array.from({length:44},()=>`<i style="left:${Math.random()*100}%;--c:${pick(HEX.concat(['#4f9a49','#ffc93c']))};--d:${2.6+Math.random()*2.4}s;--dl:${Math.random()*1.2}s"></i>`).join('');
+  document.body.appendChild(d);setTimeout(()=>d.remove(),6500);
+}
+$('#againBtn').onclick=()=>{G.players.forEach(p=>{p.score=0;p.shown=0});G.round=1;G.turn=0;G.puzzle=makePuzzle(cfg.mode);openGarden()};
+$('#changeBtn').onclick=()=>{show('setup')};
+
+renderSetup();show('setup');
+// test hooks
+window.__hothouse={solve,makePuzzle};
+})();
+</script>
+</body>
+</html>
