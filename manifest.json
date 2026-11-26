@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-26",
+      "slug": "2026-11-26",
+      "title": "Needle Drop",
+      "category": "games",
+      "design": "soft-gradient-depth",
+      "oneLiner": "A pass-and-play party game: one player sees a hidden spot on a dial, gives a clue, and the group slides the needle to find it.",
+      "path": "apps/2026-11-26/"
+    },
+    {
       "date": "2026-11-25",
       "slug": "2026-11-25",
       "title": "Hothouse",

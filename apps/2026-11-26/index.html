@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Needle Drop</title>
+<meta name="description" content="A pass-and-play party game: one player sees a hidden spot on a dial, gives a clue, and the group slides the needle to find it.">
+<style>
+:root{
+  --ink:#1d1a33; --ink-2:#4a4666; --ink-3:#6e6a89;
+  --paper:#f7f4fb; --card:rgba(255,255,255,.72); --line:rgba(29,26,51,.1);
+  --a:hsl(204 88% 58%); --b:hsl(14 92% 60%);
+  --z2:#ffd166; --z3:#ff9f5c; --z4:#ff4f7b;
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ff:ui-rounded,"SF Pro Rounded","Avenir Next Rounded","Nunito","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{
+  font-family:var(--ff); color:var(--ink); background:var(--paper);
+  min-height:100dvh; line-height:1.5; font-size:16px;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+/* soft gradient depth: three blurred glows that follow the current spectrum */
+.glow{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--paper)}
+.glow i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;transition:background 1.2s ease, transform 2s ease}
+.glow i:nth-child(1){width:70vmax;height:70vmax;left:-25vmax;top:-30vmax;background:var(--a)}
+.glow i:nth-child(2){width:65vmax;height:65vmax;right:-30vmax;bottom:-25vmax;background:var(--b)}
+.glow i:nth-child(3){width:40vmax;height:40vmax;left:35%;top:40%;background:#fff;opacity:.8}
+.app{
+  width:min(100%,480px); margin:0 auto; min-height:100dvh;
+  padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  display:flex; flex-direction:column; gap:16px;
+}
+h1,h2{letter-spacing:-.02em;line-height:1.1;font-weight:800}
+h1{font-size:44px} h2{font-size:28px}
+p{color:var(--ink-2);max-width:60ch}
+.card{
+  background:var(--card); backdrop-filter:blur(18px) saturate(1.3); -webkit-backdrop-filter:blur(18px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.8); border-radius:var(--r-lg); padding:24px;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 24px 48px -24px color-mix(in srgb,var(--b) 45%,transparent), 0 8px 16px -8px color-mix(in srgb,var(--a) 35%,transparent);
+}
+button,input{font:inherit;color:inherit}
+.btn{
+  min-height:52px; padding:0 24px; border:0; border-radius:999px; cursor:pointer; font-weight:700; font-size:16px;
+  background:var(--ink); color:#fff;
+  box-shadow:0 10px 24px -8px color-mix(in srgb,var(--b) 70%,var(--ink)), 0 2px 0 rgba(255,255,255,.18) inset;
+  transition:transform .25s var(--spring), box-shadow .25s;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.96);box-shadow:0 4px 10px -6px var(--ink)}
+.btn.ghost{background:rgba(255,255,255,.7);color:var(--ink);box-shadow:0 0 0 1.5px var(--line) inset}
+.btn[disabled]{opacity:.4;pointer-events:none}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>.btn{flex:1 1 140px}
+
+/* setup */
+.hero{display:grid;gap:12px;padding-top:8px}
+.hero p{font-size:18px;line-height:1.55}
+.players{display:grid;gap:8px;margin:16px 0}
+.player{display:flex;gap:8px;align-items:center}
+.player input{
+  flex:1;min-width:0;height:48px;padding:0 16px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:rgba(255,255,255,.85);
+}
+.player input::placeholder{color:var(--ink-3)}
+.icon{width:48px;height:48px;border-radius:50%;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--ink-3)}
+.icon:hover{background:rgba(29,26,51,.06)}
+.seg{display:inline-grid;grid-auto-flow:column;gap:4px;padding:4px;border-radius:999px;background:rgba(29,26,51,.07);margin:4px 0 20px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;min-height:44px;line-height:44px;padding:0 20px;border-radius:999px;font-weight:700;color:var(--ink-2);transition:background .25s,color .25s}
+.seg input:checked+span{background:#fff;color:var(--ink);box-shadow:0 4px 12px -4px rgba(29,26,51,.3)}
+.seg input:focus-visible+span{outline:3px solid var(--ink)}
+.lbl{font-weight:700;font-size:14px;color:var(--ink-2);display:block}
+
+/* round */
+.hud{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;color:var(--ink-2)}
+.dots{display:flex;gap:6px;flex-wrap:wrap;max-width:60%}
+.dots b{width:10px;height:10px;border-radius:50%;background:rgba(29,26,51,.15);transition:background .4s,transform .4s var(--spring)}
+.dots b.on{background:var(--ink)} .dots b.now{transform:scale(1.5);background:linear-gradient(135deg,var(--a),var(--b))}
+.team{font-size:14px}.team strong{font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+.ends{display:flex;justify-content:space-between;gap:12px;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.ends span:first-child{color:color-mix(in srgb,var(--a) 70%,var(--ink))}
+.ends span:last-child{text-align:right;color:color-mix(in srgb,var(--b) 70%,var(--ink))}
+.dialwrap{padding:16px 12px 12px;position:relative}
+svg.dial{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;overflow:visible}
+svg.dial.locked{cursor:default}
+.bands{opacity:0;transition:opacity .5s}
+.bands.show{opacity:1}
+.bands path{transform-origin:200px 210px;transform:scale(.6);transition:transform .7s var(--spring)}
+.bands.show path{transform:scale(1)}
+.bands .p3{transition-delay:.08s}.bands .p4{transition-delay:.16s}
+.bands text{font-weight:800;font-size:15px;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.needle{transform-origin:200px 210px;transition:opacity .3s}
+.needle.ease{transition:transform .5s var(--spring),opacity .3s}
+.needle.hide{opacity:0}
+.focusring{opacity:0}.needle.focus .focusring{opacity:1}
+.panel{display:grid;gap:12px}
+.panel p{font-size:16px;line-height:1.55}
+.panel strong{color:var(--ink)}
+.score{display:flex;align-items:baseline;gap:12px}
+.score .n{font-size:72px;font-weight:800;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums;
+  background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.score .w{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.confetti{position:fixed;left:0;top:0;width:10px;height:14px;border-radius:3px;pointer-events:none;z-index:9}
+/* end */
+.final{font-size:96px;font-weight:800;line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.final small{font-size:22px;color:var(--ink-3);letter-spacing:0;font-weight:700}
+.bars{display:grid;gap:12px;margin:8px 0 0}
+.bar{display:grid;grid-template-columns:96px 1fr 40px;gap:12px;align-items:center;font-weight:700;font-size:15px}
+.bar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .tr{height:14px;border-radius:99px;background:rgba(29,26,51,.08);overflow:hidden}
+.bar .fl{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b));transition:width 1s var(--spring)}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pop{animation:pop .6s var(--spring) both}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+@media (max-width:380px){h1{font-size:38px}.ends{font-size:24px}.bar{grid-template-columns:72px 1fr 36px}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+<main class="app" id="app"></main>
+
+<script>
+(()=>{
+"use strict";
+const PAIRS=[
+["Cold","Hot",205,12],["Soggy","Crunchy",195,38],["Boring","Exciting",230,330],["Tiny","Gigantic",160,260],
+["Slow","Fast",150,8],["Silly","Serious",320,225],["Sleepy","Wide awake",250,48],["Gross","Delicious",95,345],
+["Easy","Hard",140,350],["Quiet","Loud",190,0],["Old","New",35,185],["Cheap","Expensive",120,285],
+["Scary","Cuddly",270,330],["Ordinary","Weird",215,300],["Smooth","Bumpy",200,30],["Terrible superpower","Amazing superpower",20,265],
+["Bad pizza topping","Great pizza topping",110,10],["Underrated","Overrated",175,320],["Winter","Summer",210,40],
+["Wimpy","Tough",170,20],["Plain","Fancy",60,290],["Boring school subject","Fun school subject",225,150],
+["Messy","Tidy",25,190],["Round","Pointy",300,170],["Rare","Common",280,90],["Sweet","Sour",340,85],
+["Bad idea","Good idea",5,140],["Short","Tall",155,255],["Not a sport","Definitely a sport",240,15],
+["Hard to spell","Easy to spell",345,175],["Cat thing","Dog thing",285,35],["Morning","Night",45,245]
+];
+const MAXP=8;
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduce=matchMedia("(prefers-reduced-motion: reduce)");
+const app=$("#app");
+let S={names:["",""],laps:1};
+let G=null;
+
+function setColors(hl,hr){
+  const r=document.documentElement.style;
+  r.setProperty("--a",`hsl(${hl} 88% 60%)`);r.setProperty("--b",`hsl(${hr} 90% 60%)`);
+}
+function pick(){
+  const free=PAIRS.map((_,i)=>i).filter(i=>!G.used.has(i));
+  const i=free[Math.floor(Math.random()*free.length)];
+  G.used.add(i);G.pair=PAIRS[i];
+  G.target=10+Math.random()*80;
+  G.guess=50;
+  setColors(G.pair[2],G.pair[3]);
+}
+const nm=i=>(S.names[i]||"").trim()||`Player ${i+1}`;
+
+/* ---------- setup ---------- */
+function setup(){
+  setColors(205,12);
+  G=null;
+  app.innerHTML=`
+  <section class="hero pop">
+    <h1>Needle Drop</h1>
+    <p>One of you secretly sees where a spot hides on a dial between two opposites. Give a clue, and the rest of the group slides the needle to find it.</p>
+  </section>
+  <section class="card pop" style="animation-delay:.08s">
+    <span class="lbl">Who's playing?</span>
+    <div class="players" id="pl"></div>
+    <div class="row" style="margin-bottom:20px"><button class="btn ghost" id="add" type="button">Add a player</button></div>
+    <span class="lbl" id="lapl">How long?</span>
+    <div class="seg" role="radiogroup" aria-labelledby="lapl">
+      <label><input type="radio" name="laps" value="1"><span>Everyone gives a clue once</span></label>
+      <label><input type="radio" name="laps" value="2"><span>Twice</span></label>
+    </div>
+    <div class="row"><button class="btn" id="go" type="button">Start playing</button></div>
+  </section>`;
+  drawPlayers();
+  app.querySelectorAll('input[name=laps]').forEach(r=>{r.checked=+r.value===S.laps;r.onchange=()=>S.laps=+r.value});
+  $("#add").onclick=()=>{if(S.names.length<MAXP){S.names.push("");drawPlayers();const ins=app.querySelectorAll(".player input");ins[ins.length-1].focus()}};
+  $("#go").onclick=start;
+}
+function drawPlayers(){
+  const pl=$("#pl");
+  pl.innerHTML=S.names.map((n,i)=>`<div class="player"><input aria-label="Player ${i+1} name" maxlength="14" placeholder="Player ${i+1}" value="${esc(n)}" data-i="${i}" autocomplete="off">${S.names.length>2?`<button class="icon" type="button" aria-label="Remove player ${i+1}" data-r="${i}">×</button>`:""}</div>`).join("");
+  pl.querySelectorAll("input").forEach(el=>el.oninput=()=>S.names[+el.dataset.i]=el.value);
+  pl.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{S.names.splice(+b.dataset.r,1);drawPlayers()});
+  const add=$("#add");if(add)add.disabled=S.names.length>=MAXP;
+}
+
+/* ---------- game ---------- */
+function start(){
+  const n=S.names.length;
+  G={n,rounds:n*S.laps,r:0,total:0,res:[],used:new Set(),phase:"peek",shown:false,locked:false};
+  pick();round();
+}
+const giver=()=>G.r%G.n;
+
+function band(p1,p2,r1,r2){
+  p1=Math.max(0,p1);p2=Math.min(100,p2);
+  const P=(p,r)=>{const t=Math.PI*(1-p/100);return[(200+r*Math.cos(t)).toFixed(1),(210-r*Math.sin(t)).toFixed(1)]};
+  const [a,b,c,d]=[P(p1,r2),P(p2,r2),P(p2,r1),P(p1,r1)];
+  return `M${a} A${r2} ${r2} 0 0 1 ${b} L${c} A${r1} ${r1} 0 0 0 ${d}Z`;
+}
+function dialSVG(){
+  const t=G.target,P=(p,r)=>{const a=Math.PI*(1-p/100);return[200+r*Math.cos(a),210-r*Math.sin(a)]};
+  const lab=(p,v)=>{const [x,y]=P(p,128);return `<text x="${x.toFixed(1)}" y="${(y+5).toFixed(1)}">${v}</text>`};
+  const B=[[15,"z2","p2",2],[9,"z3","p3",3],[4,"z4","p4",4]];
+  const paths=B.map(([w,z,c])=>`<path class="${c}" fill="var(--${z})" d="${band(t-w,t+w,56,170)}"/>`).join("");
+  return `
+  <svg class="dial" id="dial" viewBox="0 0 400 236" role="group" aria-label="Dial from ${esc(G.pair[0])} to ${esc(G.pair[1])}">
+    <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" style="stop-color:var(--a)"/><stop offset="1" style="stop-color:var(--b)"/></linearGradient>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#1d1a33" flood-opacity=".28"/></filter></defs>
+    <path d="M30 210A170 170 0 0 1 370 210Z" fill="url(#g)" opacity=".28"/>
+    <path d="M30 210A170 170 0 0 1 370 210" fill="none" stroke="url(#g)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M60 210A140 140 0 0 1 340 210" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/>
+    <g class="bands" id="bands">${paths}${lab(t,4)}${lab(t-6.5,3)}${lab(t+6.5,3)}${lab(t-12,2)}${lab(t+12,2)}</g>
+    <g class="needle hide" id="needle" tabindex="0" role="slider" aria-label="Needle position, ${esc(G.pair[0])} to ${esc(G.pair[1])}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="Middle">
+      <circle class="focusring" cx="200" cy="62" r="25" fill="none" stroke="#1d1a33" stroke-width="3" stroke-dasharray="5 4"/>
+      <g filter="url(#sh)"><line x1="200" y1="210" x2="200" y2="70" stroke="#1d1a33" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="200" cy="62" r="17" fill="#fff" stroke="#1d1a33" stroke-width="6"/></g>
+    </g>
+    <circle cx="200" cy="210" r="20" fill="#1d1a33"/><circle cx="200" cy="210" r="7" fill="#fff"/>
+  </svg>`;
+}
+function setNeedle(ease){
+  const n=$("#needle");n.classList.toggle("ease",!!ease&&!reduce.matches);
+  n.style.transform=`rotate(${((G.guess-50)*1.8).toFixed(2)}deg)`;
+  n.setAttribute("aria-valuenow",Math.round(G.guess));
+  const g=G.guess;n.setAttribute("aria-valuetext",`${Math.round(g)} out of 100, ${g<40?"closer to "+G.pair[0]:g>60?"closer to "+G.pair[1]:"near the middle"}`);
+}
+function round(){
+  const hud=Array.from({length:G.rounds},(_,i)=>`<b class="${i<G.r?"on":i===G.r?"now":""}"></b>`).join("");
+  app.innerHTML=`
+  <div class="hud"><div class="dots" role="img" aria-label="Round ${G.r+1} of ${G.rounds}">${hud}</div><div class="team">Team score <strong id="tot">${G.total}</strong></div></div>
+  <div class="ends pop"><span>${esc(G.pair[0])}</span><span>${esc(G.pair[1])}</span></div>
+  <section class="card dialwrap pop" style="animation-delay:.06s">${dialSVG()}</section>
+  <section class="panel" id="panel" aria-live="polite"></section>`;
+  G.phase="peek";G.shown=false;G.locked=false;
+  setNeedle(false);bindDial();panel();
+}
+function panel(){
+  const p=$("#panel"),who=esc(nm(giver()));
+  if(G.phase==="peek"){
+    p.innerHTML=`<p><strong>${who}</strong> is the clue giver. Everyone else, look away. ${who}, tap Show target, then think of a clue that points to that spot: a word, an example, a sound.</p>
+    <div class="row"><button class="btn" id="tog" type="button" aria-pressed="false">Show target</button><button class="btn ghost" id="swap" type="button">Swap the dial</button></div>
+    <div class="row"><button class="btn ghost" id="ready" type="button">Hide it and give the clue</button></div>`;
+    $("#tog").onclick=()=>show(!G.shown);
+    $("#swap").onclick=()=>{G.used.size<PAIRS.length&&(pick(),swapAnim())};
+    $("#ready").onclick=()=>{show(false);G.phase="guess";$("#needle").classList.remove("hide");setNeedle(false);panel();$("#needle").focus({preventScroll:true})};
+  }else if(G.phase==="guess"){
+    p.innerHTML=`<p><strong>${who}</strong>, say your clue out loud. Everyone else: talk it over, slide the needle to where you think the target is, then lock it in.</p>
+    <div class="row"><button class="btn" id="lock" type="button">Lock it in</button></div>`;
+    $("#lock").onclick=reveal;
+  }else{
+    const last=G.res[G.res.length-1];
+    p.innerHTML=`<div class="score pop"><span class="n" id="sc">0</span><span class="w">${esc(last.word)}</span></div>
+    <p>${esc(last.msg)}</p>
+    <div class="row"><button class="btn" id="next" type="button">${G.r+1<G.rounds?"Next clue giver":"See final score"}</button></div>`;
+    $("#next").onclick=()=>{G.r++;if(G.r>=G.rounds)return finish();pick();round()};
+    $("#next").focus({preventScroll:true});
+  }
+}
+function swapAnim(){
+  const old=$("#dial").parentNode;old.innerHTML=dialSVG();
+  const e=$(".ends");e.innerHTML=`<span>${esc(G.pair[0])}</span><span>${esc(G.pair[1])}</span>`;
+  G.shown=false;bindDial();setNeedle(false);$("#tog").textContent="Show target";$("#tog").setAttribute("aria-pressed","false");
+}
+function show(v){
+  G.shown=v;$("#bands").classList.toggle("show",v);
+  const t=$("#tog");if(t){t.textContent=v?"Hide target":"Show target";t.setAttribute("aria-pressed",v)}
+}
+function bindDial(){
+  const svg=$("#dial"),needle=$("#needle");
+  const fromEvent=e=>{
+    const r=svg.getBoundingClientRect(),k=r.width/400;
+    const cx=r.left+200*k,cy=r.top+210*k,dx=e.clientX-cx,dy=cy-e.clientY;
+    let a=Math.atan2(dy,dx);
+    if(a<0)a=dx>0?0:Math.PI;
+    return (1-a/Math.PI)*100;
+  };
+  let drag=false;
+  svg.onpointerdown=e=>{
+    if(G.phase!=="guess"||G.locked)return;
+    drag=true;svg.setPointerCapture(e.pointerId);G.guess=fromEvent(e);setNeedle(true);needle.focus({preventScroll:true});
+  };
+  svg.onpointermove=e=>{if(drag){G.guess=fromEvent(e);setNeedle(false)}};
+  svg.onpointerup=svg.onpointercancel=()=>{drag=false};
+  needle.onfocus=()=>needle.classList.add("focus");needle.onblur=()=>needle.classList.remove("focus");
+  needle.onkeydown=e=>{
+    if(G.phase!=="guess")return;
+    const s=e.shiftKey?10:2;let g=G.guess;
+    if(e.key==="ArrowLeft"||e.key==="ArrowDown")g-=s;else if(e.key==="ArrowRight"||e.key==="ArrowUp")g+=s;
+    else if(e.key==="Home")g=0;else if(e.key==="End")g=100;else if(e.key==="Enter"){reveal();return}else return;
+    e.preventDefault();G.guess=Math.max(0,Math.min(100,g));setNeedle(true);
+  };
+}
+function reveal(){
+  if(G.locked)return;G.locked=true;G.phase="reveal";
+  $("#dial").classList.add("locked");
+  const d=Math.abs(G.guess-G.target);
+  const pts=d<=4?4:d<=9?3:d<=15?2:0;
+  const word=["Missed it","","Close","Nearly","Bullseye"][pts]||"Missed it";
+  const msg=[
+    `The target was ${G.target<G.guess?"further toward "+G.pair[0]:"further toward "+G.pair[1]}. No points this time. A clue that is easier to picture might help.`,"",
+    "Just inside the outer ring. The clue pointed the right way.","Right next to the center. Great clue.","Dead center. You two are on the same wavelength."][pts];
+  G.res.push({giver:giver(),pts,word,msg});
+  $("#bands").classList.add("show");
+  panel();
+  const sc=$("#sc");count(sc,0,pts,600);
+  const old=G.total;G.total+=pts;count($("#tot"),old,G.total,700);
+  if(pts>=3)confetti(pts===4?60:26);
+}
+function count(el,from,to,ms){
+  if(!el)return;
+  if(reduce.matches||from===to){el.textContent=to;return}
+  const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);el.textContent=Math.round(from+(to-from)*e);if(k<1)requestAnimationFrame(f)})(t0);
+}
+function confetti(n){
+  if(reduce.matches)return;
+  const cols=["#ff4f7b","#ffd166","#ff9f5c","#4cc9f0","#7ae582","#fff"];
+  const r=$("#dial").getBoundingClientRect(),ox=r.left+r.width/2,oy=r.top+r.height*.85;
+  for(let i=0;i<n;i++){
+    const e=document.createElement("i");e.className="confetti";e.style.background=cols[i%cols.length];
+    document.body.appendChild(e);
+    const a=-Math.PI*(.1+Math.random()*.8),v=180+Math.random()*320;
+    const dx=Math.cos(a)*v,dy=Math.sin(a)*v;
+    e.animate([{transform:`translate(${ox}px,${oy}px) rotate(0)`,opacity:1},
+      {transform:`translate(${ox+dx}px,${oy+dy}px) rotate(${Math.random()*360}deg)`,opacity:1,offset:.45},
+      {transform:`translate(${ox+dx*1.3}px,${oy+dy+320}px) rotate(${Math.random()*720}deg)`,opacity:0}],
+      {duration:1300+Math.random()*700,easing:"cubic-bezier(.2,.7,.4,1)"}).onfinish=()=>e.remove();
+  }
+}
+function finish(){
+  const max=G.rounds*4,pct=G.total/max;
+  const title=pct>=.75?"Mind readers":pct>=.55?"Same wavelength":pct>=.35?"Getting warmer":"Different planets";
+  const line=pct>=.75?"You barely needed the dial.":pct>=.55?"Most clues landed. Nicely tuned.":pct>=.35?"A few clues hit. Try more vivid examples next round.":"Great fun, though. Swap clue givers and try again.";
+  const per=S.names.map((_,i)=>{const r=G.res.filter(x=>x.giver===i);return{i,avg:r.length?r.reduce((a,x)=>a+x.pts,0)/r.length:0}});
+  app.innerHTML=`
+  <section class="hero pop"><h2>${title}</h2><p>${line}</p></section>
+  <section class="card pop" style="animation-delay:.08s">
+    <div class="final"><span id="fin">0</span> <small>of ${max} points</small></div>
+    <p style="margin:8px 0 20px">Average points per clue, by clue giver:</p>
+    <div class="bars">${per.map(p=>`<div class="bar"><span class="nm">${esc(nm(p.i))}</span><span class="tr"><span class="fl" data-w="${p.avg/4*100}"></span></span><span class="v">${p.avg.toFixed(1)}</span></div>`).join("")}</div>
+  </section>
+  <div class="row"><button class="btn" id="again" type="button">Play again</button><button class="btn ghost" id="edit" type="button">Change players</button></div>`;
+  count($("#fin"),0,G.total,1100);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>app.querySelectorAll(".fl").forEach(f=>f.style.width=f.dataset.w+"%")));
+  $("#again").onclick=start;$("#edit").onclick=setup;
+  if(pct>=.55)confettiTop();
+}
+function confettiTop(){
+  if(reduce.matches)return;
+  const cols=["#ff4f7b","#ffd166","#ff9f5c","#4cc9f0","#7ae582"];
+  for(let i=0;i<50;i++){
+    const e=document.createElement("i");e.className="confetti";e.style.background=cols[i%5];document.body.appendChild(e);
+    const x=Math.random()*innerWidth;
+    e.animate([{transform:`translate(${x}px,-20px) rotate(0)`},{transform:`translate(${x+(Math.random()-.5)*160}px,${innerHeight+20}px) rotate(${Math.random()*900}deg)`}],
+      {duration:2200+Math.random()*1800,delay:Math.random()*700,easing:"ease-in",fill:"backwards"}).onfinish=()=>e.remove();
+  }
+}
+setup();
+})();
+</script>
+</body>
+</html>
