@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-27",
+      "slug": "2026-11-27",
+      "title": "Next Word",
+      "category": "trend",
+      "design": "minimal-dark",
+      "oneLiner": "Roll the dice on a tiny language model and feel what temperature and top-p do to every word it picks.",
+      "path": "apps/2026-11-27/"
+    },
+    {
       "date": "2026-11-26",
       "slug": "2026-11-26",
       "title": "Needle Drop",
