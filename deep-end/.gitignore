@@ -1,0 +1,7 @@
+study/assets/
+study/vendor/
+study/dev*.html
+sources/*/
+*.jpg
+*.jpeg
+__pycache__/

@@ -1,0 +1,689 @@
+<title>Deep End 02</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  /* Study 02: the paper moves to the music. Hinged cutouts, built backdrops, torn cuts on the beat. */
+  :root {
+    --ink: #f3ede2;
+    --ink-dim: rgba(243, 237, 226, 0.55);
+    --room: #0b0a0c;
+    --mono: "Courier Prime", "Courier New", Courier, monospace;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--room); color: var(--ink); font-family: var(--mono); overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0; box-sizing: border-box;
+  }
+  #stage { position: fixed; inset: 0; display: block; touch-action: none; }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+  #veil { position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 48%, rgba(0,0,0,0.5) 100%); mix-blend-mode: multiply; }
+  #flash { position: fixed; inset: 0; pointer-events: none; background: #fff6e6; opacity: 0; }
+
+  .hud { position: fixed; z-index: 3; pointer-events: none; font-size: 12px; letter-spacing: 0.08em; text-transform: lowercase;
+    color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  #brand { top: calc(18px + env(safe-area-inset-top, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); }
+  #depth { top: calc(18px + env(safe-area-inset-top, 0px)); right: max(20px, env(safe-area-inset-right, 0px)); }
+  #tempo { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); right: max(20px, env(safe-area-inset-right, 0px)); text-align: right; }
+  #tempo b { font-weight: 400; color: var(--ink); }
+  #caption { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); right: 40%;
+    font-size: 14px; color: var(--ink); opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease, transform 0.35s ease;
+    text-transform: none; letter-spacing: 0.02em; }
+  #caption.on { opacity: 1; transform: none; }
+  #whisper { bottom: calc(52px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; font-size: 13px; font-style: italic;
+    color: var(--ink-dim); opacity: 0; transition: opacity 1.2s ease; text-transform: none; }
+  #whisper.on { opacity: 1; }
+  #drop { position: fixed; inset: 0; z-index: 5; display: none; place-items: center; background: rgba(11,10,12,0.72); font-size: 14px;
+    letter-spacing: 0.2em; text-transform: lowercase; color: var(--ink); pointer-events: none; }
+  #drop.on { display: grid; }
+
+  #intro { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; text-align: center; background: var(--room); transition: opacity 1.4s ease; }
+  #intro.gone { opacity: 0; pointer-events: none; }
+  #intro .card { max-width: 36ch; padding: 24px; display: grid; gap: 22px; justify-items: center; }
+  #intro h1 { font-weight: 400; font-size: 15px; letter-spacing: 0.34em; text-transform: lowercase; margin: 0; color: var(--ink); text-wrap: balance; }
+  #intro p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--ink-dim); text-wrap: balance; }
+  #enter { font: inherit; font-size: 13px; letter-spacing: 0.2em; text-transform: lowercase; color: var(--ink); background: transparent;
+    border: 1px solid rgba(243,237,226,0.35); border-radius: 999px; padding: 12px 26px; cursor: pointer; transition: border-color 0.3s, background 0.3s; }
+  #enter:hover, #enter:focus-visible { border-color: var(--ink); background: rgba(243,237,226,0.06); outline: none; }
+  #again { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.12em; min-height: 1em; }
+  @media (prefers-reduced-motion: reduce) { #intro { transition: none; } }
+</style>
+
+<div id="stage"></div>
+<div id="veil"></div>
+<div id="flash"></div>
+<div id="brand" class="hud">deep end · study 02</div>
+<div id="depth" class="hud">0 m</div>
+<div id="caption" class="hud"></div>
+<div id="whisper" class="hud"></div>
+<div id="tempo" class="hud"></div>
+<div id="drop">drop the song</div>
+
+<div id="intro">
+  <div class="card">
+    <h1>deep end</h1>
+    <p>a house made of paper.<br>it moves to the music. scroll, or do nothing, and you fall.<br>drop a song onto it if you have one. tap T on the beat to teach it the tempo.</p>
+    <button id="enter" type="button">enter</button>
+    <div id="again"></div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+
+// ---------- memory ----------
+const mem = {
+  get(k, d) { try { const v = localStorage.getItem('deepend.' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('deepend.' + k, JSON.stringify(v)); } catch {} },
+};
+const visits = mem.get('visits02', 0) + 1; mem.set('visits02', visits);
+const heartOpenedBefore = mem.get('heart1', false);
+if (visits > 1) document.getElementById('again').textContent = visits === 2 ? 'you have been here before' : `visit ${visits}. the rooms have moved.`;
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const visitRand = mulberry(2000 + visits * 7919);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- the beat ----------
+// everything that moves asks this clock where it is in the bar
+const beat = { bpm: 116, t0: 0, ctx: null,
+  at(t) { return (t - this.t0) * this.bpm / 60; },
+  now() { return this.ctx ? this.at(this.ctx.currentTime) : 0; } };
+
+// ---------- layout ----------
+// y runs downward. floors: yard 0..-14, water -14..-28, canyon -28..-42
+const FLOORS = [-14, -28];
+const FLOOR_Y = -40.6;
+// [name, x, y, z, height, rot deg, caption, rig]
+const LAYOUT = [
+  // the yard
+  ['rose-pink',      -6.8,  3.0, -1.4, 5.0,  12, 'a rose, 1827', { type: 'bob', amp: 0.03 }],
+  ['rose-china',      6.9,  2.4, -1.6, 5.2, -10, 'a china rose', { type: 'bob', amp: 0.03 }],
+  ['rose-wild',       6.6, -8.4, -1.2, 4.2,  18, 'a wild rose', { type: 'bob', amp: 0.03 }],
+  ['white-rabbit',    5.2, -4.0,  0.9, 2.8,  -4, 'he is late', { type: 'hop', every: 2, h: 0.35 }],
+  ['muybridge',      -9.0, -3.4,  0.4, 1.9,   0, 'palo alto, 1878', { type: 'gallop', from: -11, to: 11, beats: 12 }],
+  ['earth',           3.6,  5.0, -3.0, 2.2,   0, 'apollo 13', { type: 'rock', amp: 2, beats: 8 }],
+  ['hero-body',      -0.8, -1.6,  0.0, 7.4,  -2, 'the yard', { type: 'sing' }, 'hero'],
+  ['girl-closeup',    4.6,  1.2, -2.6, 4.6,  -6, 'same day, no sunglasses', { type: 'bob' }],
+  ['girl-swing',     -5.4,  1.6, -1.0, 5.4,   0, 'the swing', { type: 'swing', px: 0.62, py: -0.55, amp: 16, beats: 4 }],
+  ['print-drawing',  -5.6, -6.6,  0.6, 3.0, -10, 'october 1987', { type: 'rock', amp: 4, beats: 2 }],
+  ['booth-a',         1.9, -6.2,  0.5, 3.4,   6, 'the photo booth', { type: 'frames', alt: 'booth-b', every: 1 }],
+  ['mom-and-me',      5.0, -6.0, -0.8, 3.2,  -5, 'mom, and the rabbit', { type: 'rock', amp: 3, beats: 4 }],
+  ['girl-picnic',    -2.8, -8.8, -1.6, 3.0,   8, 'the picnic', { type: 'bob' }],
+  ['note-grad',      -1.2,-10.3,  1.0, 0.9,  -3, 'summer 1989, in her hand', { type: 'bob' }],
+  ['grad-girl',       3.2,-10.6, -0.4, 3.2,   0, 'montessori graduation', { type: 'hop', every: 2, h: 0.25 }],
+  ['heather',         0.0,-11.8,  0.3, 3.0,   0, 'the heather', { type: 'bob' }, null, { count: 3, from: -5.5, to: 5.5, zStep: -0.15 }],
+  ['dog',            -6.0,-12.4, -0.3, 2.0,   0, 'the dog', { type: 'drive', from: -9, to: 9, beats: 24 }],
+  ['rabbit',          0.0,-12.8,  0.6, 1.5,   0, 'the rabbit', { type: 'hop', every: 1, h: 0.5, travel: 1.0 }, null, { count: 4, from: -7, to: 7, zStep: 0.05 }],
+  // the water
+  ['jelly-blue',     -6.4,-17.0, -2.2, 6.0,   8, 'haeckel, 1904', { type: 'drift', beats: 16, amp: 0.6 }],
+  ['jelly-disco',     6.6,-20.6, -2.6, 6.2,  -6, 'haeckel, 1904', { type: 'drift', beats: 20, amp: 0.5 }],
+  ['jelly-siphon',    0.6,-23.6, -3.2, 4.6,  14, 'siphonophorae', { type: 'drift', beats: 24, amp: 0.4 }],
+  ['shark-spotted',  -2.8,-15.4, -1.4, 1.6,  -4, 'the spotted one', { type: 'drive', from: 11, to: -11, beats: 40 }],
+  ['shark-bloch',     3.4,-25.8, -0.6, 1.4,   3, 'bloch, 1785', { type: 'drive', from: -11, to: 11, beats: 52 }],
+  ['titanic',         0.0,-13.9, -3.8, 2.6,   0, 'april 1912', { type: 'rock', amp: 1.5, beats: 8 }],
+  ['white-rabbit',   -4.6,-24.4,  0.8, 2.4,   6, 'still late', { type: 'hop', every: 2, h: 0.3 }],
+  ['note-lindsey',   -4.2,-14.9,  0.8, 0.8,   4, 'lindsey and dee', { type: 'bob' }],
+  ['kiddie-pool',    -4.4,-16.6, -1.2, 1.9,   0, 'the kiddie pool', { type: 'bob', amp: 0.08 }],
+  ['horse-brown',     4.8,-17.0, -2.4, 2.6,   0, 'the brown horse', { type: 'rock', amp: 5, beats: 2 }],
+  ['surfers',         0.4,-19.8,  0.2, 5.2,   0, 'the wave was painted', { type: 'rock', amp: 6, beats: 2 }],
+  ['girl-cat',        5.6,-20.0, -2.8, 3.2,   4, 'the chair, the cat', { type: 'rock', amp: 2, beats: 8 }],
+  ['horse-white',    -5.2,-21.8, -1.8, 3.2,   0, 'the white horse', { type: 'rock', amp: 5, beats: 2 }],
+  ['tulle',           4.6,-23.0, -1.0, 5.0,   0, 'the skirt', { type: 'swing', px: 0.5, py: -0.3, amp: 7, beats: 4 }],
+  ['print-cake',     -1.6,-25.2,  0.6, 3.4,  -3, 'one candle', { type: 'bob', amp: 0.02 }, null, null, { flame: [0.60, 0.59] }],
+  ['teen-orchids',    2.4,-26.4, -0.4, 4.4,   7, 'orchids', { type: 'bob' }],
+  ['print-pool',     -5.4,-26.6, -2.6, 3.4,  -8, 'the pool', { type: 'bob', amp: 0.02 }],
+  ['print-portrait',  5.8,-26.2, -3.0, 2.8,  12, 'school picture', { type: 'bob', amp: 0.02 }],
+  ['rabbit',          1.0,-27.6,  0.4, 1.3,   0, 'the rabbit again', { type: 'hop', every: 2, h: 0.4, travel: 0.6 }, null, { count: 2, from: -3, to: 3, zStep: 0 }],
+  // the canyon
+  ['calliope',        0.2,-32.8, -2.4, 3.6,   0, 'the steam car of the muses', { type: 'drive', from: 12, to: -12, beats: 48 }],
+  ['white-rabbit',    4.4,-38.8,  0.9, 2.2,  -5, 'he went this way', { type: 'hop', every: 4, h: 0.25 }],
+  ['bucket-hat',     -1.6,-30.2, -2.2, 3.6,  -6, 'the hat', { type: 'bob' }],
+  ['cotton-candy',   -5.6,-30.4, -1.2, 4.4,   0, 'harajuku', { type: 'shake' }],
+  ['cameras',         4.2,-31.6, -0.6, 4.6,   0, 'two cameras, 2025', { type: 'flash' }],
+  ['print-santa',    -5.8,-33.6, -3.0, 2.6,   8, 'santa', { type: 'bob', amp: 0.02 }],
+  ['william-bryce',  -3.4,-34.2, -1.6, 3.6,   0, 'bryce canyon', { type: 'bob', amp: 0.03 }],
+  ['print-bull',      5.8,-34.0, -3.2, 3.0,  -6, 'grandma, and the bull', { type: 'bob', amp: 0.02 }],
+  ['braids',          2.0,-36.4, -1.0, 3.4,   0, 'braids', { type: 'rock', amp: 3, beats: 4 }],
+  ['print-painting',  5.6,-36.6, -2.8, 3.2,   4, 'the field', { type: 'bob', amp: 0.02 }],
+  ['diploma',        -5.8,-37.8, -1.4, 3.4,   0, 'mountain view', { type: 'rock', amp: 3, beats: 4 }],
+  ['baby-lap',        3.2,-39.8,  0.6, 3.6,   0, 'held', { type: 'rock', amp: 3, beats: 2 }],
+  ['roses-coat',      5.6,-40.6, -1.6, 4.6,   0, 'roses', { type: 'bob' }],
+  ['red-car',         0.0,-41.0, -0.9, 2.8,   0, 'the red car', { type: 'drive', from: -10, to: 10, beats: 32 }],
+  ['rabbit',         -2.8,-42.2,  0.5, 1.5,  -4, 'the rabbit, waiting', { type: 'hop', every: 4, h: 0.3 }],
+];
+const HEART = { name: 'barrel', x: 0.4, y: -41.4, z: -0.4, h: 6.6, behind: 'baby-dad', caption: 'the first photograph' };
+const BACKDROPS = [
+  // [name, y center, height, z, repeatX, saturation keep 0..1]
+  ['bg-stars',       -2.0, 24.0, -7.2, 1.0, 0.55],
+  ['bg-clouds-pink', -6.5, 13.0, -6.6, 1.0, 0.95],
+  ['bg-clouds-sea',   3.5, 12.0, -6.8, 1.0, 0.9],
+  ['bg-hokusai',    -21.0, 22.0, -7.0, 1.0, 0.9],
+  ['bg-dore',       -27.5, 12.0, -6.4, 1.0, 0.7],
+  ['bg-nebula',     -35.0, 24.0, -7.2, 1.0, 0.8],
+  ['bg-bryce',      -37.0, 16.0, -6.6, 1.0, 0.9],
+];
+
+// ---------- renderer ----------
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x0b0a0c, 1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(0, 0, 12);
+scene.add(camera);
+const light = new THREE.Vector3(1.5, 1.0, 2.0), lightTarget = light.clone();
+const uPulse = { value: 0 }, uStep = { value: 0 };
+
+// ---------- shaders ----------
+const vert = /* glsl */`varying vec2 vUv; varying vec3 vW;
+  void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+const pieceFrag = /* glsl */`
+  uniform sampler2D map; uniform vec3 uLight; uniform float uAmbient; uniform vec3 uTint; uniform float uOpacity; uniform float uPulse;
+  varying vec2 vUv; varying vec3 vW;
+  void main(){
+    vec4 t = texture2D(map, vUv); if (t.a < 0.02) discard;
+    float d = distance(vW.xy, uLight.xy);
+    float spot = smoothstep(11.0, 0.0, d) * (1.0 + 0.35 * uPulse);
+    vec3 c = t.rgb * (uAmbient + 0.6 * spot) * uTint;
+    c *= mix(vec3(1.0), vec3(1.07, 1.0, 0.93), spot);
+    gl_FragColor = vec4(c, t.a * uOpacity);
+  }`;
+const backFrag = /* glsl */`
+  uniform sampler2D map; uniform vec3 uLight; uniform float uPulse; uniform vec2 uRepeat; uniform float uTop; uniform float uBottom; uniform float uStep; uniform float uSat;
+  varying vec2 vUv; varying vec3 vW;
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  void main(){
+    vec3 t = texture2D(map, vUv * uRepeat).rgb;
+    float d = distance(vW.xy, uLight.xy);
+    float spot = smoothstep(16.0, 0.0, d) * (1.0 + 0.25 * uPulse);
+    vec3 c = t * (0.42 + 0.5 * spot);
+    c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, uSat);
+    float g = hash(floor(vW.xy * 60.0) + uStep) - 0.5; c += g * 0.045;
+    float fade = smoothstep(uTop, uTop - 3.5, vW.y) * smoothstep(uBottom, uBottom + 3.5, vW.y);
+    gl_FragColor = vec4(c, fade);
+  }`;
+const waterFrag = /* glsl */`
+  uniform float uStep; uniform vec3 uLight; varying vec3 vW; varying vec2 vUv;
+  void main(){
+    float t = uStep / 12.0; vec2 p = vW.xy * 0.9;
+    float c1 = sin(p.x * 1.7 + t * 0.8) + sin(p.y * 1.3 - t * 0.6);
+    float c2 = sin((p.x + p.y) * 1.1 + t * 0.5) + sin((p.x - p.y) * 0.9 - t * 0.7);
+    float caustic = pow(max(0.0, 0.5 + 0.25 * (c1 + c2)), 3.0);
+    float edge = smoothstep(0.0, 0.3, vUv.y) * smoothstep(1.0, 0.7, vUv.y);
+    float spot = smoothstep(12.0, 0.0, distance(vW.xy, uLight.xy));
+    vec3 col = mix(vec3(0.12, 0.38, 0.55), vec3(0.55, 0.85, 0.95), caustic * (0.4 + 0.6 * spot));
+    gl_FragColor = vec4(col, edge * (0.16 + 0.12 * caustic));
+  }`;
+const tearFrag = /* glsl */`
+  uniform float uProg; uniform float uSeed; uniform float uDir; varying vec2 vUv;
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
+  void main(){
+    vec2 uv = vUv; if (uDir > 0.5) uv.x = 1.0 - uv.x;
+    float n = noise(uv * vec2(3.0, 9.0) + uSeed * 17.0) * 0.6 + noise(uv * vec2(12.0, 30.0) + uSeed * 31.0) * 0.4;
+    float torn = uv.x * 0.72 + n * 0.28;
+    float a = 1.0 - smoothstep(uProg - 0.015, uProg + 0.015, torn);
+    float edge = smoothstep(uProg - 0.06, uProg - 0.015, torn);
+    vec3 paper = vec3(0.98, 0.965, 0.93);
+    vec3 fibre = mix(paper, vec3(0.78, 0.72, 0.64), edge * 0.8);
+    float grain = (hash(floor(vUv * 500.0)) - 0.5) * 0.05;
+    gl_FragColor = vec4(fibre + grain, a);
+  }`;
+
+// ---------- backdrops, lattice, water ----------
+const loader = new THREE.TextureLoader();
+const loadTex = url => new Promise((res, rej) => loader.load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, rej));
+const zoneAt = y => ({ yard: THREE.MathUtils.smoothstep(y, -17, -11), dark: 1 - THREE.MathUtils.smoothstep(y, -32, -25) });
+function tintFor(y) {
+  const { yard, dark } = zoneAt(y);
+  const t = new THREE.Color(0.82, 0.9, 0.98).lerp(new THREE.Color(1.0, 0.97, 0.92), yard).lerp(new THREE.Color(0.94, 0.86, 0.84), dark);
+  return { t, ambient: 0.5 + 0.2 * yard - 0.05 * dark };
+}
+async function addBackdrops(manifest) {
+  let order = -2;
+  for (const [name, yc, h, z, rep, sat] of BACKDROPS) {
+    const m = manifest[name]; if (!m) continue;
+    const tex = await loadTex(`assets/${name}.jpg`); tex.wrapS = THREE.MirroredRepeatWrapping;
+    const w = h * (m.w / m.h) * rep;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w, 30), h), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: backFrag,
+      uniforms: { map: { value: tex }, uLight: { value: light }, uPulse, uStep, uSat: { value: sat }, uRepeat: { value: new THREE.Vector2(Math.max(w, 30) / (h * m.w / m.h), 1) }, uTop: { value: yc + h / 2 }, uBottom: { value: yc - h / 2 } } }));
+    mesh.position.set(0, yc, z); mesh.renderOrder = order++; scene.add(mesh);
+  }
+  // a dark wall behind everything so the seams between backdrops read as room, not void
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshBasicMaterial({ color: 0x14100f }));
+  wall.position.set(0, -20, -7.5); wall.renderOrder = -20; scene.add(wall);
+}
+function latticeTexture() {
+  const s = 1024, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d');
+  g.save(); g.translate(s / 2, s / 2); g.rotate(Math.PI / 4); const pitch = 190, w = 54;
+  for (let i = -8; i <= 8; i++) { const grd = g.createLinearGradient(i * pitch - w / 2, 0, i * pitch + w / 2, 0); grd.addColorStop(0, '#d9d2c4'); grd.addColorStop(0.5, '#fbf7ef'); grd.addColorStop(1, '#cfc8ba'); g.fillStyle = grd; g.fillRect(i * pitch - w / 2, -s, w, 2 * s); }
+  for (let i = -8; i <= 8; i++) { const grd = g.createLinearGradient(0, i * pitch - w / 2, 0, i * pitch + w / 2); grd.addColorStop(0, '#cfc8ba'); grd.addColorStop(0.5, '#f6f1e8'); grd.addColorStop(1, '#d9d2c4'); g.fillStyle = grd; g.fillRect(-s, i * pitch - w / 2, 2 * s, w); }
+  g.restore(); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+{
+  const fenceFrag = /* glsl */`uniform sampler2D map; uniform vec3 uColor; uniform float uMix; uniform float uOpacity; uniform vec3 uLight; uniform vec2 uRepeat; varying vec2 vUv; varying vec3 vW;
+    void main(){ vec4 t = texture2D(map, vUv * uRepeat); float fadeY = smoothstep(-13.5, -9.0, vW.y) * smoothstep(1.0, -1.5, vW.y); float fadeX = smoothstep(12.0, 10.0, abs(vW.x));
+      float l = 0.7 + 0.45 * smoothstep(13.0, 0.0, distance(vW.xy, uLight.xy)); vec3 c = mix(t.rgb * l, uColor, uMix); gl_FragColor = vec4(c, t.a * uOpacity * fadeY * fadeX); }`;
+  const mat = (map, color, mix, opacity) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: fenceFrag,
+    uniforms: { map: { value: map }, uColor: { value: new THREE.Color(color) }, uMix: { value: mix }, uOpacity: { value: opacity }, uLight: { value: light }, uRepeat: { value: new THREE.Vector2(5, 3) } } });
+  const tex = latticeTexture();
+  const lattice = new THREE.Mesh(new THREE.PlaneGeometry(26, 15), mat(tex, 0xffffff, 0, 1)); lattice.position.set(0, -7.0, -3.2); lattice.renderOrder = -1;
+  const shadow = new THREE.Mesh(lattice.geometry, mat(tex, 0x120c08, 1, 0.3)); shadow.position.set(0.25, -7.35, -4.1); shadow.renderOrder = -1;
+  scene.add(shadow, lattice);
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vert, fragmentShader: waterFrag, uniforms: { uStep, uLight: { value: light } } }));
+  water.position.set(0, -21, 1.8); water.renderOrder = 5; scene.add(water);
+}
+
+// ---------- pieces and rigs ----------
+const pieces = [], pickable = [], alphaCache = new Map(), texCache = new Map();
+const getTex = name => texCache.get(name) || (texCache.set(name, loadTex(`assets/${name}.png`)), texCache.get(name));
+function alphaAt(tex, uv) {
+  let data = alphaCache.get(tex);
+  if (!data) { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.drawImage(tex.image, 0, 0, 128, 128); data = g.getImageData(0, 0, 128, 128).data; alphaCache.set(tex, data); }
+  const x = Math.min(127, Math.max(0, uv.x * 128 | 0)), y = Math.min(127, Math.max(0, (1 - uv.y) * 128 | 0));
+  return data[(y * 128 + x) * 4 + 3] / 255;
+}
+function pieceMaterial(tex, y, opacity = 1) {
+  const { t, ambient } = tintFor(y);
+  return new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: pieceFrag, transparent: true, depthWrite: false,
+    uniforms: { map: { value: tex }, uLight: { value: light }, uAmbient: { value: ambient }, uTint: { value: t }, uOpacity: { value: opacity }, uPulse } });
+}
+let missingName = null;
+async function addPiece(entry, manifest, instance = 0, instances = 1) {
+  let [name, x0, y0, z, h, rotDeg, caption, rig, tag, multi, extra] = entry;
+  const m = manifest[name]; if (!m) return;
+  if (multi) { const f = instances === 1 ? 0.5 : instance / (instances - 1); x0 = multi.from + (multi.to - multi.from) * f; z = z + multi.zStep * instance; }
+  const hero = tag === 'hero';
+  const drift = hero || visits === 1 ? 0 : 0.6;
+  const x = x0 + (visitRand() - 0.5) * 2 * drift, y = y0 + (visitRand() - 0.5) * drift;
+  const rot = THREE.MathUtils.degToRad(rotDeg + (hero || visits === 1 ? 0 : (visitRand() - 0.5) * 8));
+  const [tex, shTex] = await Promise.all([getTex(name), getTex(name + '_shadow').catch(() => null)]);
+  const isSprite = m.kind === 'sprite';
+  if (isSprite) { tex.repeat.set(1 / m.cols, 1 / m.rows); tex.magFilter = THREE.NearestFilter; }
+  const w = isSprite ? h * (m.fw / m.fh) : h * (m.w / m.h);
+  // the pivot: rigs that swing hang from a point, rigs that rock stand on their feet
+  let px = 0.5, py = 0.5;
+  if (rig.type === 'swing') { px = rig.px; py = rig.py; }
+  if (rig.type === 'rock' || rig.type === 'hop') { px = 0.5; py = 1.0; }
+  const group = new THREE.Group(); group.position.set(x, y, z);
+  const geo = new THREE.PlaneGeometry(w, h); geo.translate((0.5 - px) * w, (py - 0.5) * h, 0);
+  const mesh = new THREE.Mesh(geo, pieceMaterial(tex, y)); mesh.renderOrder = 2;
+  group.add(mesh);
+  let shadow = null;
+  if (shTex) { shadow = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ alphaMap: shTex, color: 0x100a08, transparent: true, opacity: 0.4, depthWrite: false })); shadow.renderOrder = 1; scene.add(shadow); }
+  scene.add(group);
+  if (isSprite) { mesh.material.uniforms.map.value = tex.clone(); mesh.material.uniforms.map.value.needsUpdate = true; mesh.material.uniforms.map.value.repeat.set(1 / m.cols, 1 / m.rows); mesh.material.uniforms.map.value.magFilter = THREE.NearestFilter; }
+  const piece = { name, group, mesh, shadow, caption, sprite: isSprite ? m : null, rest: new THREE.Vector3(x, y, z), rot, lift: 0, jitter: new THREE.Vector3(), jrot: 0, phase: visitRand() * 7 + instance * 0.9, rig, tex, w, h, instance, hero, px, py, extraParts: [] };
+  mesh.userData.piece = piece; pieces.push(piece); pickable.push(mesh);
+  if (rig.type === 'frames') { piece.altTex = await getTex(rig.alt); }
+  if (rig.type === 'sing' && m.jaw) {
+    const jm = manifest['hero-jaw'], jt = await getTex('hero-jaw');
+    const jw = m.jaw.w * w, jh = m.jaw.h * h;
+    const jg = new THREE.PlaneGeometry(jw, jh);
+    const jaw = new THREE.Mesh(jg, pieceMaterial(jt, y)); jaw.renderOrder = 3;
+    // jaw rest: the jaw's top-left in body space, mesh-centred coordinates
+    const jx = (m.jaw.x + m.jaw.w / 2 - 0.5) * w, jy = (0.5 - m.jaw.y - m.jaw.h / 2) * h;
+    jaw.position.set(jx + (0.5 - px) * w, jy + (py - 0.5) * h, 0.02); jaw.userData.rest = jaw.position.clone();
+    group.add(jaw); piece.jaw = jaw;
+  }
+  if (rig.type === 'flash') {
+    const flash = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.6, w * 1.6), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+    flash.position.set(0, h * 0.12, 0.3); group.add(flash); piece.flash = flash;
+  }
+  if (extra && extra.flame) {
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.7), new THREE.MeshBasicMaterial({ map: flameTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    fl.position.set((extra.flame[0] - 0.5) * w, (0.5 - extra.flame[1]) * h + 0.3, 0.05); group.add(fl); piece.flame = fl;
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 }));
+    halo.position.copy(fl.position); halo.position.z = 0.04; group.add(halo); piece.halo = halo;
+  }
+}
+function glowTexture() {
+  const s = 256, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d');
+  const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2); r.addColorStop(0, 'rgba(255,226,180,1)'); r.addColorStop(0.3, 'rgba(255,196,130,0.5)'); r.addColorStop(1, 'rgba(255,170,100,0)');
+  g.fillStyle = r; g.fillRect(0, 0, s, s); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function flameTexture() {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 112; const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 70, 2, 32, 60, 50); r.addColorStop(0, 'rgba(255,250,220,1)'); r.addColorStop(0.25, 'rgba(255,200,90,0.95)'); r.addColorStop(0.6, 'rgba(255,120,30,0.5)'); r.addColorStop(1, 'rgba(255,80,0,0)');
+  g.fillStyle = r; g.beginPath(); g.ellipse(32, 62, 18, 44, 0, 0, 7); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+// ---------- the heart (the door is an opening that already existed) ----------
+const heart = { group: null, photo: null, open: heartOpenedBefore, t: heartOpenedBefore ? 1 : 0, glow: null, mesh: null };
+async function buildHeart(manifest) {
+  const m = manifest[HEART.name]; if (!m) return;
+  const tex = await getTex(HEART.name), sh = await getTex(HEART.name + '_shadow').catch(() => null);
+  const h = HEART.h, w = h * m.w / m.h;
+  const hx = (m.heart.x - 0.5) * w, hy = (0.5 - m.heart.y) * h;    // heart position in mesh space
+  const group = new THREE.Group(); group.position.set(HEART.x + hx, HEART.y + hy, HEART.z);
+  const geo = new THREE.PlaneGeometry(w, h); geo.translate(-hx, -hy, 0);   // pivot on the heart
+  const mesh = new THREE.Mesh(geo, pieceMaterial(tex, HEART.y)); mesh.renderOrder = 4; group.add(mesh);
+  if (sh) { const shadow = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ alphaMap: sh, color: 0x100a08, transparent: true, opacity: 0.4, depthWrite: false })); shadow.position.set(0.25, -0.25, -0.15); shadow.renderOrder = 1; group.add(shadow); heart.shadow = shadow; }
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 }));
+  glow.position.set(0, 0, -0.3); group.add(glow);
+  scene.add(group);
+  mesh.userData.piece = { name: 'barrel', caption: 'the heather. there is a heart cut in the barrel.', mesh, tex, rest: group.position.clone(), rot: 0 };
+  pickable.push(mesh);
+  let photo = null;
+  if (manifest[HEART.behind]) {
+    const pm = manifest[HEART.behind], pt = await getTex(HEART.behind);
+    const ph = 3.6, pw = ph * pm.w / pm.h;
+    photo = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), pieceMaterial(pt, HEART.y, 0)); photo.renderOrder = 0;
+    photo.position.set(HEART.x + hx, HEART.y + hy, HEART.z - 1.2); photo.rotation.z = -0.04;
+    photo.userData.piece = { name: HEART.behind, caption: HEART.caption, mesh: photo, tex: pt, rest: photo.position.clone(), rot: -0.04 };
+    scene.add(photo);
+  }
+  Object.assign(heart, { group, mesh, glow, photo }); applyHeart();
+}
+function applyHeart() {
+  const t = heart.t, e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  if (!heart.group) return;
+  const s = 1 + 17 * e; heart.group.scale.set(s, s, 1);
+  heart.mesh.material.uniforms.uOpacity.value = 1 - THREE.MathUtils.smoothstep(t, 0.78, 1.0);
+  if (heart.shadow) heart.shadow.material.opacity = 0.4 * (1 - e);
+  heart.glow.material.opacity = 0.9 * (1 - e);
+  if (heart.photo) {
+    heart.photo.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(t, 0.2, 0.9);
+    const ps = 0.35 + 0.65 * e; heart.photo.scale.set(ps, ps, 1);
+    if (t > 0.6 && !pickable.includes(heart.photo)) pickable.push(heart.photo);
+  }
+}
+
+// ---------- scraps on the downbeat ----------
+const scraps = [];
+async function buildScraps(manifest) {
+  const names = Object.keys(manifest).filter(n => manifest[n].kind === 'scrap');
+  for (let i = 0; i < 22; i++) {
+    const n = names[i % names.length], m = manifest[n], tex = await getTex(n);
+    const h = 0.6 + Math.random() * 0.9, w = h * m.w / m.h;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), pieceMaterial(tex, 0, 0)); mesh.renderOrder = 8; mesh.visible = false;
+    scene.add(mesh); scraps.push({ mesh, life: 0, vx: 0, vy: 0, vr: 0 });
+  }
+}
+function throwScraps(camY, n = 3) {
+  if (reduced) return;
+  let thrown = 0;
+  for (const s of scraps) {
+    if (s.life > 0) continue;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    s.mesh.position.set(side * (11 + Math.random() * 3), camY + (Math.random() - 0.5) * 7, 3 + Math.random() * 1.5);
+    s.vx = -side * (16 + Math.random() * 10); s.vy = (Math.random() - 0.5) * 4; s.vr = (Math.random() - 0.5) * 9;
+    s.mesh.rotation.z = Math.random() * 6.3; s.life = 1.1; s.mesh.visible = true;
+    s.mesh.material.uniforms.uTint.value = tintFor(camY).t; s.mesh.material.uniforms.uAmbient.value = 0.75;
+    if (++thrown >= n) break;
+  }
+}
+
+// ---------- the torn cut between floors ----------
+const tear = { mesh: null, prog: -0.2, pending: false, seed: 0 };
+{
+  const mat = new THREE.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, vertexShader: vert, fragmentShader: tearFrag, uniforms: { uProg: { value: -0.2 }, uSeed: { value: 0 }, uDir: { value: 0 } } });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); mesh.renderOrder = 50; mesh.position.set(0, 0, -1.001); camera.add(mesh); tear.mesh = mesh;
+}
+function fitOverlay() {
+  const h = 2 * Math.tan(THREE.MathUtils.degToRad(20)) * 1.001 * 1.02, w = h * camera.aspect;
+  tear.mesh.scale.set(w, h, 1);
+}
+
+// ---------- sound: a groove made in the browser, or the song you drop ----------
+const sound = { ctx: null, master: null, synth: true, song: null, started: false, timer: 0, nextStep: 0, nextTime: 0, kick: 0 };
+const CHORDS = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];   // Am F C G, midi
+const mtof = n => 440 * Math.pow(2, (n - 69) / 12);
+function startSound() {
+  if (sound.started) return; sound.started = true;
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  const ctx = new AC(); sound.ctx = ctx; beat.ctx = ctx; beat.t0 = ctx.currentTime + 0.1;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.connect(ctx.destination);
+  const master = ctx.createGain(); master.gain.value = 0; master.connect(comp); sound.master = master;
+  master.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 2.5);
+  // noise buffer for hats, claps, rustles
+  const len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; sound.noise = buf;
+  sound.nextStep = 0; sound.nextTime = beat.t0;
+  sound.timer = setInterval(scheduleSynth, 25);
+}
+function noiseVoice(t, dur, type, freq, q, gain) {
+  const ctx = sound.ctx, s = ctx.createBufferSource(); s.buffer = sound.noise;
+  const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f); f.connect(g); g.connect(sound.master); s.start(t); s.stop(t + dur + 0.02);
+}
+function toneVoice(t, dur, type, freq, gain, cutoff, detune = 0) {
+  const ctx = sound.ctx, o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; o.detune.value = detune;
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(f); f.connect(g); g.connect(sound.master); o.start(t); o.stop(t + dur + 0.02);
+}
+function scheduleSynth() {
+  if (!sound.synth || !sound.ctx) return;
+  const ctx = sound.ctx, stepDur = 60 / beat.bpm / 4;
+  while (sound.nextTime < ctx.currentTime + 0.14) {
+    const s = sound.nextStep, t = sound.nextTime, bar = Math.floor(s / 16) % 4, in16 = s % 16, chord = CHORDS[bar];
+    if (in16 % 4 === 0) {   // kick, four on the floor
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+      g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28); o.connect(g); g.connect(sound.master); o.start(t); o.stop(t + 0.3);
+    }
+    if (in16 === 4 || in16 === 12) for (let k = 0; k < 3; k++) noiseVoice(t + k * 0.012, 0.12, 'bandpass', 1600, 0.9, 0.22);   // clap
+    if (in16 % 2 === 0) noiseVoice(t, 0.05, 'highpass', 8000, 0.7, in16 % 4 === 2 ? 0.16 : 0.07);   // hats, open on the off
+    if (in16 % 2 === 0) { const root = chord[0] - 24 + (in16 % 4 === 2 ? 12 : 0); toneVoice(t, 0.2, 'sawtooth', mtof(root), 0.32, 520); }   // octave bass
+    if (in16 === 2 || in16 === 10 || (bar === 3 && in16 === 14)) chord.forEach((n, i) => { toneVoice(t, 0.22, 'sawtooth', mtof(n + 12), 0.07, 2200, i * 7 - 7); toneVoice(t, 0.22, 'sawtooth', mtof(n + 12), 0.07, 2200, -i * 9 + 9); });   // string stab
+    if (in16 === 0) chord.forEach(n => toneVoice(t, stepDur * 16, 'triangle', mtof(n), 0.035, 900));   // pad
+    sound.nextStep++; sound.nextTime += stepDur;
+  }
+}
+function rustle() {
+  if (!sound.ctx) return; const t = sound.ctx.currentTime; noiseVoice(t, 0.13, 'bandpass', 2600 + Math.random() * 1500, 0.8, 0.09);
+}
+function swell() {
+  if (!sound.ctx) return; const ctx = sound.ctx, t = ctx.currentTime;
+  [220, 330, 440].forEach((f, i) => { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.08, t + 1.2 + i * 0.3); g.gain.linearRampToValueAtTime(0, t + 4.5); o.connect(g); g.connect(sound.master); o.start(t); o.stop(t + 4.6); });
+}
+async function playSong(file) {
+  if (!sound.ctx) startSound();
+  const ctx = sound.ctx, data = await file.arrayBuffer();
+  let buffer; try { buffer = await ctx.decodeAudioData(data); } catch { whisper("couldn't read that song"); return; }
+  if (sound.song) { try { sound.song.stop(); } catch {} }
+  sound.synth = false;
+  const src = ctx.createBufferSource(); src.buffer = buffer; src.loop = true; src.connect(sound.master);
+  const start = ctx.currentTime + 0.05; src.start(start); sound.song = src; beat.t0 = start;
+  songName = file.name.replace(/\.[^.]+$/, ''); updateTempo(); whisper('tap T on the beat so the house can hear it');
+}
+let songName = null;
+const taps = [];
+function tap() {
+  if (!sound.ctx) return; const t = sound.ctx.currentTime;
+  if (taps.length && t - taps[taps.length - 1] > 2.5) taps.length = 0;
+  taps.push(t); if (taps.length > 8) taps.shift();
+  if (taps.length >= 4) { const d = []; for (let i = 1; i < taps.length; i++) d.push(taps[i] - taps[i - 1]); const mean = d.reduce((a, b) => a + b) / d.length; beat.bpm = Math.round(60 / mean); }
+  beat.t0 = t - Math.floor(beat.at(t)) * (60 / beat.bpm) * 0;   // phase resets to this tap
+  beat.t0 = t;
+  if (sound.synth) { sound.nextStep = 0; sound.nextTime = t + 60 / beat.bpm * 0; }
+  updateTempo();
+}
+const tempoEl = document.getElementById('tempo');
+function updateTempo() { tempoEl.innerHTML = `<b>${beat.bpm} bpm</b> · ${songName ? songName : 'house groove'} · drop a song · T taps`; }
+updateTempo();
+
+// ---------- input ----------
+const state = { targetY: 0, y: 0, px: 0, py: 0, lastMove: performance.now(), lastScroll: performance.now(), entered: false, hover: null, floor: 0 };
+const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2(0, 0);
+function onMove(cx, cy) { ndc.x = (cx / innerWidth) * 2 - 1; ndc.y = -(cy / innerHeight) * 2 + 1; state.lastMove = performance.now(); state.px = ndc.x; state.py = ndc.y; }
+addEventListener('pointermove', e => onMove(e.clientX, e.clientY), { passive: true });
+addEventListener('wheel', e => { state.targetY -= e.deltaY * 0.012; clampY(); state.lastScroll = performance.now(); }, { passive: true });
+let touchY = null;
+addEventListener('touchstart', e => { touchY = e.touches[0].clientY; onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+addEventListener('touchmove', e => { const t = e.touches[0]; if (touchY !== null) { state.targetY += (t.clientY - touchY) * 0.02; touchY = t.clientY; clampY(); state.lastScroll = performance.now(); } onMove(t.clientX, t.clientY); }, { passive: true });
+addEventListener('touchend', () => { touchY = null; });
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') { state.targetY -= 2.5; clampY(); state.lastScroll = performance.now(); }
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') { state.targetY += 2.5; clampY(); state.lastScroll = performance.now(); }
+  if (e.key === 't' || e.key === 'T') tap();
+});
+const dropEl = document.getElementById('drop');
+addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('on'); });
+addEventListener('dragleave', e => { if (e.relatedTarget === null) dropEl.classList.remove('on'); });
+addEventListener('drop', e => { e.preventDefault(); dropEl.classList.remove('on'); const f = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/')); if (f) playSong(f); });
+function clampY() { state.targetY = Math.min(0, Math.max(FLOOR_Y, state.targetY)); }
+function resize() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight, false); fitOverlay(); }
+addEventListener('resize', resize); resize();
+const intro = document.getElementById('intro');
+document.getElementById('enter').addEventListener('click', () => { startSound(); state.entered = true; intro.classList.add('gone'); state.lastScroll = performance.now(); });
+
+// ---------- captions ----------
+const captionEl = document.getElementById('caption'), whisperEl = document.getElementById('whisper'), depthEl = document.getElementById('depth'), flashEl = document.getElementById('flash');
+let shownCaption = null, whisperText = null;
+function showCaption(text) { if (text === shownCaption) return; shownCaption = text; if (!text) { captionEl.classList.remove('on'); return; } captionEl.textContent = text; captionEl.classList.add('on'); }
+function whisper(text) { if (text === whisperText) return; whisperText = text; if (!text) { whisperEl.classList.remove('on'); return; } whisperEl.textContent = text; whisperEl.classList.add('on'); }
+
+// ---------- main loop ----------
+const clock = new THREE.Clock();
+let stepAcc = 0, stepIndex = 0, lastBeat = -1, kickEnv = 0, screenFlash = 0;
+const tmpV = new THREE.Vector3(), lightPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), unproj = new THREE.Vector3();
+const SYLLABLES = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0];   // eighths, four bars
+
+function rigPose(p, b, T) {
+  // returns { dx, dy, rot, sx, sy } in the piece's own units; b is the beat as a float, T quantized seconds
+  const r = p.rig, amp = reduced ? 0 : 1, out = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1 };
+  const bob = Math.sin(T * 0.7 + p.phase) * (r.amp ?? 0.05) * amp;
+  switch (r.type) {
+    case 'swing': out.rot = THREE.MathUtils.degToRad(r.amp) * Math.sin(2 * Math.PI * (b + p.phase) / r.beats) * amp; break;
+    case 'rock': out.rot = THREE.MathUtils.degToRad(r.amp) * Math.sin(2 * Math.PI * (b + p.phase * 0.3) / r.beats) * amp; break;
+    case 'hop': { const ph = ((b + p.instance * 0.37) % r.every); const u = Math.min(1, ph / 0.8); out.dy = r.h * Math.sin(Math.PI * u) * amp;
+      out.sy = 1 + 0.12 * Math.sin(Math.PI * u) * amp; out.sx = 1 - 0.08 * Math.sin(Math.PI * u) * amp;
+      if (r.travel) { const bars = Math.floor((b + p.instance * 0.37) / r.every); out.dx = ((bars * r.travel + p.instance * 2.3) % 14) - 7 - p.rest.x + p.rest.x * 0; } break; }
+    case 'gallop': { const f = ((b / r.beats) + p.phase * 0.1) % 1; out.dx = r.from + f * (r.to - r.from) - p.rest.x; out.dy = 0; break; }
+    case 'drift': { out.dx = Math.sin(2 * Math.PI * (b + p.phase) / r.beats) * r.amp * amp; out.dy = Math.cos(2 * Math.PI * (b + p.phase * 0.7) / (r.beats * 0.6)) * r.amp * 0.5 * amp; out.rot = Math.sin(2 * Math.PI * b / r.beats) * 0.06 * amp; break; }
+    case 'drive': { const f = ((b / r.beats) + p.phase * 0.1) % 1; out.dx = r.from + f * (r.to - r.from) - p.rest.x; out.dy = Math.abs(Math.sin(b * Math.PI)) * 0.05 * amp; break; }
+    case 'shake': { const ph = b % 1; out.dx = Math.sin(ph * 2 * Math.PI * 2) * Math.max(0, 1 - ph * 3) * 0.14 * amp; break; }
+    case 'flash': { const ph = b % 4; out.sx = out.sy = 1 + Math.max(0, 1 - ph * 4) * 0.05 * amp; break; }
+    default: out.dy = bob;
+  }
+  if (r.type !== 'bob' && r.type !== 'frames') out.dy += bob * 0.4;
+  return out;
+}
+
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, clock.getDelta()), now = performance.now();
+
+  // falling
+  if (state.entered && !reduced && now - state.lastScroll > 1400) { state.targetY -= 0.22 * dt; clampY(); }
+  state.y += (state.targetY - state.y) * (1 - Math.exp(-dt * 3.2));
+  const b = beat.now(), beatIdx = Math.floor(b);
+  if (beatIdx !== lastBeat && state.entered) {
+    lastBeat = beatIdx; kickEnv = 1;
+    if (beatIdx % 4 === 0) { throwScraps(state.y, 2 + (beatIdx % 8 === 0 ? 2 : 0)); if (tear.pending) { tear.pending = false; tear.prog = 1.15; tear.seed = Math.random(); tear.mesh.material.uniforms.uDir.value = Math.random() < 0.5 ? 0 : 1; } }
+    if (beatIdx % 8 === 0) screenFlash = Math.max(screenFlash, 0.0);
+  }
+  kickEnv = Math.max(0, kickEnv - dt * 4.5); uPulse.value = kickEnv;
+  camera.position.y = state.y + state.py * 0.35 + kickEnv * 0.03;
+  camera.position.x = state.px * 0.55;
+  camera.lookAt(camera.position.x * 0.6, state.y + state.py * 0.2, 0);
+
+  // which floor; a torn cut lands on the next downbeat after crossing
+  const floor = state.y > FLOORS[0] ? 0 : state.y > FLOORS[1] ? 1 : 2;
+  if (floor !== state.floor) { state.floor = floor; if (!reduced) tear.pending = true; }
+  if (tear.prog > -0.2) { tear.prog -= dt * 2.6; tear.mesh.material.uniforms.uProg.value = tear.prog; tear.mesh.material.uniforms.uSeed.value = tear.seed; }
+  tear.mesh.visible = tear.prog > -0.19;
+
+  // the lamp follows the hand
+  raycaster.setFromCamera(ndc, camera);
+  if (raycaster.ray.intersectPlane(lightPlane, unproj)) lightTarget.set(unproj.x, unproj.y, 2.0);
+  light.lerp(lightTarget, 1 - Math.exp(-dt * 6));
+
+  // stop-motion: poses update 12 times a second, with registration error
+  stepAcc += dt; const stepped = stepAcc >= 1 / 12;
+  if (stepped) {
+    stepAcc -= 1 / 12; stepIndex++; uStep.value = stepIndex;
+    const T = stepIndex / 12;
+    for (const p of pieces) {
+      if (!reduced) { p.jitter.set((Math.random() - 0.5) * 0.012, (Math.random() - 0.5) * 0.012, 0); p.jrot = (Math.random() - 0.5) * 0.004; }
+      const pose = rigPose(p, b, T);
+      p.pose = pose;
+      if (p.sprite) { const fr = Math.floor(b * 5.5) % p.sprite.frames; const t = p.mesh.material.uniforms.map.value; t.offset.set((fr % p.sprite.cols) / p.sprite.cols, 1 - 1 / p.sprite.rows - Math.floor(fr / p.sprite.cols) / p.sprite.rows); }
+      if (p.rig.type === 'frames' && p.altTex) { const alt = Math.floor(b / p.rig.every) % 2 === 1; p.mesh.material.uniforms.map.value = alt ? p.altTex : p.tex; }
+      if (p.jaw) {
+        const e8 = Math.floor(b * 2), ph8 = (b * 2) % 1, open = SYLLABLES[((e8 % 32) + 32) % 32] ? Math.max(0, 1 - ph8 * 1.5) : 0;
+        const o = reduced ? 0 : open;
+        p.jaw.position.y = p.jaw.userData.rest.y - o * 0.16; p.jaw.rotation.z = -o * 0.07; p.jaw.position.x = p.jaw.userData.rest.x + o * 0.03;
+        pose.rot += Math.sin(b * Math.PI) * 0.015 * (reduced ? 0 : 1);
+      }
+      if (p.flame) { const f = 0.85 + Math.random() * 0.3; p.flame.scale.set(f, 0.9 + Math.random() * 0.25, 1); p.flame.rotation.z = (Math.random() - 0.5) * 0.15; p.halo.material.opacity = 0.25 + Math.random() * 0.15; }
+    }
+  }
+  for (const p of pieces) {
+    const pose = p.pose || { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1 };
+    const liftTarget = state.hover === p ? 1 : 0; p.lift += (liftTarget - p.lift) * (1 - Math.exp(-dt * 8));
+    const g = p.group;
+    g.position.set(p.rest.x + pose.dx + p.jitter.x, p.rest.y + pose.dy + p.jitter.y, p.rest.z + p.lift * 0.35);
+    g.rotation.z = p.rot + pose.rot + p.jrot; g.scale.set(pose.sx, pose.sy, 1);
+    if (p.flash) { const ph = b % 4; const f = Math.max(0, 1 - ph * 2.2); p.flash.material.opacity = (Math.floor(b / 4) % 2 === 0 ? f : 0) * (reduced ? 0 : 1); }
+    if (p.shadow) {
+      const gap = g.position.z + 6;
+      tmpV.set(g.position.x - light.x, g.position.y - light.y, 0); const d = tmpV.length() || 1; tmpV.multiplyScalar(1 / d);
+      const len = 0.05 * gap + 0.06 * gap * Math.min(1.6, d / 5);
+      p.shadow.position.set(g.position.x + tmpV.x * len, g.position.y + tmpV.y * len - 0.02 * gap, g.position.z - 0.12);
+      p.shadow.rotation.z = g.rotation.z; p.shadow.scale.set(pose.sx * (1 + 0.012 * gap), pose.sy * (1 + 0.012 * gap), 1);
+      p.shadow.material.opacity = 0.2 + 0.26 * THREE.MathUtils.smoothstep(12 - d, 0, 12);
+    }
+  }
+  // scraps
+  for (const s of scraps) {
+    if (s.life <= 0) continue; s.life -= dt;
+    s.mesh.position.x += s.vx * dt; s.mesh.position.y += s.vy * dt; s.mesh.rotation.z += s.vr * dt;
+    s.mesh.material.uniforms.uOpacity.value = Math.min(1, s.life * 4);
+    if (s.life <= 0) s.mesh.visible = false;
+  }
+
+  // hover
+  let hover = null;
+  if (state.entered) { const hits = raycaster.intersectObjects(pickable, false); for (const h of hits) { const p = h.object.userData.piece; if (p && h.uv && alphaAt(p.tex, h.uv) > 0.5) { hover = p; break; } } }
+  if (hover !== state.hover) { state.hover = hover; if (hover) rustle(); }
+  showCaption(hover ? hover.caption : null);
+  document.body.style.cursor = hover ? 'pointer' : 'default';
+
+  // the heart opens for stillness
+  const nearHeart = Math.abs(state.y - HEART.y) < 5, idle = Math.min(now - state.lastMove, now - state.lastScroll);
+  if (state.entered && nearHeart && !heart.open) {
+    whisper(idle > 4200 ? 'wait.' : idle > 2200 ? 'there is a heart cut in the barrel.' : null);
+    if (idle > 6500) { heart.open = true; mem.set('heart1', true); swell(); whisper(null); }
+  } else if (!heart.open) whisper(whisperText && whisperText.startsWith('tap') ? whisperText : null);
+  if (heart.open && heart.t < 1) { heart.t = Math.min(1, heart.t + dt / 3.2); applyHeart(); }
+
+  depthEl.textContent = `${Math.round(-state.y)} m`;
+  screenFlash = Math.max(0, screenFlash - dt * 3); flashEl.style.opacity = screenFlash;
+  renderer.render(scene, camera);
+}
+
+// ---------- boot ----------
+(async () => {
+  let manifest = {};
+  try { manifest = await (await fetch('assets/manifest.json')).json(); } catch (e) { console.warn('no manifest', e); }
+  const hero = LAYOUT.find(e => e[8] === 'hero');
+  if (hero) await addPiece(hero, manifest);
+  frame();
+  const rest = LAYOUT.filter(e => e[8] !== 'hero');
+  const candidates = rest.filter(e => !e[9]);   // never remove a multiple
+  missingName = visits > 1 ? candidates[Math.floor(visitRand() * candidates.length)][0] : null;
+  const jobs = [];
+  for (const e of rest) {
+    if (e[0] === missingName) continue;
+    const n = e[9] ? e[9].count : 1;
+    for (let i = 0; i < n; i++) jobs.push(addPiece(e, manifest, i, n).catch(err => console.warn(e[0], err)));
+  }
+  await Promise.all([addBackdrops(manifest), ...jobs]);
+  await buildHeart(manifest);
+  await buildScraps(manifest);
+  window.DE = { pieces, scene, camera, heart, scraps };
+})();
+</script>
