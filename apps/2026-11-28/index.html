@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Skill Lint</title>
+<meta name="description" content="Paste a SKILL.md and get an instant, offline check against the Agent Skills format.">
+<style>
+:root{
+  --paper:#F3F4F6; --card:#FFFFFF; --ink:#101318; --mute:#5B6270; --line:#D9DCE2;
+  --cobalt:#2340F0; --cobalt-ink:#fff; --ok:#0F7B55; --warn:#A8620A; --bad:#C62B2B;
+  --okbg:#E3F3EC; --warnbg:#FBEFD9; --badbg:#FBE4E4; --focus:#2340F0;
+  --editor:#FFFFFF; --gutter:#ECEEF2;
+  --sans:"Helvetica Neue",Helvetica,"Segoe UI",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --paper:#0E1014; --card:#171A20; --ink:#EEF0F4; --mute:#9AA1AE; --line:#2A2F39;
+  --cobalt:#7C8CFF; --cobalt-ink:#0E1014; --ok:#4CC9A0; --warn:#F0B35A; --bad:#FF7B7B;
+  --okbg:#12302A; --warnbg:#35290F; --badbg:#3A1717; --focus:#9AA7FF; --editor:#12151A; --gutter:#1B1F26;}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px}
+header{display:grid;gap:8px;margin-bottom:32px;max-width:640px}
+h1{font-size:clamp(40px,8vw,72px);line-height:.95;letter-spacing:-.045em;font-weight:700;margin:0}
+.sub{font-size:18px;line-height:1.5;color:var(--mute);margin:0;max-width:52ch}
+.grid{display:grid;gap:24px;grid-template-columns:1fr}
+@media(min-width:900px){.grid{grid-template-columns:1.1fr .9fr;align-items:start}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.bar h2{font-size:16px;margin:0 auto 0 0;letter-spacing:-.01em}
+.btn{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;
+  transition:transform .12s cubic-bezier(.3,1.6,.5,1),background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn:active{transform:scale(.95)}
+.btn.primary{background:var(--cobalt);color:var(--cobalt-ink);border-color:var(--cobalt)}
+.ed{display:grid;grid-template-columns:48px 1fr;background:var(--editor);height:min(62dvh,560px);min-height:320px}
+.gut{background:var(--gutter);overflow:hidden;font:13px/1.65 var(--mono);color:var(--mute);text-align:right;padding:12px 8px 12px 0;user-select:none;white-space:pre}
+.gut .e{color:var(--bad);font-weight:700}.gut .w{color:var(--warn);font-weight:700}
+textarea{width:100%;height:100%;border:0;resize:none;background:transparent;color:var(--ink);font:13px/1.65 var(--mono);padding:12px 16px;white-space:pre;overflow:auto;tab-size:2}
+textarea:focus-visible{outline-offset:-3px}
+.score{padding:24px 24px 20px;border-bottom:1px solid var(--line)}
+.num{font-size:clamp(88px,16vw,144px);line-height:.85;font-weight:700;letter-spacing:-.06em;font-variant-numeric:tabular-nums;transition:color .3s}
+.verdict{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:12px 0 4px}
+.tally{color:var(--mute);margin:0;font-size:15px}
+.meter{display:flex;gap:3px;margin-top:16px;height:8px}
+.meter i{flex:1;background:var(--line);border-radius:2px;transition:background .3s}
+.list{list-style:none;margin:0;padding:0;max-height:min(52dvh,480px);overflow:auto}
+.list li{border-bottom:1px solid var(--line)}
+.list li:last-child{border:0}
+.f{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:start;width:100%;text-align:left;background:none;border:0;padding:14px 16px;cursor:pointer;min-height:44px}
+.f:hover{background:var(--paper)}
+.dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:2px}
+.dot.e{background:var(--badbg);color:var(--bad)}.dot.w{background:var(--warnbg);color:var(--warn)}.dot.i{background:var(--paper);color:var(--mute);border:1px solid var(--line)}.dot.p{background:var(--okbg);color:var(--ok)}
+.ft{font-weight:600;line-height:1.35}
+.fd{color:var(--mute);font-size:14px;line-height:1.5;margin-top:2px;max-width:60ch}
+.ln{font:12px var(--mono);color:var(--mute);padding-top:4px;white-space:nowrap}
+.fix{margin:0 16px 14px 56px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--cobalt);background:none;color:var(--cobalt);font-weight:600;cursor:pointer}
+.fix:hover{background:var(--cobalt);color:var(--cobalt-ink)}
+.pass{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.96);opacity:.4}to{transform:none;opacity:1}}
+.group{padding:12px 16px 4px;font-weight:600;font-size:14px;color:var(--mute)}
+footer{margin-top:32px;color:var(--mute);font-size:14px;max-width:70ch;line-height:1.6}
+footer a{color:inherit}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:8px;opacity:0;pointer-events:none;transition:.25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Skill Lint</h1>
+  <p class="sub">Paste a SKILL.md. Get the problems, the line they are on, and a one-tap fix. Everything runs in your browser.</p>
+</header>
+<div class="grid">
+  <section class="panel" aria-labelledby="edh">
+    <div class="bar">
+      <h2 id="edh">SKILL.md</h2>
+      <button class="btn" id="sample">Load a rough draft</button>
+      <button class="btn" id="clear">Clear</button>
+    </div>
+    <div class="ed">
+      <div class="gut" id="gut" aria-hidden="true"></div>
+      <textarea id="ta" spellcheck="false" aria-label="SKILL.md contents" placeholder="---&#10;name: my-skill&#10;description: What it does. Use when ...&#10;---"></textarea>
+    </div>
+  </section>
+  <section class="panel" aria-live="polite" aria-label="Lint results">
+    <div class="score">
+      <div class="num" id="num">0</div>
+      <p class="verdict" id="verdict">Paste a skill to begin</p>
+      <p class="tally" id="tally"></p>
+      <div class="meter" id="meter" aria-hidden="true"></div>
+    </div>
+    <ul class="list" id="list"></ul>
+    <div class="bar" style="border-top:1px solid var(--line);border-bottom:0">
+      <button class="btn primary" id="copy">Copy report</button>
+    </div>
+  </section>
+</div>
+<footer>Checks follow the open Agent Skills format that Anthropic handed to the Agentic AI Foundation in October 2026: required name and description, length limits, naming rules, and the writing habits that help an agent pick the right skill. It is a linter, not a judge. A clean score means the file is well formed, not that the skill is good.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $=id=>document.getElementById(id);
+const ta=$('ta'),gut=$('gut'),list=$('list');
+const SAMPLE=`---
+name: PDF Helper Tools
+description: I can help you with documents. Last updated before March 2025.
+version: 2
+---
+# PDF helper
+
+Run scripts\\extract.py on the file you are given.
+`;
+const KEYS=['name','description','license','allowed-tools','metadata','compatibility'];
+function parse(text){
+  const lines=text.split('\n'); const r={lines,fm:null,fmEnd:-1,fields:{},body:[]};
+  if(lines[0]&&lines[0].trim()==='---'){
+    for(let i=1;i<lines.length;i++){ if(lines[i].trim()==='---'){r.fmEnd=i;break;} }
+    if(r.fmEnd>0){
+      r.fm=true; let cur=null;
+      for(let i=1;i<r.fmEnd;i++){
+        const m=lines[i].match(/^([A-Za-z][\w-]*):\s*(.*)$/);
+        if(m){cur=m[1];let v=m[2];let fold=/^[>|][+-]?$/.test(v.trim());r.fields[cur]={line:i+1,value:fold?'':v.replace(/^["']|["']$/g,'')};cur=cur;}
+        else if(cur&&/^\s+\S/.test(lines[i])){r.fields[cur].value+=(r.fields[cur].value?' ':'')+lines[i].trim();}
+      }
+      r.body=lines.slice(r.fmEnd+1);
+    }
+  }
+  return r;
+}
+function lint(text){
+  const p=parse(text),out=[];
+  const add=(sev,title,detail,line,fix)=>out.push({sev,title,detail,line,fix});
+  if(!text.trim())return out;
+  if(!p.fm){
+    add('e','Frontmatter is missing or never closes','A skill starts with a --- line, then name and description, then a closing --- line.',1,{label:'Add frontmatter',run:t=>'---\nname: my-skill\ndescription: Does one specific thing. Use when the user asks for it.\n---\n\n'+t.replace(/^---\s*\n?/,'')});
+    return out;
+  }
+  const n=p.fields.name,d=p.fields.description;
+  if(!n||!n.value.trim())add('e','Name is missing','Every skill needs a name field.',1);
+  else{
+    const v=n.value.trim();
+    const slug=v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    const fixName={label:'Rewrite as "'+slug+'"',run:t=>t.split('\n').map((l,i)=>i===n.line-1?'name: '+slug:l).join('\n')};
+    if(!/^[a-z0-9-]+$/.test(v))add('e','Name must be lowercase letters, numbers and hyphens','"'+v+'" has other characters.',n.line,fixName);
+    else if(/^-|-$|--/.test(v))add('e','Name has a stray hyphen','No leading, trailing or doubled hyphens.',n.line,fixName);
+    if(v.length>64)add('e','Name is over 64 characters',v.length+' characters.',n.line);
+    if(/anthropic|claude/i.test(v))add('e','Name uses a reserved word','"anthropic" and "claude" are reserved in skill names.',n.line);
+    if(/\b(helper|utils?|tools?|documents?|data|files?)\b|(^|-)(helper|utils?|tools?|documents?|data|files?)(-|$)/i.test(v))add('w','Name is vague','Words like helper, tools or data do not tell an agent when to reach for it. Name the job, such as extracting-pdf-text.',n.line);
+  }
+  if(!d||!d.value.trim())add('e','Description is missing','The description is how an agent decides to load your skill. Say what it does and when to use it.',1);
+  else{
+    const v=d.value.trim();
+    if(v.length>1024)add('e','Description is over 1024 characters',v.length+' characters. Move detail into the body.',d.line);
+    if(/<[^>]+>/.test(v))add('e','Description contains angle brackets','XML-style tags are not allowed in the description.',d.line,{label:'Remove tags',run:t=>t.split('\n').map((l,i)=>i===d.line-1?l.replace(/<[^>]*>/g,''):l).join('\n')});
+    if(v.length<50)add('w','Description is very short',v.length+' characters. Add what it does and the situations that should trigger it.',d.line);
+    if(!/\b(use when|when (the user|you|asked|working)|use for|use this when|trigger)/i.test(v))add('w','Description never says when to use it','Add a phrase like "Use when the user mentions PDFs or forms." Agents match on the trigger.',d.line);
+    if(/\b(I|I'm|my|you|your)\b/.test(v))add('w','Description is not in third person','It is injected into a system prompt. Write "Extracts text from PDFs", not "I can help you".',d.line);
+    if(/\b(19|20)\d\d\b|\b(before|after|until)\s+(january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(v))add('w','Description contains a date','Dates go stale. Describe the behaviour, not when it was written.',d.line);
+  }
+  Object.keys(p.fields).forEach(k=>{if(!KEYS.includes(k))add('w','Unknown field "'+k+'"','Supported fields: '+KEYS.join(', ')+'. Others are ignored.',p.fields[k].line,{label:'Remove field',run:t=>t.split('\n').filter((l,i)=>i!==p.fields[k].line-1).join('\n')});});
+  const bodyText=p.body.join('\n').trim();
+  const bodyStart=p.fmEnd+2;
+  if(!bodyText)add('e','Body is empty','Add the instructions the agent should follow once the skill loads.',bodyStart);
+  else{
+    if(p.lines.length>500)add('w','File is over 500 lines',p.lines.length+' lines. Split detail into reference files and link to them.',501);
+    if(!p.body.some(l=>/^#{1,3}\s/.test(l)))add('i','No headings in the body','Short headings make long instructions easier for an agent to scan.',bodyStart);
+    if(!/example|```/i.test(bodyText))add('i','No examples','One concrete input and output teaches an agent more than a paragraph.',bodyStart);
+    p.body.forEach((l,i)=>{ if(/\b[\w.-]+\\[\w.-]+\.\w+/.test(l)){add('w','Windows-style path','Use forward slashes so the path works everywhere.',bodyStart+i,{label:'Use forward slashes',run:t=>t.split('\n').map((x,j)=>j===bodyStart-1+i?x.replace(/\\/g,'/'):x).join('\n')});}});
+  }
+  return out;
+}
+const rank={e:0,w:1,i:2};
+let last=[];
+function render(){
+  const text=ta.value; const res=lint(text).sort((a,b)=>rank[a.sev]-rank[b.sev]); last=res;
+  const e=res.filter(x=>x.sev==='e').length,w=res.filter(x=>x.sev==='w').length,i=res.filter(x=>x.sev==='i').length;
+  const empty=!text.trim();
+  const score=empty?0:Math.max(0,100-e*20-w*8-i*3);
+  countTo(score);
+  const col=empty?'var(--mute)':score>=90?'var(--ok)':score>=60?'var(--warn)':'var(--bad)';
+  $('num').style.color=col;
+  $('verdict').textContent=empty?'Paste a skill to begin':score===100?'Clean. Ready to ship.':score>=90?'Nearly there':score>=60?'Needs work':'Agents will struggle with this';
+  $('tally').textContent=empty?'':(e+' error'+(e==1?'':'s')+', '+w+' warning'+(w==1?'':'s')+', '+i+' suggestion'+(i==1?'':'s'));
+  const m=$('meter');m.innerHTML='';for(let k=0;k<20;k++){const s=document.createElement('i');if(!empty&&k<Math.round(score/5))s.style.background=col;m.appendChild(s);}
+  list.innerHTML='';
+  if(empty){list.innerHTML='<li><div class="f" style="cursor:default"><span class="dot i">·</span><div><div class="ft">Nothing to check yet</div><div class="fd">Paste a SKILL.md on the left, or load the rough draft to see the linter work.</div></div><span></span></div></li>';}
+  else if(!res.length){list.innerHTML='<li class="pass"><div class="f" style="cursor:default"><span class="dot p">✓</span><div><div class="ft">All checks passed</div><div class="fd">Frontmatter, name, description and body all look right.</div></div><span></span></div></li>';}
+  res.forEach(f=>{
+    const li=document.createElement('li');
+    const b=document.createElement('button');b.className='f';
+    b.innerHTML='<span class="dot '+f.sev+'">'+({e:'!',w:'?',i:'i'})[f.sev]+'</span><div><div class="ft"></div><div class="fd"></div></div><span class="ln">line '+f.line+'</span>';
+    b.querySelector('.ft').textContent=f.title;b.querySelector('.fd').textContent=f.detail;
+    b.onclick=()=>jump(f.line);li.appendChild(b);
+    if(f.fix){const x=document.createElement('button');x.className='fix';x.textContent=f.fix.label;x.onclick=()=>{ta.value=f.fix.run(ta.value);render();toast('Fixed');};li.appendChild(x);}
+    list.appendChild(li);
+  });
+  gutter(res);
+}
+function gutter(res){
+  const n=ta.value.split('\n').length;const mark={};res.forEach(f=>{if(f.sev!=='i'&&(!mark[f.line]||f.sev==='e'))mark[f.line]=f.sev;});
+  let h='';for(let k=1;k<=n;k++)h+=mark[k]?'<span class="'+mark[k]+'">'+k+'</span>\n':k+'\n';
+  gut.innerHTML=h;gut.scrollTop=ta.scrollTop;
+}
+function jump(line){
+  const ls=ta.value.split('\n');line=Math.min(line,ls.length);
+  let s=0;for(let k=0;k<line-1;k++)s+=ls[k].length+1;
+  ta.focus();ta.setSelectionRange(s,s+ls[line-1].length);
+  ta.scrollTop=Math.max(0,(line-3)*21.45);gut.scrollTop=ta.scrollTop;
+}
+let shown=0,raf;
+function countTo(t){
+  cancelAnimationFrame(raf);const from=shown,start=performance.now();
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){shown=t;$('num').textContent=t;return;}
+  const step=now=>{const k=Math.min(1,(now-start)/500);const v=Math.round(from+(t-from)*(1-Math.pow(1-k,3)));$('num').textContent=v;shown=v;if(k<1)raf=requestAnimationFrame(step);};
+  raf=requestAnimationFrame(step);
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),1600);}
+ta.addEventListener('input',render);
+ta.addEventListener('scroll',()=>{gut.scrollTop=ta.scrollTop;});
+$('sample').onclick=()=>{ta.value=SAMPLE;render();toast('Loaded. Tap a problem to jump to it.');};
+$('clear').onclick=()=>{ta.value='';render();ta.focus();};
+$('copy').onclick=async()=>{
+  const t='Skill Lint score: '+$('num').textContent+'/100\n'+last.map(f=>'- ['+({e:'error',w:'warning',i:'suggestion'})[f.sev]+'] line '+f.line+': '+f.title).join('\n');
+  try{await navigator.clipboard.writeText(t);toast('Report copied');}catch(e){toast('Copy is blocked here');}
+};
+render();
+</script>
+</body>
+</html>

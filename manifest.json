@@ -4,6 +4,15 @@
   "description": "Daily mini-apps built by Ada for Amber",
   "apps": [
     {
+      "date": "2026-11-28",
+      "slug": "2026-11-28",
+      "title": "Skill Lint",
+      "category": "productivity",
+      "design": "swiss-minimal",
+      "oneLiner": "Paste a SKILL.md and get an instant offline check against the Agent Skills format, with line-level findings and one-tap fixes.",
+      "path": "apps/2026-11-28/"
+    },
+    {
       "date": "2026-11-27",
       "slug": "2026-11-27",
       "title": "Next Word",
